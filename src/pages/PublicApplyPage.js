@@ -348,12 +348,12 @@ export default function PublicApplyPage() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             {/* GCash */}
             <div style={{ background: '#141B2D', border: '1px solid rgba(0,163,255,0.25)', borderRadius: 14, padding: '18px 20px', textAlign: 'center' }}>
-              <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/878/GCash_logo.svg/512px-GCash_logo.svg.png" alt="GCash" style={{ height: 40, objectFit: 'contain', marginBottom: 10 }} />
+              <img src="/gcash-logo.png" alt="GCash" style={{ height: 40, objectFit: 'contain', marginBottom: 10 }} />
               <div style={{ fontSize: 12, color: '#7A8AAA', lineHeight: 1.6 }}>Send your installment payment via GCash. Account details will be provided upon loan approval.</div>
             </div>
             {/* RCBC */}
             <div style={{ background: '#141B2D', border: '1px solid rgba(220,38,38,0.25)', borderRadius: 14, padding: '18px 20px', textAlign: 'center' }}>
-              <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/RCBC_logo.svg/512px-RCBC_logo.svg.png" alt="RCBC" style={{ height: 40, objectFit: 'contain', marginBottom: 10 }} />
+              <img src="/rcbc-logo.png" alt="RCBC" style={{ height: 40, objectFit: 'contain', marginBottom: 10 }} />
               <div style={{ fontSize: 12, color: '#7A8AAA', lineHeight: 1.6 }}>Bank transfer via RCBC. Account details will be provided upon loan approval.</div>
             </div>
           </div>
