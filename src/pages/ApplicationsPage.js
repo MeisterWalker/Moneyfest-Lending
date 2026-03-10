@@ -107,20 +107,36 @@ function ApplicationCard({ app, onApprove, onReject }) {
               </div>
             )}
             {app.release_method ? (
-              <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 10, padding: '10px 14px' }}>
-                <img
-                  src={app.release_method === 'GCash' ? '/gcash-logo.png' : app.release_method === 'RCBC' ? '/rcbc-logo.png' : app.release_method === 'Other Bank Transfer' ? '/bank-logo.png' : '/cash-logo.png'}
-                  alt={app.release_method}
-                  style={{ width: 32, height: 32, objectFit: 'contain', flexShrink: 0 }}
-                />
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 11, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Preferred Release Method</div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: '#F0F4FF', marginTop: 2 }}>{app.release_method}</div>
+              <div style={{ marginTop: 10, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 10, overflow: 'hidden' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderBottom: (app.gcash_number || app.bank_account_number) ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
+                  <img
+                    src={app.release_method === 'GCash' ? '/gcash-logo.png' : app.release_method === 'RCBC' ? '/rcbc-logo.png' : app.release_method === 'Other Bank Transfer' ? '/bank-logo.png' : '/cash-logo.png'}
+                    alt={app.release_method}
+                    style={{ width: 32, height: 32, objectFit: 'contain', flexShrink: 0 }}
+                  />
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 11, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Preferred Release Method</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: '#F0F4FF', marginTop: 2 }}>
+                      {app.release_method}{app.bank_name ? ` — ${app.bank_name}` : ''}
+                    </div>
+                  </div>
+                  {(app.release_method === 'Physical Cash' || app.release_method === 'RCBC') ? (
+                    <span style={{ fontSize: 11, color: '#22C55E', background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 20, padding: '3px 10px', whiteSpace: 'nowrap' }}>✓ No fee</span>
+                  ) : (
+                    <span style={{ fontSize: 11, color: '#F59E0B', background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 20, padding: '3px 10px', whiteSpace: 'nowrap' }}>Fee applies</span>
+                  )}
                 </div>
-                {(app.release_method === 'Physical Cash' || app.release_method === 'RCBC') ? (
-                  <span style={{ fontSize: 11, color: '#22C55E', background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 20, padding: '3px 10px', whiteSpace: 'nowrap' }}>✓ No fee</span>
-                ) : (
-                  <span style={{ fontSize: 11, color: '#F59E0B', background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 20, padding: '3px 10px', whiteSpace: 'nowrap' }}>Fee applies</span>
+                {app.release_method === 'GCash' && (app.gcash_number || app.gcash_name) && (
+                  <div style={{ padding: '10px 14px', display: 'flex', gap: 24 }}>
+                    {app.gcash_number && <div><div style={{ fontSize: 11, color: '#4B5580' }}>GCash Number</div><div style={{ fontSize: 13, color: '#60B8FF', fontWeight: 600, marginTop: 2 }}>{app.gcash_number}</div></div>}
+                    {app.gcash_name && <div><div style={{ fontSize: 11, color: '#4B5580' }}>GCash Name</div><div style={{ fontSize: 13, color: '#F0F4FF', fontWeight: 600, marginTop: 2 }}>{app.gcash_name}</div></div>}
+                  </div>
+                )}
+                {(app.release_method === 'RCBC' || app.release_method === 'Other Bank Transfer') && app.bank_account_number && (
+                  <div style={{ padding: '10px 14px' }}>
+                    <div style={{ fontSize: 11, color: '#4B5580' }}>Account Number</div>
+                    <div style={{ fontSize: 13, color: '#F0F4FF', fontWeight: 600, marginTop: 2 }}>{app.bank_account_number}</div>
+                  </div>
                 )}
               </div>
             ) : (
