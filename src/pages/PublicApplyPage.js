@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase'
 const DEPARTMENTS = ['Minto Money', 'Greyhound']
 const LOAN_AMOUNTS = [5000, 7000, 9000, 10000]
 
-function FAQItem({ question, answer }) {
+function FAQItem({ question, answer, children }) {
   const [open, setOpen] = useState(false)
   return (
     <div style={{ background: '#141B2D', border: `1px solid ${open ? 'rgba(59,130,246,0.3)' : 'rgba(255,255,255,0.06)'}`, borderRadius: 12, overflow: 'hidden', transition: 'border 0.2s' }}>
@@ -15,6 +15,7 @@ function FAQItem({ question, answer }) {
       {open && (
         <div style={{ padding: '0 18px 14px', fontSize: 13, color: '#7A8AAA', lineHeight: 1.7, borderTop: '1px solid rgba(255,255,255,0.04)' }}>
           {answer}
+          {children}
         </div>
       )}
     </div>
@@ -29,7 +30,7 @@ export default function PublicApplyPage() {
   const [form, setForm] = useState({
     full_name: '', department: '', tenure_years: '', phone: '', email: '',
     address: '', trustee_name: '', trustee_phone: '', trustee_relationship: '',
-    loan_amount: '', loan_purpose: '', agreed: false
+    loan_amount: '', loan_purpose: '', release_method: '', agreed: false
   })
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
@@ -51,6 +52,7 @@ export default function PublicApplyPage() {
 
   const validateStep3 = () => {
     if (!form.loan_amount) return 'Please select a loan amount'
+    if (!form.release_method) return 'Please select a preferred release method'
     if (!form.agreed) return 'You must agree to the terms'
     return null
   }
@@ -79,6 +81,7 @@ export default function PublicApplyPage() {
       trustee_relationship: form.trustee_relationship.trim(),
       loan_amount: parseFloat(form.loan_amount),
       loan_purpose: form.loan_purpose.trim(),
+      release_method: form.release_method,
       status: 'Pending',
       created_at: new Date().toISOString()
     })
@@ -113,6 +116,9 @@ export default function PublicApplyPage() {
           <div style={{ fontSize: 13, color: '#22C55E', fontWeight: 600 }}>📋 Application Details</div>
           <div style={{ fontSize: 13, color: '#7A8AAA', marginTop: 8 }}>
             Amount Requested: <strong style={{ color: '#F0F4FF' }}>₱{parseFloat(form.loan_amount).toLocaleString()}</strong>
+          </div>
+          <div style={{ fontSize: 13, color: '#7A8AAA', marginTop: 4 }}>
+            Release Method: <strong style={{ color: '#F0F4FF' }}>{form.release_method}</strong>
           </div>
           <div style={{ fontSize: 13, color: '#7A8AAA', marginTop: 4 }}>
             Status: <strong style={{ color: '#F59E0B' }}>Pending Review</strong>
@@ -254,6 +260,40 @@ export default function PublicApplyPage() {
                   <input value={form.loan_purpose} onChange={e => set('loan_purpose', e.target.value)} placeholder="e.g. Medical, Education, Emergency" style={inputStyle} />
                 </div>
 
+                {/* Release Method */}
+                <div>
+                  <label style={labelStyle}>Preferred Release Method *</label>
+                  <p style={{ fontSize: 12, color: '#4B5580', marginBottom: 10, marginTop: -2 }}>
+                    Note: Transaction fees will be deducted from your loan amount depending on the method chosen.
+                  </p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {[
+                      { value: 'Physical Cash', label: '💵 Physical Cash', desc: 'Receive your loan in cash. No transaction fee.', fee: null, feeColor: '#22C55E' },
+                      { value: 'GCash', label: '💙 GCash', desc: 'Sent to your GCash number.', fee: 'Fee: ₱15 or 1% (whichever is higher)', feeColor: '#F59E0B' },
+                      { value: 'RCBC', label: '🏦 RCBC Bank Transfer', desc: 'Transferred to your RCBC account.', fee: 'Free if RCBC to RCBC', feeColor: '#22C55E' },
+                      { value: 'Other Bank Transfer', label: '🏛️ Other Bank Transfer', desc: 'Instapay/PESONet to any non-RCBC bank.', fee: 'Fee: ₱25 (Instapay) or ₱10 (PESONet)', feeColor: '#F59E0B' },
+                    ].map(opt => (
+                      <button key={opt.value} onClick={() => set('release_method', opt.value)} style={{ padding: '12px 14px', borderRadius: 10, border: `2px solid ${form.release_method === opt.value ? '#3B82F6' : 'rgba(255,255,255,0.07)'}`, background: form.release_method === opt.value ? 'rgba(59,130,246,0.1)' : 'rgba(255,255,255,0.02)', cursor: 'pointer', textAlign: 'left', transition: 'all 0.15s', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
+                        <div>
+                          <div style={{ fontWeight: 700, fontSize: 13, color: form.release_method === opt.value ? '#F0F4FF' : '#7A8AAA' }}>{opt.label}</div>
+                          <div style={{ fontSize: 11, color: '#4B5580', marginTop: 2 }}>{opt.desc}</div>
+                        </div>
+                        <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                          {opt.fee
+                            ? <div style={{ fontSize: 11, color: opt.feeColor, fontWeight: 600 }}>{opt.fee}</div>
+                            : <div style={{ fontSize: 11, color: '#22C55E', fontWeight: 600 }}>✓ No fee</div>
+                          }
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                  {form.release_method && !['Physical Cash', 'RCBC'].includes(form.release_method) && (
+                    <div style={{ marginTop: 8, padding: '9px 12px', background: 'rgba(245,158,11,0.07)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 8, fontSize: 12, color: '#F59E0B' }}>
+                      ⚠️ The applicable transaction fee will be deducted from your approved loan amount before release.
+                    </div>
+                  )}
+                </div>
+
                 {/* Terms */}
                 <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, padding: '14px', fontSize: 12, color: '#7A8AAA', lineHeight: 1.7, maxHeight: 120, overflowY: 'auto' }}>
                   <strong style={{ color: '#F0F4FF' }}>Terms & Conditions:</strong> By submitting this application, I confirm that all information provided is accurate. I understand that loans are subject to 8% flat interest rate, repayable in 4 equal installments every 5th and 20th of the month. Late payments will result in credit score deductions. I authorize LM Management to verify my information and contact my trustee if necessary.
@@ -308,14 +348,12 @@ export default function PublicApplyPage() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             {/* GCash */}
             <div style={{ background: '#141B2D', border: '1px solid rgba(0,163,255,0.25)', borderRadius: 14, padding: '18px 20px', textAlign: 'center' }}>
-              <div style={{ fontSize: 32, marginBottom: 8 }}>💙</div>
-              <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 18, color: '#00A3FF', marginBottom: 4 }}>GCash</div>
+              <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/878/GCash_logo.svg/512px-GCash_logo.svg.png" alt="GCash" style={{ height: 40, objectFit: 'contain', marginBottom: 10 }} />
               <div style={{ fontSize: 12, color: '#7A8AAA', lineHeight: 1.6 }}>Send your installment payment via GCash. Account details will be provided upon loan approval.</div>
             </div>
             {/* RCBC */}
             <div style={{ background: '#141B2D', border: '1px solid rgba(220,38,38,0.25)', borderRadius: 14, padding: '18px 20px', textAlign: 'center' }}>
-              <div style={{ fontSize: 32, marginBottom: 8 }}>🏦</div>
-              <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 18, color: '#EF4444', marginBottom: 4 }}>RCBC</div>
+              <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/RCBC_logo.svg/512px-RCBC_logo.svg.png" alt="RCBC" style={{ height: 40, objectFit: 'contain', marginBottom: 10 }} />
               <div style={{ fontSize: 12, color: '#7A8AAA', lineHeight: 1.6 }}>Bank transfer via RCBC. Account details will be provided upon loan approval.</div>
             </div>
           </div>
@@ -355,8 +393,31 @@ export default function PublicApplyPage() {
                 q: 'How long does approval take?',
                 a: 'Applications are reviewed manually by the admin. You will be contacted once your application has been approved or rejected.'
               },
+              {
+                q: 'Who can I contact for questions?',
+                a: 'For any inquiries, you may reach out to the following admins via Microsoft Teams chat:'
+              },
             ].map((item, i) => (
-              <FAQItem key={i} question={item.q} answer={item.a} />
+              <FAQItem key={i} question={item.q} answer={item.a}>
+                {item.q === 'Who can I contact for questions?' && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 10 }}>
+                    {[
+                      { name: 'John Paul Lacaron', role: 'Admin' },
+                      { name: 'Charlou John Ramil', role: 'Admin' },
+                    ].map((person, pi) => (
+                      <div key={pi} style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(59,130,246,0.07)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: 9, padding: '10px 12px' }}>
+                        <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'linear-gradient(135deg,#3B82F6,#8B5CF6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 13, color: '#fff', flexShrink: 0 }}>
+                          {person.name.charAt(0)}
+                        </div>
+                        <div>
+                          <div style={{ fontWeight: 700, color: '#F0F4FF', fontSize: 13 }}>{person.name}</div>
+                          <div style={{ fontSize: 11, color: '#3B82F6' }}>📱 Microsoft Teams</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </FAQItem>
             ))}
           </div>
         </div>
