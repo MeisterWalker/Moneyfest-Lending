@@ -23,12 +23,17 @@ function getNextTwoCutoffs() {
 }
 
 function getDueDate(releaseDate) {
+  // 4 installments from release date, each on 5th or 20th
+  // Release on 5th  -> cutoffs: 20th, +1 5th, +1 20th, +2 5th  (final = +2 months, 5th)
+  // Release on 20th -> cutoffs: +1 5th, +1 20th, +2 5th, +2 20th (final = +2 months, 20th)
   const d = new Date(releaseDate)
   const day = d.getDate()
-  if (day === 5) {
-    return new Date(d.getFullYear(), d.getMonth(), 20)
+  if (day <= 5) {
+    // Released on 5th: 4th installment is 2 months later on the 5th
+    return new Date(d.getFullYear(), d.getMonth() + 2, 5)
   } else {
-    return new Date(d.getFullYear(), d.getMonth() + 1, 5)
+    // Released on 20th: 4th installment is 2 months later on the 20th
+    return new Date(d.getFullYear(), d.getMonth() + 2, 20)
   }
 }
 
@@ -108,7 +113,7 @@ export default function LoanModal({ isOpen, onClose, onSave, loan, borrower, bor
       interest_rate: rate,
       total_repayment: totalRepayment,
       installment_amount: installmentAmount,
-      due_date: dueDate ? formatDateValue(dueDate) : '',
+      due_date: dueDate ? formatDateValue(dueDate) : formatDateValue(new Date()),
       remaining_balance: totalRepayment,
       status: 'Pending'
     }, isEdit)
