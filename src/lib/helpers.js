@@ -2,12 +2,14 @@ import { supabase } from './supabase'
 
 export async function logAudit({ action_type, module, description, changed_by }) {
   try {
-    await supabase.from('audit_logs').insert({
-      action_type,
-      module,
-      description,
-      changed_by: changed_by || 'system'
+    const { error } = await supabase.from('audit_logs').insert({
+      action_type: action_type || 'UNKNOWN',
+      module: module || 'System',
+      description: description || '',
+      changed_by: changed_by || 'admin',
+      created_at: new Date().toISOString()
     })
+    if (error) console.error('Audit log insert error:', error)
   } catch (e) {
     console.error('Audit log failed:', e)
   }

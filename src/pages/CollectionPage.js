@@ -367,7 +367,11 @@ export default function CollectionPage() {
 
   const handleAuditLog = async (action) => {
     await supabase.from('audit_logs').insert({
-      module: 'Collection', action: 'Email Sent', description: action, created_at: new Date().toISOString()
+      action_type: 'EMAIL_SENT',
+      module: 'Collection',
+      description: action,
+      changed_by: 'admin',
+      created_at: new Date().toISOString()
     })
   }
 

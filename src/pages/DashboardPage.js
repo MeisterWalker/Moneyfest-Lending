@@ -1,7 +1,10 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
+import { logAudit } from '../lib/helpers'
 import { formatCurrency, formatDate } from '../lib/helpers'
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
+import { useAuth } from '../context/AuthContext'
 import { ClipboardList } from 'lucide-react'
 import {
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
@@ -286,6 +289,8 @@ function CustomTooltip({ active, payload, label, prefix = '₱' }) {
 
 // ─── Main Dashboard ───────────────────────────────────────────
 export default function DashboardPage() {
+  const { user } = useAuth()
+  const { user } = useAuth()
   const [loans, setLoans] = useState([])
   const [pendingApps, setPendingApps] = useState(0)
   const [borrowers, setBorrowers] = useState([])
@@ -323,6 +328,12 @@ export default function DashboardPage() {
       const newScore = Math.min(850, b.credit_score + 15)
       await supabase.from('borrowers').update({ credit_score: newScore, risk_score: newScore >= 650 ? 'Low' : newScore >= 550 ? 'Medium' : 'High' }).eq('id', b.id)
     }
+    await logAudit({
+      action_type: 'INSTALLMENT_PAID',
+      module: 'Loan',
+      description: `Installment ${newPaid} of 4 recorded via Dashboard for ${b?.full_name || 'Unknown'} — ₱${loan.installment_amount?.toLocaleString('en-PH', { minimumFractionDigits: 2 })}`,
+      changed_by: user?.email
+    })
     fetchData()
   }
 

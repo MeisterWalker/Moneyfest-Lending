@@ -188,7 +188,15 @@ export default function BorrowersPage() {
       }).eq('id', editingBorrower.id)
 
       if (error) { toast('Failed to update borrower', 'error'); return }
-      await logAudit({ action_type: 'BORROWER_EDITED', module: 'Borrower', description: `Borrower profile updated: ${form.full_name}`, changed_by: user?.email })
+      const editChanges = []
+      if (editing.full_name !== form.full_name) editChanges.push('name')
+      if (editing.department !== form.department) editChanges.push('department')
+      if (editing.phone !== form.phone) editChanges.push('phone')
+      if (editing.email !== form.email) editChanges.push('email')
+      if (editing.admin_notes !== form.admin_notes) editChanges.push('admin notes')
+      if (String(editing.loan_limit) !== String(form.loan_limit)) editChanges.push(`loan limit → ₱${parseFloat(form.loan_limit)?.toLocaleString()}`)
+      const changeDesc = editChanges.length > 0 ? ` (changed: ${editChanges.join(', ')})` : ''
+      await logAudit({ action_type: 'BORROWER_EDITED', module: 'Borrower', description: `Borrower profile updated: ${form.full_name}${changeDesc}`, changed_by: user?.email })
       toast(`${form.full_name} updated successfully`, 'success')
     } else {
       // New borrower: ALWAYS hardcode credit_score=750, risk_score="Low"

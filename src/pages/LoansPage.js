@@ -373,7 +373,8 @@ export default function LoansPage() {
         updated_at: new Date().toISOString()
       }).eq('id', editingLoan.id)
       if (error) { toast('Failed to update loan', 'error'); return }
-      await logAudit({ action_type: 'LOAN_EDITED', module: 'Loan', description: `Loan edited for borrower`, changed_by: user?.email })
+      const editedBorrower = borrowers.find(b => b.id === form.borrower_id)
+      await logAudit({ action_type: 'LOAN_EDITED', module: 'Loan', description: `Loan edited for ${editedBorrower?.full_name || 'Unknown'} — ₱${form.loan_amount?.toLocaleString()}`, changed_by: user?.email })
       toast('Loan updated', 'success')
     } else {
       // Check for existing active loan
@@ -475,6 +476,14 @@ export default function LoansPage() {
 
   const handleStatusUpdate = async (loanId, newStatus) => {
     await supabase.from('loans').update({ status: newStatus }).eq('id', loanId)
+    const loan = loans.find(l => l.id === loanId)
+    const borrower = borrowers.find(b => b.id === loan?.borrower_id)
+    await logAudit({
+      action_type: 'LOAN_STATUS_CHANGED',
+      module: 'Loan',
+      description: `Loan status manually changed to "${newStatus}" for ${borrower?.full_name || 'Unknown'}`,
+      changed_by: user?.email
+    })
     fetchData()
   }
 
