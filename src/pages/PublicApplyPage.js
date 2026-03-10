@@ -220,13 +220,16 @@ export default function PublicApplyPage() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 <div>
                   <label style={labelStyle}>Loan Amount Requested *</label>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
                     {LOAN_AMOUNTS.map(amt => (
                       <button key={amt} onClick={() => set('loan_amount', amt)} style={{ padding: '14px', borderRadius: 10, border: `2px solid ${form.loan_amount === amt ? '#3B82F6' : 'rgba(255,255,255,0.08)'}`, background: form.loan_amount === amt ? 'rgba(59,130,246,0.15)' : 'rgba(255,255,255,0.03)', color: form.loan_amount === amt ? '#F0F4FF' : '#7A8AAA', cursor: 'pointer', textAlign: 'center', transition: 'all 0.15s' }}>
                         <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 20, color: form.loan_amount === amt ? '#22C55E' : '#7A8AAA' }}>₱{amt.toLocaleString()}</div>
                         <div style={{ fontSize: 11, marginTop: 2 }}>₱{(amt * 1.08 / 4).toFixed(2)}/cutoff</div>
                       </button>
                     ))}
+                  </div>
+                  <div style={{ background: 'rgba(245,158,11,0.07)', border: '1px solid rgba(245,158,11,0.25)', borderRadius: 9, padding: '10px 14px', fontSize: 12, color: '#F59E0B', lineHeight: 1.6 }}>
+                    ⚠️ <strong>Subject to approval.</strong> The amount you select is your request only. First-time borrowers are typically approved for ₱5,000 regardless of the amount requested. Higher limits are earned over time based on your repayment history and credit standing.
                   </div>
                 </div>
                 <div>
