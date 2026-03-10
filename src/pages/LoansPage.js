@@ -25,18 +25,18 @@ function generateReceiptHTML({ loan, borrower, installmentNum, amount, date }) {
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'DM Sans', sans-serif; background: #fff; color: #1a1a2e; padding: 40px; max-width: 600px; margin: 0 auto; }
         .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; padding-bottom: 20px; border-bottom: 2px solid #e8ecf5; }
-        .logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 22px; color: #1a1a2e; }
+        .logo { font-family: 'Space Grotesk', sans-serif; font-weight: 800; font-size: 22px; color: #1a1a2e; }
         .logo span { background: linear-gradient(135deg, #3B82F6, #8B5CF6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .receipt-label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: #7A8AAA; margin-bottom: 4px; }
-        .receipt-num { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 14px; color: #1a1a2e; }
-        .title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 28px; margin-bottom: 4px; }
+        .receipt-num { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 14px; color: #1a1a2e; }
+        .title { font-family: 'Space Grotesk', sans-serif; font-weight: 800; font-size: 28px; margin-bottom: 4px; }
         .subtitle { font-size: 14px; color: #7A8AAA; margin-bottom: 28px; }
         .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 28px; }
         .info-item label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: #7A8AAA; display: block; margin-bottom: 4px; }
         .info-item span { font-size: 14px; font-weight: 500; color: #1a1a2e; }
         .amount-box { background: linear-gradient(135deg, #f0f4ff, #e8f5e9); border: 1px solid #c8d8f0; border-radius: 12px; padding: 24px; text-align: center; margin-bottom: 28px; }
         .amount-label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: #7A8AAA; margin-bottom: 8px; }
-        .amount-value { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 36px; color: #22C55E; }
+        .amount-value { font-family: 'Space Grotesk', sans-serif; font-weight: 800; font-size: 36px; color: #22C55E; }
         .progress { margin-bottom: 28px; }
         .progress-label { font-size: 13px; font-weight: 600; margin-bottom: 10px; }
         .progress-bar { height: 10px; background: #e8ecf5; border-radius: 5px; overflow: hidden; }
@@ -187,7 +187,7 @@ function LoanCard({ loan, borrowers, onEdit, onDelete, onRecordPayment, onDefaul
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 14 }}>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6, flexWrap: 'wrap' }}>
-              <span style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 18, color: 'var(--text-primary)' }}>
+              <span style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 18, color: 'var(--text-primary)' }}>
                 {formatCurrency(loan.loan_amount)}
               </span>
               <StatusBadge status={loan.status} />
@@ -210,7 +210,7 @@ function LoanCard({ loan, borrowers, onEdit, onDelete, onRecordPayment, onDefaul
           {/* Right side - total repayment */}
           <div style={{ textAlign: 'right', flexShrink: 0 }}>
             <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 2 }}>Total Repayment</div>
-            <div style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 16, color: 'var(--text-primary)' }}>
+            <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 16, color: 'var(--text-primary)' }}>
               {formatCurrency(loan.total_repayment)}
             </div>
             <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
@@ -553,7 +553,7 @@ export default function LoansPage() {
           { label: 'Overdue', value: stats.overdue, color: 'var(--gold)' },
         ].map(s => (
           <div key={s.label} className="card" style={{ padding: '14px 18px', textAlign: 'center', cursor: 'pointer' }} onClick={() => setStatusFilter(s.label === statusFilter ? 'All' : s.label)}>
-            <div style={{ fontFamily: 'Syne', fontWeight: 800, fontSize: 24, color: s.color }}>{s.value}</div>
+            <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 24, color: s.color }}>{s.value}</div>
             <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{s.label}</div>
           </div>
         ))}
@@ -622,7 +622,7 @@ export default function LoansPage() {
       {deleteTarget && (
         <div className="modal-overlay">
           <div className="modal-box" style={{ maxWidth: 400, padding: 28 }}>
-            <h2 style={{ fontFamily: 'Syne', fontSize: 18, marginBottom: 10 }}>Delete Loan?</h2>
+            <h2 style={{ fontFamily: 'Space Grotesk', fontSize: 18, marginBottom: 10 }}>Delete Loan?</h2>
             <p style={{ color: 'var(--text-label)', fontSize: 14, marginBottom: 24 }}>
               This will permanently delete this loan record. This cannot be undone.
             </p>
@@ -638,7 +638,7 @@ export default function LoansPage() {
       {defaultTarget && (
         <div className="modal-overlay">
           <div className="modal-box" style={{ maxWidth: 420, padding: 28 }}>
-            <h2 style={{ fontFamily: 'Syne', fontSize: 18, marginBottom: 10 }}>Mark as Defaulted?</h2>
+            <h2 style={{ fontFamily: 'Space Grotesk', fontSize: 18, marginBottom: 10 }}>Mark as Defaulted?</h2>
             <p style={{ color: 'var(--text-label)', fontSize: 14, marginBottom: 8 }}>
               This will mark the loan as <strong style={{ color: 'var(--red)' }}>Defaulted</strong> and deduct <strong style={{ color: 'var(--red)' }}>150 points</strong> from the borrower's credit score.
             </p>

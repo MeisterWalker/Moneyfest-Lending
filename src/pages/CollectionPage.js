@@ -92,7 +92,7 @@ function EmailReminderModal({ events, onClose, onLog }) {
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <Mail size={20} color="var(--blue)" />
             <div>
-              <div style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 16 }}>Send Email Reminders</div>
+              <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 16 }}>Send Email Reminders</div>
               <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Notify borrowers of upcoming installments</div>
             </div>
           </div>
@@ -177,7 +177,7 @@ function EmailReminderModal({ events, onClose, onLog }) {
             <div>
               <div style={{ textAlign: 'center', marginBottom: 20 }}>
                 <div style={{ fontSize: 36, marginBottom: 8 }}>{results.filter(r => r.success).length === results.length ? '🎉' : '⚠️'}</div>
-                <div style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 18, marginBottom: 4 }}>
+                <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 18, marginBottom: 4 }}>
                   {results.filter(r => r.success).length} of {results.length} sent successfully
                 </div>
                 <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Reminders delivered to borrowers' inboxes</div>
@@ -227,7 +227,7 @@ function CalendarView({ events, currentMonth, setCurrentMonth }) {
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
         <button onClick={() => setCurrentMonth(new Date(year, month - 1, 1))} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--card-border)', borderRadius: 8, width: 34, height: 34, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-primary)' }}><ChevronLeft size={16} /></button>
-        <span style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 18 }}>{currentMonth.toLocaleDateString('en-PH', { month: 'long', year: 'numeric' })}</span>
+        <span style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 18 }}>{currentMonth.toLocaleDateString('en-PH', { month: 'long', year: 'numeric' })}</span>
         <button onClick={() => setCurrentMonth(new Date(year, month + 1, 1))} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--card-border)', borderRadius: 8, width: 34, height: 34, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-primary)' }}><ChevronRight size={16} /></button>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2, marginBottom: 4 }}>
@@ -252,7 +252,7 @@ function CalendarView({ events, currentMonth, setCurrentMonth }) {
       </div>
       {selected && (
         <div style={{ marginTop: 16, padding: '16px 18px', background: 'rgba(59,130,246,0.06)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: 10 }}>
-          <div style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 14, marginBottom: 12 }}>{new Date(year, month, selected).toLocaleDateString('en-PH', { weekday: 'long', month: 'long', day: 'numeric' })}</div>
+          <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 14, marginBottom: 12 }}>{new Date(year, month, selected).toLocaleDateString('en-PH', { weekday: 'long', month: 'long', day: 'numeric' })}</div>
           {selectedEvents.length === 0 ? <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>{isCutoff(selected) ? 'Cutoff day — no installments scheduled' : 'No installments this day'}</p> : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {selectedEvents.map((ev, i) => (
@@ -412,7 +412,7 @@ export default function CollectionPage() {
           { label: 'This Month', value: formatCurrency(thisMonthTotal), color: 'var(--green)' },
         ].map(s => (
           <div key={s.label} className="card" style={{ padding: '14px 18px', textAlign: 'center' }}>
-            <div style={{ fontFamily: 'Syne', fontWeight: 800, fontSize: 20, color: s.color }}>{s.value}</div>
+            <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 20, color: s.color }}>{s.value}</div>
             <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{s.label}</div>
           </div>
         ))}

@@ -123,7 +123,7 @@ export default function LoanModal({ isOpen, onClose, onSave, loan, borrower, bor
         {/* Header */}
         <div style={{ padding: '24px 28px 20px', borderBottom: '1px solid var(--card-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
-            <h2 style={{ fontFamily: 'Syne', fontSize: 18, fontWeight: 700 }}>
+            <h2 style={{ fontFamily: 'Space Grotesk', fontSize: 18, fontWeight: 700 }}>
               {prefill ? '🔄 Renew Loan' : isEdit ? 'Edit Loan' : 'New Loan Application'}
             </h2>
             <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 2 }}>
@@ -203,7 +203,7 @@ export default function LoanModal({ isOpen, onClose, onSave, loan, borrower, bor
                 ].map(item => (
                   <div key={item.label}>
                     <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{item.label}</div>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: item.highlight ? 'var(--green)' : 'var(--text-primary)', fontFamily: 'Syne' }}>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: item.highlight ? 'var(--green)' : 'var(--text-primary)', fontFamily: 'Space Grotesk' }}>
                       {item.value}
                     </div>
                   </div>

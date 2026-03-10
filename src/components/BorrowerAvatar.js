@@ -163,7 +163,7 @@ export function BorrowerAvatar({ name = '', photoUrl = null, size = 46, editable
           {/* Initials */}
           <span style={{
             position: 'relative', zIndex: 1,
-            fontFamily: 'Syne, sans-serif', fontWeight: 800,
+            fontFamily: 'Space Grotesk, sans-serif', fontWeight: 800,
             fontSize: size > 60 ? size * 0.28 : size * 0.32,
             background: `linear-gradient(135deg, ${colors[0]}, ${colors[1]})`,
             WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',

@@ -29,7 +29,7 @@ function StatBox({ label, value, sub, color = 'var(--blue)', highlight }) {
       border: highlight ? `1px solid ${color}30` : undefined
     }}>
       <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>{label}</div>
-      <div style={{ fontFamily: 'Syne', fontWeight: 800, fontSize: 22, color, lineHeight: 1.1 }}>{value}</div>
+      <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 22, color, lineHeight: 1.1 }}>{value}</div>
       {sub && <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>{sub}</div>}
     </div>
   )
@@ -150,7 +150,7 @@ export default function ForecastPage() {
 
       {/* Forecast Controls */}
       <div className="card" style={{ padding: '22px 24px', marginBottom: 24 }}>
-        <div style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 15, marginBottom: 18 }}>⚙️ Simulation Parameters</div>
+        <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 15, marginBottom: 18 }}>⚙️ Simulation Parameters</div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 20 }}>
           <div className="form-group">
             <label className="form-label">Starting Capital (₱)</label>
@@ -222,7 +222,7 @@ export default function ForecastPage() {
 
       {/* Growth Chart */}
       <div className="card" style={{ padding: '22px 24px', marginBottom: 24 }}>
-        <div style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 15, marginBottom: 18 }}>📈 12-Month Growth Projection</div>
+        <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 15, marginBottom: 18 }}>📈 12-Month Growth Projection</div>
         <ResponsiveContainer width="100%" height={260}>
           <LineChart data={proj12}>
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
@@ -239,7 +239,7 @@ export default function ForecastPage() {
 
       {/* Compounding Table */}
       <div className="card" style={{ padding: '22px 24px', marginBottom: 24 }}>
-        <div style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 15, marginBottom: 18 }}>📊 5-Year Compounding Table</div>
+        <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 15, marginBottom: 18 }}>📊 5-Year Compounding Table</div>
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
             <thead>
@@ -255,7 +255,7 @@ export default function ForecastPage() {
                   onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.015)'}
                   onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                 >
-                  <td style={{ padding: '13px 16px', fontFamily: 'Syne', fontWeight: 700 }}>{row.year}</td>
+                  <td style={{ padding: '13px 16px', fontFamily: 'Space Grotesk', fontWeight: 700 }}>{row.year}</td>
                   <td style={{ padding: '13px 16px', color: 'var(--teal)', fontWeight: 600 }}>{formatCurrency(row.capital)}</td>
                   <td style={{ padding: '13px 16px', color: 'var(--green)', fontWeight: 600 }}>{formatCurrency(row.profit)}</td>
                   <td style={{ padding: '13px 16px' }}>
@@ -272,7 +272,7 @@ export default function ForecastPage() {
 
       {/* Break-even analysis */}
       <div className="card" style={{ padding: '22px 24px' }}>
-        <div style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 15, marginBottom: 16 }}>🔍 Break-Even Analysis</div>
+        <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 15, marginBottom: 16 }}>🔍 Break-Even Analysis</div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
           {[
             { label: 'Months to break even', value: breakEvenMonth ? `${breakEvenMonth} months` : '>12 months', color: 'var(--blue)' },
@@ -282,7 +282,7 @@ export default function ForecastPage() {
           ].map(item => (
             <div key={item.label} style={{ padding: '14px 16px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--card-border)', borderRadius: 10 }}>
               <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{item.label}</div>
-              <div style={{ fontFamily: 'Syne', fontWeight: 800, fontSize: 20, color: item.color }}>{item.value}</div>
+              <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 20, color: item.color }}>{item.value}</div>
               {item.sub && <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{item.sub}</div>}
             </div>
           ))}

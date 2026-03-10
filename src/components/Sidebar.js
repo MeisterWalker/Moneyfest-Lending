@@ -65,7 +65,7 @@ export default function Sidebar() {
             <LedgerIcon size={20} />
           </div>
           <div>
-            <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 15, letterSpacing: '-0.02em', color: 'var(--text-primary)' }}>
+            <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 800, fontSize: 15, letterSpacing: '-0.02em', color: 'var(--text-primary)' }}>
               Loan Manifest
             </div>
             <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Admin Panel</div>

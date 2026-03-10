@@ -58,7 +58,7 @@ export default function BorrowerModal({ isOpen, onClose, onSave, borrower, depar
         {/* Header */}
         <div style={{ padding: '24px 28px 20px', borderBottom: '1px solid var(--card-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
-            <h2 style={{ fontFamily: 'Syne', fontSize: 18, fontWeight: 700 }}>
+            <h2 style={{ fontFamily: 'Space Grotesk', fontSize: 18, fontWeight: 700 }}>
               {isEdit ? 'Edit Borrower' : 'Add New Borrower'}
             </h2>
             <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 2 }}>

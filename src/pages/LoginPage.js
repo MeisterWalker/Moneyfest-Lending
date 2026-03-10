@@ -109,7 +109,7 @@ export default function LoginPage() {
             <LedgerIcon size={32} />
           </div>
           <h1 style={{
-            fontFamily: 'Syne, sans-serif',
+            fontFamily: 'Space Grotesk, sans-serif',
             fontSize: 32,
             fontWeight: 800,
             letterSpacing: '-0.04em',

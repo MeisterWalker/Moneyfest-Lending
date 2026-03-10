@@ -119,7 +119,7 @@ export default function AuditPage() {
           { label: 'Payments Recorded', value: logs.filter(l => l.action_type === 'INSTALLMENT_PAID').length, color: 'var(--teal)' },
         ].map(s => (
           <div key={s.label} className="card" style={{ padding: '14px 18px', textAlign: 'center' }}>
-            <div style={{ fontFamily: 'Syne', fontWeight: 800, fontSize: 22, color: s.color }}>{s.value}</div>
+            <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 22, color: s.color }}>{s.value}</div>
             <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{s.label}</div>
           </div>
         ))}

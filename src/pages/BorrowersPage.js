@@ -44,7 +44,7 @@ function BorrowerCard({ borrower, departments, onEdit, onDelete }) {
             <BorrowerAvatar name={borrower.full_name} photoUrl={borrower.photo_url} size={46} />
 
             <div style={{ minWidth: 0 }}>
-              <div style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 16, marginBottom: 4 }}>
+              <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 16, marginBottom: 4 }}>
                 {borrower.full_name}
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
@@ -60,7 +60,7 @@ function BorrowerCard({ borrower, departments, onEdit, onDelete }) {
 
           {/* Credit score + risk */}
           <div style={{ textAlign: 'right', flexShrink: 0 }}>
-            <div style={{ fontFamily: 'Syne', fontWeight: 800, fontSize: 22, color: scoreColor, lineHeight: 1 }}>
+            <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 22, color: scoreColor, lineHeight: 1 }}>
               {borrower.credit_score}
             </div>
             <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>Credit Score</div>
@@ -274,7 +274,7 @@ export default function BorrowersPage() {
           { label: 'High Risk', value: borrowers.filter(b => b.risk_score === 'High').length, color: 'var(--red)' },
         ].map(s => (
           <div key={s.label} className="card" style={{ padding: '14px 18px', textAlign: 'center' }}>
-            <div style={{ fontFamily: 'Syne', fontWeight: 800, fontSize: 24, color: s.color }}>{s.value}</div>
+            <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 24, color: s.color }}>{s.value}</div>
             <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{s.label}</div>
           </div>
         ))}
@@ -317,7 +317,7 @@ export default function BorrowersPage() {
       {deleteTarget && (
         <div className="modal-overlay">
           <div className="modal-box" style={{ maxWidth: 400, padding: 28 }}>
-            <h2 style={{ fontFamily: 'Syne', fontSize: 18, marginBottom: 10 }}>Delete Borrower?</h2>
+            <h2 style={{ fontFamily: 'Space Grotesk', fontSize: 18, marginBottom: 10 }}>Delete Borrower?</h2>
             <p style={{ color: 'var(--text-label)', fontSize: 14, marginBottom: 6 }}>
               Are you sure you want to remove <strong style={{ color: 'var(--text-primary)' }}>{deleteTarget.full_name}</strong>?
             </p>

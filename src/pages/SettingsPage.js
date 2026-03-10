@@ -21,7 +21,7 @@ function Section({ icon: Icon, title, color = 'var(--blue)', children }) {
         <div style={{ width: 34, height: 34, borderRadius: 9, background: `${color}18`, border: `1px solid ${color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <Icon size={16} color={color} />
         </div>
-        <span style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 15 }}>{title}</span>
+        <span style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 15 }}>{title}</span>
       </div>
       <div style={{ padding: '22px 24px' }}>{children}</div>
     </div>
@@ -85,16 +85,16 @@ function LoanConfigSection({ settings, onSave }) {
       <div style={{ background: 'rgba(59,130,246,0.06)', border: '1px solid rgba(59,130,246,0.15)', borderRadius: 10, padding: '14px 18px', marginBottom: 18, display: 'flex', gap: 30, flexWrap: 'wrap' }}>
         <div>
           <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 3 }}>Profit per full capital cycle</div>
-          <div style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 18, color: 'var(--blue)' }}>{formatCurrency(previewProfit)}</div>
+          <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 18, color: 'var(--blue)' }}>{formatCurrency(previewProfit)}</div>
         </div>
         <div>
           <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 3 }}>Min loan amount</div>
-          <div style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 18, color: 'var(--text-primary)' }}>₱5,000</div>
+          <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 18, color: 'var(--text-primary)' }}>₱5,000</div>
           <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Fixed</div>
         </div>
         <div>
           <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 3 }}>Pay periods / year</div>
-          <div style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 18, color: 'var(--text-primary)' }}>26</div>
+          <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 18, color: 'var(--text-primary)' }}>26</div>
           <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>5th & 20th cutoffs</div>
         </div>
       </div>

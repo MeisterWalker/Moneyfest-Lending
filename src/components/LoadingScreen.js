@@ -92,7 +92,7 @@ export default function LoadingScreen({ onComplete }) {
           transition: 'box-shadow 0.3s ease'
         }}>
           <span style={{
-            fontFamily: 'Syne, sans-serif',
+            fontFamily: 'Space Grotesk, sans-serif',
             fontSize: 28,
             fontWeight: 800,
             background: 'linear-gradient(135deg, var(--blue), var(--purple))',
@@ -110,7 +110,7 @@ export default function LoadingScreen({ onComplete }) {
       {/* App name */}
       <div style={{ textAlign: 'center' }}>
         <div style={{
-          fontFamily: 'Syne, sans-serif',
+          fontFamily: 'Space Grotesk, sans-serif',
           fontSize: 22,
           fontWeight: 800,
           letterSpacing: '-0.03em',

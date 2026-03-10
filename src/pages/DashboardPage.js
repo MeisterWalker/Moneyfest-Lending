@@ -34,7 +34,7 @@ function StatCard({ label, value, sub, icon: Icon, color, trend }) {
       </div>
       <div>
         <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</div>
-        <div style={{ fontFamily: 'Syne', fontWeight: 800, fontSize: 22, color: 'var(--text-primary)', lineHeight: 1.1 }}>{value}</div>
+        <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 22, color: 'var(--text-primary)', lineHeight: 1.1 }}>{value}</div>
         {sub && <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>{sub}</div>}
       </div>
     </div>
@@ -54,7 +54,7 @@ function EfficiencyCard({ rate, onTime, total }) {
         <span style={{ fontSize: 11, color, background: `${color}15`, border: `1px solid ${color}30`, padding: '2px 8px', borderRadius: 10, fontWeight: 600 }}>{label}</span>
       </div>
       <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Collection Efficiency</div>
-      <div style={{ fontFamily: 'Syne', fontWeight: 800, fontSize: 22, color, lineHeight: 1.1, marginBottom: 4 }}>{rate.toFixed(1)}%</div>
+      <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 22, color, lineHeight: 1.1, marginBottom: 4 }}>{rate.toFixed(1)}%</div>
       <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{onTime} of {total} installments on time</div>
       {/* Mini bar */}
       <div style={{ height: 4, background: 'rgba(255,255,255,0.06)', borderRadius: 2, marginTop: 10, overflow: 'hidden' }}>
@@ -82,7 +82,7 @@ function CutoffBanner({ loans, borrowers, onMarkPaid, onDismiss }) {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14, flexWrap: 'wrap', gap: 10 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <Calendar size={18} color="var(--blue)" />
-          <span style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 16 }}>
+          <span style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 16 }}>
             📅 Today is a Cutoff Day — {today.toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' })}
           </span>
         </div>
@@ -108,7 +108,7 @@ function CutoffBanner({ loans, borrowers, onMarkPaid, onDismiss }) {
                     </span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <span style={{ fontFamily: 'Syne', fontWeight: 700, color: 'var(--blue)' }}>
+                    <span style={{ fontFamily: 'Space Grotesk', fontWeight: 700, color: 'var(--blue)' }}>
                       {formatCurrency(loan.installment_amount)}
                     </span>
                     <button onClick={() => onMarkPaid(loan)}
@@ -151,7 +151,7 @@ function CountdownWidget({ loans, borrowers }) {
     <div className="card" style={{ padding: '20px 22px', marginBottom: 24 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
         <Clock size={18} color="var(--blue)" />
-        <span style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 15 }}>
+        <span style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 15 }}>
           ⏳ Next Cutoff in{' '}
           <span style={{ color: 'var(--blue)', fontSize: 20 }}>{daysLeft}</span>
           {' '}day{daysLeft !== 1 ? 's' : ''} —{' '}
@@ -161,11 +161,11 @@ function CountdownWidget({ loans, borrowers }) {
       <div style={{ display: 'flex', gap: 20, marginBottom: 14, flexWrap: 'wrap' }}>
         <div>
           <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Borrowers Due</div>
-          <div style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 18, color: 'var(--text-primary)' }}>{dueLoansList.length}</div>
+          <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 18, color: 'var(--text-primary)' }}>{dueLoansList.length}</div>
         </div>
         <div>
           <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Expected Collection</div>
-          <div style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 18, color: 'var(--green)' }}>{formatCurrency(totalExpected)}</div>
+          <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 18, color: 'var(--green)' }}>{formatCurrency(totalExpected)}</div>
         </div>
       </div>
       {dueLoansList.length > 0 && (
@@ -196,7 +196,7 @@ function TopBorrowersWidget({ borrowers, navigate }) {
 
   return (
     <div className="card" style={{ padding: '20px 22px' }}>
-      <div style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 16, marginBottom: 16 }}>Borrower Insights</div>
+      <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 16, marginBottom: 16 }}>Borrower Insights</div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
         <div>
           <div style={{ fontSize: 12, color: 'var(--gold)', fontWeight: 600, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -208,7 +208,7 @@ function TopBorrowersWidget({ borrowers, navigate }) {
                 <div style={{ fontSize: 13, fontWeight: 500 }}>{b.full_name}</div>
                 <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{BADGE[b.loyalty_badge]} {b.loyalty_badge}</div>
               </div>
-              <div style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 15, color: 'var(--green)' }}>{b.credit_score}</div>
+              <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 15, color: 'var(--green)' }}>{b.credit_score}</div>
             </div>
           ))}
         </div>
@@ -222,7 +222,7 @@ function TopBorrowersWidget({ borrowers, navigate }) {
                 <div style={{ fontSize: 13, fontWeight: 500 }}>{b.full_name}</div>
                 <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{b.risk_score} Risk</div>
               </div>
-              <div style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 15, color: b.credit_score < 550 ? 'var(--red)' : 'var(--gold)' }}>{b.credit_score}</div>
+              <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 15, color: b.credit_score < 550 ? 'var(--red)' : 'var(--gold)' }}>{b.credit_score}</div>
             </div>
           ))}
         </div>
@@ -235,7 +235,7 @@ function TopBorrowersWidget({ borrowers, navigate }) {
 function AuditWidget({ logs }) {
   return (
     <div className="card" style={{ padding: '20px 22px' }}>
-      <div style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 16, marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 16, marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         Recent Activity
         <span style={{ fontSize: 12, color: 'var(--text-muted)', fontFamily: 'DM Sans', fontWeight: 400 }}>Last 10 actions</span>
       </div>
@@ -451,7 +451,7 @@ export default function DashboardPage() {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 24 }}>
         {/* Capital Growth Line Chart */}
         <div className="card" style={{ padding: '20px 22px' }}>
-          <div style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 15, marginBottom: 18 }}>📈 Capital Growth</div>
+          <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 15, marginBottom: 18 }}>📈 Capital Growth</div>
           <ResponsiveContainer width="100%" height={200}>
             <LineChart data={capitalGrowthData}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
@@ -465,7 +465,7 @@ export default function DashboardPage() {
 
         {/* Monthly Profit Bar Chart */}
         <div className="card" style={{ padding: '20px 22px' }}>
-          <div style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 15, marginBottom: 18 }}>💰 Monthly Profit</div>
+          <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 15, marginBottom: 18 }}>💰 Monthly Profit</div>
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={monthlyData}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
@@ -482,7 +482,7 @@ export default function DashboardPage() {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 20, marginBottom: 24 }}>
         {/* Loan Status Donut */}
         <div className="card" style={{ padding: '20px 22px' }}>
-          <div style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 15, marginBottom: 14 }}>Loan Status</div>
+          <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 15, marginBottom: 14 }}>Loan Status</div>
           {donutData.length === 0 ? (
             <div className="empty-state" style={{ padding: '30px 10px' }}>
               <CheckCircle size={32} />
