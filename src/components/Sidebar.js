@@ -63,7 +63,7 @@ export default function Sidebar() {
             background: 'linear-gradient(135deg, var(--blue), var(--purple))',
             display: 'flex', alignItems: 'center', justifyContent: 'center'
           }}>
-            <LedgerIcon size={20} />
+            <img src="/favicon-96x96.png" alt="Loan Manifest" style={{ width: 20, height: 20, objectFit: 'contain' }} />
           </div>
           <div>
             <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 800, fontSize: 15, letterSpacing: '-0.02em', color: 'var(--text-primary)' }}>

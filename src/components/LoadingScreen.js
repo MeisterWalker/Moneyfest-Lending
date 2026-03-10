@@ -91,19 +91,16 @@ export default function LoadingScreen({ onComplete }) {
           boxShadow: phase === 'pulse' ? '0 0 40px rgba(59,130,246,0.4)' : '0 0 20px rgba(59,130,246,0.2)',
           transition: 'box-shadow 0.3s ease'
         }}>
-          <span style={{
-            fontFamily: 'Space Grotesk, sans-serif',
-            fontSize: 28,
-            fontWeight: 800,
-            background: 'linear-gradient(135deg, var(--blue), var(--purple))',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text',
-            lineHeight: 1,
-            animation: phase === 'spin' ? 'pesoBounce 1.6s ease-in-out infinite' : 'none'
-          }}>
-            ₱
-          </span>
+          <img
+            src="/favicon-96x96.png"
+            alt="Loan Manifest"
+            style={{
+              width: 40,
+              height: 40,
+              objectFit: 'contain',
+              animation: phase === 'spin' ? 'pesoBounce 1.6s ease-in-out infinite' : 'none'
+            }}
+          />
         </div>
       </div>
 
