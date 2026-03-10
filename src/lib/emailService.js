@@ -1,5 +1,3 @@
-const RESEND_API_KEY = process.env.REACT_APP_RESEND_API_KEY
-const FROM_EMAIL = 'onboarding@resend.dev'
 const APP_NAME = 'Loan Manifest'
 
 function generateReminderHTML({ borrowerName, installmentNum, amount, dueDate, loanAmount, remainingBalance, daysUntilDue, customMessages, customFooter }) {
@@ -174,27 +172,28 @@ function generateReminderHTML({ borrowerName, installmentNum, amount, dueDate, l
 }
 
 export async function sendReminderEmail({ to, borrowerName, installmentNum, amount, dueDate, loanAmount, remainingBalance, daysUntilDue, customMessages, customFooter }) {
-  if (!RESEND_API_KEY) return { success: false, error: 'API key not configured' }
   if (!to || !to.includes('@')) return { success: false, error: 'Invalid email address' }
 
   const urgencyPrefix = daysUntilDue === 0 ? '🔴 Due Today' : daysUntilDue === 1 ? '🟡 Due Tomorrow' : `📅 Due in ${daysUntilDue} days`
 
   try {
-    const response = await fetch('https://api.resend.com/emails', {
+    const SUPABASE_URL = 'https://swwedyfgbqhtavxmbmhv.supabase.co'
+    const SUPABASE_ANON_KEY = process.env.REACT_APP_SUPABASE_ANON_KEY
+
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/send-email`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${RESEND_API_KEY}`,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
       },
       body: JSON.stringify({
-        from: `${APP_NAME} <${FROM_EMAIL}>`,
-        to: [to],
+        to,
         subject: `${urgencyPrefix} — ₱${amount?.toLocaleString('en-PH')} installment due ${dueDate}`,
         html: generateReminderHTML({ borrowerName, installmentNum, amount, dueDate, loanAmount, remainingBalance, daysUntilDue, customMessages, customFooter })
       })
     })
     const data = await response.json()
-    if (!response.ok) return { success: false, error: data.message || 'Failed to send' }
+    if (!response.ok) return { success: false, error: data.message || data.error || 'Failed to send' }
     return { success: true, id: data.id }
   } catch (err) {
     return { success: false, error: err.message }
