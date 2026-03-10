@@ -532,6 +532,7 @@ export default function LoansPage() {
     pending: loans.filter(l => l.status === 'Pending').length,
     paid: loans.filter(l => l.status === 'Paid').length,
     overdue: loans.filter(l => l.status === 'Overdue').length,
+    defaulted: loans.filter(l => l.status === 'Defaulted').length,
   }
 
   return (
@@ -560,8 +561,9 @@ export default function LoansPage() {
           { label: 'Pending', value: stats.pending, color: 'var(--gray)' },
           { label: 'Paid', value: stats.paid, color: 'var(--green)' },
           { label: 'Overdue', value: stats.overdue, color: 'var(--gold)' },
+          { label: 'Defaulted', value: stats.defaulted, color: 'var(--red)' },
         ].map(s => (
-          <div key={s.label} className="card" style={{ padding: '14px 18px', textAlign: 'center', cursor: 'pointer' }} onClick={() => setStatusFilter(s.label === statusFilter ? 'All' : s.label)}>
+          <div key={s.label} className="card" style={{ padding: '14px 18px', textAlign: 'center', cursor: 'pointer', border: statusFilter === s.label ? `1px solid ${s.color}` : undefined }} onClick={() => setStatusFilter(statusFilter === s.label ? 'All' : s.label)}>
             <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 24, color: s.color }}>{s.value}</div>
             <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{s.label}</div>
           </div>

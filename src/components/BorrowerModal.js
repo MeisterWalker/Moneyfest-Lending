@@ -7,7 +7,7 @@ const RELATIONSHIPS = ['Spouse', 'Parent', 'Sibling', 'Child', 'Friend', 'Collea
 export default function BorrowerModal({ isOpen, onClose, onSave, borrower, departments }) {
   const isEdit = !!borrower
   const [form, setForm] = useState({
-    full_name: '', department_id: '', tenure_years: '',
+    full_name: '', department: '', tenure_years: '',
     address: '', phone: '', email: '',
     trustee_name: '', trustee_phone: '', trustee_relationship: '',
     admin_notes: '', photo_url: ''
@@ -19,7 +19,7 @@ export default function BorrowerModal({ isOpen, onClose, onSave, borrower, depar
     if (borrower) {
       setForm({
         full_name: borrower.full_name || '',
-        department_id: borrower.department_id || '',
+        department: borrower.department || '',
         tenure_years: borrower.tenure_years || '',
         address: borrower.address || '',
         phone: borrower.phone || '',
@@ -44,7 +44,7 @@ export default function BorrowerModal({ isOpen, onClose, onSave, borrower, depar
 
   const handleSave = async () => {
     if (!form.full_name.trim()) return alert('Full name is required')
-    if (!form.department_id) return alert('Please select a department')
+    if (!form.department) return alert('Please select a department')
     setSaving(true)
     await onSave(form, isEdit)
     setSaving(false)
@@ -91,9 +91,9 @@ export default function BorrowerModal({ isOpen, onClose, onSave, borrower, depar
           <div className="form-grid">
             <div className="form-group">
               <label className="form-label">Department *</label>
-              <select value={form.department_id} onChange={e => set('department_id', e.target.value)}>
+              <select value={form.department} onChange={e => set('department', e.target.value)}>
                 <option value="">Select department</option>
-                {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                {departments.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
               </select>
             </div>
             <div className="form-group">

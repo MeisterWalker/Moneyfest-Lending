@@ -26,7 +26,7 @@ const RISK_CONFIG = {
 
 function BorrowerCard({ borrower, departments, onEdit, onDelete }) {
   const [expanded, setExpanded] = useState(false)
-  const dept = departments.find(d => d.id === borrower.department_id)
+  const dept = { name: borrower.department }
   const badge = BADGE_CONFIG[borrower.loyalty_badge] || BADGE_CONFIG.New
   const risk = RISK_CONFIG[borrower.risk_score] || RISK_CONFIG.Low
 
@@ -173,7 +173,7 @@ export default function BorrowersPage() {
       // CRITICAL: Only update profile fields, NEVER touch credit_score or risk_score
       const { error } = await supabase.from('borrowers').update({
         full_name: form.full_name,
-        department_id: form.department_id,
+        department: form.department,
         tenure_years: parseFloat(form.tenure_years) || 0,
         address: form.address,
         phone: form.phone,
@@ -202,7 +202,7 @@ export default function BorrowersPage() {
       // New borrower: ALWAYS hardcode credit_score=750, risk_score="Low"
       const { error } = await supabase.from('borrowers').insert({
         full_name: form.full_name,
-        department_id: form.department_id,
+        department: form.department,
         tenure_years: parseFloat(form.tenure_years) || 0,
         address: form.address,
         phone: form.phone,
@@ -212,8 +212,8 @@ export default function BorrowersPage() {
         trustee_relationship: form.trustee_relationship,
         admin_notes: form.admin_notes,
         photo_url: form.photo_url || null,
-        credit_score: 750,      // hardcoded, never calculated
-        risk_score: 'Low',      // hardcoded, never calculated
+        credit_score: 750,
+        risk_score: 'Low',
         loyalty_badge: 'New',
         loan_limit: 5000,
         loan_limit_level: 1
@@ -251,7 +251,7 @@ export default function BorrowersPage() {
 
   const filtered = borrowers.filter(b =>
     b.full_name?.toLowerCase().includes(search.toLowerCase()) ||
-    departments.find(d => d.id === b.department_id)?.name?.toLowerCase().includes(search.toLowerCase())
+    b.department?.toLowerCase().includes(search.toLowerCase())
   )
 
   return (
