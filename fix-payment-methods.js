@@ -54,3 +54,11 @@ if (content.includes(oldSection)) {
 } else {
   console.log('❌ Could not find the target section. File may already be updated or structure differs.')
 }
+
+// Also fix other bank fee description
+content = content.replace(
+  `{ logo: '/bank-logo.png', label: 'Other Bank (Instapay/PESONet)', fee: '₱15–₱50 (varies per bank)', freebie: false }`,
+  `{ logo: '/bank-logo.png', label: 'Other Bank (Instapay/PESONet)', fee: 'Borrower covers transfer fee', freebie: false }`
+)
+fs.writeFileSync(filePath, content, 'utf8')
+console.log('✅ Other bank fee description updated!')
