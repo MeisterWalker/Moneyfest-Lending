@@ -296,11 +296,12 @@ export default function DashboardPage() {
   const navigate = useNavigate()
 
   const fetchData = useCallback(async () => {
-    const [{ data: l }, { data: b }, { data: s }, { data: a }] = await Promise.all([
+    const [{ data: l }, { data: b }, { data: s }, { data: a }, { data: apps }] = await Promise.all([
       supabase.from('loans').select('*').order('created_at', { ascending: false }),
       supabase.from('borrowers').select('*'),
       supabase.from('settings').select('*').eq('id', 1).single(),
-      supabase.from('audit_logs').select('*').order('created_at', { ascending: false }).limit(10)
+      supabase.from('audit_logs').select('*').order('created_at', { ascending: false }).limit(10),
+      supabase.from('applications').select('id').eq('status', 'Pending')
     ])
     setLoans(l || [])
     setBorrowers(b || [])
