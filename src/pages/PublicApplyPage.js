@@ -370,6 +370,10 @@ export default function PublicApplyPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {[
               {
+                q: 'Who can apply for a loan?',
+                a: 'This lending program is exclusively available to active employees of MySource Solutions. You must be currently employed and in good standing to be eligible. Applicants from outside the company will not be processed.'
+              },
+              {
                 q: 'How much can I borrow?',
                 a: 'First-time borrowers are approved for ₱5,000. Your limit increases as you build a good repayment history — up to ₱10,000 over time.'
               },
