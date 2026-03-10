@@ -2,107 +2,180 @@ const RESEND_API_KEY = process.env.REACT_APP_RESEND_API_KEY
 const FROM_EMAIL = 'onboarding@resend.dev'
 const APP_NAME = 'Loan Manifest'
 
-function generateReminderHTML({ borrowerName, installmentNum, amount, dueDate, loanAmount, remainingBalance, daysUntilDue }) {
-  const urgencyColor = daysUntilDue <= 1 ? '#EF4444' : daysUntilDue <= 3 ? '#F59E0B' : '#3B82F6'
-  const urgencyText = daysUntilDue === 0 ? '🔴 Due Today!' : daysUntilDue === 1 ? '🟡 Due Tomorrow!' : `🔵 Due in ${daysUntilDue} days`
+function generateReminderHTML({ borrowerName, installmentNum, amount, dueDate, loanAmount, remainingBalance, daysUntilDue, customMessages, customFooter }) {
+  const urgencyColor = daysUntilDue === 0 ? '#EF4444' : daysUntilDue === 1 ? '#F59E0B' : '#3B82F6'
+  const urgencyLabel = daysUntilDue === 0 ? 'DUE TODAY' : daysUntilDue === 1 ? 'DUE TOMORROW' : `DUE IN ${daysUntilDue} DAYS`
+  const urgencyEmoji = daysUntilDue === 0 ? '🔴' : daysUntilDue === 1 ? '🟡' : '🔵'
+
+  const paidInstallments = installmentNum - 1
+  const progressPercent = (paidInstallments / 4) * 100
+
+  const STORAGE_KEY = 'lm_email_settings'
+  let savedSettings = {}
+  try { savedSettings = JSON.parse(typeof localStorage !== 'undefined' ? localStorage.getItem(STORAGE_KEY) || '{}' : '{}') } catch {}
+  const msgs = customMessages || savedSettings
+  const footerText = customFooter || savedSettings.footer || 'From LM Management'
+
+  const defaultUpcoming = `Your next installment is coming up in <strong>${daysUntilDue} days</strong>. We're reaching out early so you have enough time to prepare. Staying on top of your payments keeps your credit score healthy and ensures continued access to our lending program.`
+  const defaultTomorrow = `Your installment is due <strong>tomorrow</strong>. Please prepare your payment and coordinate with your admin at your earliest convenience to avoid any late fees or credit score deductions.`
+  const defaultToday = `Your installment is due <strong>today</strong>. Please make sure to settle your payment before the cutoff ends. Timely payments help maintain your credit standing and unlock higher loan limits in the future.`
+
+  const rawMessage = daysUntilDue === 0
+    ? (msgs?.today || defaultToday)
+    : daysUntilDue === 1
+    ? (msgs?.tomorrow || defaultTomorrow)
+    : (msgs?.upcoming || defaultUpcoming)
+
+  const reminderMessage = rawMessage.replace('{days}', daysUntilDue)
 
   return `
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Payment Reminder</title>
+  <title>Payment Reminder — Loan Manifest</title>
 </head>
-<body style="margin:0;padding:0;background:#f0f4ff;font-family:'Segoe UI',Arial,sans-serif;">
-  <div style="max-width:520px;margin:32px auto;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
-    
-    <!-- Header -->
-    <div style="background:linear-gradient(135deg,#1a1a3e,#2d1b69);padding:28px 32px;">
-      <div style="font-size:22px;font-weight:800;color:#ffffff;letter-spacing:-0.5px;">
-        💼 Loan<span style="background:linear-gradient(135deg,#60a5fa,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Manifest</span>
-      </div>
-      <div style="font-size:13px;color:rgba(255,255,255,0.5);margin-top:4px;">Payment Reminder</div>
-    </div>
+<body style="margin:0;padding:0;background:#0B0F1A;font-family:'Segoe UI',Arial,sans-serif;">
 
-    <!-- Urgency Banner -->
-    <div style="background:${urgencyColor}15;border-left:4px solid ${urgencyColor};padding:14px 32px;font-size:13px;font-weight:600;color:${urgencyColor};">
-      ${urgencyText}
-    </div>
+  <!-- Outer wrapper -->
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0B0F1A;padding:40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="100%" style="max-width:560px;" cellpadding="0" cellspacing="0">
 
-    <!-- Body -->
-    <div style="padding:28px 32px;">
-      <p style="font-size:16px;color:#1a1a2e;margin:0 0 20px;line-height:1.5;">
-        Hi <strong>${borrowerName}</strong>,
-      </p>
-      <p style="font-size:14px;color:#4a5568;margin:0 0 24px;line-height:1.6;">
-        This is a friendly reminder that your loan installment is due on <strong style="color:#1a1a2e;">${dueDate}</strong>. Please make sure to coordinate with your admin before the cutoff.
-      </p>
+          <!-- HEADER: Logo + Brand -->
+          <tr>
+            <td style="background:linear-gradient(135deg,#0d1226 0%,#141B2D 60%,#1a1040 100%);border-radius:16px 16px 0 0;padding:32px 36px;border-bottom:1px solid rgba(139,92,246,0.3);">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td>
+                    <!-- Logo icon -->
+                    <div style="display:inline-block;width:42px;height:42px;background:linear-gradient(135deg,#3B82F6,#8B5CF6);border-radius:10px;text-align:center;line-height:42px;font-size:20px;margin-bottom:12px;">💼</div>
+                    <div style="font-size:26px;font-weight:900;color:#F0F4FF;letter-spacing:-1px;margin-bottom:2px;">
+                      Loan<span style="background:linear-gradient(90deg,#60a5fa,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Manifest</span>
+                    </div>
+                    <div style="font-size:12px;color:#4B5580;letter-spacing:0.08em;text-transform:uppercase;">Workplace Lending System</div>
+                  </td>
+                  <td align="right" valign="top">
+                    <div style="background:${urgencyColor}20;border:1px solid ${urgencyColor}60;border-radius:20px;padding:6px 14px;display:inline-block;">
+                      <span style="font-size:11px;font-weight:800;color:${urgencyColor};letter-spacing:0.08em;">${urgencyEmoji} ${urgencyLabel}</span>
+                    </div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
 
-      <!-- Amount Box -->
-      <div style="background:linear-gradient(135deg,#f0f4ff,#e8f5e9);border:1px solid #c8d8f0;border-radius:12px;padding:20px;text-align:center;margin-bottom:24px;">
-        <div style="font-size:12px;text-transform:uppercase;letter-spacing:0.06em;color:#7A8AAA;margin-bottom:6px;">Amount Due</div>
-        <div style="font-size:32px;font-weight:800;color:#22C55E;">₱${amount?.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</div>
-        <div style="font-size:12px;color:#7A8AAA;margin-top:4px;">Installment ${installmentNum} of 4</div>
-      </div>
+          <!-- GREETING -->
+          <tr>
+            <td style="background:#141B2D;padding:28px 36px 0;">
+              <p style="font-size:15px;color:#CBD5F0;margin:0 0 6px;">Hi <strong style="color:#F0F4FF;">${borrowerName}</strong>,</p>
+              <p style="font-size:14px;color:#8892B0;margin:0 0 20px;line-height:1.7;">
+                ${reminderMessage}
+              </p>
+            </td>
+          </tr>
 
-      <!-- Details -->
-      <div style="background:#f8faff;border-radius:10px;padding:16px 20px;margin-bottom:24px;">
-        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #e8ecf5;font-size:13px;">
-          <span style="color:#7A8AAA;">Loan Principal</span>
-          <span style="font-weight:600;color:#1a1a2e;">₱${loanAmount?.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #e8ecf5;font-size:13px;">
-          <span style="color:#7A8AAA;">Installment</span>
-          <span style="font-weight:600;color:#1a1a2e;">${installmentNum} of 4</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;">
-          <span style="color:#7A8AAA;">Remaining Balance</span>
-          <span style="font-weight:700;color:#EF4444;">₱${remainingBalance?.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
-        </div>
-      </div>
+          <!-- AMOUNT DUE CARD -->
+          <tr>
+            <td style="background:#141B2D;padding:0 36px 24px;">
+              <div style="background:linear-gradient(135deg,#0f1729,#1a1040);border:1px solid rgba(139,92,246,0.3);border-radius:14px;padding:24px;text-align:center;position:relative;overflow:hidden;">
+                <!-- Glow effect via border -->
+                <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:#4B5580;margin-bottom:8px;">Amount Due</div>
+                <div style="font-size:42px;font-weight:900;color:#22C55E;letter-spacing:-1px;margin-bottom:4px;">
+                  ₱${amount?.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </div>
+                <div style="font-size:13px;color:#4B5580;">
+                  Installment <strong style="color:#8B5CF6;">${installmentNum}</strong> of <strong style="color:#8B5CF6;">4</strong>
+                  &nbsp;·&nbsp;
+                  Due <strong style="color:#F0F4FF;">${dueDate}</strong>
+                </div>
+              </div>
+            </td>
+          </tr>
 
-      <!-- Progress -->
-      <div style="margin-bottom:24px;">
-        <div style="font-size:12px;color:#7A8AAA;margin-bottom:8px;">Repayment Progress</div>
-        <div style="height:8px;background:#e8ecf5;border-radius:4px;overflow:hidden;">
-          <div style="height:100%;width:${((installmentNum - 1) / 4) * 100}%;background:linear-gradient(90deg,#8B5CF6,#22C55E);border-radius:4px;"></div>
-        </div>
-        <div style="display:flex;justify-content:space-between;margin-top:6px;">
-          ${[1,2,3,4].map(i => `
-            <div style="width:24px;height:24px;border-radius:50%;background:${i < installmentNum ? '#22C55E' : '#e8ecf5'};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:${i < installmentNum ? '#fff' : '#7A8AAA'};">
-              ${i < installmentNum ? '✓' : i}
-            </div>
-          `).join('')}
-        </div>
-      </div>
+          <!-- LOAN DETAILS -->
+          <tr>
+            <td style="background:#141B2D;padding:0 36px 24px;">
+              <div style="background:#0B0F1A;border:1px solid #1E2640;border-radius:12px;overflow:hidden;">
+                <div style="padding:12px 20px;border-bottom:1px solid #1E2640;display:flex;justify-content:space-between;">
+                  <table width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td style="font-size:13px;color:#4B5580;padding:8px 0;border-bottom:1px solid #1E2640;">Loan Principal</td>
+                      <td align="right" style="font-size:13px;font-weight:700;color:#F0F4FF;padding:8px 0;border-bottom:1px solid #1E2640;">₱${loanAmount?.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</td>
+                    </tr>
+                    <tr>
+                      <td style="font-size:13px;color:#4B5580;padding:8px 0;border-bottom:1px solid #1E2640;">Installment No.</td>
+                      <td align="right" style="font-size:13px;font-weight:700;color:#F0F4FF;padding:8px 0;border-bottom:1px solid #1E2640;">${installmentNum} of 4</td>
+                    </tr>
+                    <tr>
+                      <td style="font-size:13px;color:#4B5580;padding:8px 0;">Remaining Balance</td>
+                      <td align="right" style="font-size:13px;font-weight:700;color:#EF4444;padding:8px 0;">₱${remainingBalance?.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</td>
+                    </tr>
+                  </table>
+                </div>
+              </div>
+            </td>
+          </tr>
 
-      <p style="font-size:13px;color:#7A8AAA;line-height:1.6;margin:0;">
-        Please coordinate with your admin for payment. This is an automated reminder from ${APP_NAME}.
-      </p>
-    </div>
+          <!-- PROGRESS BAR -->
+          <tr>
+            <td style="background:#141B2D;padding:0 36px 28px;">
+              <div style="font-size:12px;color:#4B5580;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.06em;">Repayment Progress</div>
+              <!-- Track -->
+              <div style="height:8px;background:#1E2640;border-radius:4px;overflow:hidden;margin-bottom:12px;">
+                <div style="height:100%;width:${progressPercent}%;background:linear-gradient(90deg,#8B5CF6,#22C55E);border-radius:4px;"></div>
+              </div>
+              <!-- Step circles -->
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  ${[1,2,3,4].map(i => `
+                  <td align="center">
+                    <div style="width:28px;height:28px;border-radius:50%;background:${i < installmentNum ? 'linear-gradient(135deg,#8B5CF6,#22C55E)' : i === installmentNum ? '#3B82F6' : '#1E2640'};margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:${i <= installmentNum ? '#fff' : '#4B5580'};line-height:28px;text-align:center;">
+                      ${i < installmentNum ? '✓' : i}
+                    </div>
+                    <div style="font-size:10px;color:${i < installmentNum ? '#22C55E' : i === installmentNum ? '#3B82F6' : '#4B5580'};margin-top:5px;text-align:center;">${i < installmentNum ? 'Paid' : i === installmentNum ? 'Due' : 'Sched'}</div>
+                  </td>
+                  `).join('')}
+                </tr>
+              </table>
+            </td>
+          </tr>
 
-    <!-- Footer -->
-    <div style="background:#f8faff;padding:16px 32px;text-align:center;border-top:1px solid #e8ecf5;">
-      <p style="font-size:11px;color:#7A8AAA;margin:0;">
-        ${APP_NAME} · Private Workplace Lending System<br/>
-        Please do not reply to this email.
-      </p>
-    </div>
-  </div>
+          <!-- REMINDER NOTE -->
+          <tr>
+            <td style="background:#141B2D;padding:0 36px 28px;">
+              <div style="background:rgba(59,130,246,0.07);border-left:3px solid #3B82F6;border-radius:0 8px 8px 0;padding:14px 16px;">
+                <p style="font-size:13px;color:#8892B0;margin:0;line-height:1.7;">
+                  📌 <strong style="color:#CBD5F0;">Reminder:</strong> Payments are collected every <strong style="color:#F0F4FF;">5th and 20th</strong> of the month. Late or missed payments affect your credit score and may freeze your loan limit increase. For questions or concerns, please reach out to your admin directly.
+                </p>
+              </div>
+            </td>
+          </tr>
+
+          <!-- FOOTER -->
+          <tr>
+            <td style="background:#0d1226;border-top:1px solid #1E2640;border-radius:0 0 16px 16px;padding:24px 36px;text-align:center;">
+              <p style="font-size:13px;color:#CBD5F0;margin:0 0 4px;font-weight:600;">${footerText}</p>
+              <p style="font-size:11px;color:#4B5580;margin:0 0 12px;">This is an automated reminder. Please do not reply to this email.</p>
+              <div style="width:40px;height:2px;background:linear-gradient(90deg,#3B82F6,#8B5CF6);margin:0 auto;border-radius:2px;"></div>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+
 </body>
 </html>
   `
 }
 
-export async function sendReminderEmail({ to, borrowerName, installmentNum, amount, dueDate, loanAmount, remainingBalance, daysUntilDue }) {
-  if (!RESEND_API_KEY) {
-    console.error('Resend API key not configured')
-    return { success: false, error: 'API key not configured' }
-  }
-  if (!to || !to.includes('@')) {
-    return { success: false, error: 'Invalid email address' }
-  }
+export async function sendReminderEmail({ to, borrowerName, installmentNum, amount, dueDate, loanAmount, remainingBalance, daysUntilDue, customMessages, customFooter }) {
+  if (!RESEND_API_KEY) return { success: false, error: 'API key not configured' }
+  if (!to || !to.includes('@')) return { success: false, error: 'Invalid email address' }
 
   const urgencyPrefix = daysUntilDue === 0 ? '🔴 Due Today' : daysUntilDue === 1 ? '🟡 Due Tomorrow' : `📅 Due in ${daysUntilDue} days`
 
@@ -117,10 +190,9 @@ export async function sendReminderEmail({ to, borrowerName, installmentNum, amou
         from: `${APP_NAME} <${FROM_EMAIL}>`,
         to: [to],
         subject: `${urgencyPrefix} — ₱${amount?.toLocaleString('en-PH')} installment due ${dueDate}`,
-        html: generateReminderHTML({ borrowerName, installmentNum, amount, dueDate, loanAmount, remainingBalance, daysUntilDue })
+        html: generateReminderHTML({ borrowerName, installmentNum, amount, dueDate, loanAmount, remainingBalance, daysUntilDue, customMessages, customFooter })
       })
     })
-
     const data = await response.json()
     if (!response.ok) return { success: false, error: data.message || 'Failed to send' }
     return { success: true, id: data.id }
@@ -155,14 +227,7 @@ export async function sendBulkReminders({ events, daysAhead = 2 }) {
       daysUntilDue
     })
 
-    results.push({
-      borrower: ev.borrower.full_name,
-      email: ev.borrower.email,
-      daysUntilDue,
-      ...result
-    })
-
-    // Small delay between emails to avoid rate limiting
+    results.push({ borrower: ev.borrower.full_name, email: ev.borrower.email, daysUntilDue, ...result })
     await new Promise(r => setTimeout(r, 300))
   }
 

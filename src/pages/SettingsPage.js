@@ -6,8 +6,9 @@ import { useToast } from '../components/Toast'
 import {
   Settings, Building2, Sliders, ShieldAlert,
   Plus, Trash2, Save, RefreshCw, AlertTriangle,
-  Download, Lock, Eye, EyeOff, Check
+  Download, Lock, Eye, EyeOff, Check, Mail, Send, Eye as PreviewIcon
 } from 'lucide-react'
+import { sendReminderEmail } from '../lib/emailService'
 
 // ─── Section Card ─────────────────────────────────────────────
 function Section({ icon: Icon, title, color = 'var(--blue)', children }) {
@@ -379,6 +380,201 @@ function DangerZoneSection({ loans, adminEmail, onReset }) {
   )
 }
 
+
+// ─── Email Settings Section ───────────────────────────────────
+const DEFAULT_MESSAGES = {
+  upcoming: "Your next installment is coming up in {days} days. We're reaching out early so you have enough time to prepare. Staying on top of your payments keeps your credit score healthy and ensures continued access to our lending program.",
+  tomorrow: "Your installment is due tomorrow. Please prepare your payment and coordinate with your admin at your earliest convenience to avoid any late fees or credit score deductions.",
+  today: "Your installment is due today. Please make sure to settle your payment before the cutoff ends. Timely payments help maintain your credit standing and unlock higher loan limits in the future."
+}
+
+function EmailSection({ adminEmail }) {
+  const { toast } = useToast()
+  const STORAGE_KEY = 'lm_email_settings'
+
+  const loadSaved = () => {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {} } catch { return {} }
+  }
+
+  const saved = loadSaved()
+  const [messages, setMessages] = useState({
+    upcoming: saved.upcoming || DEFAULT_MESSAGES.upcoming,
+    tomorrow: saved.tomorrow || DEFAULT_MESSAGES.tomorrow,
+    today: saved.today || DEFAULT_MESSAGES.today
+  })
+  const [footer, setFooter] = useState(saved.footer || 'From LM Management')
+  const [subjectPrefix, setSubjectPrefix] = useState(saved.subjectPrefix || 'Payment Reminder')
+  const [testEmail, setTestEmail] = useState(adminEmail || '')
+  const [sending, setSending] = useState(false)
+  const [activeTab, setActiveTab] = useState('upcoming')
+  const [showPreview, setShowPreview] = useState(false)
+  const [saved2, setSaved2] = useState(false)
+
+  const tabConfig = [
+    { key: 'upcoming', label: '🔵 Upcoming', color: 'var(--blue)' },
+    { key: 'tomorrow', label: '🟡 Tomorrow', color: 'var(--gold)' },
+    { key: 'today', label: '🔴 Today', color: 'var(--red)' }
+  ]
+
+  const handleSave = () => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ upcoming: messages.upcoming, tomorrow: messages.tomorrow, today: messages.today, footer, subjectPrefix }))
+    setSaved2(true)
+    setTimeout(() => setSaved2(false), 2000)
+    toast('Email settings saved!', 'success')
+  }
+
+  const handleReset = () => {
+    setMessages({ ...DEFAULT_MESSAGES })
+    setFooter('From LM Management')
+    setSubjectPrefix('Payment Reminder')
+    localStorage.removeItem(STORAGE_KEY)
+    toast('Reset to defaults', 'success')
+  }
+
+  const handleTestEmail = async () => {
+    if (!testEmail || !testEmail.includes('@')) { toast('Enter a valid email address', 'error'); return }
+    setSending(true)
+    const result = await sendReminderEmail({
+      to: testEmail,
+      borrowerName: 'Juan dela Cruz',
+      installmentNum: 2,
+      amount: 1350,
+      dueDate: 'March 20, 2026',
+      loanAmount: 5000,
+      remainingBalance: 2700,
+      daysUntilDue: 2,
+      customMessages: messages,
+      customFooter: footer
+    })
+    setSending(false)
+    if (result.success) toast('Test email sent! Check your inbox 📬', 'success')
+    else toast(`Failed: ${result.error}`, 'error')
+  }
+
+  const previewHTML = `
+    <div style="font-family:sans-serif;background:#0B0F1A;padding:24px;border-radius:12px;color:#F0F4FF;">
+      <div style="background:linear-gradient(135deg,#141B2D,#1a1040);border-radius:12px;padding:20px 24px;margin-bottom:16px;border:1px solid rgba(139,92,246,0.3);">
+        <div style="font-size:20px;font-weight:900;margin-bottom:2px;">Loan<span style="color:#8B5CF6;">Manifest</span></div>
+        <div style="font-size:11px;color:#4B5580;text-transform:uppercase;letter-spacing:0.08em;">Payment Reminder</div>
+      </div>
+      <div style="background:#141B2D;border-radius:12px;padding:20px 24px;margin-bottom:12px;">
+        <p style="color:#CBD5F0;font-size:14px;margin:0 0 12px;">Hi <strong>Juan dela Cruz</strong>,</p>
+        <p style="color:#8892B0;font-size:13px;line-height:1.7;margin:0;">${messages[activeTab].replace('{days}', '2')}</p>
+      </div>
+      <div style="background:linear-gradient(135deg,#0f1729,#1a1040);border:1px solid rgba(139,92,246,0.3);border-radius:12px;padding:20px;text-align:center;margin-bottom:12px;">
+        <div style="font-size:11px;color:#4B5580;text-transform:uppercase;margin-bottom:6px;">Amount Due</div>
+        <div style="font-size:32px;font-weight:900;color:#22C55E;">₱1,350.00</div>
+        <div style="font-size:12px;color:#4B5580;">Installment 2 of 4 · Due March 20, 2026</div>
+      </div>
+      <div style="background:#0d1226;border-top:1px solid #1E2640;border-radius:12px;padding:16px;text-align:center;margin-top:12px;">
+        <div style="font-size:13px;color:#CBD5F0;font-weight:600;">${footer}</div>
+        <div style="font-size:11px;color:#4B5580;margin-top:4px;">This is an automated reminder. Please do not reply to this email.</div>
+      </div>
+    </div>
+  `
+
+  return (
+    <Section icon={Mail} title="Email Reminders" color="var(--blue)">
+      {/* Test Email */}
+      <div style={{ marginBottom: 28 }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <Send size={14} color="var(--blue)" /> Send Test Email
+        </div>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <input
+            value={testEmail}
+            onChange={e => setTestEmail(e.target.value)}
+            placeholder="Enter email address to test..."
+            style={{ flex: 1, padding: '10px 14px', borderRadius: 9, border: '1px solid var(--card-border)', background: 'rgba(255,255,255,0.04)', color: 'var(--text-primary)', fontSize: 13 }}
+          />
+          <button onClick={handleTestEmail} disabled={sending} style={{ padding: '10px 18px', borderRadius: 9, border: 'none', background: 'var(--blue)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: sending ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 7, opacity: sending ? 0.7 : 1, whiteSpace: 'nowrap' }}>
+            {sending
+              ? <><div style={{ width: 14, height: 14, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} /> Sending...</>
+              : <><Send size={14} /> Send Test</>
+            }
+          </button>
+        </div>
+        <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 8 }}>
+          Sends a sample email using dummy borrower data so you can preview the exact layout in your inbox.
+        </p>
+      </div>
+
+      <div style={{ height: 1, background: 'var(--card-border)', marginBottom: 24 }} />
+
+      {/* Message Editor */}
+      <div style={{ marginBottom: 24 }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 12 }}>
+          Reminder Messages
+        </div>
+
+        {/* Tabs */}
+        <div style={{ display: 'flex', gap: 6, marginBottom: 14, background: 'rgba(255,255,255,0.03)', borderRadius: 10, padding: 4 }}>
+          {tabConfig.map(t => (
+            <button key={t.key} onClick={() => setActiveTab(t.key)} style={{ flex: 1, padding: '8px 12px', borderRadius: 7, border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600, background: activeTab === t.key ? 'rgba(255,255,255,0.08)' : 'transparent', color: activeTab === t.key ? 'var(--text-primary)' : 'var(--text-muted)', transition: 'all 0.15s' }}>
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Tip */}
+        {activeTab === 'upcoming' && (
+          <div style={{ fontSize: 12, color: 'var(--blue)', background: 'rgba(59,130,246,0.07)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: 8, padding: '8px 12px', marginBottom: 10 }}>
+            💡 Use <strong>{'{days}'}</strong> in your message and it will be replaced with the actual number of days remaining.
+          </div>
+        )}
+
+        <textarea
+          value={messages[activeTab]}
+          onChange={e => setMessages(m => ({ ...m, [activeTab]: e.target.value }))}
+          rows={5}
+          style={{ width: '100%', padding: '12px 14px', borderRadius: 9, border: '1px solid var(--card-border)', background: 'rgba(255,255,255,0.04)', color: 'var(--text-primary)', fontSize: 13, lineHeight: 1.7, resize: 'vertical', boxSizing: 'border-box', fontFamily: 'DM Sans, sans-serif' }}
+          placeholder="Enter your reminder message..."
+        />
+      </div>
+
+      {/* Footer & Subject */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 24 }}>
+        <div>
+          <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: 7, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Footer Sign-off</label>
+          <input value={footer} onChange={e => setFooter(e.target.value)} placeholder="From LM Management" style={{ width: '100%', padding: '10px 14px', borderRadius: 9, border: '1px solid var(--card-border)', background: 'rgba(255,255,255,0.04)', color: 'var(--text-primary)', fontSize: 13, boxSizing: 'border-box' }} />
+        </div>
+        <div>
+          <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: 7, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Subject Prefix</label>
+          <input value={subjectPrefix} onChange={e => setSubjectPrefix(e.target.value)} placeholder="Payment Reminder" style={{ width: '100%', padding: '10px 14px', borderRadius: 9, border: '1px solid var(--card-border)', background: 'rgba(255,255,255,0.04)', color: 'var(--text-primary)', fontSize: 13, boxSizing: 'border-box' }} />
+        </div>
+      </div>
+
+      {/* Live Preview */}
+      <div style={{ marginBottom: 24 }}>
+        <button onClick={() => setShowPreview(p => !p)} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '9px 16px', borderRadius: 9, border: '1px solid var(--card-border)', background: 'rgba(255,255,255,0.04)', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: 13, fontWeight: 600, marginBottom: showPreview ? 14 : 0 }}>
+          <PreviewIcon size={14} /> {showPreview ? 'Hide Preview' : 'Show Live Preview'}
+        </button>
+        {showPreview && (
+          <div style={{ border: '1px solid var(--card-border)', borderRadius: 12, overflow: 'hidden' }}>
+            <div style={{ padding: '8px 14px', background: 'rgba(255,255,255,0.03)', borderBottom: '1px solid var(--card-border)', fontSize: 11, color: 'var(--text-muted)', display: 'flex', gap: 6, alignItems: 'center' }}>
+              <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#EF4444' }} />
+              <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#F59E0B' }} />
+              <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#22C55E' }} />
+              <span style={{ marginLeft: 6 }}>Email Preview — {tabConfig.find(t => t.key === activeTab)?.label}</span>
+            </div>
+            <div dangerouslySetInnerHTML={{ __html: previewHTML }} style={{ padding: 16, background: '#0B0F1A' }} />
+          </div>
+        )}
+      </div>
+
+      {/* Actions */}
+      <div style={{ display: 'flex', gap: 10 }}>
+        <button onClick={handleSave} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '10px 20px', borderRadius: 9, border: 'none', background: saved2 ? 'var(--green)' : 'var(--blue)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: 'background 0.2s' }}>
+          {saved2 ? <><Check size={14} /> Saved!</> : <><Save size={14} /> Save Changes</>}
+        </button>
+        <button onClick={handleReset} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '10px 16px', borderRadius: 9, border: '1px solid var(--card-border)', background: 'transparent', color: 'var(--text-muted)', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+          <RefreshCw size={13} /> Reset to Default
+        </button>
+      </div>
+    </Section>
+  )
+}
+
 // ─── Main Settings Page ───────────────────────────────────────
 export default function SettingsPage() {
   const [settings, setSettings] = useState(null)
@@ -427,6 +623,7 @@ export default function SettingsPage() {
 
       <LoanConfigSection settings={settings} onSave={handleSaveConfig} />
       <DepartmentsSection departments={departments} onRefresh={fetchData} adminEmail={user?.email} />
+      <EmailSection adminEmail={user?.email} />
       <DangerZoneSection loans={loans} adminEmail={user?.email} onReset={fetchData} />
     </div>
   )
