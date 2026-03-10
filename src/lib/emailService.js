@@ -129,11 +129,19 @@ function generateReminderHTML({ borrowerName, installmentNum, amount, dueDate, l
               <table width="100%" cellpadding="0" cellspacing="0">
                 <tr>
                   ${[1,2,3,4].map(i => `
-                  <td align="center">
-                    <div style="width:28px;height:28px;border-radius:50%;background:${i < installmentNum ? 'linear-gradient(135deg,#8B5CF6,#22C55E)' : i === installmentNum ? '#3B82F6' : '#1E2640'};margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:${i <= installmentNum ? '#fff' : '#4B5580'};line-height:28px;text-align:center;">
-                      ${i < installmentNum ? '✓' : i}
-                    </div>
-                    <div style="font-size:10px;color:${i < installmentNum ? '#22C55E' : i === installmentNum ? '#3B82F6' : '#4B5580'};margin-top:5px;text-align:center;">${i < installmentNum ? 'Paid' : i === installmentNum ? 'Due' : 'Sched'}</div>
+                  <td align="center" style="width:25%;">
+                    <table cellpadding="0" cellspacing="0" style="margin:0 auto;">
+                      <tr>
+                        <td align="center" valign="middle" style="width:28px;height:28px;border-radius:50%;background:${i < installmentNum ? '#22C55E' : i === installmentNum ? '#3B82F6' : '#1E2640'};font-size:12px;font-weight:800;color:${i <= installmentNum ? '#ffffff' : '#4B5580'};text-align:center;line-height:28px;font-family:Arial,sans-serif;">
+                          ${i < installmentNum ? '&#10003;' : i}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td align="center" style="font-size:10px;color:${i < installmentNum ? '#22C55E' : i === installmentNum ? '#3B82F6' : '#4B5580'};padding-top:5px;font-family:Arial,sans-serif;">
+                          ${i < installmentNum ? 'Paid' : i === installmentNum ? 'Due' : 'Sched'}
+                        </td>
+                      </tr>
+                    </table>
                   </td>
                   `).join('')}
                 </tr>
