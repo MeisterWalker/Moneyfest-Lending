@@ -548,7 +548,7 @@ export default function LoansPage() {
             <Search size={15} />
             <input placeholder="Search by borrower..." value={search} onChange={e => setSearch(e.target.value)} />
           </div>
-          <button className="btn-primary" onClick={() => { setEditingLoan(null); setPrefillLoan(null); setModalOpen(true) }}>
+          <button className="btn-primary" onClick={() => { setEditingLoan(null); setPrefillLoan(null); setModalOpen(true) }} style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
             <Plus size={16} /> New Loan
           </button>
         </div>
@@ -597,7 +597,7 @@ export default function LoansPage() {
           <h3>{search || statusFilter !== 'All' ? 'No results found' : 'No loans yet'}</h3>
           <p style={{ marginBottom: 20 }}>{search ? 'Try a different search' : statusFilter !== 'All' ? `No ${statusFilter} loans` : 'Create the first loan to get started'}</p>
           {!search && statusFilter === 'All' && (
-            <button className="btn-primary" onClick={() => setModalOpen(true)}><Plus size={16} /> New Loan</button>
+            <button className="btn-primary" onClick={() => setModalOpen(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}><Plus size={16} /> New Loan</button>
           )}
         </div>
       ) : (
