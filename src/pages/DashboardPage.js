@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useAuth } from '../context/AuthContext'
 import { useAuth } from '../context/AuthContext'
+import { useAuth } from '../context/AuthContext'
 import { ClipboardList } from 'lucide-react'
 import {
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
@@ -290,6 +291,7 @@ function CustomTooltip({ active, payload, label, prefix = '₱' }) {
 
 // ─── Main Dashboard ───────────────────────────────────────────
 export default function DashboardPage() {
+  const { user } = useAuth()
   const { user } = useAuth()
   const { user } = useAuth()
   const { user } = useAuth()
