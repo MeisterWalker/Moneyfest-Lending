@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { formatCurrency, formatDate } from '../lib/helpers'
 import { useNavigate } from 'react-router-dom'
+import { ClipboardList } from 'lucide-react'
 import {
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
@@ -286,6 +287,7 @@ function CustomTooltip({ active, payload, label, prefix = '₱' }) {
 // ─── Main Dashboard ───────────────────────────────────────────
 export default function DashboardPage() {
   const [loans, setLoans] = useState([])
+  const [pendingApps, setPendingApps] = useState(0)
   const [borrowers, setBorrowers] = useState([])
   const [settings, setSettings] = useState(null)
   const [auditLogs, setAuditLogs] = useState([])
@@ -302,6 +304,7 @@ export default function DashboardPage() {
     ])
     setLoans(l || [])
     setBorrowers(b || [])
+    setPendingApps((apps || []).length)
     setSettings(s)
     setAuditLogs(a || [])
     setLoading(false)

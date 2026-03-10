@@ -1,0 +1,277 @@
+import { useState, useEffect, useCallback } from 'react'
+import { supabase } from '../lib/supabase'
+import { useAuth } from '../context/AuthContext'
+import { useToast } from '../components/Toast'
+import { logAudit } from '../lib/helpers'
+import { ClipboardList, Check, X, Clock, ChevronDown, ChevronUp, User, Phone, Mail, MapPin, Users, DollarSign } from 'lucide-react'
+
+const STATUS_COLORS = {
+  Pending: { bg: 'rgba(245,158,11,0.1)', border: 'rgba(245,158,11,0.3)', text: '#F59E0B' },
+  Approved: { bg: 'rgba(34,197,94,0.1)', border: 'rgba(34,197,94,0.3)', text: '#22C55E' },
+  Rejected: { bg: 'rgba(239,68,68,0.1)', border: 'rgba(239,68,68,0.3)', text: '#EF4444' },
+}
+
+function ApplicationCard({ app, onApprove, onReject }) {
+  const [expanded, setExpanded] = useState(false)
+  const [rejectReason, setRejectReason] = useState('')
+  const [showRejectInput, setShowRejectInput] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const s = STATUS_COLORS[app.status] || STATUS_COLORS.Pending
+
+  const handleApprove = async () => {
+    setLoading(true)
+    await onApprove(app)
+    setLoading(false)
+  }
+
+  const handleReject = async () => {
+    if (!rejectReason.trim()) return
+    setLoading(true)
+    await onReject(app, rejectReason)
+    setLoading(false)
+  }
+
+  return (
+    <div style={{ background: '#141B2D', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, overflow: 'hidden', marginBottom: 12 }}>
+      {/* Header row */}
+      <div style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 14, cursor: 'pointer' }} onClick={() => setExpanded(e => !e)}>
+        <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'linear-gradient(135deg,#3B82F6,#8B5CF6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Space Grotesk', fontWeight: 800, color: '#fff', fontSize: 15, flexShrink: 0 }}>
+          {app.full_name?.charAt(0).toUpperCase()}
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 15, color: '#F0F4FF' }}>{app.full_name}</div>
+          <div style={{ fontSize: 12, color: '#7A8AAA', marginTop: 2 }}>{app.department} · {new Date(app.created_at).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
+        </div>
+        <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 18, color: '#22C55E', flexShrink: 0 }}>
+          ₱{app.loan_amount?.toLocaleString()}
+        </div>
+        <div style={{ padding: '4px 12px', borderRadius: 20, background: s.bg, border: `1px solid ${s.border}`, fontSize: 12, fontWeight: 700, color: s.text, flexShrink: 0 }}>
+          {app.status}
+        </div>
+        {expanded ? <ChevronUp size={16} color="#4B5580" /> : <ChevronDown size={16} color="#4B5580" />}
+      </div>
+
+      {/* Expanded details */}
+      {expanded && (
+        <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', padding: '20px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 20 }}>
+            {/* Personal */}
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>Personal Info</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {[
+                  { icon: <Phone size={13} />, label: app.phone },
+                  { icon: <Mail size={13} />, label: app.email },
+                  { icon: <MapPin size={13} />, label: app.address || 'Not provided' },
+                ].map((item, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#CBD5F0' }}>
+                    <span style={{ color: '#4B5580' }}>{item.icon}</span>
+                    {item.label}
+                  </div>
+                ))}
+              </div>
+            </div>
+            {/* Trustee */}
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>Trustee / Guarantor</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {[
+                  { icon: <User size={13} />, label: app.trustee_name },
+                  { icon: <Phone size={13} />, label: app.trustee_phone },
+                  { icon: <Users size={13} />, label: app.trustee_relationship },
+                ].map((item, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#CBD5F0' }}>
+                    <span style={{ color: '#4B5580' }}>{item.icon}</span>
+                    {item.label}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Loan details */}
+          <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, padding: '14px 16px', marginBottom: 20 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <div style={{ fontSize: 11, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Requested Amount</div>
+                <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 24, color: '#22C55E' }}>₱{app.loan_amount?.toLocaleString()}</div>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <div style={{ fontSize: 11, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Est. Installment</div>
+                <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 18, color: '#F0F4FF' }}>₱{(app.loan_amount * 1.08 / 4).toFixed(2)}/cutoff</div>
+              </div>
+            </div>
+            {app.loan_purpose && (
+              <div style={{ marginTop: 10, fontSize: 13, color: '#7A8AAA' }}>
+                Purpose: <span style={{ color: '#CBD5F0' }}>{app.loan_purpose}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Reject reason if rejected */}
+          {app.status === 'Rejected' && app.reject_reason && (
+            <div style={{ padding: '10px 14px', background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, fontSize: 13, color: '#EF4444', marginBottom: 16 }}>
+              Rejection reason: {app.reject_reason}
+            </div>
+          )}
+
+          {/* Actions for pending */}
+          {app.status === 'Pending' && (
+            <div>
+              {!showRejectInput ? (
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <button onClick={handleApprove} disabled={loading} style={{ flex: 1, padding: '11px', borderRadius: 10, border: 'none', background: 'rgba(34,197,94,0.15)', color: '#22C55E', fontSize: 14, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, border: '1px solid rgba(34,197,94,0.3)' }}>
+                    <Check size={15} /> Approve & Create Loan
+                  </button>
+                  <button onClick={() => setShowRejectInput(true)} style={{ flex: 1, padding: '11px', borderRadius: 10, border: '1px solid rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.08)', color: '#EF4444', fontSize: 14, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}>
+                    <X size={15} /> Reject
+                  </button>
+                </div>
+              ) : (
+                <div>
+                  <input
+                    value={rejectReason}
+                    onChange={e => setRejectReason(e.target.value)}
+                    placeholder="Enter rejection reason..."
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: 9, border: '1px solid rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.05)', color: '#F0F4FF', fontSize: 13, boxSizing: 'border-box', marginBottom: 10 }}
+                  />
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button onClick={handleReject} disabled={!rejectReason.trim() || loading} style={{ flex: 1, padding: '10px', borderRadius: 9, border: 'none', background: '#EF4444', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+                      Confirm Reject
+                    </button>
+                    <button onClick={() => { setShowRejectInput(false); setRejectReason('') }} style={{ padding: '10px 16px', borderRadius: 9, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#7A8AAA', fontSize: 13, cursor: 'pointer' }}>
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+export default function ApplicationsPage() {
+  const [applications, setApplications] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [filter, setFilter] = useState('Pending')
+  const { user } = useAuth()
+  const { toast } = useToast()
+
+  const fetchData = useCallback(async () => {
+    const { data } = await supabase.from('applications').select('*').order('created_at', { ascending: false })
+    setApplications(data || [])
+    setLoading(false)
+  }, [])
+
+  useEffect(() => { fetchData() }, [fetchData])
+
+  const handleApprove = async (app) => {
+    // 1. Create borrower
+    const { data: borrower, error: bErr } = await supabase.from('borrowers').insert({
+      full_name: app.full_name, department: app.department,
+      tenure_years: app.tenure_years, phone: app.phone,
+      email: app.email, address: app.address,
+      trustee_name: app.trustee_name, trustee_phone: app.trustee_phone,
+      trustee_relationship: app.trustee_relationship,
+      credit_score: 750, risk_score: 'Low',
+      loan_limit: 5000, loan_limit_level: 1,
+      loan_limit_override: false, clean_loans: 0,
+      loyalty_badge: 'New', at_risk: false,
+      admin_notes: `Applied via loan application form. Loan purpose: ${app.loan_purpose || 'Not specified'}`
+    }).select().single()
+
+    if (bErr) { toast('Failed to create borrower', 'error'); return }
+
+    // 2. Calculate release date (next upcoming 5th or 20th)
+    const today = new Date()
+    const day = today.getDate()
+    const month = today.getMonth()
+    const year = today.getFullYear()
+    let releaseDate
+    if (day <= 5) releaseDate = new Date(year, month, 5)
+    else if (day <= 20) releaseDate = new Date(year, month, 20)
+    else releaseDate = new Date(year, month + 1, 5)
+    const releaseDateStr = releaseDate.toISOString().slice(0, 10)
+
+    // 3. Create loan
+    const loanAmount = app.loan_amount
+    const totalRepayment = loanAmount * 1.08
+    const installmentAmount = totalRepayment / 4
+
+    const { error: lErr } = await supabase.from('loans').insert({
+      borrower_id: borrower.id, loan_amount: loanAmount,
+      interest_rate: 0.08, total_repayment: totalRepayment,
+      installment_amount: installmentAmount, remaining_balance: totalRepayment,
+      payments_made: 0, release_date: releaseDateStr,
+      status: 'Pending', created_at: new Date().toISOString()
+    })
+
+    if (lErr) { toast('Borrower created but loan failed', 'error'); return }
+
+    // 4. Update application status
+    await supabase.from('applications').update({ status: 'Approved' }).eq('id', app.id)
+
+    // 5. Log audit
+    await logAudit({ action_type: 'APPLICATION_APPROVED', module: 'Applications', description: `Application approved for ${app.full_name} — ₱${loanAmount.toLocaleString()} loan created`, changed_by: user?.email })
+
+    toast(`✅ Approved! ${app.full_name} added as borrower with ₱${loanAmount.toLocaleString()} loan`, 'success')
+    fetchData()
+  }
+
+  const handleReject = async (app, reason) => {
+    await supabase.from('applications').update({ status: 'Rejected', reject_reason: reason }).eq('id', app.id)
+    await logAudit({ action_type: 'APPLICATION_REJECTED', module: 'Applications', description: `Application rejected for ${app.full_name}. Reason: ${reason}`, changed_by: user?.email })
+    toast(`Application rejected`, 'success')
+    fetchData()
+  }
+
+  const filtered = applications.filter(a => filter === 'All' ? true : a.status === filter)
+  const pendingCount = applications.filter(a => a.status === 'Pending').length
+
+  if (loading) return (
+    <div style={{ padding: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
+      <div style={{ color: '#4B5580' }}>Loading applications...</div>
+    </div>
+  )
+
+  return (
+    <div style={{ padding: '32px 28px', maxWidth: 900, margin: '0 auto' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 28, flexWrap: 'wrap', gap: 16 }}>
+        <div>
+          <h1 style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 28, color: '#F0F4FF', margin: 0 }}>Applications</h1>
+          <p style={{ color: '#4B5580', fontSize: 14, marginTop: 4 }}>Review and manage loan applications</p>
+        </div>
+        {pendingCount > 0 && (
+          <div style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.3)', borderRadius: 10, padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Clock size={15} color="#F59E0B" />
+            <span style={{ fontSize: 13, fontWeight: 700, color: '#F59E0B' }}>{pendingCount} pending review</span>
+          </div>
+        )}
+      </div>
+
+      {/* Filter tabs */}
+      <div style={{ display: 'flex', gap: 6, background: 'rgba(255,255,255,0.03)', borderRadius: 10, padding: 4, marginBottom: 24, width: 'fit-content' }}>
+        {['Pending', 'Approved', 'Rejected', 'All'].map(f => (
+          <button key={f} onClick={() => setFilter(f)} style={{ padding: '7px 16px', borderRadius: 7, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, background: filter === f ? '#3B82F6' : 'transparent', color: filter === f ? '#fff' : '#4B5580', transition: 'all 0.15s' }}>
+            {f} {f === 'Pending' && pendingCount > 0 ? `(${pendingCount})` : ''}
+          </button>
+        ))}
+      </div>
+
+      {filtered.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '60px 20px', color: '#4B5580' }}>
+          <ClipboardList size={40} style={{ marginBottom: 16, opacity: 0.4 }} />
+          <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 18, marginBottom: 8 }}>No {filter.toLowerCase()} applications</div>
+          <div style={{ fontSize: 14 }}>Share the application link with your employees to get started</div>
+        </div>
+      ) : (
+        filtered.map(app => (
+          <ApplicationCard key={app.id} app={app} onApprove={handleApprove} onReject={handleReject} />
+        ))
+      )}
+    </div>
+  )
+}

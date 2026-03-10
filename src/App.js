@@ -12,12 +12,14 @@ import SettingsPage from './pages/SettingsPage'
 import AuditPage from './pages/AuditPage'
 import ForecastPage from './pages/ForecastPage'
 import CollectionPage from './pages/CollectionPage'
+import ApplicationsPage from './pages/ApplicationsPage'
+import PublicApplyPage from './pages/PublicApplyPage'
 import './index.css'
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
   if (loading) return <LoadingScreen />
-  return user ? children : <Navigate to="/login" replace />
+  return user ? children : <Navigate to="/admin" replace />
 }
 
 function AppLayout({ children }) {
@@ -35,15 +37,32 @@ function AppRoutes() {
   const { user } = useAuth()
   return (
     <Routes>
-      <Route path="/login"      element={user ? <Navigate to="/dashboard" replace /> : <LoginPage />} />
-      <Route path="/"           element={<Navigate to="/dashboard" replace />} />
-      <Route path="/dashboard"  element={<ProtectedRoute><AppLayout><DashboardPage /></AppLayout></ProtectedRoute>} />
-      <Route path="/borrowers"  element={<ProtectedRoute><AppLayout><BorrowersPage /></AppLayout></ProtectedRoute>} />
-      <Route path="/loans"      element={<ProtectedRoute><AppLayout><LoansPage /></AppLayout></ProtectedRoute>} />
-      <Route path="/collection" element={<ProtectedRoute><AppLayout><CollectionPage /></AppLayout></ProtectedRoute>} />
-      <Route path="/forecast"   element={<ProtectedRoute><AppLayout><ForecastPage /></AppLayout></ProtectedRoute>} />
-      <Route path="/audit"      element={<ProtectedRoute><AppLayout><AuditPage /></AppLayout></ProtectedRoute>} />
-      <Route path="/settings"   element={<ProtectedRoute><AppLayout><SettingsPage /></AppLayout></ProtectedRoute>} />
+      {/* ── Public routes ── */}
+      <Route path="/"              element={<PublicApplyPage />} />
+      <Route path="/apply"         element={<PublicApplyPage />} />
+
+      {/* ── Admin auth ── */}
+      <Route path="/admin"         element={user ? <Navigate to="/admin/dashboard" replace /> : <LoginPage />} />
+      <Route path="/login"         element={<Navigate to="/admin" replace />} />
+
+      {/* ── Admin protected routes ── */}
+      <Route path="/admin/dashboard"    element={<ProtectedRoute><AppLayout><DashboardPage /></AppLayout></ProtectedRoute>} />
+      <Route path="/admin/borrowers"    element={<ProtectedRoute><AppLayout><BorrowersPage /></AppLayout></ProtectedRoute>} />
+      <Route path="/admin/loans"        element={<ProtectedRoute><AppLayout><LoansPage /></AppLayout></ProtectedRoute>} />
+      <Route path="/admin/collection"   element={<ProtectedRoute><AppLayout><CollectionPage /></AppLayout></ProtectedRoute>} />
+      <Route path="/admin/forecast"     element={<ProtectedRoute><AppLayout><ForecastPage /></AppLayout></ProtectedRoute>} />
+      <Route path="/admin/audit"        element={<ProtectedRoute><AppLayout><AuditPage /></AppLayout></ProtectedRoute>} />
+      <Route path="/admin/settings"     element={<ProtectedRoute><AppLayout><SettingsPage /></AppLayout></ProtectedRoute>} />
+      <Route path="/admin/applications" element={<ProtectedRoute><AppLayout><ApplicationsPage /></AppLayout></ProtectedRoute>} />
+
+      {/* ── Catch old routes ── */}
+      <Route path="/dashboard"   element={<Navigate to="/admin/dashboard" replace />} />
+      <Route path="/borrowers"   element={<Navigate to="/admin/borrowers" replace />} />
+      <Route path="/loans"       element={<Navigate to="/admin/loans" replace />} />
+      <Route path="/collection"  element={<Navigate to="/admin/collection" replace />} />
+      <Route path="/forecast"    element={<Navigate to="/admin/forecast" replace />} />
+      <Route path="/audit"       element={<Navigate to="/admin/audit" replace />} />
+      <Route path="/settings"    element={<Navigate to="/admin/settings" replace />} />
     </Routes>
   )
 }

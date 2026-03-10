@@ -1,4 +1,4 @@
-import { NavLink, useNavigate } from 'react-router-dom'
+import { ClipboardList,  NavLink, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, Users, FileText, TrendingUp,
   Calendar, History, Settings, LogOut
@@ -104,7 +104,7 @@ export default function Sidebar() {
       {/* Bottom: user + settings + logout */}
       <div style={{ padding: '10px', borderTop: '1px solid var(--card-border)' }}>
         <NavLink
-          to="/settings"
+          to="/admin/settings"
           style={({ isActive }) => ({
             display: 'flex', alignItems: 'center', gap: 10,
             padding: '10px 12px', borderRadius: 10, textDecoration: 'none',
