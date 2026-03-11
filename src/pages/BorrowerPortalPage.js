@@ -660,8 +660,6 @@ export default function BorrowerPortalPage() {
         </div>
       </div>
 
-
-
       <div style={{ maxWidth: 640, margin: '0 auto', padding: '24px 20px' }}>
 
         {uploadSuccess && (
@@ -679,8 +677,19 @@ export default function BorrowerPortalPage() {
           </div>
         ) : (
           <>
-            {/* Loan summary card */}
-            <div style={{ background: 'linear-gradient(135deg,#141B2D,#1a1040)', border: '1px solid rgba(139,92,246,0.2)', borderRadius: 16, padding: 24, marginBottom: 20 }}>
+            {/* Loan summary card with outside quick-access buttons */}
+            <div style={{ position: 'relative', marginBottom: 20 }}>
+              <div style={{ position: 'absolute', top: -12, right: 12, display: 'flex', gap: 6, zIndex: 10 }}>
+                <button onClick={() => setPage('payment-history')} style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'linear-gradient(135deg,#0f2a1a,#141B2D)', border: '1px solid rgba(34,197,94,0.35)', borderRadius: 20, padding: '5px 12px', cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.3)' }}>
+                  <span style={{ fontSize: 13 }}>🧾</span>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: '#22C55E' }}>History</span>
+                </button>
+                <button onClick={() => setPage('profile')} style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'linear-gradient(135deg,#160f2a,#141B2D)', border: '1px solid rgba(139,92,246,0.35)', borderRadius: 20, padding: '5px 12px', cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.3)' }}>
+                  <span style={{ fontSize: 13 }}>👤</span>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: '#8B5CF6' }}>Profile</span>
+                </button>
+              </div>
+            <div style={{ background: 'linear-gradient(135deg,#141B2D,#1a1040)', border: '1px solid rgba(139,92,246,0.2)', borderRadius: 16, padding: 24 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20, flexWrap: 'wrap', gap: 10 }}>
                 <div>
                   <div style={{ fontSize: 12, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Remaining Balance</div>
@@ -759,6 +768,7 @@ export default function BorrowerPortalPage() {
                   </div>
                 ))}
               </div>
+            </div>
             </div>
 
             {/* Installment schedule */}
