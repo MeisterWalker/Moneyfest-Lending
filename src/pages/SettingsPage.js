@@ -6,7 +6,7 @@ import { useToast } from '../components/Toast'
 import {
   Settings, Building2, Sliders, ShieldAlert,
   Plus, Trash2, Save, RefreshCw, AlertTriangle,
-  Download, Lock, Eye, EyeOff, Check, Mail, Send, Eye as PreviewIcon
+  Download, Lock, Eye, EyeOff, Check, Mail, Send, Eye as PreviewIcon, Clock, DatabaseBackup
 } from 'lucide-react'
 import { sendReminderEmail } from '../lib/emailService'
 
@@ -189,6 +189,91 @@ function DepartmentsSection({ departments, onRefresh, adminEmail }) {
 }
 
 // ─── Danger Zone / 3-Layer Reset ─────────────────────────────
+
+function AuditCleanupSection({ adminEmail }) {
+  const [cleaning, setCleaning] = useState(false)
+  const [count, setCount] = useState(null)
+  const [deleted, setDeleted] = useState(null)
+  const { toast } = useToast()
+
+  const checkCount = async () => {
+    const sixMonthsAgo = new Date()
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6)
+    const { count: c } = await supabase
+      .from('audit_logs')
+      .select('*', { count: 'exact', head: true })
+      .lt('created_at', sixMonthsAgo.toISOString())
+    setCount(c || 0)
+  }
+
+  const handleClean = async () => {
+    setCleaning(true)
+    const sixMonthsAgo = new Date()
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6)
+    const { error } = await supabase
+      .from('audit_logs')
+      .delete()
+      .lt('created_at', sixMonthsAgo.toISOString())
+    if (error) {
+      toast('Failed to clean audit logs', 'error')
+      setCleaning(false)
+      return
+    }
+    setDeleted(count)
+    setCount(0)
+    await logAudit({
+      action_type: 'AUDIT_CLEANED',
+      module: 'Settings',
+      description: 'Audit logs older than 6 months deleted — ' + count + ' records removed',
+      changed_by: adminEmail
+    })
+    toast('Audit logs cleaned — ' + count + ' old records deleted', 'success')
+    setCleaning(false)
+  }
+
+  return (
+    <Section icon={Clock} title="Audit Log Maintenance" color="var(--teal)">
+      <div style={{ background: 'rgba(20,184,166,0.04)', border: '1px solid rgba(20,184,166,0.15)', borderRadius: 12, padding: '20px 22px' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 600, fontSize: 15, marginBottom: 6, color: 'var(--text-primary)' }}>Auto-Clean Old Audit Logs</div>
+            <div style={{ fontSize: 13, color: 'var(--text-label)', lineHeight: 1.6, maxWidth: 500 }}>
+              Permanently deletes audit log entries older than <strong style={{ color: 'var(--text-primary)' }}>6 months</strong> to free up database space. Recent logs are kept intact.
+            </div>
+            {deleted !== null && (
+              <div style={{ marginTop: 10, fontSize: 12, color: 'var(--green)' }}>
+                Last cleanup removed {deleted} record{deleted !== 1 ? 's' : ''}.
+              </div>
+            )}
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-end' }}>
+            <button
+              onClick={checkCount}
+              style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 8, border: '1px solid rgba(20,184,166,0.3)', background: 'transparent', color: 'var(--teal)', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
+            >
+              <DatabaseBackup size={13} /> Check old records
+            </button>
+            {count !== null && (
+              <div style={{ fontSize: 12, color: count > 0 ? 'var(--gold)' : 'var(--green)', textAlign: 'right' }}>
+                {count > 0 ? count + ' record' + (count !== 1 ? 's' : '') + ' older than 6 months' : 'No old records found'}
+              </div>
+            )}
+            {count > 0 && (
+              <button
+                onClick={handleClean}
+                disabled={cleaning}
+                style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 8, border: 'none', background: 'var(--teal)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: cleaning ? 'not-allowed' : 'pointer', opacity: cleaning ? 0.7 : 1 }}
+              >
+                <Trash2 size={13} /> {cleaning ? 'Cleaning...' : 'Delete ' + count + ' old records'}
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </Section>
+  )
+}
+
 function DangerZoneSection({ loans, adminEmail, onReset }) {
   const [step, setStep] = useState(0) // 0=idle, 1=warning, 2=type-reset, 3=password
   const [resetInput, setResetInput] = useState('')
@@ -228,7 +313,7 @@ function DangerZoneSection({ loans, adminEmail, onReset }) {
 
     // Reset: clear capital logs + profit records, revert starting capital
     await supabase.from('capital_logs').delete().neq('id', 0)
-    await supabase.from('settings').update({ starting_capital: 30000 }).eq('id', 1)
+    await supabase.from('settings').update({ starting_capital: 30000, last_reset_date: new Date().toISOString() }).eq('id', 1)
     await logAudit({
       action_type: 'DASHBOARD_RESET',
       module: 'Settings',
@@ -624,6 +709,7 @@ export default function SettingsPage() {
       <LoanConfigSection settings={settings} onSave={handleSaveConfig} />
       <DepartmentsSection departments={departments} onRefresh={fetchData} adminEmail={user?.email} />
       <EmailSection adminEmail={user?.email} />
+      <AuditCleanupSection adminEmail={user?.email} />
       <DangerZoneSection loans={loans} adminEmail={user?.email} onReset={fetchData} />
     </div>
   )

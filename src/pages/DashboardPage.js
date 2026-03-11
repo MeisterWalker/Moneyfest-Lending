@@ -355,19 +355,24 @@ export default function DashboardPage() {
   // Projected yearly profit (simple: current monthly * 12, accounting for 26 pay periods)
   const projectedYearly = availableLiquidity * (settings?.interest_rate || 0.08) * 6
 
-  // Collection efficiency
-  const totalInstallmentsDue = activeLoans.reduce((sum, l) => sum + l.payments_made, 0)
-  const totalExpectedInstallments = activeLoans.length * 4
+  // Collection efficiency - only count loans created after last reset
+  const resetDate = settings?.last_reset_date ? new Date(settings.last_reset_date) : null
+  const loansAfterReset = resetDate
+    ? activeLoans.filter(l => new Date(l.created_at) >= resetDate)
+    : activeLoans
+  const totalInstallmentsDue = loansAfterReset.reduce((sum, l) => sum + l.payments_made, 0)
+  const totalExpectedInstallments = loansAfterReset.length * 4
   const efficiencyRate = totalExpectedInstallments > 0 ? (totalInstallmentsDue / totalExpectedInstallments) * 100 : 100
 
-  // Monthly profit chart data (last 6 months)
+  // Monthly profit chart data (last 6 months, filtered by reset date)
   const monthlyData = Array.from({ length: 6 }, (_, i) => {
     const d = new Date()
     d.setMonth(d.getMonth() - (5 - i))
     const profit = paidLoans
       .filter(l => {
         const updated = new Date(l.updated_at)
-        return updated.getMonth() === d.getMonth() && updated.getFullYear() === d.getFullYear()
+        const afterReset = resetDate ? updated >= resetDate : true
+        return afterReset && updated.getMonth() === d.getMonth() && updated.getFullYear() === d.getFullYear()
       })
       .reduce((sum, l) => sum + ((l.total_repayment || 0) - (l.loan_amount || 0)), 0)
     return {
