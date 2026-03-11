@@ -395,12 +395,22 @@ export default function BorrowerPortalPage() {
   // ── PROFILE PAGE ──────────────────────────────────────────────
   if (borrower && page === 'profile') return (
     <div style={{ minHeight: '100vh', background: '#0B0F1A', fontFamily: 'DM Sans, sans-serif' }}>
-      <div style={{ background: 'linear-gradient(135deg,#0d1226,#141B2D)', borderBottom: '1px solid rgba(139,92,246,0.2)', padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 12 }}>
-        <button onClick={() => setPage('home')} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, padding: '7px 14px', color: '#F0F4FF', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>← Back</button>
-        <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 16, color: '#F0F4FF' }}>My Profile</div>
+      <div style={{ background: 'linear-gradient(135deg,#0d1226,#141B2D)', borderBottom: '1px solid rgba(139,92,246,0.2)', padding: '16px 24px' }}>
+        <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 16, color: '#F0F4FF' }}>
+          Loan<span style={{ background: 'linear-gradient(90deg,#60a5fa,#a78bfa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Moneyfest</span>
+          <span style={{ fontFamily: 'DM Sans', fontWeight: 400, fontSize: 13, color: '#4B5580', marginLeft: 8 }}>· My Profile</span>
+        </div>
       </div>
-      <div style={{ maxWidth: 480, margin: '0 auto', padding: '24px 20px' }}>
-
+      <div style={{ maxWidth: 480, margin: '0 auto', padding: '36px 20px 24px' }}>
+              {/* Floating back button */}
+      <div style={{ position: 'relative', maxWidth: 480, margin: '0 auto', padding: '0 20px' }}>
+        <div style={{ position: 'absolute', top: -16, left: 20, zIndex: 10 }}>
+          <button onClick={() => setPage('home')} style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'linear-gradient(135deg,#141B2D,#1a1040)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 20, padding: '5px 14px', cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.3)' }}>
+            <span style={{ fontSize: 13, color: '#a78bfa' }}>←</span>
+            <span style={{ fontSize: 11, fontWeight: 700, color: '#a78bfa' }}>Back to Home</span>
+          </button>
+        </div>
+      </div>
         {/* Avatar + Name */}
         <div style={{ background: '#141B2D', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, padding: 24, marginBottom: 16, textAlign: 'center' }}>
           <div style={{ width: 72, height: 72, borderRadius: '50%', background: 'linear-gradient(135deg,#3B82F6,#8B5CF6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28, fontWeight: 900, color: '#fff', margin: '0 auto 14px', fontFamily: 'Space Grotesk' }}>
@@ -503,12 +513,22 @@ export default function BorrowerPortalPage() {
   // ── PAYMENT HISTORY PAGE ───────────────────────────────────────
   if (borrower && page === 'payment-history') return (
     <div style={{ minHeight: '100vh', background: '#0B0F1A', fontFamily: 'DM Sans, sans-serif' }}>
-      <div style={{ background: 'linear-gradient(135deg,#0d1226,#141B2D)', borderBottom: '1px solid rgba(59,130,246,0.2)', padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 12 }}>
-        <button onClick={() => setPage('home')} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, padding: '7px 14px', color: '#F0F4FF', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>← Back</button>
-        <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 16, color: '#F0F4FF' }}>Payment History</div>
+      <div style={{ background: 'linear-gradient(135deg,#0d1226,#141B2D)', borderBottom: '1px solid rgba(59,130,246,0.2)', padding: '16px 24px' }}>
+        <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 16, color: '#F0F4FF' }}>
+          Loan<span style={{ background: 'linear-gradient(90deg,#60a5fa,#a78bfa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Moneyfest</span>
+          <span style={{ fontFamily: 'DM Sans', fontWeight: 400, fontSize: 13, color: '#4B5580', marginLeft: 8 }}>· Payment History</span>
+        </div>
       </div>
-      <div style={{ maxWidth: 480, margin: '0 auto', padding: '24px 20px' }}>
-
+      <div style={{ maxWidth: 480, margin: '0 auto', padding: '36px 20px 24px' }}>
+              {/* Floating back button */}
+      <div style={{ position: 'relative', maxWidth: 480, margin: '0 auto', padding: '0 20px' }}>
+        <div style={{ position: 'absolute', top: -16, left: 20, zIndex: 10 }}>
+          <button onClick={() => setPage('home')} style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'linear-gradient(135deg,#141B2D,#1a1040)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 20, padding: '5px 14px', cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.3)' }}>
+            <span style={{ fontSize: 13, color: '#a78bfa' }}>←</span>
+            <span style={{ fontSize: 11, fontWeight: 700, color: '#a78bfa' }}>Back to Home</span>
+          </button>
+        </div>
+      </div>
         {allLoans.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '60px 20px' }}>
             <div style={{ fontSize: 48, marginBottom: 16 }}>📭</div>
