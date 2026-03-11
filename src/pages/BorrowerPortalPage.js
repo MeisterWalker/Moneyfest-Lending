@@ -6,7 +6,7 @@ import {
 } from 'lucide-react'
 
 function formatDate(str) {
-  if (!str) return '—'
+  if (!str) return "—"
   const [y, m, d] = str.split('-')
   return new Date(Number(y), Number(m) - 1, Number(d)).toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' })
 }
@@ -246,7 +246,7 @@ export default function BorrowerPortalPage() {
 
         <div style={{ background: '#141B2D', border: `1px solid ${pendingApp.status === 'Rejected' ? 'rgba(239,68,68,0.25)' : 'rgba(245,158,11,0.25)'}`, borderRadius: 16, padding: 28 }}>
           <div style={{ textAlign: 'center', marginBottom: 24 }}>
-            <div style={{ fontSize: 48, marginBottom: 12 }}>{pendingApp.status === 'Rejected' ? '❌' : '⏳'}</div>
+            <div style={{ fontSize: 48, marginBottom: 12 }}>{pendingApp.status === 'Rejected' ? "❌" : "⏳"}</div>
             <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 20, color: pendingApp.status === 'Rejected' ? '#EF4444' : '#F59E0B', marginBottom: 8 }}>
               {pendingApp.status === 'Rejected' ? 'Application Not Approved' : 'Application Under Review'}
             </div>
@@ -367,7 +367,7 @@ export default function BorrowerPortalPage() {
             disabled={loading}
             style={{ width: '100%', padding: '13px', borderRadius: 10, border: 'none', background: loading ? 'rgba(139,92,246,0.3)' : 'linear-gradient(135deg,#3B82F6,#8B5CF6)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', fontFamily: 'Space Grotesk' }}
           >
-            {loading ? 'Checking...' : 'Access My Loan →'}
+            {loading ? 'Checking...' : "Access My Loan →"}
           </button>
 
           <div style={{ marginTop: 18, padding: '12px 14px', background: 'rgba(59,130,246,0.06)', borderRadius: 8, fontSize: 12, color: '#4B5580', lineHeight: 1.6 }}>
@@ -396,9 +396,9 @@ export default function BorrowerPortalPage() {
         </p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           {[
-            { logo: '/cash-logo.png', label: 'Physical Cash', fee: '✓ Free', feeBg: 'rgba(34,197,94,0.08)', feeColor: '#22C55E', feeBorder: 'rgba(34,197,94,0.2)', border: 'rgba(34,197,94,0.25)', desc: 'Pay your admin directly in person. Coordinate with John Paul Lacaron or Charlou John Ramil to arrange your payment. No fees, no transfer needed.', steps: ['Prepare the exact installment amount in cash', 'Coordinate with your admin via Teams Chat', 'Hand over payment and request acknowledgement', 'Upload a photo of the receipt or acknowledgement in the portal'] },
+            { logo: '/cash-logo.png', label: 'Physical Cash', fee: "✓ Free", feeBg: 'rgba(34,197,94,0.08)', feeColor: '#22C55E', feeBorder: 'rgba(34,197,94,0.2)', border: 'rgba(34,197,94,0.25)', desc: 'Pay your admin directly in person. Coordinate with John Paul Lacaron or Charlou John Ramil to arrange your payment. No fees, no transfer needed.', steps: ['Prepare the exact installment amount in cash', 'Coordinate with your admin via Teams Chat', 'Hand over payment and request acknowledgement', 'Upload a photo of the receipt or acknowledgement in the portal'] },
             { logo: '/gcash-logo.png', label: 'GCash', fee: 'P15 or 1%', feeBg: 'rgba(245,158,11,0.08)', feeColor: '#F59E0B', feeBorder: 'rgba(245,158,11,0.2)', border: 'rgba(0,163,255,0.25)', desc: 'Send via GCash to the admin number. A transaction fee of P15 or 1% of the amount (whichever is higher) applies - please send the exact installment amount and cover any fees separately.', steps: ['Open GCash and send to admin number', 'Send the exact installment amount', 'Screenshot the successful transaction screen', 'Upload the screenshot in the portal'] },
-            { logo: '/rcbc-logo.png', label: 'RCBC to RCBC', fee: '✓ Free', feeBg: 'rgba(34,197,94,0.08)', feeColor: '#22C55E', feeBorder: 'rgba(34,197,94,0.2)', border: 'rgba(220,38,38,0.25)', desc: 'Transfer directly to the admin RCBC account. Same-bank RCBC-to-RCBC transfers are completely free with no deductions.', steps: ['Log in to RCBC Online or App', 'Transfer exact installment amount to admin RCBC account', 'Screenshot the successful transfer confirmation', 'Upload the screenshot in the portal'] },
+            { logo: '/rcbc-logo.png', label: 'RCBC to RCBC', fee: "✓ Free", feeBg: 'rgba(34,197,94,0.08)', feeColor: '#22C55E', feeBorder: 'rgba(34,197,94,0.2)', border: 'rgba(220,38,38,0.25)', desc: 'Transfer directly to the admin RCBC account. Same-bank RCBC-to-RCBC transfers are completely free with no deductions.', steps: ['Log in to RCBC Online or App', 'Transfer exact installment amount to admin RCBC account', 'Screenshot the successful transfer confirmation', 'Upload the screenshot in the portal'] },
             { logo: '/bank-logo.png', label: 'Other Bank (Instapay/PESONet)', fee: 'You cover fee', feeBg: 'rgba(245,158,11,0.08)', feeColor: '#F59E0B', feeBorder: 'rgba(245,158,11,0.2)', border: 'rgba(139,92,246,0.25)', desc: 'Transfer from any other bank using Instapay or PESONet. You are responsible for covering any transfer fees - send the exact installment amount plus fees so the full amount arrives.', steps: ['Use your bank online transfer or app', 'Choose Instapay (faster) or PESONet', 'Send exact installment amount + transfer fee', 'Screenshot the transaction confirmation', 'Upload the screenshot in the portal'] },
           ].map((item, i) => (
             <div key={i} style={{ background: '#141B2D', border: `1px solid ${item.border}`, borderRadius: 16, overflow: 'hidden' }}>
@@ -544,7 +544,7 @@ export default function BorrowerPortalPage() {
                         <div style={{ fontSize: 12, color: '#4B5580', marginTop: 2 }}>Due: {formatDate(due.dateStr)}</div>
                         {proof && (
                           <div style={{ fontSize: 11, marginTop: 4, color: proof.status === 'Pending' ? '#F59E0B' : '#22C55E' }}>
-                            {proof.status === 'Pending' ? '⏳ Proof submitted — awaiting admin confirmation' : '✅ Payment confirmed'}
+                            {proof.status === 'Pending' ? "⏳ Proof submitted — awaiting admin confirmation" : "✅ Payment confirmed"}
                           </div>
                         )}
                       </div>

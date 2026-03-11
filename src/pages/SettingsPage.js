@@ -131,7 +131,7 @@ function DepartmentsSection({ departments, onRefresh, adminEmail }) {
   const handleDelete = async (dept) => {
     // Check if any borrowers use this dept
     const { data } = await supabase.from('borrowers').select('id').eq('department_id', dept.id).limit(1)
-    if (data?.length > 0) { toast('Cannot delete — borrowers are assigned to this department', 'error'); setDeleteTarget(null); return }
+    if (data?.length > 0) { toast("Cannot delete — borrowers are assigned to this department", 'error'); setDeleteTarget(null); return }
     await supabase.from('departments').delete().eq('id', dept.id)
     await logAudit({ action_type: 'DEPT_DELETED', module: 'Settings', description: `Department deleted: ${dept.name}`, changed_by: adminEmail })
     toast(`"${dept.name}" removed`, 'info')
@@ -224,10 +224,10 @@ function AuditCleanupSection({ adminEmail }) {
     await logAudit({
       action_type: 'AUDIT_CLEANED',
       module: 'Settings',
-      description: 'Audit logs older than 6 months deleted — ' + count + ' records removed',
+      description: "Audit logs older than 6 months deleted — " + count + ' records removed',
       changed_by: adminEmail
     })
-    toast('Audit logs cleaned — ' + count + ' old records deleted', 'success')
+    toast("Audit logs cleaned — " + count + ' old records deleted', 'success')
     setCleaning(false)
   }
 
@@ -317,7 +317,7 @@ function DangerZoneSection({ loans, adminEmail, onReset }) {
     await logAudit({
       action_type: 'DASHBOARD_RESET',
       module: 'Settings',
-      description: 'Dashboard reset performed. Capital logs cleared, starting capital reverted to ₱30,000. Archive downloaded.',
+      description: "Dashboard reset performed. Capital logs cleared, starting capital reverted to ₱30,000. Archive downloaded.",
       changed_by: adminEmail
     })
 
@@ -440,7 +440,7 @@ function DangerZoneSection({ loans, adminEmail, onReset }) {
                 disabled={resetting || !passwordInput}
                 style={{ background: 'var(--red)', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 20px', cursor: 'pointer', fontSize: 13, fontWeight: 600 }}
               >
-                {resetting ? <><RefreshCw size={13} style={{ animation: 'spin 0.6s linear infinite' }} /> Resetting...</> : '🗑️ Reset Now'}
+                {resetting ? <><RefreshCw size={13} style={{ animation: 'spin 0.6s linear infinite' }} /> Resetting...</> : "🗑️ Reset Now"}
               </button>
               <button onClick={cancel} className="btn-cancel">Cancel</button>
             </div>
@@ -496,9 +496,9 @@ function EmailSection({ adminEmail }) {
   const [saved2, setSaved2] = useState(false)
 
   const tabConfig = [
-    { key: 'upcoming', label: '🔵 Upcoming', color: 'var(--blue)' },
-    { key: 'tomorrow', label: '🟡 Tomorrow', color: 'var(--gold)' },
-    { key: 'today', label: '🔴 Today', color: 'var(--red)' }
+    { key: 'upcoming', label: "🔵 Upcoming", color: 'var(--blue)' },
+    { key: 'tomorrow', label: "🟡 Tomorrow", color: 'var(--gold)' },
+    { key: 'today', label: "🔴 Today", color: 'var(--red)' }
   ]
 
   const handleSave = () => {
@@ -532,7 +532,7 @@ function EmailSection({ adminEmail }) {
       customFooter: footer
     })
     setSending(false)
-    if (result.success) toast('Test email sent! Check your inbox 📬', 'success')
+    if (result.success) toast("Test email sent! Check your inbox 📬", 'success')
     else toast(`Failed: ${result.error}`, 'error')
   }
 
@@ -687,7 +687,7 @@ export default function SettingsPage() {
     const { error } = await supabase.from('settings').update(values).eq('id', 1)
     if (error) { toast('Failed to save settings', 'error'); return }
     await logAudit({ action_type: 'SETTINGS_UPDATED', module: 'Settings', description: `Loan config updated — Capital: ₱${values.starting_capital?.toLocaleString()}, Rate: ${(values.interest_rate * 100).toFixed(0)}%, Max: ₱${values.max_loan_amount?.toLocaleString()}`, changed_by: user?.email })
-    toast('Settings saved — changes apply across the app', 'success')
+    toast("Settings saved — changes apply across the app", 'success')
     fetchData()
   }
 

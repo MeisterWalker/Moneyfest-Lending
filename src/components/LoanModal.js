@@ -136,7 +136,7 @@ export default function LoanModal({ isOpen, onClose, onSave, loan, borrower, bor
         <div style={{ padding: '24px 28px 20px', borderBottom: '1px solid var(--card-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
             <h2 style={{ fontFamily: 'Space Grotesk', fontSize: 18, fontWeight: 700 }}>
-              {prefill ? '🔄 Renew Loan' : isEdit ? 'Edit Loan' : 'New Loan Application'}
+              {prefill ? "🔄 Renew Loan" : isEdit ? 'Edit Loan' : 'New Loan Application'}
             </h2>
             <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 2 }}>
               {selectedBorrower ? `Borrower: ${selectedBorrower.full_name}` : 'Fill in loan details below'}
@@ -250,7 +250,7 @@ export default function LoanModal({ isOpen, onClose, onSave, loan, borrower, bor
                 <input
                   type="text"
                   readOnly
-                  value={dueDate ? dueDate.toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' }) : '—'}
+                  value={dueDate ? dueDate.toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' }) : "—"}
                   style={{ opacity: 0.6, cursor: 'not-allowed' }}
                 />
                 <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>Auto-calculated</div>
@@ -288,7 +288,7 @@ export default function LoanModal({ isOpen, onClose, onSave, loan, borrower, bor
                 Loan Agreement Confirmed
               </div>
               <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                Borrower has agreed to repay {amount >= minLoan ? formatCurrency(totalRepayment) : 'the full amount'} in 4 equal installments of {amount >= minLoan ? formatCurrency(installmentAmount) : '—'} each cutoff date.
+                Borrower has agreed to repay {amount >= minLoan ? formatCurrency(totalRepayment) : 'the full amount'} in 4 equal installments of {amount >= minLoan ? formatCurrency(installmentAmount) : "—"} each cutoff date.
               </div>
             </div>
           </div>
@@ -298,7 +298,7 @@ export default function LoanModal({ isOpen, onClose, onSave, loan, borrower, bor
         <div style={{ padding: '16px 28px 24px', borderTop: '1px solid var(--card-border)', display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
           <button onClick={onClose} className="btn-cancel">Cancel</button>
           <button onClick={handleSave} disabled={saving || !form.agreement_confirmed} className="btn-primary">
-            {saving ? 'Saving...' : prefill ? '🔄 Renew Loan' : isEdit ? 'Save Changes' : 'Create Loan'}
+            {saving ? 'Saving...' : prefill ? "🔄 Renew Loan" : isEdit ? 'Save Changes' : 'Create Loan'}
           </button>
         </div>
       </div>

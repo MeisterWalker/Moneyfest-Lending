@@ -12,10 +12,10 @@ import {
 import BorrowerAvatar from '../components/BorrowerAvatar'
 
 const BADGE_CONFIG = {
-  New: { label: '🆕 New', cls: 'badge-new' },
-  Trusted: { label: '✅ Trusted', cls: 'badge-trusted' },
-  Reliable: { label: '⭐ Reliable', cls: 'badge-reliable' },
-  VIP: { label: '👑 VIP', cls: 'badge-vip' },
+  New: { label: "🆕 New", cls: 'badge-new' },
+  Trusted: { label: "✅ Trusted", cls: 'badge-trusted' },
+  Reliable: { label: "⭐ Reliable", cls: 'badge-reliable' },
+  VIP: { label: "👑 VIP", cls: 'badge-vip' },
 }
 
 const RISK_CONFIG = {
@@ -97,12 +97,12 @@ function BorrowerCard({ borrower, departments, onEdit, onDelete }) {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
             <div>
               <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Address</div>
-              <div style={{ fontSize: 13, color: 'var(--text-label)' }}>{borrower.address || '—'}</div>
+              <div style={{ fontSize: 13, color: 'var(--text-label)' }}>{borrower.address || "—"}</div>
             </div>
             <div>
               <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Trustee</div>
               <div style={{ fontSize: 13, color: 'var(--text-label)' }}>
-                {borrower.trustee_name || '—'}{borrower.trustee_relationship ? ` (${borrower.trustee_relationship})` : ''}
+                {borrower.trustee_name || "—"}{borrower.trustee_relationship ? ` (${borrower.trustee_relationship})` : ''}
                 {borrower.trustee_phone && <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{borrower.trustee_phone}</div>}
               </div>
             </div>

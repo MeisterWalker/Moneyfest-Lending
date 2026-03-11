@@ -184,7 +184,7 @@ export default function LoginPage() {
               onClick={() => setIsSetup(!isSetup)}
               style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--blue)', fontSize: 13 }}
             >
-              {isSetup ? '← Back to sign in' : 'First time? Create admin account →'}
+              {isSetup ? "← Back to sign in" : "First time? Create admin account →"}
             </button>
           </div>
         </div>

@@ -19,11 +19,11 @@ const ACTION_COLORS = {
 }
 
 const ACTION_ICONS = {
-  BORROWER_ADDED: '👤', BORROWER_EDITED: '✏️', BORROWER_DELETED: '🗑️',
-  LOAN_CREATED: '📄', LOAN_EDITED: '✏️', LOAN_DELETED: '🗑️',
-  LOAN_RENEWED: '🔄', LOAN_DEFAULTED: '❌', INSTALLMENT_PAID: '✅',
-  SETTINGS_UPDATED: '⚙️', DEPT_ADDED: '🏢', DEPT_DELETED: '🏢',
-  DASHBOARD_RESET: '⚠️',
+  BORROWER_ADDED: "👤", BORROWER_EDITED: "✏️", BORROWER_DELETED: "🗑️",
+  LOAN_CREATED: "📄", LOAN_EDITED: "✏️", LOAN_DELETED: "🗑️",
+  LOAN_RENEWED: "🔄", LOAN_DEFAULTED: "❌", INSTALLMENT_PAID: "✅",
+  SETTINGS_UPDATED: "⚙️", DEPT_ADDED: "🏢", DEPT_DELETED: "🏢",
+  DASHBOARD_RESET: "⚠️",
 }
 
 const MODULE_COLORS = {
@@ -34,7 +34,7 @@ const MODULE_COLORS = {
 
 function ActionBadge({ action }) {
   const cfg = ACTION_COLORS[action] || { color: 'var(--text-label)', bg: 'rgba(255,255,255,0.06)' }
-  const icon = ACTION_ICONS[action] || '•'
+  const icon = ACTION_ICONS[action] || "•"
   const label = action?.replace(/_/g, ' ') || action
   return (
     <span style={{

@@ -67,8 +67,8 @@ function generateReceiptHTML({ loan, borrower, installmentNum, amount, date }) {
       <div class="subtitle">Installment ${installmentNum} of 4 — ${borrower?.full_name || 'Borrower'}</div>
 
       <div class="info-grid">
-        <div class="info-item"><label>Borrower</label><span>${borrower?.full_name || '—'}</span></div>
-        <div class="info-item"><label>Department</label><span>${borrower?.department || '—'}</span></div>
+        <div class="info-item"><label>Borrower</label><span>${borrower?.full_name || "—"}</span></div>
+        <div class="info-item"><label>Department</label><span>${borrower?.department || "—"}</span></div>
         <div class="info-item"><label>Payment Date</label><span>${date}</span></div>
         <div class="info-item"><label>Loan Amount</label><span>₱${loan.loan_amount?.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span></div>
       </div>
@@ -82,7 +82,7 @@ function generateReceiptHTML({ loan, borrower, installmentNum, amount, date }) {
         <div class="progress-label">Repayment Progress — ${installmentNum} of 4 installments paid</div>
         <div class="progress-bar"><div class="progress-fill" style="width:${(installmentNum / 4) * 100}%"></div></div>
         <div class="progress-steps">
-          ${[1,2,3,4].map(i => `<div class="step ${i <= installmentNum ? 'done' : 'pending'}">${i <= installmentNum ? '✓' : i}</div>`).join('')}
+          ${[1,2,3,4].map(i => `<div class="step ${i <= installmentNum ? 'done' : 'pending'}">${i <= installmentNum ? "✓" : i}</div>`).join('')}
         </div>
       </div>
 
@@ -91,7 +91,7 @@ function generateReceiptHTML({ loan, borrower, installmentNum, amount, date }) {
         <div class="summary-row"><span>Total Repayment (incl. interest)</span><span>₱${loan.total_repayment?.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span></div>
         <div class="summary-row"><span>Amount Paid to Date</span><span>₱${totalPaid?.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span></div>
         <div class="summary-row" style="color:${remaining <= 0 ? '#22C55E' : '#1a1a2e'}">
-          <span>${remaining <= 0 ? '🎉 Fully Paid!' : 'Remaining Balance'}</span>
+          <span>${remaining <= 0 ? "🎉 Fully Paid!" : 'Remaining Balance'}</span>
           <span>₱${Math.max(0, remaining)?.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
         </div>
       </div>
@@ -235,7 +235,7 @@ function LoanCard({ loan, borrowers, onEdit, onDelete, onRecordPayment, onDefaul
             <Clock size={12} style={{ display: 'inline', marginRight: 6 }} />
             Loan releases on {formatDate(loan.release_date)}
             {daysUntilDue > 0 && ` (in ${daysUntilDue} day${daysUntilDue !== 1 ? 's' : ''})`}
-            {daysUntilDue <= 0 && ' — activating today'}
+            {daysUntilDue <= 0 && " — activating today"}
           </div>
         )}
       </div>

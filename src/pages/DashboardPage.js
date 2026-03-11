@@ -157,7 +157,7 @@ function CountdownWidget({ loans, borrowers }) {
         <span style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 15 }}>
           ⏳ Next Cutoff in{' '}
           <span style={{ color: 'var(--blue)', fontSize: 20 }}>{daysLeft}</span>
-          {' '}day{daysLeft !== 1 ? 's' : ''} —{' '}
+          {' '}day{daysLeft !== 1 ? 's' : '"} —{" '}
           {nextCutoff.toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' })}
         </span>
       </div>
@@ -195,7 +195,7 @@ function TopBorrowersWidget({ borrowers, navigate }) {
   const top = sorted.slice(0, 3)
   const atRisk = [...borrowers].filter(b => b.credit_score < 750).sort((a, b) => a.credit_score - b.credit_score).slice(0, 3)
 
-  const BADGE = { New: '🆕', Trusted: '✅', Reliable: '⭐', VIP: '👑' }
+  const BADGE = { New: "🆕", Trusted: "✅", Reliable: "⭐", VIP: "👑" }
 
   return (
     <div className="card" style={{ padding: '20px 22px' }}>
@@ -264,7 +264,7 @@ function AuditWidget({ logs }) {
 }
 
 // ─── Custom Tooltip ───────────────────────────────────────────
-function CustomTooltip({ active, payload, label, prefix = '₱' }) {
+function CustomTooltip({ active, payload, label, prefix = "₱" }) {
   if (!active || !payload?.length) return null
   return (
     <div style={{
@@ -329,7 +329,7 @@ export default function DashboardPage() {
     await logAudit({
       action_type: 'INSTALLMENT_PAID',
       module: 'Loan',
-      description: `Installment ${newPaid} of 4 recorded via Dashboard for ${b?.full_name || 'Unknown'} — ₱${loan.installment_amount?.toLocaleString('en-PH', { minimumFractionDigits: 2 })}`,
+      description: `Installment ${newPaid} of 4 recorded via Dashboard for ${b?.full_name || 'Unknown"} — ₱${loan.installment_amount?.toLocaleString("en-PH', { minimumFractionDigits: 2 })}`,
       changed_by: user?.email
     })
     fetchData()

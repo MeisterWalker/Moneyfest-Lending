@@ -176,7 +176,7 @@ function EmailReminderModal({ events, onClose, onLog }) {
           ) : (
             <div>
               <div style={{ textAlign: 'center', marginBottom: 20 }}>
-                <div style={{ fontSize: 36, marginBottom: 8 }}>{results.filter(r => r.success).length === results.length ? '🎉' : '⚠️'}</div>
+                <div style={{ fontSize: 36, marginBottom: 8 }}>{results.filter(r => r.success).length === results.length ? "🎉" : "⚠️"}</div>
                 <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 18, marginBottom: 4 }}>
                   {results.filter(r => r.success).length} of {results.length} sent successfully
                 </div>
@@ -190,7 +190,7 @@ function EmailReminderModal({ events, onClose, onLog }) {
                       <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{r.email}</div>
                     </div>
                     <div style={{ fontSize: 12, fontWeight: 600, color: r.success ? 'var(--green)' : 'var(--red)' }}>
-                      {r.success ? '✓ Sent' : `✗ ${r.error}`}
+                      {r.success ? "✓ Sent" : `✗ ${r.error}`}
                     </div>
                   </div>
                 ))}
@@ -253,12 +253,12 @@ function CalendarView({ events, currentMonth, setCurrentMonth }) {
       {selected && (
         <div style={{ marginTop: 16, padding: '16px 18px', background: 'rgba(59,130,246,0.06)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: 10 }}>
           <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 14, marginBottom: 12 }}>{new Date(year, month, selected).toLocaleDateString('en-PH', { weekday: 'long', month: 'long', day: 'numeric' })}</div>
-          {selectedEvents.length === 0 ? <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>{isCutoff(selected) ? 'Cutoff day — no installments scheduled' : 'No installments this day'}</p> : (
+          {selectedEvents.length === 0 ? <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>{isCutoff(selected) ? "Cutoff day — no installments scheduled" : 'No installments this day'}</p> : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {selectedEvents.map((ev, i) => (
                 <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 13 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><EventDot isPaid={ev.isPaid} isPast={ev.isPast} isNext={ev.isNext} /><span style={{ fontWeight: 500 }}>{ev.borrower?.full_name}</span><span style={{ color: 'var(--text-muted)', fontSize: 12 }}>Installment {ev.installmentNum}/4</span></div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ fontWeight: 700, color: ev.isPaid ? 'var(--green)' : ev.isPast ? 'var(--red)' : 'var(--text-primary)' }}>{formatCurrency(ev.amount)}</span>{ev.isPaid && <span style={{ fontSize: 11, color: 'var(--green)' }}>✓ Paid</span>}{ev.isPast && <span style={{ fontSize: 11, color: 'var(--red)' }}>⚠ Overdue</span>}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ fontWeight: 700, color: ev.isPaid ? 'var(--green)' : ev.isPast ? 'var(--red)' : 'var(--text-primary)' }}>{formatCurrency(ev.amount)}</span>{ev.isPaid && <span style={{ fontSize: 11, color: 'var(--green)" }}>✓ Paid</span>}{ev.isPast && <span style={{ fontSize: 11, color: "var(--red)' }}>⚠ Overdue</span>}</div>
                 </div>
               ))}
               <div style={{ borderTop: '1px solid rgba(59,130,246,0.15)', paddingTop: 8, display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
@@ -314,7 +314,7 @@ function AgendaView({ events }) {
                     </span>
                   </div>
                   <span style={{ fontSize: 11, color: isToday ? 'var(--blue)' : 'var(--text-muted)', background: isToday ? 'rgba(59,130,246,0.1)' : 'rgba(255,255,255,0.04)', padding: '2px 8px', borderRadius: 10 }}>
-                    {isToday ? '📅 Today' : daysLeft === 1 ? 'Tomorrow' : `In ${daysLeft} days`}
+                    {isToday ? "📅 Today" : daysLeft === 1 ? 'Tomorrow' : `In ${daysLeft} days`}
                   </span>
                   <span style={{ marginLeft: 'auto', fontWeight: 700, color: 'var(--green)', fontSize: 14 }}>{formatCurrency(total)}</span>
                 </div>
