@@ -311,7 +311,7 @@ export default function ApplicationsPage() {
       admin_notes: `Applied via loan application form. Loan purpose: ${app.loan_purpose || 'Not specified'}`
     }).select().single()
 
-    if (bErr) { toast('Failed to create borrower', 'error'); return }
+    if (bErr) { console.error('Borrower insert error:', bErr); toast('Failed to create borrower: ' + bErr.message, 'error'); return }
 
     // 3. Calculate release date (next upcoming 5th or 20th)
     const today = new Date()
