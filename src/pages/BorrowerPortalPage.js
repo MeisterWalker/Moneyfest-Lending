@@ -169,6 +169,16 @@ export default function BorrowerPortalPage() {
   const [pendingApp, setPendingApp] = useState(null)
   const [allLoans, setAllLoans] = useState([])
 
+  // Auto-restore session on page refresh
+  useEffect(() => {
+    const saved = localStorage.getItem('lm_portal_code')
+    if (saved) {
+      setCode(saved)
+      setInputCode(saved)
+      fetchPortalData(saved)
+    }
+  }, [fetchPortalData])
+
   const fetchPortalData = useCallback(async (accessCode) => {
     setLoading(true)
     setError('')
@@ -222,6 +232,7 @@ export default function BorrowerPortalPage() {
   const handleLogin = async () => {
     if (!inputCode.trim()) { setError('Please enter your access code'); return }
     setCode(inputCode)
+    localStorage.setItem('lm_portal_code', inputCode.toUpperCase().trim())
     await fetchPortalData(inputCode)
   }
 
@@ -652,7 +663,7 @@ export default function BorrowerPortalPage() {
               <div style={{ fontSize: 13, fontWeight: 600, color: '#F0F4FF' }}>{borrower.full_name}</div>
               <div style={{ fontSize: 11, color: '#4B5580' }}>{borrower.department}</div>
             </div>
-            <button onClick={() => { setBorrower(null); setLoan(null); setCode(''); setInputCode('') }}
+            <button onClick={() => { setBorrower(null); setLoan(null); setAllLoans([]); setCode(''); setInputCode(''); localStorage.removeItem('lm_portal_code') }}
               style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, padding: '6px 12px', color: 'var(--text-muted)', fontSize: 12, cursor: 'pointer' }}>
               Sign out
             </button>
