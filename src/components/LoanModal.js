@@ -52,7 +52,7 @@ export default function LoanModal({ isOpen, onClose, onSave, loan, borrower, bor
   const [form, setForm] = useState({
     borrower_id: '',
     loan_amount: '',
-    interest_rate: settings?.interest_rate || 0.08,
+    interest_rate: settings?.interest_rate || 0.07,
     release_date: formatDateValue(nextCutoff),
     agreement_confirmed: false,
     notes: ''
@@ -65,7 +65,7 @@ export default function LoanModal({ isOpen, onClose, onSave, loan, borrower, bor
       setForm({
         borrower_id: loan.borrower_id || '',
         loan_amount: loan.loan_amount || '',
-        interest_rate: loan.interest_rate || 0.08,
+        interest_rate: loan.interest_rate || 0.07,
         release_date: loan.release_date || formatDateValue(nextCutoff),
         agreement_confirmed: loan.agreement_confirmed || false,
         notes: loan.notes || ''
@@ -74,7 +74,7 @@ export default function LoanModal({ isOpen, onClose, onSave, loan, borrower, bor
       setForm({
         borrower_id: prefill.borrower_id || '',
         loan_amount: prefill.loan_amount || '',
-        interest_rate: prefill.interest_rate || settings?.interest_rate || 0.08,
+        interest_rate: prefill.interest_rate || settings?.interest_rate || 0.07,
         release_date: formatDateValue(nextCutoff),
         agreement_confirmed: false,
         notes: ''
@@ -83,7 +83,7 @@ export default function LoanModal({ isOpen, onClose, onSave, loan, borrower, bor
       setForm({
         borrower_id: borrower?.id || '',
         loan_amount: '',
-        interest_rate: settings?.interest_rate || 0.08,
+        interest_rate: settings?.interest_rate || 0.07,
         release_date: formatDateValue(nextCutoff),
         agreement_confirmed: false,
         notes: ''
@@ -97,7 +97,7 @@ export default function LoanModal({ isOpen, onClose, onSave, loan, borrower, bor
   const maxLoan = selectedBorrower?.loan_limit || settings?.max_loan_amount || 10000
   const minLoan = 5000
   const amount = parseFloat(form.loan_amount) || 0
-  const rate = parseFloat(form.interest_rate) || 0.08
+  const rate = parseFloat(form.interest_rate) || 0.07
   const totalRepayment = amount * (1 + rate)
   const installmentAmount = totalRepayment / 4
   const dueDate = form.release_date ? (() => {

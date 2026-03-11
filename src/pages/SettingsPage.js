@@ -41,7 +41,7 @@ function LoanConfigSection({ settings, onSave }) {
     if (settings) {
       setForm({
         starting_capital: settings.starting_capital || 30000,
-        interest_rate: ((settings.interest_rate || 0.08) * 100).toFixed(0),
+        interest_rate: ((settings.interest_rate || 0.07) * 100).toFixed(0),
         max_loan_amount: settings.max_loan_amount || 10000
       })
     }
@@ -686,8 +686,39 @@ export default function SettingsPage() {
   const handleSaveConfig = async (values) => {
     const { error } = await supabase.from('settings').update(values).eq('id', 1)
     if (error) { toast('Failed to save settings', 'error'); return }
-    await logAudit({ action_type: 'SETTINGS_UPDATED', module: 'Settings', description: `Loan config updated — Capital: ₱${values.starting_capital?.toLocaleString()}, Rate: ${(values.interest_rate * 100).toFixed(0)}%, Max: ₱${values.max_loan_amount?.toLocaleString()}`, changed_by: user?.email })
-    toast("Settings saved — changes apply across the app", 'success')
+
+    // Cascade new interest rate to all Pending loans
+    const newRate = values.interest_rate
+    const pendingLoans = loans.filter(l => l.status === 'Pending' || l.status === 'Active')
+    let cascadeCount = 0
+    for (const loan of pendingLoans) {
+      const newTotal = loan.loan_amount * (1 + newRate)
+      const newInstallment = newTotal / 4
+      const newRemaining = newInstallment * (4 - (loan.payments_made || 0))
+      await supabase.from('loans').update({
+        interest_rate: newRate,
+        total_repayment: newTotal,
+        installment_amount: newInstallment,
+        remaining_balance: newRemaining
+      }).eq('id', loan.id)
+      cascadeCount++
+    }
+
+    // Also update pending installments
+    if (cascadeCount > 0) {
+      const pendingLoanIds = pendingLoans.map(l => l.id)
+      for (const loanId of pendingLoanIds) {
+        const loan = pendingLoans.find(l => l.id === loanId)
+        const newInstallment = (loan.loan_amount * (1 + newRate)) / 4
+        await supabase.from('installments')
+          .update({ amount_due: newInstallment })
+          .eq('loan_id', loanId)
+          .eq('status', 'Pending')
+      }
+    }
+
+    await logAudit({ action_type: 'SETTINGS_UPDATED', module: 'Settings', description: `Loan config updated — Rate changed to ${(newRate * 100).toFixed(0)}%. Applied to ${cascadeCount} active/pending loan(s).`, changed_by: user?.email })
+    toast(cascadeCount > 0 ? `Settings saved — rate updated on ${cascadeCount} pending/active loan(s)` : 'Settings saved', 'success')
     fetchData()
   }
 

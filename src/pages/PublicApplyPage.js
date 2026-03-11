@@ -33,6 +33,13 @@ export default function PublicApplyPage() {
   const [disclaimerCountdown, setDisclaimerCountdown] = useState(4)
   const [pendingAmount, setPendingAmount] = useState(null)
 
+  const [interestRate, setInterestRate] = useState(0.07)
+
+  useEffect(() => {
+    supabase.from('settings').select('interest_rate').eq('id', 1).single()
+      .then(({ data }) => { if (data?.interest_rate) setInterestRate(data.interest_rate) })
+  }, [])
+
   const [form, setForm] = useState({
     full_name: '', department: '', tenure_years: '', phone: '', email: '', address: '',
     trustee_name: '', trustee_phone: '', trustee_relationship: '',
@@ -328,7 +335,7 @@ export default function PublicApplyPage() {
                   {LOAN_AMOUNTS.map(amt => (
                     <button key={amt} onClick={() => form.loan_amount === amt ? null : startDisclaimer(amt)} style={{ padding: '14px', borderRadius: 10, border: `2px solid ${form.loan_amount === amt ? '#3B82F6' : 'rgba(255,255,255,0.08)'}`, background: form.loan_amount === amt ? 'rgba(59,130,246,0.15)' : 'rgba(255,255,255,0.03)', color: form.loan_amount === amt ? '#F0F4FF' : '#7A8AAA', cursor: 'pointer', textAlign: 'center', transition: 'all 0.15s' }}>
                       <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 20, color: form.loan_amount === amt ? '#22C55E' : '#7A8AAA' }}>₱{amt.toLocaleString()}</div>
-                      <div style={{ fontSize: 11, marginTop: 2 }}>₱{(amt * 1.08 / 4).toFixed(2)}/cutoff</div>
+                      <div style={{ fontSize: 11, marginTop: 2 }}>₱{(amt * (1 + interestRate) / 4).toFixed(2)}/cutoff</div>
                     </button>
                   ))}
                 </div>
@@ -408,7 +415,7 @@ export default function PublicApplyPage() {
               {/* Interest Calculator */}
               {form.loan_amount && (() => {
                 const principal = parseFloat(form.loan_amount)
-                const interest = principal * 0.08
+                const interest = principal * interestRate
                 const totalRepayment = principal + interest
                 const perInstallment = totalRepayment / 4
                 let feeAmount = 0
@@ -444,7 +451,7 @@ export default function PublicApplyPage() {
                     <div style={{ padding: '16px 18px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                       {[
                         { label: 'Loan Amount', value: 'P' + principal.toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#F0F4FF', sub: 'Principal' },
-                        { label: 'Interest (8% flat)', value: 'P' + interest.toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#F59E0B', sub: 'One-time' },
+                        { label: `Interest (${(interestRate * 100).toFixed(0)}% flat)`, value: 'P' + interest.toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#F59E0B', sub: 'One-time' },
                         { label: 'Total Repayment', value: 'P' + totalRepayment.toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#EF4444', sub: 'Over 4 payments' },
                         { label: 'Per Installment', value: 'P' + perInstallment.toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#22C55E', sub: 'Every cutoff' },
                       ].map((item, i) => (
@@ -487,7 +494,7 @@ export default function PublicApplyPage() {
 
               {/* Terms */}
               <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, padding: '14px', fontSize: 12, color: '#7A8AAA', lineHeight: 1.7, maxHeight: 120, overflowY: 'auto' }}>
-                <strong style={{ color: '#F0F4FF' }}>Terms & Conditions:</strong> By submitting this application, I confirm that all information provided is accurate. I understand that loans are subject to 8% flat interest rate, repayable in 4 equal installments every 5th and 20th of the month. Late payments will result in credit score deductions. I authorize LM Management to verify my information and contact my trustee if necessary.
+                <strong style={{ color: '#F0F4FF' }}>Terms & Conditions:</strong> By submitting this application, I confirm that all information provided is accurate. I understand that loans are subject to {(interestRate * 100).toFixed(0)}% flat interest rate, repayable in 4 equal installments every 5th and 20th of the month. Late payments will result in credit score deductions. I authorize LM Management to verify my information and contact my trustee if necessary.
               </div>
               <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer' }}>
                 <input type="checkbox" checked={form.agreed} onChange={e => set('agreed', e.target.checked)} style={{ marginTop: 2, width: 16, height: 16, accentColor: '#3B82F6', flexShrink: 0 }} />
@@ -533,7 +540,7 @@ export default function PublicApplyPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <FAQItem question="Who can apply for a loan?" answer="This lending program is exclusively available to active employees of MySource Solutions. You must be currently employed and in good standing to be eligible. Applicants from outside the company will not be processed." />
             <FAQItem question="How much can I borrow?" answer="First-time borrowers are approved for ₱5,000. Your limit increases as you build a good repayment history — up to ₱10,000 over time." />
-            <FAQItem question="How is the interest calculated?" answer="We use a flat 8% interest rate on the principal. For example, a ₱5,000 loan has a total repayment of ₱5,400, split into 4 installments of ₱1,350 each." />
+            <FAQItem question="How is the interest calculated?" answer={`We use a flat ${(interestRate * 100).toFixed(0)}% interest rate on the principal. For example, a ₱5,000 loan has a total repayment of ₱${(5000 * (1 + interestRate)).toLocaleString('en-PH', { minimumFractionDigits: 2 })}, split into 4 installments of ₱${(5000 * (1 + interestRate) / 4).toLocaleString('en-PH', { minimumFractionDigits: 2 })} each.`} />
             <FAQItem question="When are payments due?" answer="Payments are collected every 5th and 20th of the month — that's 2 payments per month for 2 months until your loan is fully paid." />
             <FAQItem question="Can I apply for another loan while I have an existing one?" answer="No. You must fully settle your current loan before applying for a new one. No rollovers or extensions are allowed." />
             <FAQItem question="What happens if I miss a payment?" answer="Missed payments will negatively affect your credit score and may freeze your loan limit increase. Consistent late payments may result in your loan being flagged as defaulted." />

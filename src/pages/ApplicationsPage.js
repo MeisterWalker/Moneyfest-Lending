@@ -326,13 +326,17 @@ export default function ApplicationsPage() {
     const releaseDateDisplay = releaseDate.toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' })
 
     // 4. Create loan
+    // Fetch current interest rate from settings
+    const { data: settingsData } = await supabase.from('settings').select('interest_rate').eq('id', 1).single()
+    const currentRate = settingsData?.interest_rate || 0.07
+
     const loanAmount = Number(app.loan_amount)
-    const totalRepayment = loanAmount * 1.08
+    const totalRepayment = loanAmount * (1 + currentRate)
     const installmentAmount = totalRepayment / 4
 
     const { error: lErr } = await supabase.from('loans').insert({
       borrower_id: borrower.id, loan_amount: loanAmount,
-      interest_rate: 0.08, total_repayment: totalRepayment,
+      interest_rate: currentRate, total_repayment: totalRepayment,
       installment_amount: installmentAmount, remaining_balance: totalRepayment,
       payments_made: 0, release_date: releaseDateStr,
       status: 'Pending', created_at: new Date().toISOString()
