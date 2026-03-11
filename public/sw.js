@@ -1,6 +1,6 @@
 self.addEventListener('push', function(event) {
   const data = event.data ? event.data.json() : {}
-  const title = data.title || 'Loan Manifest'
+  const title = data.title || 'Loan Moneyfest'
   const options = {
     body: data.body || 'You have a new notification',
     icon: '/favicon-96x96.png',

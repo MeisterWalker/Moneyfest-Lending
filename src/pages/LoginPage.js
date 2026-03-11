@@ -120,7 +120,7 @@ export default function LoginPage() {
             marginBottom: 6,
             lineHeight: 1.1
           }}>
-            Loan Manifest
+            Loan Moneyfest
           </h1>
           <p style={{ color: 'var(--text-label)', fontSize: 14 }}>
             {isSetup ? 'Create your admin account' : 'Admin access only'}
@@ -190,7 +190,7 @@ export default function LoginPage() {
         </div>
 
         <p style={{ textAlign: 'center', marginTop: 24, color: 'var(--text-muted)', fontSize: 12 }}>
-          Loan Manifest • Private Admin System
+          Loan Moneyfest • Private Admin System
         </p>
       </div>
     </div>

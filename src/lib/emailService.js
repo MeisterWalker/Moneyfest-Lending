@@ -1,4 +1,4 @@
-const APP_NAME = 'Loan Manifest'
+const APP_NAME = 'Loan Moneyfest'
 
 function generateReminderHTML({ borrowerName, installmentNum, amount, dueDate, loanAmount, remainingBalance, daysUntilDue, customMessages, customFooter }) {
   const urgencyColor = daysUntilDue === 0 ? '#EF4444' : daysUntilDue === 1 ? '#F59E0B' : '#3B82F6'
@@ -32,7 +32,7 @@ function generateReminderHTML({ borrowerName, installmentNum, amount, dueDate, l
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Payment Reminder — Loan Manifest</title>
+  <title>Payment Reminder — Loan Moneyfest</title>
 </head>
 <body style="margin:0;padding:0;background:#0B0F1A;font-family:'Segoe UI',Arial,sans-serif;">
 
@@ -51,7 +51,7 @@ function generateReminderHTML({ borrowerName, installmentNum, amount, dueDate, l
                     <!-- Logo icon -->
                     <div style="display:inline-block;width:42px;height:42px;background:linear-gradient(135deg,#3B82F6,#8B5CF6);border-radius:10px;text-align:center;line-height:42px;font-size:20px;margin-bottom:12px;">💼</div>
                     <div style="font-size:26px;font-weight:900;color:#F0F4FF;letter-spacing:-1px;margin-bottom:2px;">
-                      Loan<span style="background:linear-gradient(90deg,#60a5fa,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Manifest</span>
+                      Loan<span style="background:linear-gradient(90deg,#60a5fa,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Moneyfest</span>
                     </div>
                     <div style="font-size:12px;color:#4B5580;letter-spacing:0.08em;text-transform:uppercase;">Workplace Lending System</div>
                   </td>
@@ -248,7 +248,7 @@ function generateApprovalHTML({ borrowerName, accessCode, loanAmount, releaseDat
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Loan Approved — Loan Manifest</title>
+  <title>Loan Approved — Loan Moneyfest</title>
 </head>
 <body style="margin:0;padding:0;background:#0B0F1A;font-family:'Segoe UI',Arial,sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#0B0F1A;padding:40px 20px;">
@@ -261,7 +261,7 @@ function generateApprovalHTML({ borrowerName, accessCode, loanAmount, releaseDat
             <td style="background:linear-gradient(135deg,#0d1226 0%,#141B2D 60%,#1a1040 100%);border-radius:16px 16px 0 0;padding:32px 36px;border-bottom:1px solid rgba(34,197,94,0.3);">
               <div style="display:inline-block;width:42px;height:42px;background:linear-gradient(135deg,#3B82F6,#8B5CF6);border-radius:10px;text-align:center;line-height:42px;font-size:20px;margin-bottom:12px;">💼</div>
               <div style="font-size:26px;font-weight:900;color:#F0F4FF;letter-spacing:-1px;margin-bottom:2px;">
-                Loan<span style="background:linear-gradient(90deg,#60a5fa,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Manifest</span>
+                Loan<span style="background:linear-gradient(90deg,#60a5fa,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Moneyfest</span>
               </div>
               <div style="font-size:12px;color:#4B5580;letter-spacing:0.08em;text-transform:uppercase;">Workplace Lending System</div>
             </td>
@@ -379,7 +379,7 @@ export async function sendPendingEmail({ to, borrowerName, accessCode, loanAmoun
   const html = `
 <!DOCTYPE html>
 <html lang="en">
-<head><meta charset="UTF-8" /><title>Application Received — Loan Manifest</title></head>
+<head><meta charset="UTF-8" /><title>Application Received — Loan Moneyfest</title></head>
 <body style="margin:0;padding:0;background:#0B0F1A;font-family:'Segoe UI',Arial,sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#0B0F1A;padding:40px 20px;">
     <tr><td align="center">
@@ -387,7 +387,7 @@ export async function sendPendingEmail({ to, borrowerName, accessCode, loanAmoun
 
         <tr><td style="background:linear-gradient(135deg,#0d1226,#141B2D);border-radius:16px 16px 0 0;padding:32px 36px;border-bottom:1px solid rgba(245,158,11,0.3);">
           <div style="display:inline-block;width:42px;height:42px;background:linear-gradient(135deg,#3B82F6,#8B5CF6);border-radius:10px;text-align:center;line-height:42px;font-size:20px;margin-bottom:12px;">💼</div>
-          <div style="font-size:26px;font-weight:900;color:#F0F4FF;letter-spacing:-1px;margin-bottom:2px;">Loan<span style="background:linear-gradient(90deg,#60a5fa,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Manifest</span></div>
+          <div style="font-size:26px;font-weight:900;color:#F0F4FF;letter-spacing:-1px;margin-bottom:2px;">Loan<span style="background:linear-gradient(90deg,#60a5fa,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Moneyfest</span></div>
           <div style="font-size:12px;color:#4B5580;letter-spacing:0.08em;text-transform:uppercase;">Workplace Lending System</div>
         </td></tr>
 

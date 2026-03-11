@@ -1,4 +1,4 @@
-# 🏦 Loan Manifest
+# 🏦 Loan Moneyfest
 
 Private admin-only workplace micro-lending management system.
 
@@ -86,4 +86,4 @@ Run the SQL in `src/lib/supabase.js` to create:
 - Cutoff dates: 5th and 20th of each month only
 - One active loan per borrower
 - Credit score starts at 750 for all new borrowers
-"# Loan-Manifest" 
+"# Loan-Moneyfest" 
