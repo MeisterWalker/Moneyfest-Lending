@@ -391,7 +391,7 @@ export default function PublicApplyPage() {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     {[
                       { value: 'Physical Cash', logo: '/cash-logo.png', desc: 'Receive your loan in cash. No transaction fee.', fee: null },
-                      { value: 'GCash', logo: '/gcash-logo.png', desc: 'Sent to your GCash number. Gcash to Gcash is free.', fee: null },
+                      { value: 'GCash', logo: '/gcash-logo.png', desc: 'Sent to your GCash number. GCash to GCash is free.', fee: null },
                       { value: 'RCBC', logo: '/rcbc-logo.png', desc: 'Transferred to your RCBC account. Free if RCBC to RCBC.', fee: null },
                       { value: 'Other Bank Transfer', logo: '/bank-logo.png', desc: 'Instapay/PESONet to any non-RCBC bank. You must send the exact amount due — transfer fees are on your end.', fee: 'Borrower covers transfer fee' },
                     ].map(opt => (
@@ -534,7 +534,7 @@ export default function PublicApplyPage() {
 
             <FAQItem question="What happens if I miss a payment?" answer="Missed payments will negatively affect your credit score and may freeze your loan limit increase. Consistent late payments may result in your loan being flagged as defaulted." />
 
-            <FAQItem question="How will my loan be released and are there fees?" answer="Once approved, your loan will be released via your chosen method — Physical Cash, GCash, RCBC, or Other Bank Transfer. Release fees vary: Physical Cash and RCBC-to-RCBC are free, GCash charges ₱15 or 1% (whichever is higher), and other bank transfers (Instapay/PESONet) require the borrower to cover the transfer fee. Fees are deducted from your approved amount before release." />
+            <FAQItem question="How will my loan be released and are there fees?" answer="Once approved, your loan will be released via your chosen method — Physical Cash, GCash, RCBC, or Other Bank Transfer. Release fees vary: Physical Cash and RCBC-to-RCBC are free, GCash to GCash is free, and other bank transfers (Instapay/PESONet) require the borrower to cover the transfer fee. Fees are deducted from your approved amount before release." />
 
             <FAQItem question="What are the accepted repayment methods?" answer="You can repay your loan using any of the following methods. Always upload your proof of payment through the Borrower Portal after every transaction.">
               <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
