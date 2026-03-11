@@ -3,21 +3,22 @@ import { Bell, X, CheckCheck, FileText, Clock, BellOff } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 
+const VAPID_PUBLIC = 'BH38yVjqloXzB2UF9aDXCV8qdOiKhPoQ1rRTYSyRtWZiDe8qOcFFW8ZNOMA-yw0xlf0O0jcPBnrK99xyZsjzpRE'
+const PUSH_FUNCTION_URL = process.env.REACT_APP_SUPABASE_URL + '/functions/v1/send-push'
+
 function playChime() {
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)()
     function beep(freq, startTime, duration) {
       const osc = ctx.createOscillator()
       const gain = ctx.createGain()
-      osc.connect(gain)
-      gain.connect(ctx.destination)
+      osc.connect(gain); gain.connect(ctx.destination)
       osc.type = 'sine'
       osc.frequency.setValueAtTime(freq, startTime)
       gain.gain.setValueAtTime(0, startTime)
       gain.gain.linearRampToValueAtTime(0.3, startTime + 0.01)
       gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration)
-      osc.start(startTime)
-      osc.stop(startTime + duration)
+      osc.start(startTime); osc.stop(startTime + duration)
     }
     const now = ctx.currentTime
     beep(880, now, 0.25)
@@ -25,28 +26,45 @@ function playChime() {
   } catch (e) {}
 }
 
-function sendPush(title, body, url) {
-  if (!('serviceWorker' in navigator)) return
-  navigator.serviceWorker.ready.then(reg => {
-    reg.showNotification(title, {
-      body, icon: '/favicon-96x96.png', badge: '/favicon-96x96.png',
-      vibrate: [200, 100, 200], data: { url },
-      tag: 'loan-manifest-' + Date.now()
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4)
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')
+  const rawData = window.atob(base64)
+  const outputArray = new Uint8Array(rawData.length)
+  for (let i = 0; i < rawData.length; ++i) outputArray[i] = rawData.charCodeAt(i)
+  return outputArray
+}
+
+async function registerPushSubscription(userEmail) {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return false
+  try {
+    const reg = await navigator.serviceWorker.register('/sw.js')
+    await navigator.serviceWorker.ready
+
+    const existing = await reg.pushManager.getSubscription()
+    if (existing) {
+      // Save to DB in case it's a new device
+      await supabase.from('push_subscriptions').upsert({
+        user_email: userEmail,
+        subscription: existing.toJSON()
+      }, { onConflict: 'user_email,subscription' })
+      return true
+    }
+
+    const subscription = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC)
     })
-  }).catch(() => {})
-}
 
-async function registerSW() {
-  if (!('serviceWorker' in navigator)) return false
-  try { await navigator.serviceWorker.register('/sw.js'); return true }
-  catch (e) { return false }
-}
-
-async function requestPermission() {
-  if (!('Notification' in window)) return 'unsupported'
-  if (Notification.permission === 'granted') return 'granted'
-  if (Notification.permission === 'denied') return 'denied'
-  return await Notification.requestPermission()
+    await supabase.from('push_subscriptions').insert({
+      user_email: userEmail,
+      subscription: subscription.toJSON()
+    })
+    return true
+  } catch (e) {
+    console.error('Push subscription failed:', e)
+    return false
+  }
 }
 
 function makeAppNotif(app) {
@@ -78,29 +96,17 @@ export default function NotificationBell() {
   const [open, setOpen] = useState(false)
   const [notifications, setNotifications] = useState([])
   const [permission, setPermission] = useState(typeof Notification !== 'undefined' ? Notification.permission : 'default')
-  const [swReady, setSwReady] = useState(false)
   const panelRef = useRef(null)
   const seenIds = useRef(new Set())
-
-  useEffect(() => {
-    registerSW().then(ok => setSwReady(ok))
-  }, [])
 
   const addNotif = useCallback((notif, shouldSound) => {
     if (seenIds.current.has(notif.id)) return
     seenIds.current.add(notif.id)
     setNotifications(prev => [notif, ...prev].slice(0, 50))
-    if (!shouldSound) return
-    if (document.hidden) {
-      if (Notification.permission === 'granted') {
-        sendPush(notif.title, notif.message,
-          notif.type === 'application' ? '/admin/applications' : '/admin/loans')
-      }
-    } else {
-      playChime()
-    }
+    if (shouldSound && !document.hidden) playChime()
   }, [])
 
+  // Check due-tomorrow on mount
   useEffect(() => {
     if (!user) return
     async function checkDue() {
@@ -127,15 +133,14 @@ export default function NotificationBell() {
             cutoff.setDate(i % 2 === 1 ? 5 : 20)
           }
           const cs = cutoff.getFullYear() + '-' + String(cutoff.getMonth()+1).padStart(2,'0') + '-' + String(cutoff.getDate()).padStart(2,'0')
-          if (cs === tomorrowStr) {
-            addNotif(makeDueNotif(loan, loan.borrowers?.full_name || 'Unknown'), false)
-          }
+          if (cs === tomorrowStr) addNotif(makeDueNotif(loan, loan.borrowers?.full_name || 'Unknown'), false)
         }
       })
     }
     checkDue()
   }, [user, addNotif])
 
+  // Real-time new applications
   useEffect(() => {
     if (!user) return
     const channel = supabase.channel('new-applications')
@@ -145,6 +150,7 @@ export default function NotificationBell() {
     return () => supabase.removeChannel(channel)
   }, [user, addNotif])
 
+  // Close on outside click
   useEffect(() => {
     function handleClick(e) {
       if (panelRef.current && !panelRef.current.contains(e.target)) setOpen(false)
@@ -153,13 +159,16 @@ export default function NotificationBell() {
     return () => document.removeEventListener('mousedown', handleClick)
   }, [open])
 
-  const unread = notifications.filter(n => !n.read).length
-
   async function handleEnablePush() {
-    const result = await requestPermission()
+    if (!('Notification' in window)) return
+    const result = await Notification.requestPermission()
     setPermission(result)
-    if (result === 'granted' && !swReady) setSwReady(await registerSW())
+    if (result === 'granted') {
+      await registerPushSubscription(user.email)
+    }
   }
+
+  const unread = notifications.filter(n => !n.read).length
 
   if (!user) return null
 
@@ -207,7 +216,7 @@ export default function NotificationBell() {
             </div>
             <div style={{ display: 'flex', gap: 8 }}>
               {notifications.length > 0 && (
-                <button onClick={() => { setNotifications([]); seenIds.current.clear() }} title="Clear all"
+                <button onClick={() => { setNotifications([]); seenIds.current.clear() }}
                   style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: 4, borderRadius: 6, display: 'flex', alignItems: 'center' }}>
                   <CheckCheck size={15} />
                 </button>
@@ -223,7 +232,7 @@ export default function NotificationBell() {
             <div style={{ padding: '10px 16px', background: 'rgba(59,130,246,0.08)', borderBottom: '1px solid rgba(59,130,246,0.15)', display: 'flex', alignItems: 'center', gap: 10 }}>
               <BellOff size={14} color="var(--blue)" style={{ flexShrink: 0 }} />
               <div style={{ flex: 1, fontSize: 11, color: 'var(--text-label)', lineHeight: 1.4 }}>
-                Enable system notifications to get alerted in the background
+                Enable system notifications to get alerted even when this tab is in the background
               </div>
               <button onClick={handleEnablePush}
                 style={{ background: 'var(--blue)', border: 'none', borderRadius: 6, color: '#fff', fontSize: 11, fontWeight: 700, padding: '5px 10px', cursor: 'pointer', flexShrink: 0 }}>
@@ -235,7 +244,7 @@ export default function NotificationBell() {
           {permission === 'granted' && (
             <div style={{ padding: '8px 16px', background: 'rgba(34,197,94,0.06)', borderBottom: '1px solid rgba(34,197,94,0.1)', display: 'flex', alignItems: 'center', gap: 8 }}>
               <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--green)', flexShrink: 0 }} />
-              <div style={{ fontSize: 11, color: 'var(--green)' }}>System notifications active</div>
+              <div style={{ fontSize: 11, color: 'var(--green)' }}>System notifications active — alerts work in background</div>
             </div>
           )}
 

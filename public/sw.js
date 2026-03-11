@@ -1,4 +1,3 @@
-// Service Worker for Web Push Notifications
 self.addEventListener('push', function(event) {
   const data = event.data ? event.data.json() : {}
   const title = data.title || 'Loan Manifest'
