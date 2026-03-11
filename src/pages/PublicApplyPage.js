@@ -468,31 +468,6 @@ export default function PublicApplyPage() {
           Your information is kept private and secure. For inquiries contact your department admin.
         </p>
 
-        {/* Payment Methods */}
-        <div style={{ marginTop: 40 }}>
-          <h3 style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 16, color: '#F0F4FF', marginBottom: 16, textAlign: 'center' }}>
-            💳 Accepted Payment Methods
-          </h3>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-            {[
-              { logo: '/cash-logo.png', label: 'Physical Cash', fee: '✓ Free', desc: 'Pay in person. No fees.', freebie: true, border: 'rgba(34,197,94,0.25)' },
-              { logo: '/gcash-logo.png', label: 'GCash', fee: '₱15 or 1%', desc: 'Whichever is higher.', freebie: false, border: 'rgba(0,163,255,0.25)' },
-              { logo: '/rcbc-logo.png', label: 'RCBC to RCBC', fee: '✓ Free', desc: 'Same bank transfer.', freebie: true, border: 'rgba(220,38,38,0.25)' },
-              { logo: '/bank-logo.png', label: 'Other Bank', fee: 'You cover fee', desc: 'Instapay/PESONet. Send exact amount due.', freebie: false, border: 'rgba(139,92,246,0.25)' },
-            ].map((item, i) => (
-              <div key={i} style={{ background: '#141B2D', border: `1px solid ${item.border}`, borderRadius: 14, padding: '20px 16px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
-                <img src={item.logo} alt={item.label} style={{ height: 44, objectFit: 'contain' }} />
-                <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 13, color: '#F0F4FF' }}>{item.label}</div>
-                <div style={{ fontSize: 11, fontWeight: 700, color: item.freebie ? '#22C55E' : '#F59E0B', background: item.freebie ? 'rgba(34,197,94,0.08)' : 'rgba(245,158,11,0.08)', padding: '3px 12px', borderRadius: 20, border: `1px solid ${item.freebie ? 'rgba(34,197,94,0.2)' : 'rgba(245,158,11,0.2)'}` }}>{item.fee}</div>
-                <div style={{ fontSize: 11, color: '#4B5580', lineHeight: 1.5 }}>{item.desc}</div>
-              </div>
-            ))}
-          </div>
-          <div style={{ marginTop: 10, padding: '10px 14px', background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 9, fontSize: 12, color: '#F59E0B', textAlign: 'center' }}>
-            ⚠️ Always send proof of payment to your admin after every transaction.
-          </div>
-        </div>
-
         {/* FAQ */}
         <div style={{ marginTop: 40, marginBottom: 40 }}>
           <h3 style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 16, color: '#F0F4FF', marginBottom: 16, textAlign: 'center' }}>
@@ -512,26 +487,29 @@ export default function PublicApplyPage() {
 
             <FAQItem question="What happens if I miss a payment?" answer="Missed payments will negatively affect your credit score and may freeze your loan limit increase. Consistent late payments may result in your loan being flagged as defaulted." />
 
-            <FAQItem question="How will my loan be released and are there fees?" answer="Once approved, your loan will be released via your chosen method. Here is the fee breakdown:">
-              <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <FAQItem question="How will my loan be released and are there fees?" answer="Once approved, your loan will be released via your chosen method — Physical Cash, GCash, RCBC, or Other Bank Transfer. Release fees vary: Physical Cash and RCBC-to-RCBC are free, GCash charges ₱15 or 1% (whichever is higher), and other bank transfers (Instapay/PESONet) require the borrower to cover the transfer fee. Fees are deducted from your approved amount before release." />
+
+            <FAQItem question="What are the accepted repayment methods?" answer="You can repay your loan using any of the following methods. Always upload your proof of payment through the Borrower Portal after every transaction.">
+              <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {[
-                  { logo: '/cash-logo.png', method: 'Physical Cash', fee: 'Free — no deductions', freebie: true },
-                  { logo: '/gcash-logo.png', method: 'GCash', fee: '₱15 or 1% (whichever is higher)', freebie: false },
-                  { logo: '/rcbc-logo.png', method: 'RCBC to RCBC', fee: 'Free — same bank transfer', freebie: true },
-                  { logo: '/bank-logo.png', method: 'Other Bank (Instapay/PESONet)', fee: 'Borrower covers transfer fee', freebie: false },
-                ].map((row, ri) => (
-                  <div key={ri} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '9px 12px', background: 'rgba(255,255,255,0.03)', border: `1px solid ${row.freebie ? 'rgba(34,197,94,0.15)' : 'rgba(255,255,255,0.06)'}`, borderRadius: 8 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <img src={row.logo} alt={row.method} style={{ width: 28, height: 28, objectFit: 'contain', flexShrink: 0 }} />
-                      <span style={{ fontSize: 13, color: '#CBD5F0' }}>{row.method}</span>
+                  { logo: '/cash-logo.png', label: 'Physical Cash', fee: '✓ Free', desc: 'Pay your admin directly in person. No fees, no transfer needed.', freebie: true, border: 'rgba(34,197,94,0.25)' },
+                  { logo: '/gcash-logo.png', label: 'GCash', fee: '₱15 or 1%', desc: 'Send to the admin GCash number. Fee is whichever is higher.', freebie: false, border: 'rgba(0,163,255,0.25)' },
+                  { logo: '/rcbc-logo.png', label: 'RCBC to RCBC', fee: '✓ Free', desc: 'Transfer directly to the admin RCBC account. Same-bank transfers are free.', freebie: true, border: 'rgba(220,38,38,0.25)' },
+                  { logo: '/bank-logo.png', label: 'Other Bank (Instapay/PESONet)', fee: 'You cover fee', desc: 'Transfer from any other bank. You must send the exact amount due — transfer fees are on your end.', freebie: false, border: 'rgba(139,92,246,0.25)' },
+                ].map((item, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 14, background: '#0B0F1A', border: `1px solid ${item.border}`, borderRadius: 12, padding: '14px 16px' }}>
+                    <img src={item.logo} alt={item.label} style={{ width: 40, height: 40, objectFit: 'contain', flexShrink: 0 }} />
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3, flexWrap: 'wrap' }}>
+                        <span style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 13, color: '#F0F4FF' }}>{item.label}</span>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: item.freebie ? '#22C55E' : '#F59E0B', background: item.freebie ? 'rgba(34,197,94,0.08)' : 'rgba(245,158,11,0.08)', padding: '2px 10px', borderRadius: 20, border: `1px solid ${item.freebie ? 'rgba(34,197,94,0.2)' : 'rgba(245,158,11,0.2)'}` }}>{item.fee}</span>
+                      </div>
+                      <div style={{ fontSize: 12, color: '#4B5580', lineHeight: 1.5 }}>{item.desc}</div>
                     </div>
-                    <span style={{ fontSize: 12, fontWeight: 700, color: row.freebie ? '#22C55E' : '#F59E0B', background: row.freebie ? 'rgba(34,197,94,0.08)' : 'rgba(245,158,11,0.08)', padding: '3px 10px', borderRadius: 20, border: `1px solid ${row.freebie ? 'rgba(34,197,94,0.2)' : 'rgba(245,158,11,0.2)'}` }}>
-                      {row.fee}
-                    </span>
                   </div>
                 ))}
-                <div style={{ fontSize: 12, color: '#4B5580', marginTop: 4, lineHeight: 1.6 }}>
-                  ⚠️ Fees are deducted from your approved loan amount before release.
+                <div style={{ marginTop: 4, padding: '10px 14px', background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 9, fontSize: 12, color: '#F59E0B', lineHeight: 1.6 }}>
+                  ⚠️ Always upload your proof of payment through the <strong>Borrower Portal</strong> after every transaction so your admin can confirm it.
                 </div>
               </div>
             </FAQItem>
