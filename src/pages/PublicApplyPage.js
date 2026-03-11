@@ -565,7 +565,7 @@ export default function PublicApplyPage() {
 
             <FAQItem question="Who can I contact for questions?" answer="For any inquiries, you may reach out to the following admins via Microsoft Teams chat:">
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 10 }}>
-                {[{ name: 'John Paul Lacaron' }, { name: 'French Dako Ulok' }, { name: 'Charlou John Ramil' }].map((person, pi) => (
+                {[{ name: 'John Paul Lacaron' }, { name: 'Charlou John Ramil' }].map((person, pi) => (
                   <div key={pi} style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(59,130,246,0.07)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: 9, padding: '10px 12px' }}>
                     <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'linear-gradient(135deg,#3B82F6,#8B5CF6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 13, color: '#fff', flexShrink: 0 }}>
                       {person.name.charAt(0)}
