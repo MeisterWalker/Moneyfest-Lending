@@ -329,7 +329,7 @@ export default function DashboardPage() {
     await logAudit({
       action_type: 'INSTALLMENT_PAID',
       module: 'Loan',
-      description: `Installment ${newPaid} of 4 recorded via Dashboard for ${b?.full_name || 'Unknown"} — ₱${loan.installment_amount?.toLocaleString("en-PH', { minimumFractionDigits: 2 })}`,
+      description: `Installment ${newPaid} of 4 recorded via Dashboard for ${b?.full_name || 'Unknown'} — ₱${loan.installment_amount?.toLocaleString('en-PH', { minimumFractionDigits: 2 })}`,
       changed_by: user?.email
     })
     fetchData()

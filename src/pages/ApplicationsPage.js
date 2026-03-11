@@ -40,7 +40,7 @@ function ApplicationCard({ app, onApprove, onReject }) {
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 15, color: '#F0F4FF' }}>{app.full_name}</div>
-          <div style={{ fontSize: 12, color: '#7A8AAA", marginTop: 2 }}>{app.department} · {new Date(app.created_at).toLocaleDateString("en-PH', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
+          <div style={{ fontSize: 12, color: '#7A8AAA', marginTop: 2 }}>{app.department} · {new Date(app.created_at).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
         </div>
         <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 18, color: '#22C55E', flexShrink: 0 }}>
           ₱{app.loan_amount?.toLocaleString()}
@@ -251,7 +251,7 @@ function ProofReviewSection({ supabase, user, logAudit }) {
             <div key={proof.id} style={{ background: '#0B0F1A', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
               <div style={{ flex: 1, minWidth: 200 }}>
                 <div style={{ fontSize: 13, fontWeight: 700, color: '#F0F4FF' }}>{proof.borrowers?.full_name}</div>
-                <div style={{ fontSize: 12, color: 'var(--text-muted)", marginTop: 2 }}>Installment {proof.installment_number} of 4 · ₱{Number(proof.loans?.installment_amount).toLocaleString("en-PH', { minimumFractionDigits: 2 })}</div>
+                <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>Installment {proof.installment_number} of 4 · ₱{Number(proof.loans?.installment_amount).toLocaleString("en-PH', { minimumFractionDigits: 2 })}</div>
                 {proof.notes && <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4, fontStyle: 'italic' }}>"{proof.notes}"</div>}
                 <div style={{ fontSize: 11, color: '#4B5580', marginTop: 4 }}>{new Date(proof.created_at).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
               </div>

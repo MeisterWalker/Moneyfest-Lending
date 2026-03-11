@@ -238,9 +238,9 @@ export default function BorrowerPortalPage() {
     <div style={{ minHeight: '100vh', background: '#0B0F1A', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, fontFamily: 'DM Sans, sans-serif' }}>
       <div style={{ width: '100%', maxWidth: 460 }}>
         <div style={{ textAlign: 'center', marginBottom: 28 }}>
-          <img src="/favicon-96x96.png" alt="Loan Manifest" style={{ width: 48, height: 48, objectFit: 'contain', marginBottom: 10 }} />
+          <img src="/favicon-96x96.png" alt="LoanMoneyfest" style={{ width: 48, height: 48, objectFit: 'contain', marginBottom: 10 }} />
           <div style={{ fontFamily: 'Space Grotesk', fontWeight: 900, fontSize: 24, color: '#F0F4FF' }}>
-            Loan<span style={{ background: 'linear-gradient(90deg,#60a5fa,#a78bfa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Manifest</span>
+            Loan<span style={{ background: 'linear-gradient(90deg,#60a5fa,#a78bfa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Moneyfest</span>
           </div>
         </div>
 
@@ -323,9 +323,9 @@ export default function BorrowerPortalPage() {
       <div style={{ width: '100%', maxWidth: 400 }}>
         {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: 36 }}>
-          <img src="/favicon-96x96.png" alt="Loan Manifest" style={{ width: 56, height: 56, objectFit: 'contain', marginBottom: 12 }} />
+          <img src="/favicon-96x96.png" alt="LoanMoneyfest" style={{ width: 56, height: 56, objectFit: 'contain', marginBottom: 12 }} />
           <div style={{ fontFamily: 'Space Grotesk', fontWeight: 900, fontSize: 28, color: '#F0F4FF', letterSpacing: -1 }}>
-            Loan<span style={{ background: 'linear-gradient(90deg,#60a5fa,#a78bfa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Manifest</span>
+            Loan<span style={{ background: 'linear-gradient(90deg,#60a5fa,#a78bfa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Moneyfest</span>
           </div>
           <div style={{ fontSize: 13, color: '#4B5580', marginTop: 4 }}>Borrower Portal</div>
         </div>
@@ -396,9 +396,9 @@ export default function BorrowerPortalPage() {
         </p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           {[
-            { logo: '/cash-logo.png', label: 'Physical Cash', fee: "✓ Free", feeBg: 'rgba(34,197,94,0.08)', feeColor: '#22C55E', feeBorder: 'rgba(34,197,94,0.2)', border: 'rgba(34,197,94,0.25)', desc: 'Pay your admin directly in person. Coordinate with John Paul Lacaron or Charlou John Ramil to arrange your payment. No fees, no transfer needed.', steps: ['Prepare the exact installment amount in cash', 'Coordinate with your admin via Teams Chat', 'Hand over payment and request acknowledgement', 'Upload a photo of the receipt or acknowledgement in the portal'] },
+            { logo: '/cash-logo.png', label: 'Physical Cash', fee: '✓ Free', feeBg: 'rgba(34,197,94,0.08)', feeColor: '#22C55E', feeBorder: 'rgba(34,197,94,0.2)', border: 'rgba(34,197,94,0.25)', desc: 'Pay your admin directly in person. Coordinate with John Paul Lacaron or Charlou John Ramil to arrange your payment. No fees, no transfer needed.', steps: ['Prepare the exact installment amount in cash', 'Coordinate with your admin via Teams Chat', 'Hand over payment and request acknowledgement', 'Upload a photo of the receipt or acknowledgement in the portal'] },
             { logo: '/gcash-logo.png', label: 'GCash', fee: 'P15 or 1%', feeBg: 'rgba(245,158,11,0.08)', feeColor: '#F59E0B', feeBorder: 'rgba(245,158,11,0.2)', border: 'rgba(0,163,255,0.25)', desc: 'Send via GCash to the admin number. A transaction fee of P15 or 1% of the amount (whichever is higher) applies - please send the exact installment amount and cover any fees separately.', steps: ['Open GCash and send to admin number', 'Send the exact installment amount', 'Screenshot the successful transaction screen', 'Upload the screenshot in the portal'] },
-            { logo: '/rcbc-logo.png', label: 'RCBC to RCBC', fee: "✓ Free", feeBg: 'rgba(34,197,94,0.08)', feeColor: '#22C55E', feeBorder: 'rgba(34,197,94,0.2)', border: 'rgba(220,38,38,0.25)', desc: 'Transfer directly to the admin RCBC account. Same-bank RCBC-to-RCBC transfers are completely free with no deductions.', steps: ['Log in to RCBC Online or App', 'Transfer exact installment amount to admin RCBC account', 'Screenshot the successful transfer confirmation', 'Upload the screenshot in the portal'] },
+            { logo: '/rcbc-logo.png', label: 'RCBC to RCBC', fee: '✓ Free', feeBg: 'rgba(34,197,94,0.08)', feeColor: '#22C55E', feeBorder: 'rgba(34,197,94,0.2)', border: 'rgba(220,38,38,0.25)', desc: 'Transfer directly to the admin RCBC account. Same-bank RCBC-to-RCBC transfers are completely free with no deductions.', steps: ['Log in to RCBC Online or App', 'Transfer exact installment amount to admin RCBC account', 'Screenshot the successful transfer confirmation', 'Upload the screenshot in the portal'] },
             { logo: '/bank-logo.png', label: 'Other Bank (Instapay/PESONet)', fee: 'You cover fee', feeBg: 'rgba(245,158,11,0.08)', feeColor: '#F59E0B', feeBorder: 'rgba(245,158,11,0.2)', border: 'rgba(139,92,246,0.25)', desc: 'Transfer from any other bank using Instapay or PESONet. You are responsible for covering any transfer fees - send the exact installment amount plus fees so the full amount arrives.', steps: ['Use your bank online transfer or app', 'Choose Instapay (faster) or PESONet', 'Send exact installment amount + transfer fee', 'Screenshot the transaction confirmation', 'Upload the screenshot in the portal'] },
           ].map((item, i) => (
             <div key={i} style={{ background: '#141B2D', border: `1px solid ${item.border}`, borderRadius: 16, overflow: 'hidden' }}>
@@ -440,10 +440,10 @@ export default function BorrowerPortalPage() {
       <div style={{ background: 'linear-gradient(135deg,#0d1226,#141B2D)', borderBottom: '1px solid rgba(139,92,246,0.2)', padding: '16px 24px' }}>
         <div style={{ maxWidth: 640, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <img src="/favicon-96x96.png" alt="Loan Manifest" style={{ width: 36, height: 36, objectFit: 'contain' }} />
+            <img src="/favicon-96x96.png" alt="LoanMoneyfest" style={{ width: 36, height: 36, objectFit: 'contain' }} />
             <div>
               <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 16, color: '#F0F4FF' }}>
-                Loan<span style={{ background: 'linear-gradient(90deg,#60a5fa,#a78bfa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Manifest</span>
+                Loan<span style={{ background: 'linear-gradient(90deg,#60a5fa,#a78bfa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Moneyfest</span>
               </div>
               <div style={{ fontSize: 11, color: '#4B5580' }}>Borrower Portal</div>
             </div>
