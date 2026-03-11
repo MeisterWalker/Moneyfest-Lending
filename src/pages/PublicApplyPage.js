@@ -391,7 +391,7 @@ export default function PublicApplyPage() {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     {[
                       { value: 'Physical Cash', logo: '/cash-logo.png', desc: 'Receive your loan in cash. No transaction fee.', fee: null },
-                      { value: 'GCash', logo: '/gcash-logo.png', desc: 'Sent to your GCash number.', fee: 'Fee: ₱15 or 1% (whichever is higher)' },
+                      { value: 'GCash', logo: '/gcash-logo.png', desc: 'Sent to your GCash number. Gcash to Gcash is free.', fee: null },
                       { value: 'RCBC', logo: '/rcbc-logo.png', desc: 'Transferred to your RCBC account. Free if RCBC to RCBC.', fee: null },
                       { value: 'Other Bank Transfer', logo: '/bank-logo.png', desc: 'Instapay/PESONet to any non-RCBC bank. You must send the exact amount due — transfer fees are on your end.', fee: 'Borrower covers transfer fee' },
                     ].map(opt => (
