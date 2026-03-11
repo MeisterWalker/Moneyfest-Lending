@@ -345,7 +345,7 @@ export default function ApplicationsPage() {
 
     // 6. Send approval email with access code
     if (app.email) {
-      await sendApprovalEmail({
+      const emailResult = await sendApprovalEmail({
         to: app.email,
         borrowerName: app.full_name,
         accessCode,
@@ -354,6 +354,7 @@ export default function ApplicationsPage() {
         installmentAmount,
         releaseDate: releaseDateDisplay
       })
+      console.log('Approval email result:', emailResult)
     }
 
     // 7. Log audit

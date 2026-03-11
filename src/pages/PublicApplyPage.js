@@ -149,12 +149,13 @@ export default function PublicApplyPage() {
 
     // Send pending confirmation email with access code
     if (form.email.trim()) {
-      await sendPendingEmail({
+      const emailResult = await sendPendingEmail({
         to: form.email.trim(),
         borrowerName: form.full_name.trim(),
         accessCode: code,
         loanAmount: parseFloat(form.loan_amount)
       })
+      console.log('Pending email result:', emailResult)
     }
 
     setAccessCode(code)
