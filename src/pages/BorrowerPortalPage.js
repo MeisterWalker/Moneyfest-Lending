@@ -390,7 +390,29 @@ export default function BorrowerPortalPage() {
 
   // Login screen
   if (!borrower) return (
-    <div style={{ minHeight: '100vh', background: '#0B0F1A', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, fontFamily: 'DM Sans, sans-serif' }}>
+    <div style={{ minHeight: '100vh', background: '#0B0F1A', fontFamily: 'DM Sans, sans-serif' }}>
+      {/* Header */}
+      <div style={{ background: 'linear-gradient(135deg,#0d1226,#141B2D)', borderBottom: '1px solid rgba(139,92,246,0.2)', padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <img src="/favicon-96x96.png" alt="LoanMoneyfest" style={{ width: 36, height: 36, objectFit: 'contain' }} />
+          <div>
+            <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 16, color: '#F0F4FF' }}>
+              Loan<span style={{ background: 'linear-gradient(90deg,#60a5fa,#a78bfa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Moneyfest</span>
+            </div>
+            <div style={{ fontSize: 11, color: '#4B5580' }}>Borrower Portal</div>
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <a href="/apply" style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 14px', borderRadius: 9, background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', color: '#22C55E', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>
+            📝 Apply
+          </a>
+          <a href="/faq" style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 14px', borderRadius: 9, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', color: '#7A8AAA', fontSize: 13, fontWeight: 600, textDecoration: 'none' }}>
+            ❓ FAQ
+          </a>
+        </div>
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, minHeight: 'calc(100vh - 69px)' }}>
       <div style={{ width: '100%', maxWidth: 400 }}>
         {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: 36 }}>
@@ -445,6 +467,8 @@ export default function BorrowerPortalPage() {
             💡 Your access code was sent to your email when your loan was approved. Contact <strong style={{ color: '#7A8AAA' }}>John Paul Lacaron</strong> or <strong style={{ color: '#7A8AAA' }}>Charlou John Ramil</strong> via Teams if you need help.
           </div>
         </div>
+
+      </div>
       </div>
     </div>
   )
@@ -737,13 +761,6 @@ export default function BorrowerPortalPage() {
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <a href="/apply" style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px', borderRadius: 8, background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', color: '#22C55E', fontSize: 12, fontWeight: 700, textDecoration: 'none', whiteSpace: 'nowrap' }}>
-              📝 Apply
-            </a>
-            <a href="/faq" style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px', borderRadius: 8, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', color: '#7A8AAA', fontSize: 12, fontWeight: 600, textDecoration: 'none', whiteSpace: 'nowrap' }}>
-              ❓ FAQ
-            </a>
-            <div style={{ width: 1, height: 20, background: 'rgba(255,255,255,0.08)' }} />
             <div style={{ textAlign: 'right' }}>
               <div style={{ fontSize: 13, fontWeight: 600, color: '#F0F4FF' }}>{borrower.full_name}</div>
               <div style={{ fontSize: 11, color: '#4B5580' }}>{borrower.department}</div>
