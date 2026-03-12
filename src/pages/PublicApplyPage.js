@@ -5,22 +5,18 @@ import { sendPendingEmail } from '../lib/emailService'
 const DEPARTMENTS = ['Minto Money', 'Greyhound']
 const LOAN_AMOUNTS = [5000, 7000, 9000, 10000]
 
-function FAQItem({ question, answer, children }) {
-  const [open, setOpen] = useState(false)
-  return (
-    <div style={{ background: '#141B2D', border: `1px solid ${open ? 'rgba(59,130,246,0.3)' : 'rgba(255,255,255,0.06)'}`, borderRadius: 12, overflow: 'hidden', transition: 'border 0.2s' }}>
-      <button onClick={() => setOpen(o => !o)} style={{ width: '100%', padding: '14px 18px', background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
-        <span style={{ fontFamily: 'Space Grotesk', fontWeight: 600, fontSize: 14, color: '#F0F4FF', textAlign: 'left' }}>{question}</span>
-        <span style={{ color: open ? '#3B82F6' : '#4B5580', fontSize: 18, flexShrink: 0, transition: 'transform 0.2s', transform: open ? 'rotate(45deg)' : 'rotate(0deg)' }}>+</span>
-      </button>
-      {open && (
-        <div style={{ padding: '0 18px 14px', fontSize: 13, color: '#7A8AAA', lineHeight: 1.7, borderTop: '1px solid rgba(255,255,255,0.04)' }}>
-          {answer}
-          {children}
-        </div>
-      )}
-    </div>
-  )
+const ALLOWED_DOMAINS = [
+  'gmail.com','yahoo.com','outlook.com','hotmail.com','icloud.com',
+  'live.com','msn.com','protonmail.com','mail.com','mysource.com',
+  'ymail.com','googlemail.com'
+]
+
+function validateEmail(email) {
+  const trimmed = email.trim().toLowerCase()
+  if (!/^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/.test(trimmed)) return 'Please enter a valid email address'
+  const domain = trimmed.split('@')[1]
+  if (!ALLOWED_DOMAINS.includes(domain)) return 'Please use a valid email provider (e.g. @gmail.com, @yahoo.com)'
+  return null
 }
 
 export default function PublicApplyPage() {
@@ -32,7 +28,6 @@ export default function PublicApplyPage() {
   const [showDisclaimer, setShowDisclaimer] = useState(false)
   const [disclaimerCountdown, setDisclaimerCountdown] = useState(4)
   const [pendingAmount, setPendingAmount] = useState(null)
-
   const [interestRate, setInterestRate] = useState(0.07)
 
   useEffect(() => {
@@ -47,48 +42,16 @@ export default function PublicApplyPage() {
     gcash_number: '', gcash_name: '', bank_account_number: '', bank_name: '',
     agreed: false
   })
-
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
-  // Disclaimer countdown
-  const startDisclaimer = (amt) => {
-    setPendingAmount(amt)
-    setDisclaimerCountdown(4)
-    setShowDisclaimer(true)
-  }
-
+  const startDisclaimer = (amt) => { setPendingAmount(amt); setDisclaimerCountdown(4); setShowDisclaimer(true) }
   useEffect(() => {
-    if (!showDisclaimer) return
-    if (disclaimerCountdown <= 0) return
+    if (!showDisclaimer || disclaimerCountdown <= 0) return
     const t = setTimeout(() => setDisclaimerCountdown(c => c - 1), 1000)
     return () => clearTimeout(t)
   }, [showDisclaimer, disclaimerCountdown])
 
-  const confirmDisclaimer = () => {
-    set('loan_amount', pendingAmount)
-    setShowDisclaimer(false)
-    setPendingAmount(null)
-    setDisclaimerCountdown(4)
-  }
-
-  const ALLOWED_DOMAINS = [
-    'gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com', 'icloud.com',
-    'live.com', 'msn.com', 'protonmail.com', 'mail.com', 'mysource.com',
-    'ymail.com', 'googlemail.com'
-  ]
-
-  const validateEmail = (email) => {
-    const trimmed = email.trim().toLowerCase()
-    // Basic format check
-    const emailRegex = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/
-    if (!emailRegex.test(trimmed)) return 'Please enter a valid email address'
-    // Domain check
-    const domain = trimmed.split('@')[1]
-    if (!ALLOWED_DOMAINS.includes(domain)) {
-      return `Please use a valid email provider (e.g. @gmail.com, @yahoo.com, @outlook.com)`
-    }
-    return null
-  }
+  const confirmDisclaimer = () => { set('loan_amount', pendingAmount); setShowDisclaimer(false); setPendingAmount(null) }
 
   const validateStep1 = () => {
     if (!form.full_name.trim()) return 'Please enter your full name'
@@ -99,24 +62,20 @@ export default function PublicApplyPage() {
     const emailErr = validateEmail(form.email)
     if (emailErr) return emailErr
     if (!form.address.trim()) return 'Please enter your address'
-    return null
-  }
-  const validateStep2 = () => {
-    if (!form.trustee_name.trim()) return 'Please enter trustee name'
-    if (!form.trustee_phone.trim()) return 'Please enter trustee phone'
+    if (!form.trustee_name.trim()) return 'Please enter trustee full name'
+    if (!form.trustee_phone.trim()) return 'Please enter trustee phone number'
     if (!form.trustee_relationship.trim()) return 'Please enter trustee relationship'
     return null
   }
-  const validateStep3 = () => {
+
+  const validateStep2 = () => {
     if (!form.loan_amount) return 'Please select a loan amount'
     if (!form.release_method) return 'Please select a preferred release method'
     if (form.release_method === 'GCash') {
       if (!form.gcash_number.trim()) return 'Please enter your GCash number'
       if (!form.gcash_name.trim()) return 'Please enter your GCash full name'
     }
-    if (form.release_method === 'RCBC') {
-      if (!form.bank_account_number.trim()) return 'Please enter your RCBC account number'
-    }
+    if (form.release_method === 'RCBC' && !form.bank_account_number.trim()) return 'Please enter your RCBC account number'
     if (form.release_method === 'Other Bank Transfer') {
       if (!form.bank_name.trim()) return 'Please enter your bank name'
       if (!form.bank_account_number.trim()) return 'Please enter your account number'
@@ -126,16 +85,15 @@ export default function PublicApplyPage() {
   }
 
   const handleNext = () => {
-    const err = step === 1 ? validateStep1() : validateStep2()
+    const err = validateStep1()
     if (err) { setError(err); return }
-    setError(''); setStep(s => s + 1)
+    setError(''); setStep(2)
   }
 
   const handleSubmit = async () => {
-    const err = validateStep3()
+    const err = validateStep2()
     if (err) { setError(err); return }
-    setError('')
-    setLoading(true)
+    setError(''); setLoading(true)
     const code = 'LM-' + Math.random().toString(36).substring(2, 6).toUpperCase()
     const { error: dbErr } = await supabase.from('applications').insert({
       full_name: form.full_name.trim(), department: form.department,
@@ -152,54 +110,52 @@ export default function PublicApplyPage() {
     setLoading(false)
     if (dbErr) { setError('Submission failed. Please try again.'); return }
     if (form.email.trim()) {
-      const emailResult = await sendPendingEmail({
-        to: form.email.trim(), borrowerName: form.full_name.trim(),
-        accessCode: code, loanAmount: parseFloat(form.loan_amount)
-      })
-      console.log('Pending email result:', emailResult)
+      await sendPendingEmail({ to: form.email.trim(), borrowerName: form.full_name.trim(), accessCode: code, loanAmount: parseFloat(form.loan_amount) })
     }
-    setAccessCode(code)
-    setSubmitted(true)
+    setAccessCode(code); setSubmitted(true)
   }
 
-  const inputStyle = {
-    width: '100%', boxSizing: 'border-box', padding: '11px 14px',
-    background: '#0B0F1A', border: '1px solid rgba(255,255,255,0.08)',
-    borderRadius: 9, color: '#F0F4FF', fontSize: 14, outline: 'none',
-    fontFamily: 'DM Sans, sans-serif'
+  const inp = {
+    width: '100%', boxSizing: 'border-box', padding: '10px 13px',
+    background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
+    borderRadius: 9, color: '#F0F4FF', fontSize: 13.5, outline: 'none',
+    fontFamily: 'DM Sans, sans-serif', transition: 'border-color 0.2s'
   }
-  const labelStyle = { display: 'block', fontSize: 12, color: '#7A8AAA', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }
+  const lbl = { display: 'block', fontSize: 11, color: '#7A8AAA', marginBottom: 5, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }
 
-  // Success screen
+  // ── Success screen ──────────────────────────────────────────
   if (submitted) return (
-    <div style={{ minHeight: '100vh', background: '#0B0F1A', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-      <div style={{ textAlign: 'center', maxWidth: 460 }}>
-        <div style={{ fontSize: 64, marginBottom: 20 }}>🎉</div>
-        <h2 style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 28, color: '#F0F4FF', marginBottom: 12 }}>Application Submitted!</h2>
-        <p style={{ color: '#7A8AAA', fontSize: 15, lineHeight: 1.7, marginBottom: 16 }}>
-          Thank you <strong style={{ color: '#F0F4FF' }}>{form.full_name}</strong>! Your loan application has been received and is now under review. Our admin will get back to you shortly.
+    <div style={{ minHeight: '100vh', background: '#0B0F1A', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+      <div style={{ textAlign: 'center', maxWidth: 480, width: '100%' }}>
+        <div style={{ fontSize: 60, marginBottom: 16 }}>🎉</div>
+        <h2 style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 28, color: '#F0F4FF', margin: '0 0 12px', letterSpacing: -0.5 }}>Application Submitted!</h2>
+        <p style={{ color: '#7A8AAA', fontSize: 15, lineHeight: 1.7, marginBottom: 20 }}>
+          Thank you <strong style={{ color: '#F0F4FF' }}>{form.full_name}</strong>! Your application is now under review. Our admin will get back to you shortly.
         </p>
-        <div style={{ background: 'linear-gradient(135deg,#0f1729,#1a1040)', border: '2px solid rgba(139,92,246,0.4)', borderRadius: 14, padding: '20px 24px', marginBottom: 20, textAlign: 'center' }}>
-          <div style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#4B5580', marginBottom: 8 }}>Your Portal Access Code</div>
-          <div style={{ fontSize: 32, fontWeight: 900, letterSpacing: 8, color: '#F0F4FF', fontFamily: 'monospace', marginBottom: 8 }}>{accessCode}</div>
-          <div style={{ fontSize: 12, color: '#4B5580', marginBottom: 14 }}>Use this to check your application status at the Borrower Portal</div>
-          <a href="/portal" style={{ display: 'inline-block', background: 'linear-gradient(135deg,#3B82F6,#8B5CF6)', color: '#fff', textDecoration: 'none', padding: '10px 24px', borderRadius: 9, fontSize: 13, fontWeight: 700 }}>
-            Check Application Status
+        <div style={{ background: 'linear-gradient(135deg,#0f1729,#1a1040)', border: '2px solid rgba(139,92,246,0.4)', borderRadius: 16, padding: '22px 28px', marginBottom: 16 }}>
+          <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#4B5580', marginBottom: 8 }}>Your Portal Access Code</div>
+          <div style={{ fontSize: 34, fontWeight: 900, letterSpacing: 8, color: '#F0F4FF', fontFamily: 'monospace', marginBottom: 10 }}>{accessCode}</div>
+          <div style={{ fontSize: 12, color: '#4B5580', marginBottom: 16 }}>Use this to track your application in the Borrower Portal</div>
+          <a href="/portal" style={{ display: 'inline-block', background: 'linear-gradient(135deg,#3B82F6,#8B5CF6)', color: '#fff', textDecoration: 'none', padding: '11px 28px', borderRadius: 10, fontSize: 13, fontWeight: 700, fontFamily: 'Space Grotesk' }}>
+            Check Status in Portal →
           </a>
         </div>
-        <div style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 12, padding: '16px 20px', marginBottom: 16 }}>
-          <div style={{ fontSize: 13, color: '#22C55E', fontWeight: 600, marginBottom: 8 }}>📋 Application Details</div>
-          <div style={{ fontSize: 13, color: '#7A8AAA', marginTop: 4 }}>Amount Requested: <strong style={{ color: '#F0F4FF' }}>₱{parseFloat(form.loan_amount).toLocaleString()}</strong></div>
-          <div style={{ fontSize: 13, color: '#7A8AAA', marginTop: 4 }}>Release Method: <strong style={{ color: '#F0F4FF' }}>{form.release_method || 'Not specified'}</strong></div>
-          <div style={{ fontSize: 13, color: '#7A8AAA', marginTop: 4 }}>Status: <strong style={{ color: '#F59E0B' }}>Pending Review</strong></div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
+          <div style={{ background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 12, padding: '14px 16px', textAlign: 'left' }}>
+            <div style={{ fontSize: 11, color: '#4B5580', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Amount</div>
+            <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 18, color: '#22C55E' }}>₱{parseFloat(form.loan_amount).toLocaleString()}</div>
+          </div>
+          <div style={{ background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 12, padding: '14px 16px', textAlign: 'left' }}>
+            <div style={{ fontSize: 11, color: '#4B5580', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Status</div>
+            <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 18, color: '#F59E0B' }}>Pending</div>
+          </div>
         </div>
-        <div style={{ background: 'rgba(59,130,246,0.06)', border: '1px solid rgba(59,130,246,0.15)', borderRadius: 12, padding: '16px 20px' }}>
-          <div style={{ fontSize: 13, color: '#60A5FA', fontWeight: 600, marginBottom: 10 }}>💬 Need to follow up?</div>
-          <div style={{ fontSize: 13, color: '#7A8AAA', marginBottom: 12, lineHeight: 1.6 }}>Contact any of the following admins via <strong style={{ color: '#F0F4FF' }}>Microsoft Teams Chat</strong>:</div>
+        <div style={{ background: 'rgba(59,130,246,0.06)', border: '1px solid rgba(59,130,246,0.15)', borderRadius: 12, padding: '16px 20px', textAlign: 'left' }}>
+          <div style={{ fontSize: 13, color: '#60A5FA', fontWeight: 700, marginBottom: 10 }}>💬 Need to follow up?</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {[{ i: 'JP', n: 'John Paul Lacaron', g: 'linear-gradient(135deg,#3B82F6,#8B5CF6)' }, { i: 'CJ', n: 'Charlou John Ramil', g: 'linear-gradient(135deg,#14B8A6,#3B82F6)' }].map(a => (
-              <div key={a.n} style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.03)', borderRadius: 8, padding: '10px 14px' }}>
-                <div style={{ width: 32, height: 32, borderRadius: '50%', background: a.g, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: '#fff', flexShrink: 0 }}>{a.i}</div>
+              <div key={a.n} style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.03)', borderRadius: 8, padding: '10px 12px' }}>
+                <div style={{ width: 32, height: 32, borderRadius: '50%', background: a.g, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 800, color: '#fff', flexShrink: 0 }}>{a.i}</div>
                 <div><div style={{ fontSize: 13, fontWeight: 600, color: '#F0F4FF' }}>{a.n}</div><div style={{ fontSize: 11, color: '#4B5580' }}>Admin · Teams Chat</div></div>
               </div>
             ))}
@@ -208,6 +164,18 @@ export default function PublicApplyPage() {
       </div>
     </div>
   )
+
+  // ── Calculator helper ────────────────────────────────────────
+  const calcDueDates = () => {
+    const today = new Date(); const d = today.getDate(), m = today.getMonth(), y = today.getFullYear()
+    let release = d <= 5 ? new Date(y, m, 5) : d <= 20 ? new Date(y, m, 20) : new Date(y, m + 1, 5)
+    return Array.from({ length: 4 }, (_, i) => {
+      const dt = new Date(release)
+      if (release.getDate() <= 5) { dt.setMonth(dt.getMonth() + Math.floor(i / 2)); dt.setDate(i % 2 === 0 ? 20 : 5) }
+      else { dt.setMonth(dt.getMonth() + Math.ceil((i + 1) / 2)); dt.setDate(i % 2 === 0 ? 5 : 20) }
+      return dt
+    })
+  }
 
   return (
     <div style={{ minHeight: '100vh', background: '#0B0F1A', fontFamily: 'DM Sans, sans-serif' }}>
@@ -222,60 +190,32 @@ export default function PublicApplyPage() {
               <div style={{ fontSize: 13, color: '#7A8AAA' }}>Please read carefully before proceeding</div>
             </div>
             <div style={{ background: '#0B0F1A', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: '18px 20px', marginBottom: 20, fontSize: 13, color: '#CBD5F0', lineHeight: 1.8 }}>
-              <p style={{ margin: '0 0 12px' }}>
-                You have selected <strong style={{ color: '#22C55E', fontFamily: 'Space Grotesk' }}>₱{pendingAmount?.toLocaleString()}</strong> as your requested loan amount.
-              </p>
-              <p style={{ margin: '0 0 12px' }}>
-                Please be aware that <strong style={{ color: '#F0F4FF' }}>all first-time borrowers are approved at a starting loan amount of ₱5,000</strong>, regardless of the amount requested. This is part of our <strong style={{ color: '#8B5CF6' }}>Level Attainment System</strong>:
-              </p>
+              <p style={{ margin: '0 0 12px' }}>You selected <strong style={{ color: '#22C55E', fontFamily: 'Space Grotesk' }}>₱{pendingAmount?.toLocaleString()}</strong> as your requested loan amount.</p>
+              <p style={{ margin: '0 0 12px' }}><strong style={{ color: '#F0F4FF' }}>All first-time borrowers are approved at ₱5,000</strong> regardless of amount requested. This is part of our <strong style={{ color: '#8B5CF6' }}>Level Attainment System</strong>:</p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6, margin: '0 0 12px' }}>
-                {[
-                  { level: 'Level 1', amount: 'P5,000', desc: 'New borrower (starting limit)' },
-                  { level: 'Level 2', amount: 'P7,000', desc: 'After 1 clean loan' },
-                  { level: 'Level 3', amount: 'P9,000', desc: 'After 2 clean loans' },
-                  { level: 'Level 4', amount: 'P10,000', desc: 'After 3 clean loans (max)' },
-                ].map((l, i) => (
+                {[['Level 1', '₱5,000', 'New borrower'], ['Level 2', '₱7,000', 'After 1 clean loan'], ['Level 3', '₱9,000', 'After 2 clean loans'], ['Level 4', '₱10,000', 'After 3 clean loans (max)']].map(([l, a, d], i) => (
                   <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 10px', background: 'rgba(139,92,246,0.06)', borderRadius: 7, border: '1px solid rgba(139,92,246,0.12)' }}>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: '#8B5CF6', minWidth: 50 }}>{l.level}</span>
-                    <span style={{ fontWeight: 700, color: '#22C55E', minWidth: 56 }}>{l.amount}</span>
-                    <span style={{ fontSize: 12, color: '#4B5580' }}>{l.desc}</span>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: '#8B5CF6', minWidth: 50 }}>{l}</span>
+                    <span style={{ fontWeight: 700, color: '#22C55E', minWidth: 60, fontFamily: 'Space Grotesk' }}>{a}</span>
+                    <span style={{ fontSize: 12, color: '#4B5580' }}>{d}</span>
                   </div>
                 ))}
               </div>
-              <p style={{ margin: 0, fontSize: 12, color: '#7A8AAA', lineHeight: 1.7 }}>
-                In some cases, the admin may approve a higher starting amount based on their review of your application — however, <strong style={{ color: '#F0F4FF' }}>this is not guaranteed</strong> and is entirely at the admin's discretion. Submitting a higher amount does not guarantee you will receive it.
-              </p>
+              <p style={{ margin: 0, fontSize: 12, color: '#7A8AAA' }}>Admin may approve higher amounts at their discretion — this is not guaranteed.</p>
             </div>
-            <button
-              onClick={disclaimerCountdown === 0 ? confirmDisclaimer : undefined}
-              disabled={disclaimerCountdown > 0}
-              style={{
-                width: '100%', padding: '14px', borderRadius: 12, border: 'none',
-                background: disclaimerCountdown > 0 ? 'rgba(255,255,255,0.05)' : 'linear-gradient(135deg,#F59E0B,#EF4444)',
-                color: disclaimerCountdown > 0 ? '#4B5580' : '#fff',
-                fontSize: 14, fontWeight: 700, cursor: disclaimerCountdown > 0 ? 'not-allowed' : 'pointer',
-                fontFamily: 'Space Grotesk', transition: 'all 0.3s',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8
-              }}
-            >
-              {disclaimerCountdown > 0 ? (
-                <>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 24, height: 24, borderRadius: '50%', background: 'rgba(255,255,255,0.08)', fontSize: 13, fontWeight: 800 }}>{disclaimerCountdown}</span>
-                  Please read the above carefully...
-                </>
-              ) : (
-                'I Understand - Continue with P' + pendingAmount?.toLocaleString()
-              )}
+            <button onClick={disclaimerCountdown === 0 ? confirmDisclaimer : undefined} disabled={disclaimerCountdown > 0}
+              style={{ width: '100%', padding: 14, borderRadius: 12, border: 'none', background: disclaimerCountdown > 0 ? 'rgba(255,255,255,0.05)' : 'linear-gradient(135deg,#F59E0B,#EF4444)', color: disclaimerCountdown > 0 ? '#4B5580' : '#fff', fontSize: 14, fontWeight: 700, cursor: disclaimerCountdown > 0 ? 'not-allowed' : 'pointer', fontFamily: 'Space Grotesk', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+              {disclaimerCountdown > 0 ? (<><span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 24, height: 24, borderRadius: '50%', background: 'rgba(255,255,255,0.08)', fontSize: 13, fontWeight: 800 }}>{disclaimerCountdown}</span>Please read carefully...</>) : ('I Understand — Continue with ₱' + pendingAmount?.toLocaleString())}
             </button>
           </div>
         </div>
       )}
 
       {/* Header */}
-      <div style={{ background: 'linear-gradient(135deg,#0d1226,#141B2D)', borderBottom: '1px solid rgba(139,92,246,0.2)', padding: '20px 24px' }}>
-        <div style={{ maxWidth: 560, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+      <div style={{ background: 'linear-gradient(135deg,#0d1226,#141B2D)', borderBottom: '1px solid rgba(139,92,246,0.2)', padding: '18px 28px' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <img src="/favicon-96x96.png" alt="LoanMoneyfest" style={{ width: 48, height: 48, objectFit: 'contain' }} />
+            <img src="/favicon-96x96.png" alt="LoanMoneyfest" style={{ width: 44, height: 44, objectFit: 'contain' }} />
             <div>
               <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 20, color: '#F0F4FF' }}>
                 Loan<span style={{ background: 'linear-gradient(90deg,#60a5fa,#a78bfa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Moneyfest</span>
@@ -283,248 +223,237 @@ export default function PublicApplyPage() {
               <div style={{ fontSize: 11, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Loan Application</div>
             </div>
           </div>
-          <a href="/portal" style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '8px 16px', borderRadius: 10, background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.3)', color: '#a78bfa', fontSize: 13, fontWeight: 700, textDecoration: 'none', fontFamily: 'Space Grotesk', whiteSpace: 'nowrap' }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
-            My Portal
-          </a>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <a href="/faq" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 9, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: '#7A8AAA', fontSize: 13, fontWeight: 600, textDecoration: 'none', whiteSpace: 'nowrap' }}>
+              ❓ FAQ
+            </a>
+            <a href="/portal" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 9, background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.3)', color: '#a78bfa', fontSize: 13, fontWeight: 700, textDecoration: 'none', whiteSpace: 'nowrap', fontFamily: 'Space Grotesk' }}>
+              My Portal →
+            </a>
+          </div>
         </div>
       </div>
 
-      <div style={{ maxWidth: 560, margin: '0 auto', padding: '32px 20px' }}>
+      <div style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 28px 60px' }}>
 
-        {/* Progress steps */}
-        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 32, position: 'relative', zIndex: 1 }}>
-          {['Personal Info', 'Trustee', 'Loan Details'].map((label, i) => {
-            const num = i + 1
-            const done = step > num
-            const active = step === num
+        {/* Step indicator */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0, marginBottom: 36 }}>
+          {['Personal & Trustee Info', 'Loan Details'].map((label, i) => {
+            const num = i + 1; const done = step > num; const active = step === num
             return (
-              <div key={num} style={{ display: 'flex', alignItems: 'center', flex: i < 2 ? 1 : 'none' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-                  <div style={{ width: 32, height: 32, borderRadius: '50%', background: done ? '#22C55E' : active ? '#3B82F6' : 'rgba(255,255,255,0.05)', border: `2px solid ${done ? '#22C55E' : active ? '#3B82F6' : 'rgba(255,255,255,0.1)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 800, color: done || active ? '#fff' : '#4B5580' }}>
-                    {done ? "✓" : num}
-                  </div>
-                  <div style={{ fontSize: 10, color: active ? '#F0F4FF' : '#4B5580', fontWeight: active ? 700 : 400, whiteSpace: 'nowrap' }}>{label}</div>
+              <div key={num} style={{ display: 'flex', alignItems: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 18px', borderRadius: 24, background: active ? 'rgba(59,130,246,0.12)' : done ? 'rgba(34,197,94,0.08)' : 'transparent', border: `1px solid ${active ? 'rgba(59,130,246,0.3)' : done ? 'rgba(34,197,94,0.25)' : 'transparent'}` }}>
+                  <div style={{ width: 26, height: 26, borderRadius: '50%', background: done ? '#22C55E' : active ? '#3B82F6' : 'rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, color: done || active ? '#fff' : '#4B5580', flexShrink: 0 }}>{done ? '✓' : num}</div>
+                  <span style={{ fontSize: 13, fontWeight: active ? 700 : 500, color: active ? '#F0F4FF' : done ? '#22C55E' : '#4B5580', whiteSpace: 'nowrap', fontFamily: 'Space Grotesk' }}>{label}</span>
                 </div>
-                {i < 2 && <div style={{ flex: 1, height: 2, background: done ? '#22C55E' : 'rgba(255,255,255,0.06)', margin: '0 8px', marginBottom: 16 }} />}
+                {i < 1 && <div style={{ width: 40, height: 2, background: step > 1 ? '#22C55E' : 'rgba(255,255,255,0.06)', margin: '0 4px' }} />}
               </div>
             )
           })}
         </div>
 
-        <div style={{ background: '#141B2D', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, padding: '24px 22px', marginBottom: 24 }}>
+        {/* ── STEP 1: Two-column layout ── */}
+        {step === 1 && (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, alignItems: 'start' }}>
 
-          {/* Step 1 */}
-          {step === 1 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <h2 style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 20, color: '#F0F4FF', marginBottom: 6 }}>Personal Information</h2>
-              <div><label style={labelStyle}>Full Name *</label><input value={form.full_name} onChange={e => set('full_name', e.target.value)} placeholder="Enter your full name" style={inputStyle} /></div>
-              <div>
-                <label style={labelStyle}>Department *</label>
-                <select value={form.department} onChange={e => set('department', e.target.value)} style={{ ...inputStyle, cursor: 'pointer' }}>
-                  <option value="">Select department</option>
-                  {DEPARTMENTS.map(d => <option key={d} value={d}>{d}</option>)}
-                </select>
+            {/* Left: Personal Info */}
+            <div style={{ background: '#141B2D', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 18, padding: 28 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 22 }}>
+                <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(59,130,246,0.12)', border: '1px solid rgba(59,130,246,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>👤</div>
+                <div>
+                  <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 16, color: '#F0F4FF' }}>Personal Information</div>
+                  <div style={{ fontSize: 11, color: '#4B5580' }}>Your basic details</div>
+                </div>
               </div>
-              <div><label style={labelStyle}>Years of Tenure *</label><input value={form.tenure_years} onChange={e => set('tenure_years', e.target.value)} placeholder="e.g. 2.5" type="number" min="0" step="0.5" style={inputStyle} /></div>
-              <div><label style={labelStyle}>Phone Number *</label><input value={form.phone} onChange={e => set('phone', e.target.value)} placeholder="09XX XXX XXXX" style={inputStyle} /></div>
-              <div>
-                <label style={labelStyle}>Email Address *</label>
-                <input
-                  value={form.email}
-                  onChange={e => set('email', e.target.value)}
-                  placeholder="your@gmail.com or your@yahoo.com"
-                  type="email"
-                  style={{
-                    ...inputStyle,
-                    borderColor: form.email && validateEmail(form.email) ? 'rgba(239,68,68,0.5)' : form.email && !validateEmail(form.email) ? 'rgba(34,197,94,0.4)' : 'rgba(255,255,255,0.08)'
-                  }}
-                />
-                {form.email && validateEmail(form.email) && (
-                  <div style={{ fontSize: 11, color: '#EF4444', marginTop: 5 }}>
-                    ⚠️ {validateEmail(form.email)}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <div><label style={lbl}>Full Name *</label><input value={form.full_name} onChange={e => set('full_name', e.target.value)} placeholder="Enter your full name" style={inp} /></div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  <div>
+                    <label style={lbl}>Department *</label>
+                    <select value={form.department} onChange={e => set('department', e.target.value)} style={{ ...inp, cursor: 'pointer' }}>
+                      <option value="">Select...</option>
+                      {DEPARTMENTS.map(d => <option key={d} value={d}>{d}</option>)}
+                    </select>
                   </div>
-                )}
-                {form.email && !validateEmail(form.email) && (
-                  <div style={{ fontSize: 11, color: '#22C55E', marginTop: 5 }}>
-                    ✓ Valid email address
-                  </div>
-                )}
+                  <div><label style={lbl}>Years of Tenure *</label><input value={form.tenure_years} onChange={e => set('tenure_years', e.target.value)} placeholder="e.g. 2.5" type="number" min="0" step="0.5" style={inp} /></div>
+                </div>
+                <div><label style={lbl}>Phone Number *</label><input value={form.phone} onChange={e => set('phone', e.target.value)} placeholder="09XX XXX XXXX" style={inp} /></div>
+                <div>
+                  <label style={lbl}>Email Address *</label>
+                  <input value={form.email} onChange={e => set('email', e.target.value)} placeholder="your@gmail.com" type="email"
+                    style={{ ...inp, borderColor: form.email && validateEmail(form.email) ? 'rgba(239,68,68,0.5)' : form.email && !validateEmail(form.email) ? 'rgba(34,197,94,0.4)' : 'rgba(255,255,255,0.08)' }} />
+                  {form.email && validateEmail(form.email) && <div style={{ fontSize: 11, color: '#EF4444', marginTop: 4 }}>⚠️ {validateEmail(form.email)}</div>}
+                  {form.email && !validateEmail(form.email) && <div style={{ fontSize: 11, color: '#22C55E', marginTop: 4 }}>✓ Valid email</div>}
+                </div>
+                <div><label style={lbl}>Home Address *</label><textarea value={form.address} onChange={e => set('address', e.target.value)} placeholder="Enter your complete home address" rows={2} style={{ ...inp, resize: 'none' }} /></div>
               </div>
-              <div><label style={labelStyle}>Home Address *</label><textarea value={form.address} onChange={e => set('address', e.target.value)} placeholder="Enter your complete address" rows={2} style={{ ...inputStyle, resize: 'none' }} /></div>
             </div>
-          )}
 
-          {/* Step 2 */}
-          {step === 2 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <h2 style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 20, color: '#F0F4FF', marginBottom: 6 }}>Trustee / Guarantor</h2>
-              <p style={{ fontSize: 13, color: '#7A8AAA', marginTop: 0 }}>Please provide a trustee who can vouch for you and may be contacted for follow-up.</p>
-              <div><label style={labelStyle}>Trustee Full Name *</label><input value={form.trustee_name} onChange={e => set('trustee_name', e.target.value)} placeholder="Enter trustee full name" style={inputStyle} /></div>
-              <div><label style={labelStyle}>Trustee Phone Number *</label><input value={form.trustee_phone} onChange={e => set('trustee_phone', e.target.value)} placeholder="09XX XXX XXXX" style={inputStyle} /></div>
-              <div><label style={labelStyle}>Relationship to Applicant *</label><input value={form.trustee_relationship} onChange={e => set('trustee_relationship', e.target.value)} placeholder="e.g. Spouse, Parent, Colleague" style={inputStyle} /></div>
-            </div>
-          )}
-
-          {/* Step 3 */}
-          {step === 3 && (
+            {/* Right: Trustee */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-              <h2 style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 20, color: '#F0F4FF', marginBottom: 6 }}>Loan Details</h2>
-
-              {/* Loan Amount */}
-              <div>
-                <label style={labelStyle}>Loan Amount *</label>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                  {LOAN_AMOUNTS.map(amt => (
-                    <button key={amt} onClick={() => form.loan_amount === amt ? null : startDisclaimer(amt)} style={{ padding: '14px', borderRadius: 10, border: `2px solid ${form.loan_amount === amt ? '#3B82F6' : 'rgba(255,255,255,0.08)'}`, background: form.loan_amount === amt ? 'rgba(59,130,246,0.15)' : 'rgba(255,255,255,0.03)', color: form.loan_amount === amt ? '#F0F4FF' : '#7A8AAA', cursor: 'pointer', textAlign: 'center', transition: 'all 0.15s' }}>
-                      <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 20, color: form.loan_amount === amt ? '#22C55E' : '#7A8AAA' }}>₱{amt.toLocaleString()}</div>
-                      <div style={{ fontSize: 11, marginTop: 2 }}>₱{(amt * (1 + interestRate) / 4).toFixed(2)}/cutoff</div>
-                    </button>
-                  ))}
+              <div style={{ background: '#141B2D', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 18, padding: 28 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 22 }}>
+                  <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>🤝</div>
+                  <div>
+                    <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 16, color: '#F0F4FF' }}>Trustee / Guarantor</div>
+                    <div style={{ fontSize: 11, color: '#4B5580' }}>Someone who can vouch for you</div>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                  <div><label style={lbl}>Trustee Full Name *</label><input value={form.trustee_name} onChange={e => set('trustee_name', e.target.value)} placeholder="Enter trustee full name" style={inp} /></div>
+                  <div><label style={lbl}>Trustee Phone *</label><input value={form.trustee_phone} onChange={e => set('trustee_phone', e.target.value)} placeholder="09XX XXX XXXX" style={inp} /></div>
+                  <div><label style={lbl}>Relationship *</label><input value={form.trustee_relationship} onChange={e => set('trustee_relationship', e.target.value)} placeholder="e.g. Spouse, Parent, Colleague" style={inp} /></div>
                 </div>
               </div>
 
-              {/* Loan Purpose */}
-              <div>
-                <label style={labelStyle}>Loan Purpose</label>
-                <textarea value={form.loan_purpose} onChange={e => set('loan_purpose', e.target.value)} placeholder="Briefly describe what this loan is for (optional)" rows={2} style={{ ...inputStyle, resize: 'none' }} />
+              {/* Info blurb */}
+              <div style={{ background: 'rgba(59,130,246,0.05)', border: '1px solid rgba(59,130,246,0.15)', borderRadius: 14, padding: '18px 20px' }}>
+                <div style={{ fontSize: 12, color: '#60A5FA', fontWeight: 700, marginBottom: 8 }}>ℹ️ What to expect</div>
+                <div style={{ fontSize: 12, color: '#4B5580', lineHeight: 1.8 }}>
+                  Applications are reviewed manually. You'll receive an access code after submitting — use it to track your status in the Borrower Portal.
+                </div>
+                <a href="/faq" style={{ display: 'inline-block', marginTop: 10, fontSize: 12, color: '#3B82F6', textDecoration: 'none', fontWeight: 600 }}>Read the FAQ →</a>
+              </div>
+            </div>
+
+          </div>
+        )}
+
+        {/* ── STEP 2: Loan Details — two-column ── */}
+        {step === 2 && (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, alignItems: 'start' }}>
+
+            {/* Left: Amount + Release */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+              {/* Loan Amount */}
+              <div style={{ background: '#141B2D', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 18, padding: 28 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
+                  <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>💰</div>
+                  <div>
+                    <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 16, color: '#F0F4FF' }}>Loan Amount</div>
+                    <div style={{ fontSize: 11, color: '#4B5580' }}>Select how much you need</div>
+                  </div>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
+                  {LOAN_AMOUNTS.map(amt => (
+                    <button key={amt} onClick={() => form.loan_amount === amt ? null : startDisclaimer(amt)}
+                      style={{ padding: '16px 12px', borderRadius: 12, border: `2px solid ${form.loan_amount === amt ? '#3B82F6' : 'rgba(255,255,255,0.07)'}`, background: form.loan_amount === amt ? 'rgba(59,130,246,0.12)' : 'rgba(255,255,255,0.02)', cursor: 'pointer', textAlign: 'center', transition: 'all 0.15s' }}>
+                      <div style={{ fontFamily: 'Space Grotesk', fontWeight: 900, fontSize: 22, color: form.loan_amount === amt ? '#22C55E' : '#7A8AAA' }}>₱{amt.toLocaleString()}</div>
+                      <div style={{ fontSize: 11, color: '#4B5580', marginTop: 3 }}>₱{(amt * (1 + interestRate) / 4).toFixed(2)}/cutoff</div>
+                    </button>
+                  ))}
+                </div>
+                <div><label style={lbl}>Loan Purpose (optional)</label><textarea value={form.loan_purpose} onChange={e => set('loan_purpose', e.target.value)} placeholder="Briefly describe what this loan is for..." rows={2} style={{ ...inp, resize: 'none' }} /></div>
               </div>
 
               {/* Release Method */}
-              <div>
-                <label style={labelStyle}>Preferred Release Method *</label>
+              <div style={{ background: '#141B2D', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 18, padding: 28 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
+                  <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>🏦</div>
+                  <div>
+                    <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 16, color: '#F0F4FF' }}>Release Method</div>
+                    <div style={{ fontSize: 11, color: '#4B5580' }}>How you want to receive your loan</div>
+                  </div>
+                </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {[
-                    { value: 'Physical Cash', logo: '/cash-logo.png', desc: 'Receive your loan in cash. No transaction fee.', fee: null },
-                    { value: 'GCash', logo: '/gcash-logo.png', desc: 'Sent to your GCash number.', fee: 'Fee: P15 or 1% (whichever is higher)' },
-                    { value: 'RCBC', logo: '/rcbc-logo.png', desc: 'Transferred to your RCBC account. Free if RCBC to RCBC.', fee: null },
-                    { value: 'Other Bank Transfer', logo: '/bank-logo.png', desc: 'Instapay/PESONet to any non-RCBC bank. You must send the exact amount due - transfer fees are on your end.', fee: 'Borrower covers transfer fee' },
+                    { value: 'Physical Cash', logo: '/cash-logo.png', desc: 'Receive in cash. No transaction fee.', fee: null },
+                    { value: 'GCash', logo: '/gcash-logo.png', desc: 'Sent to your GCash number.', fee: '₱15 or 1%' },
+                    { value: 'RCBC', logo: '/rcbc-logo.png', desc: 'Transferred to your RCBC account.', fee: null },
+                    { value: 'Other Bank Transfer', logo: '/bank-logo.png', desc: 'Instapay/PESONet. Borrower covers fee.', fee: 'You cover fee' },
                   ].map(opt => (
-                    <button key={opt.value} onClick={() => set('release_method', opt.value)} style={{ padding: '12px 14px', borderRadius: 10, border: `2px solid ${form.release_method === opt.value ? '#3B82F6' : 'rgba(255,255,255,0.07)'}`, background: form.release_method === opt.value ? 'rgba(59,130,246,0.1)' : 'rgba(255,255,255,0.02)', cursor: 'pointer', textAlign: 'left', transition: 'all 0.15s', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
+                    <button key={opt.value} onClick={() => set('release_method', opt.value)}
+                      style={{ padding: '11px 14px', borderRadius: 10, border: `2px solid ${form.release_method === opt.value ? '#3B82F6' : 'rgba(255,255,255,0.07)'}`, background: form.release_method === opt.value ? 'rgba(59,130,246,0.08)' : 'rgba(255,255,255,0.02)', cursor: 'pointer', textAlign: 'left', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, transition: 'all 0.15s' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <img src={opt.logo} alt={opt.value} style={{ width: 32, height: 32, objectFit: 'contain', flexShrink: 0 }} />
+                        <img src={opt.logo} alt={opt.value} style={{ width: 28, height: 28, objectFit: 'contain' }} />
                         <div>
                           <div style={{ fontWeight: 700, fontSize: 13, color: form.release_method === opt.value ? '#F0F4FF' : '#7A8AAA' }}>{opt.value}</div>
-                          <div style={{ fontSize: 11, color: '#4B5580', marginTop: 2 }}>{opt.desc}</div>
+                          <div style={{ fontSize: 11, color: '#4B5580' }}>{opt.desc}</div>
                         </div>
                       </div>
-                      {opt.fee && <div style={{ fontSize: 11, color: '#F59E0B', background: 'rgba(245,158,11,0.08)', padding: '3px 8px', borderRadius: 6, flexShrink: 0 }}>{opt.fee}</div>}
+                      {opt.fee && <span style={{ fontSize: 10, color: '#F59E0B', background: 'rgba(245,158,11,0.08)', padding: '2px 8px', borderRadius: 6, flexShrink: 0 }}>{opt.fee}</span>}
                     </button>
                   ))}
                 </div>
 
-                {form.release_method && !['Physical Cash', 'RCBC'].includes(form.release_method) && (
-                  <div style={{ marginTop: 8, padding: '9px 12px', background: 'rgba(245,158,11,0.07)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 8, fontSize: 12, color: '#F59E0B' }}>
-                    The applicable transaction fee will be deducted from your approved loan amount before release.
-                  </div>
-                )}
-
-                {/* GCash details */}
+                {/* Conditional account fields */}
                 {form.release_method === 'GCash' && (
-                  <div style={{ marginTop: 12, padding: '16px', background: 'rgba(0,163,255,0.05)', border: '1px solid rgba(0,163,255,0.2)', borderRadius: 12, display: 'flex', flexDirection: 'column', gap: 12 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <img src="/gcash-logo.png" alt="GCash" style={{ height: 20, objectFit: 'contain' }} />
-                      <span style={{ fontSize: 12, fontWeight: 700, color: '#60B8FF' }}>GCash Account Details</span>
-                    </div>
-                    <div><label style={labelStyle}>GCash Number *</label><input value={form.gcash_number} onChange={e => set('gcash_number', e.target.value)} placeholder="09XX XXX XXXX" style={inputStyle} /></div>
-                    <div><label style={labelStyle}>GCash Full Name *</label><input value={form.gcash_name} onChange={e => set('gcash_name', e.target.value)} placeholder="Full name linked to this GCash number" style={inputStyle} /></div>
+                  <div style={{ marginTop: 14, padding: 16, background: 'rgba(0,163,255,0.05)', border: '1px solid rgba(0,163,255,0.2)', borderRadius: 12, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: '#60B8FF' }}>📱 GCash Account Details</div>
+                    <div><label style={lbl}>GCash Number *</label><input value={form.gcash_number} onChange={e => set('gcash_number', e.target.value)} placeholder="09XX XXX XXXX" style={inp} /></div>
+                    <div><label style={lbl}>GCash Full Name *</label><input value={form.gcash_name} onChange={e => set('gcash_name', e.target.value)} placeholder="Full name on GCash" style={inp} /></div>
                   </div>
                 )}
-
-                {/* RCBC details */}
                 {form.release_method === 'RCBC' && (
-                  <div style={{ marginTop: 12, padding: '16px', background: 'rgba(220,38,38,0.05)', border: '1px solid rgba(220,38,38,0.2)', borderRadius: 12, display: 'flex', flexDirection: 'column', gap: 12 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <img src="/rcbc-logo.png" alt="RCBC" style={{ height: 20, objectFit: 'contain' }} />
-                      <span style={{ fontSize: 12, fontWeight: 700, color: '#F87171' }}>RCBC Account Details</span>
-                    </div>
-                    <div><label style={labelStyle}>RCBC Account Number *</label><input value={form.bank_account_number} onChange={e => set('bank_account_number', e.target.value)} placeholder="Enter your RCBC account number" style={inputStyle} /></div>
+                  <div style={{ marginTop: 14, padding: 16, background: 'rgba(220,38,38,0.05)', border: '1px solid rgba(220,38,38,0.2)', borderRadius: 12 }}>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: '#F87171', marginBottom: 12 }}>🏦 RCBC Account Details</div>
+                    <div><label style={lbl}>Account Number *</label><input value={form.bank_account_number} onChange={e => set('bank_account_number', e.target.value)} placeholder="Enter RCBC account number" style={inp} /></div>
                   </div>
                 )}
-
-                {/* Other Bank details */}
                 {form.release_method === 'Other Bank Transfer' && (
-                  <div style={{ marginTop: 12, padding: '16px', background: 'rgba(139,92,246,0.05)', border: '1px solid rgba(139,92,246,0.2)', borderRadius: 12, display: 'flex', flexDirection: 'column', gap: 12 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <img src="/bank-logo.png" alt="Bank" style={{ height: 20, objectFit: 'contain' }} />
-                      <span style={{ fontSize: 12, fontWeight: 700, color: '#A78BFA' }}>Bank Account Details</span>
-                    </div>
-                    <div><label style={labelStyle}>Bank Name *</label><input value={form.bank_name} onChange={e => set('bank_name', e.target.value)} placeholder="e.g. BDO, BPI, Metrobank, UnionBank" style={inputStyle} /></div>
-                    <div><label style={labelStyle}>Account Number *</label><input value={form.bank_account_number} onChange={e => set('bank_account_number', e.target.value)} placeholder="Enter your account number" style={inputStyle} /></div>
+                  <div style={{ marginTop: 14, padding: 16, background: 'rgba(139,92,246,0.05)', border: '1px solid rgba(139,92,246,0.2)', borderRadius: 12, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: '#A78BFA', marginBottom: 0 }}>🏦 Bank Account Details</div>
+                    <div><label style={lbl}>Bank Name *</label><input value={form.bank_name} onChange={e => set('bank_name', e.target.value)} placeholder="e.g. BDO, BPI, Metrobank" style={inp} /></div>
+                    <div><label style={lbl}>Account Number *</label><input value={form.bank_account_number} onChange={e => set('bank_account_number', e.target.value)} placeholder="Enter your account number" style={inp} /></div>
                   </div>
                 )}
               </div>
+            </div>
 
-              {/* Interest Calculator */}
-              {form.loan_amount && (() => {
+            {/* Right: Calculator + Terms */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+              {/* Loan Calculator */}
+              {form.loan_amount ? (() => {
                 const principal = parseFloat(form.loan_amount)
                 const interest = principal * interestRate
-                const totalRepayment = principal + interest
-                const perInstallment = totalRepayment / 4
-                let feeAmount = 0
-                let feeLabel = ''
-                if (form.release_method === 'GCash') { feeAmount = Math.max(15, principal * 0.01); feeLabel = 'GCash fee (P15 or 1%, whichever is higher)' }
-                else if (form.release_method === 'Other Bank Transfer') { feeAmount = null; feeLabel = 'Transfer fee varies (Instapay/PESONet)' }
-                const amountReceived = feeAmount > 0 ? principal - feeAmount : null
-
-                const today = new Date()
-                const day = today.getDate(), month = today.getMonth(), year = today.getFullYear()
-                let release
-                if (day <= 5) release = new Date(year, month, 5)
-                else if (day <= 20) release = new Date(year, month, 20)
-                else release = new Date(year, month + 1, 5)
-
-                const dueDates = []
-                for (let i = 1; i <= 4; i++) {
-                  const d = new Date(release)
-                  if (release.getDate() <= 5) { d.setMonth(d.getMonth() + Math.floor((i-1)/2)); d.setDate(i%2===1?20:5) }
-                  else { d.setMonth(d.getMonth() + Math.ceil(i/2)); d.setDate(i%2===1?5:20) }
-                  dueDates.push(d)
-                }
-
+                const total = principal + interest
+                const perInst = total / 4
+                let feeAmt = 0, feeLabel = ''
+                if (form.release_method === 'GCash') { feeAmt = Math.max(15, principal * 0.01); feeLabel = 'GCash fee (₱15 or 1%, whichever is higher)' }
+                else if (form.release_method === 'Other Bank Transfer') { feeLabel = 'Transfer fee varies (Instapay/PESONet)' }
+                const received = feeAmt > 0 ? principal - feeAmt : null
+                const dueDates = calcDueDates()
                 return (
-                  <div style={{ background: 'linear-gradient(135deg,#0f1729,#141B2D)', border: '1px solid rgba(34,197,94,0.25)', borderRadius: 14, overflow: 'hidden' }}>
-                    <div style={{ padding: '14px 18px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <div style={{ width: 28, height: 28, borderRadius: 8, background: 'rgba(34,197,94,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }}>🧮</div>
+                  <div style={{ background: 'linear-gradient(135deg,#0f1a2e,#141B2D)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 18, overflow: 'hidden' }}>
+                    <div style={{ padding: '18px 22px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <div style={{ width: 34, height: 34, borderRadius: 9, background: 'rgba(34,197,94,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>🧮</div>
                       <div>
-                        <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 13, color: '#F0F4FF' }}>Loan Summary</div>
+                        <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 15, color: '#F0F4FF' }}>Loan Summary</div>
                         <div style={{ fontSize: 11, color: '#4B5580' }}>Based on your selections</div>
                       </div>
                     </div>
-                    <div style={{ padding: '16px 18px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                    <div style={{ padding: '18px 22px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                       {[
-                        { label: 'Loan Amount', value: 'P' + principal.toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#F0F4FF', sub: 'Principal' },
-                        { label: `Interest (${(interestRate * 100).toFixed(0)}% flat)`, value: 'P' + interest.toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#F59E0B', sub: 'One-time' },
-                        { label: 'Total Repayment', value: 'P' + totalRepayment.toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#EF4444', sub: 'Over 4 payments' },
-                        { label: 'Per Installment', value: 'P' + perInstallment.toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#22C55E', sub: 'Every cutoff' },
+                        { label: 'Loan Amount', value: '₱' + principal.toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#F0F4FF', sub: 'Principal' },
+                        { label: `Interest (${(interestRate * 100).toFixed(0)}% flat)`, value: '₱' + interest.toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#F59E0B', sub: 'One-time' },
+                        { label: 'Total Repayment', value: '₱' + total.toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#EF4444', sub: 'Over 4 payments' },
+                        { label: 'Per Installment', value: '₱' + perInst.toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#22C55E', sub: 'Every cutoff' },
                       ].map((item, i) => (
-                        <div key={i} style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 10, padding: '10px 12px' }}>
-                          <div style={{ fontSize: 10, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>{item.label}</div>
-                          <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 16, color: item.color }}>{item.value}</div>
+                        <div key={i} style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 10, padding: '12px 14px' }}>
+                          <div style={{ fontSize: 10, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 5 }}>{item.label}</div>
+                          <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 17, color: item.color }}>{item.value}</div>
                           <div style={{ fontSize: 10, color: '#4B5580', marginTop: 2 }}>{item.sub}</div>
                         </div>
                       ))}
                     </div>
                     {feeLabel && (
-                      <div style={{ margin: '0 18px 12px', padding: '10px 14px', background: 'rgba(245,158,11,0.07)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 9 }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 6 }}>
-                          <div style={{ fontSize: 12, color: '#F59E0B' }}>⚠️ {feeLabel}</div>
-                          {feeAmount > 0 && <div style={{ fontSize: 12, fontWeight: 700, color: '#F59E0B' }}>-P{feeAmount.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</div>}
-                        </div>
-                        {amountReceived && <div style={{ marginTop: 6, fontSize: 13, color: '#F0F4FF', fontWeight: 700 }}>You will receive: <span style={{ color: '#22C55E' }}>P{amountReceived.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span></div>}
+                      <div style={{ margin: '0 22px 12px', padding: '10px 14px', background: 'rgba(245,158,11,0.07)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 9 }}>
+                        <div style={{ fontSize: 12, color: '#F59E0B' }}>⚠️ {feeLabel}</div>
+                        {received && <div style={{ fontSize: 13, fontWeight: 700, color: '#F0F4FF', marginTop: 4 }}>You will receive: <span style={{ color: '#22C55E' }}>₱{received.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span></div>}
                       </div>
                     )}
-                    <div style={{ padding: '0 18px 16px' }}>
+                    <div style={{ padding: '0 22px 20px' }}>
                       <div style={{ fontSize: 11, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>Payment Schedule</div>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
                         {dueDates.map((date, i) => (
-                          <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 8 }}>
+                          <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 13px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 9 }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                              <div style={{ width: 20, height: 20, borderRadius: '50%', background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(139,92,246,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 800, color: '#8B5CF6' }}>{i+1}</div>
-                              <span style={{ fontSize: 12, color: '#CBD5F0' }}>Installment {i+1}</span>
+                              <div style={{ width: 20, height: 20, borderRadius: '50%', background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(139,92,246,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 800, color: '#8B5CF6' }}>{i + 1}</div>
+                              <span style={{ fontSize: 12, color: '#CBD5F0' }}>Installment {i + 1}</span>
                             </div>
                             <div style={{ textAlign: 'right' }}>
-                              <div style={{ fontSize: 12, fontWeight: 700, color: '#22C55E' }}>P{perInstallment.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</div>
+                              <div style={{ fontSize: 12, fontWeight: 700, color: '#22C55E' }}>₱{perInst.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</div>
                               <div style={{ fontSize: 10, color: '#4B5580' }}>{date.toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
                             </div>
                           </div>
@@ -533,101 +462,60 @@ export default function PublicApplyPage() {
                     </div>
                   </div>
                 )
-              })()}
+              })() : (
+                <div style={{ background: '#141B2D', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 18, padding: 32, textAlign: 'center' }}>
+                  <div style={{ fontSize: 40, marginBottom: 12 }}>🧮</div>
+                  <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 15, color: '#F0F4FF', marginBottom: 6 }}>Loan Calculator</div>
+                  <div style={{ fontSize: 13, color: '#4B5580' }}>Select a loan amount on the left to see your payment breakdown and schedule.</div>
+                </div>
+              )}
 
-              {/* Terms */}
-              <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, padding: '14px', fontSize: 12, color: '#7A8AAA', lineHeight: 1.7, maxHeight: 120, overflowY: 'auto' }}>
-                <strong style={{ color: '#F0F4FF' }}>Terms & Conditions:</strong> By submitting this application, I confirm that all information provided is accurate. I understand that loans are subject to {(interestRate * 100).toFixed(0)}% flat interest rate, repayable in 4 equal installments every 5th and 20th of the month. Late payments will result in credit score deductions. I authorize LM Management to verify my information and contact my trustee if necessary.
+              {/* Terms + Submit */}
+              <div style={{ background: '#141B2D', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 18, padding: 24 }}>
+                <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, padding: '14px 16px', fontSize: 12, color: '#7A8AAA', lineHeight: 1.7, maxHeight: 100, overflowY: 'auto', marginBottom: 14 }}>
+                  <strong style={{ color: '#F0F4FF' }}>Terms & Conditions:</strong> By submitting, I confirm all information is accurate. I understand loans are subject to {(interestRate * 100).toFixed(0)}% flat interest, repayable in 4 equal installments every 5th and 20th of the month. Late payments result in credit score deductions. I authorize LM Management to verify my information and contact my trustee if necessary.
+                </div>
+                <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer', marginBottom: 14 }}>
+                  <input type="checkbox" checked={form.agreed} onChange={e => set('agreed', e.target.checked)} style={{ marginTop: 2, width: 16, height: 16, accentColor: '#3B82F6', flexShrink: 0 }} />
+                  <span style={{ fontSize: 13, color: '#7A8AAA', lineHeight: 1.6 }}>I have read and agree to the <strong style={{ color: '#F0F4FF' }}>Terms & Conditions</strong>.</span>
+                </label>
+                {error && (
+                  <div style={{ padding: '10px 14px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, fontSize: 13, color: '#EF4444', marginBottom: 14 }}>⚠️ {error}</div>
+                )}
+                <button onClick={handleSubmit} disabled={loading}
+                  style={{ width: '100%', padding: '14px', borderRadius: 12, border: 'none', background: loading ? 'rgba(255,255,255,0.05)' : 'linear-gradient(135deg,#22C55E,#3B82F6)', color: loading ? '#4B5580' : '#fff', fontSize: 14, fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', fontFamily: 'Space Grotesk', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                  {loading ? 'Submitting...' : '🚀 Submit Application'}
+                </button>
               </div>
-              <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer' }}>
-                <input type="checkbox" checked={form.agreed} onChange={e => set('agreed', e.target.checked)} style={{ marginTop: 2, width: 16, height: 16, accentColor: '#3B82F6', flexShrink: 0 }} />
-                <span style={{ fontSize: 13, color: '#7A8AAA', lineHeight: 1.6 }}>I have read and agree to the <strong style={{ color: '#F0F4FF' }}>Terms & Conditions</strong> of this loan application.</span>
-              </label>
-            </div>
-          )}
-        </div>
 
-        {/* Error */}
-        {error && (
-          <div style={{ marginTop: 16, padding: '10px 14px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, fontSize: 13, color: '#EF4444' }}>
-            ⚠️ {error}
+            </div>
           </div>
         )}
 
+        {/* Error (step 1) */}
+        {step === 1 && error && (
+          <div style={{ marginTop: 16, padding: '10px 14px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, fontSize: 13, color: '#EF4444' }}>⚠️ {error}</div>
+        )}
+
         {/* Navigation */}
-        <div style={{ display: 'flex', gap: 12, marginTop: 20 }}>
-          {step > 1 && (
-            <button onClick={() => { setStep(s => s - 1); setError('') }} style={{ flex: 1, padding: '13px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.08)', background: 'transparent', color: '#7A8AAA', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>
+        <div style={{ display: 'flex', gap: 12, marginTop: 24, maxWidth: step === 1 ? '100%' : 'none' }}>
+          {step === 2 && (
+            <button onClick={() => { setStep(1); setError('') }}
+              style={{ padding: '13px 28px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.08)', background: 'transparent', color: '#7A8AAA', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>
               ← Back
             </button>
           )}
-          {step < 3 ? (
-            <button onClick={handleNext} style={{ flex: 2, padding: '13px', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#3B82F6,#8B5CF6)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'Space Grotesk' }}>
-              Continue →
-            </button>
-          ) : (
-            <button onClick={handleSubmit} disabled={loading} style={{ flex: 2, padding: '13px', borderRadius: 10, border: 'none', background: loading ? 'rgba(255,255,255,0.05)' : 'linear-gradient(135deg,#22C55E,#3B82F6)', color: loading ? '#4B5580' : '#fff', fontSize: 14, fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-              {loading ? 'Submitting...' : "🚀 Submit Application"}
+          {step === 1 && (
+            <button onClick={handleNext}
+              style={{ marginLeft: 'auto', padding: '13px 36px', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#3B82F6,#8B5CF6)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'Space Grotesk' }}>
+              Continue to Loan Details →
             </button>
           )}
         </div>
 
-        {/* Footer note */}
         <p style={{ textAlign: 'center', fontSize: 12, color: '#4B5580', marginTop: 24, lineHeight: 1.7 }}>
-          Your information is kept private and secure. For inquiries contact your department admin.
+          Your information is kept private and secure. For inquiries contact your department admin. · <a href="/faq" style={{ color: '#3B82F6', textDecoration: 'none' }}>View FAQ</a>
         </p>
-
-        {/* FAQ */}
-        <div style={{ marginTop: 40, marginBottom: 40 }}>
-          <h3 style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 16, color: '#F0F4FF', marginBottom: 16, textAlign: 'center' }}>❓ Frequently Asked Questions</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <FAQItem question="Who can apply for a loan?" answer="This lending program is exclusively available to active employees of MySource Solutions. You must be currently employed and in good standing to be eligible. Applicants from outside the company will not be processed." />
-            <FAQItem question="How much can I borrow?" answer="First-time borrowers are approved for ₱5,000. Your limit increases as you build a good repayment history — up to ₱10,000 over time." />
-            <FAQItem question="How is the interest calculated?" answer={`We use a flat ${(interestRate * 100).toFixed(0)}% interest rate on the principal. For example, a ₱5,000 loan has a total repayment of ₱${(5000 * (1 + interestRate)).toLocaleString('en-PH', { minimumFractionDigits: 2 })}, split into 4 installments of ₱${(5000 * (1 + interestRate) / 4).toLocaleString('en-PH', { minimumFractionDigits: 2 })} each.`} />
-            <FAQItem question="When are payments due?" answer="Payments are collected every 5th and 20th of the month — that's 2 payments per month for 2 months until your loan is fully paid." />
-            <FAQItem question="Can I apply for another loan while I have an existing one?" answer="No. You must fully settle your current loan before applying for a new one. No rollovers or extensions are allowed." />
-            <FAQItem question="What happens if I miss a payment?" answer="Missed payments will negatively affect your credit score and may freeze your loan limit increase. Consistent late payments may result in your loan being flagged as defaulted." />
-            <FAQItem question="How will my loan be released and are there fees?" answer="Once approved, your loan will be released via your chosen method — Physical Cash, GCash, RCBC, or Other Bank Transfer. Release fees vary: Physical Cash and RCBC-to-RCBC are free, GCash charges P15 or 1% (whichever is higher), and other bank transfers require the borrower to cover the transfer fee. Fees are deducted from your approved amount before release." />
-            <FAQItem question="What are the accepted repayment methods?" answer="You can repay your loan using any of the following methods. Always upload your proof of payment through the Borrower Portal after every transaction.">
-              <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {[
-                  { logo: '/cash-logo.png', label: 'Physical Cash', fee: 'Free', desc: 'Pay your admin directly in person. No fees, no transfer needed.', freebie: true, border: 'rgba(34,197,94,0.25)' },
-                  { logo: '/gcash-logo.png', label: 'GCash', fee: 'P15 or 1%', desc: 'Send to the admin GCash number. Fee is whichever is higher.', freebie: false, border: 'rgba(0,163,255,0.25)' },
-                  { logo: '/rcbc-logo.png', label: 'RCBC to RCBC', fee: 'Free', desc: 'Transfer directly to the admin RCBC account. Same-bank transfers are free.', freebie: true, border: 'rgba(220,38,38,0.25)' },
-                  { logo: '/bank-logo.png', label: 'Other Bank (Instapay/PESONet)', fee: 'You cover fee', desc: 'Transfer from any other bank. You must send the exact amount due - transfer fees are on your end.', freebie: false, border: 'rgba(139,92,246,0.25)' },
-                ].map((item, i) => (
-                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 14, background: '#0B0F1A', border: `1px solid ${item.border}`, borderRadius: 12, padding: '14px 16px' }}>
-                    <img src={item.logo} alt={item.label} style={{ width: 40, height: 40, objectFit: 'contain', flexShrink: 0 }} />
-                    <div style={{ flex: 1 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3, flexWrap: 'wrap' }}>
-                        <span style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 13, color: '#F0F4FF' }}>{item.label}</span>
-                        <span style={{ fontSize: 11, fontWeight: 700, color: item.freebie ? '#22C55E' : '#F59E0B', background: item.freebie ? 'rgba(34,197,94,0.08)' : 'rgba(245,158,11,0.08)', padding: '2px 10px', borderRadius: 20, border: `1px solid ${item.freebie ? 'rgba(34,197,94,0.2)' : 'rgba(245,158,11,0.2)'}` }}>{item.fee}</span>
-                      </div>
-                      <div style={{ fontSize: 12, color: '#4B5580', lineHeight: 1.5 }}>{item.desc}</div>
-                    </div>
-                  </div>
-                ))}
-                <div style={{ marginTop: 4, padding: '10px 14px', background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 9, fontSize: 12, color: '#F59E0B', lineHeight: 1.6 }}>
-                  Always upload your proof of payment through the <strong>Borrower Portal</strong> after every transaction so your admin can confirm it.
-                </div>
-              </div>
-            </FAQItem>
-            <FAQItem question="How long does approval take?" answer="Applications are reviewed manually by the admin. You will be contacted once your application has been approved or rejected." />
-            <FAQItem question="Who can I contact for questions?" answer="For any inquiries, you may reach out to the following admins via Microsoft Teams chat:">
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 10 }}>
-                {[{ name: 'John Paul Lacaron' }, { name: 'Charlou John Ramil' }].map((person, pi) => (
-                  <div key={pi} style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(59,130,246,0.07)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: 9, padding: '10px 12px' }}>
-                    <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'linear-gradient(135deg,#3B82F6,#8B5CF6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 13, color: '#fff', flexShrink: 0 }}>{person.name.charAt(0)}</div>
-                    <div>
-                      <div style={{ fontWeight: 700, color: '#F0F4FF', fontSize: 13 }}>{person.name}</div>
-                      <div style={{ fontSize: 11, color: '#3B82F6' }}>Microsoft Teams</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </FAQItem>
-          </div>
-        </div>
 
       </div>
     </div>

@@ -1,0 +1,201 @@
+import { useState } from 'react'
+import { useEffect } from 'react'
+import { supabase } from '../lib/supabase'
+
+function FAQItem({ question, answer, children }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div style={{ background: 'rgba(255,255,255,0.02)', border: `1px solid ${open ? 'rgba(59,130,246,0.3)' : 'rgba(255,255,255,0.06)'}`, borderRadius: 14, overflow: 'hidden', transition: 'border-color 0.2s' }}>
+      <button onClick={() => setOpen(o => !o)} style={{ width: '100%', padding: '18px 22px', background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+        <span style={{ fontFamily: 'Space Grotesk', fontWeight: 600, fontSize: 15, color: '#F0F4FF', textAlign: 'left', lineHeight: 1.4 }}>{question}</span>
+        <div style={{ width: 28, height: 28, borderRadius: '50%', background: open ? 'rgba(59,130,246,0.15)' : 'rgba(255,255,255,0.04)', border: `1px solid ${open ? 'rgba(59,130,246,0.3)' : 'rgba(255,255,255,0.08)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.2s' }}>
+          <span style={{ color: open ? '#3B82F6' : '#4B5580', fontSize: 18, lineHeight: 1, transition: 'transform 0.2s', display: 'block', transform: open ? 'rotate(45deg)' : 'rotate(0deg)' }}>+</span>
+        </div>
+      </button>
+      {open && (
+        <div style={{ padding: '0 22px 20px', fontSize: 14, color: '#7A8AAA', lineHeight: 1.8, borderTop: '1px solid rgba(255,255,255,0.04)' }}>
+          <div style={{ paddingTop: 16 }}>{answer}{children}</div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+const CATEGORIES = [
+  { id: 'eligibility', label: '👤 Eligibility', icon: '👤' },
+  { id: 'amounts', label: '💰 Amounts', icon: '💰' },
+  { id: 'payments', label: '📅 Payments', icon: '📅' },
+  { id: 'release', label: '🏦 Release', icon: '🏦' },
+  { id: 'other', label: '💬 Other', icon: '💬' },
+]
+
+export default function FAQPage() {
+  const [activeCategory, setActiveCategory] = useState('eligibility')
+  const [interestRate, setInterestRate] = useState(0.07)
+
+  useEffect(() => {
+    supabase.from('settings').select('interest_rate').eq('id', 1).single()
+      .then(({ data }) => { if (data?.interest_rate) setInterestRate(data.interest_rate) })
+  }, [])
+
+  const faqByCategory = {
+    eligibility: [
+      { q: 'Who can apply for a loan?', a: 'This lending program is exclusively available to active employees of MySource Solutions. You must be currently employed and in good standing to be eligible. Applicants from outside the company will not be processed.' },
+      { q: 'Do I need a trustee to apply?', a: 'Yes. Every applicant is required to provide a trustee or guarantor — someone who can vouch for you and may be contacted for follow-up. Your trustee should be someone who knows you personally, such as a spouse, parent, or close colleague.' },
+      { q: 'Can I apply if I already have an active loan?', a: 'No. You must fully settle your current loan before applying for a new one. No rollovers or loan stacking is allowed under any circumstance.' },
+    ],
+    amounts: [
+      { q: 'How much can I borrow?', a: 'First-time borrowers start at ₱5,000. Your borrowing limit increases as you build a clean repayment history — all the way up to ₱10,000 at Level 4.' },
+      { q: 'What is the Level Attainment System?', children: (
+        <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {[
+            { level: 'Level 1', amount: '₱5,000', desc: 'New borrower — starting limit' },
+            { level: 'Level 2', amount: '₱7,000', desc: 'After 1 fully paid clean loan' },
+            { level: 'Level 3', amount: '₱9,000', desc: 'After 2 fully paid clean loans' },
+            { level: 'Level 4', amount: '₱10,000', desc: 'After 3 fully paid clean loans (max)' },
+          ].map((l, i) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', background: 'rgba(139,92,246,0.06)', borderRadius: 9, border: '1px solid rgba(139,92,246,0.12)' }}>
+              <span style={{ fontSize: 11, fontWeight: 800, color: '#8B5CF6', minWidth: 52 }}>{l.level}</span>
+              <span style={{ fontWeight: 800, color: '#22C55E', minWidth: 64, fontFamily: 'Space Grotesk' }}>{l.amount}</span>
+              <span style={{ fontSize: 12, color: '#4B5580' }}>{l.desc}</span>
+            </div>
+          ))}
+          <div style={{ fontSize: 12, color: '#4B5580', marginTop: 4, padding: '10px 14px', background: 'rgba(245,158,11,0.05)', border: '1px solid rgba(245,158,11,0.15)', borderRadius: 9 }}>
+            In some cases, the admin may approve a higher starting amount based on their review — this is not guaranteed and is at the admin's discretion.
+          </div>
+        </div>
+      )},
+      { q: `How is the interest calculated?`, a: `We use a flat ${(interestRate * 100).toFixed(0)}% interest rate on the principal. For example, a ₱5,000 loan has a total repayment of ₱${(5000 * (1 + interestRate)).toLocaleString('en-PH', { minimumFractionDigits: 2 })}, split into 4 installments of ₱${(5000 * (1 + interestRate) / 4).toLocaleString('en-PH', { minimumFractionDigits: 2 })} each. The interest does not compound — it is applied once to the principal.` },
+    ],
+    payments: [
+      { q: 'When are payments due?', a: 'Payments are collected every 5th and 20th of the month — that\'s 2 payments per month for 2 months. Your loan will be fully paid after 4 installments.' },
+      { q: 'What are the accepted repayment methods?', children: (
+        <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {[
+            { logo: '/cash-logo.png', label: 'Physical Cash', fee: 'Free', desc: 'Pay your admin directly in person. No fees, no transfer needed.', freebie: true, border: 'rgba(34,197,94,0.25)' },
+            { logo: '/gcash-logo.png', label: 'GCash', fee: '₱15 or 1%', desc: 'Send to the admin GCash number. Fee is whichever is higher.', freebie: false, border: 'rgba(0,163,255,0.25)' },
+            { logo: '/rcbc-logo.png', label: 'RCBC to RCBC', fee: 'Free', desc: 'Transfer directly to the admin RCBC account. Same-bank transfers are free.', freebie: true, border: 'rgba(220,38,38,0.25)' },
+            { logo: '/bank-logo.png', label: 'Other Bank (Instapay/PESONet)', fee: 'You cover fee', desc: 'Transfer from any other bank. You must send the exact amount due — transfer fees are on your end.', freebie: false, border: 'rgba(139,92,246,0.25)' },
+          ].map((item, i) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 14, background: '#0B0F1A', border: `1px solid ${item.border}`, borderRadius: 12, padding: '14px 16px' }}>
+              <img src={item.logo} alt={item.label} style={{ width: 38, height: 38, objectFit: 'contain', flexShrink: 0 }} />
+              <div style={{ flex: 1 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, flexWrap: 'wrap' }}>
+                  <span style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 13, color: '#F0F4FF' }}>{item.label}</span>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: item.freebie ? '#22C55E' : '#F59E0B', background: item.freebie ? 'rgba(34,197,94,0.08)' : 'rgba(245,158,11,0.08)', padding: '2px 10px', borderRadius: 20 }}>{item.fee}</span>
+                </div>
+                <div style={{ fontSize: 12, color: '#4B5580', lineHeight: 1.5 }}>{item.desc}</div>
+              </div>
+            </div>
+          ))}
+          <div style={{ marginTop: 4, padding: '12px 16px', background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 9, fontSize: 13, color: '#F59E0B', lineHeight: 1.6 }}>
+            📸 Always upload your proof of payment through the <strong>Borrower Portal</strong> after every transaction so your admin can confirm it.
+          </div>
+        </div>
+      )},
+      { q: 'What happens if I miss a payment?', a: 'Missed payments will negatively affect your credit score and may freeze your loan limit increase. Consistent late payments may result in your loan being flagged as defaulted, which affects your eligibility for future loans.' },
+    ],
+    release: [
+      { q: 'How will my loan be released?', a: 'Once approved, your loan will be released via your chosen method — Physical Cash, GCash, RCBC, or Other Bank Transfer. Release fees vary: Physical Cash and RCBC-to-RCBC are free, GCash charges ₱15 or 1% (whichever is higher), and other bank transfers require the borrower to cover the transfer fee. Fees are deducted from your approved amount before release.' },
+      { q: 'When will my loan be released after approval?', a: 'Your release will be scheduled on the nearest 5th or 20th cutoff date following approval. You will be able to see your scheduled release date on the Borrower Portal.' },
+      { q: 'How long does approval take?', a: 'Applications are reviewed manually by the admin. You will be notified via email and can track your status through the Borrower Portal using your access code.' },
+    ],
+    other: [
+      { q: 'How do I track my application?', a: 'After submitting, you will receive an access code. Use this code to log in to the Borrower Portal at loanmoneyfest.vercel.app/portal — you can track your application status, view your loan schedule, and upload payment proofs from there.' },
+      { q: 'Who can I contact for questions?', children: (
+        <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {[
+            { initials: 'JP', name: 'John Paul Lacaron', gradient: 'linear-gradient(135deg,#3B82F6,#8B5CF6)' },
+            { initials: 'CJ', name: 'Charlou John Ramil', gradient: 'linear-gradient(135deg,#14B8A6,#3B82F6)' },
+          ].map((p, i) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(59,130,246,0.07)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: 10, padding: '12px 16px' }}>
+              <div style={{ width: 36, height: 36, borderRadius: '50%', background: p.gradient, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 14, color: '#fff', flexShrink: 0 }}>{p.initials}</div>
+              <div>
+                <div style={{ fontWeight: 700, color: '#F0F4FF', fontSize: 14 }}>{p.name}</div>
+                <div style={{ fontSize: 12, color: '#3B82F6' }}>Admin · Microsoft Teams Chat</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )},
+    ],
+  }
+
+  const activeFAQs = faqByCategory[activeCategory] || []
+
+  return (
+    <div style={{ minHeight: '100vh', background: '#0B0F1A', fontFamily: 'DM Sans, sans-serif' }}>
+
+      {/* Header */}
+      <div style={{ background: 'linear-gradient(135deg,#0d1226,#141B2D)', borderBottom: '1px solid rgba(139,92,246,0.2)', padding: '20px 24px' }}>
+        <div style={{ maxWidth: 860, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <img src="/favicon-96x96.png" alt="LoanMoneyfest" style={{ width: 44, height: 44, objectFit: 'contain' }} />
+            <div>
+              <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 20, color: '#F0F4FF' }}>
+                Loan<span style={{ background: 'linear-gradient(90deg,#60a5fa,#a78bfa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Moneyfest</span>
+              </div>
+              <div style={{ fontSize: 11, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Help & FAQs</div>
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <a href="/apply" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: 10, background: 'linear-gradient(135deg,rgba(59,130,246,0.15),rgba(139,92,246,0.15))', border: '1px solid rgba(139,92,246,0.3)', color: '#a78bfa', fontSize: 13, fontWeight: 700, textDecoration: 'none', fontFamily: 'Space Grotesk', whiteSpace: 'nowrap' }}>
+              Apply Now →
+            </a>
+            <a href="/portal" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: 10, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: '#7A8AAA', fontSize: 13, fontWeight: 600, textDecoration: 'none', whiteSpace: 'nowrap' }}>
+              My Portal
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div style={{ maxWidth: 860, margin: '0 auto', padding: '40px 24px 60px' }}>
+
+        {/* Hero */}
+        <div style={{ textAlign: 'center', marginBottom: 40 }}>
+          <div style={{ fontSize: 44, marginBottom: 14 }}>❓</div>
+          <h1 style={{ fontFamily: 'Space Grotesk', fontWeight: 900, fontSize: 32, color: '#F0F4FF', margin: '0 0 12px', letterSpacing: -1 }}>Frequently Asked Questions</h1>
+          <p style={{ color: '#7A8AAA', fontSize: 15, maxWidth: 500, margin: '0 auto', lineHeight: 1.7 }}>Everything you need to know about the LoanMoneyfest employee lending program.</p>
+        </div>
+
+        {/* Two-column layout: Category tabs left, FAQs right */}
+        <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: 24, alignItems: 'start' }}>
+
+          {/* Category sidebar */}
+          <div style={{ background: '#141B2D', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, padding: 12, position: 'sticky', top: 24 }}>
+            <div style={{ fontSize: 11, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700, padding: '4px 10px 10px' }}>Categories</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              {CATEGORIES.map(cat => (
+                <button key={cat.id} onClick={() => setActiveCategory(cat.id)} style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: 'none', background: activeCategory === cat.id ? 'rgba(59,130,246,0.12)' : 'transparent', color: activeCategory === cat.id ? '#60A5FA' : '#7A8AAA', fontSize: 13, fontWeight: activeCategory === cat.id ? 700 : 400, cursor: 'pointer', textAlign: 'left', transition: 'all 0.15s', borderLeft: `3px solid ${activeCategory === cat.id ? '#3B82F6' : 'transparent'}` }}>
+                  {cat.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* FAQ list */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {activeFAQs.map((faq, i) => (
+              <FAQItem key={i} question={faq.q} answer={faq.a}>
+                {faq.children}
+              </FAQItem>
+            ))}
+          </div>
+
+        </div>
+
+        {/* Bottom CTA */}
+        <div style={{ marginTop: 48, background: 'linear-gradient(135deg,rgba(59,130,246,0.08),rgba(139,92,246,0.08))', border: '1px solid rgba(139,92,246,0.2)', borderRadius: 20, padding: '32px 36px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 24, flexWrap: 'wrap' }}>
+          <div>
+            <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 20, color: '#F0F4FF', marginBottom: 6 }}>Ready to apply?</div>
+            <div style={{ fontSize: 14, color: '#7A8AAA' }}>Fill out the form and get your access code instantly.</div>
+          </div>
+          <a href="/apply" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '13px 28px', borderRadius: 12, background: 'linear-gradient(135deg,#3B82F6,#8B5CF6)', color: '#fff', textDecoration: 'none', fontSize: 14, fontWeight: 700, fontFamily: 'Space Grotesk', whiteSpace: 'nowrap' }}>
+            Start Application →
+          </a>
+        </div>
+
+      </div>
+    </div>
+  )
+}

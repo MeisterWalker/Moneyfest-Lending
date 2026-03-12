@@ -15,6 +15,7 @@ import CollectionPage from './pages/CollectionPage'
 import ApplicationsPage from './pages/ApplicationsPage'
 import PublicApplyPage from './pages/PublicApplyPage'
 import BorrowerPortalPage from './pages/BorrowerPortalPage'
+import FAQPage from './pages/FAQPage'
 import NotificationBell from './components/NotificationBell'
 import './index.css'
 
@@ -44,6 +45,7 @@ function AppRoutes() {
       <Route path="/"              element={<PublicApplyPage />} />
       <Route path="/apply"         element={<PublicApplyPage />} />
       <Route path="/portal"        element={<BorrowerPortalPage />} />
+      <Route path="/faq"           element={<FAQPage />} />
 
       {/* ── Admin auth ── */}
       <Route path="/admin"         element={user ? <Navigate to="/admin/dashboard" replace /> : <LoginPage />} />
