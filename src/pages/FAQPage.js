@@ -73,7 +73,7 @@ export default function FAQPage() {
         <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
           {[
             { logo: '/cash-logo.png', label: 'Physical Cash', fee: 'Free', desc: 'Pay your admin directly in person. No fees, no transfer needed.', freebie: true, border: 'rgba(34,197,94,0.25)' },
-            { logo: '/gcash-logo.png', label: 'GCash', fee: '₱15 or 1%', desc: 'Send to the admin GCash number. Fee is whichever is higher.', freebie: false, border: 'rgba(0,163,255,0.25)' },
+            { logo: '/gcash-logo.png', label: 'GCash', fee: '₱15', desc: 'Send to the admin GCash number. Free if GCash to GCash — otherwise a ₱15 transaction fee applies.', freebie: false, border: 'rgba(0,163,255,0.25)' },
             { logo: '/rcbc-logo.png', label: 'RCBC to RCBC', fee: 'Free', desc: 'Transfer directly to the admin RCBC account. Same-bank transfers are free.', freebie: true, border: 'rgba(220,38,38,0.25)' },
             { logo: '/bank-logo.png', label: 'Other Bank (Instapay/PESONet)', fee: 'You cover fee', desc: 'Transfer from any other bank. You must send the exact amount due — transfer fees are on your end.', freebie: false, border: 'rgba(139,92,246,0.25)' },
           ].map((item, i) => (
@@ -96,7 +96,7 @@ export default function FAQPage() {
       { q: 'What happens if I miss a payment?', a: 'Missed payments will negatively affect your credit score and may freeze your loan limit increase. Consistent late payments may result in your loan being flagged as defaulted, which affects your eligibility for future loans.' },
     ],
     release: [
-      { q: 'How will my loan be released?', a: 'Once approved, your loan will be released via your chosen method — Physical Cash, GCash, RCBC, or Other Bank Transfer. Release fees vary: Physical Cash and RCBC-to-RCBC are free, GCash charges ₱15 or 1% (whichever is higher), and other bank transfers require the borrower to cover the transfer fee. Fees are deducted from your approved amount before release.' },
+      { q: 'How will my loan be released?', a: 'Once approved, your loan will be released via your chosen method — Physical Cash, GCash, RCBC, or Other Bank Transfer. Release fees vary: Physical Cash and RCBC-to-RCBC are free, GCash is free if sending GCash to GCash — otherwise a ₱15 fee applies, and other bank transfers require the borrower to cover the transfer fee. Fees are deducted from your approved amount before release.' },
       { q: 'When will my loan be released after approval?', a: 'Your release will be scheduled on the nearest 5th or 20th cutoff date following approval. You will be able to see your scheduled release date on the Borrower Portal.' },
       { q: 'How long does approval take?', a: 'Applications are reviewed manually by the admin. You will be notified via email and can track your status through the Borrower Portal using your access code.' },
     ],
