@@ -359,7 +359,7 @@ export default function PublicApplyPage() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {[
                     { value: 'Physical Cash', logo: '/cash-logo.png', desc: 'Receive in cash. No transaction fee.', fee: null },
-                    { value: 'GCash', logo: '/gcash-logo.png', desc: 'Sent to your GCash number.', fee: '₱15 or 1%' },
+                    { value: 'GCash', logo: '/gcash-logo.png', desc: 'Sent to your GCash number. Free if GCash to GCash.', fee: '₱15' },
                     { value: 'RCBC', logo: '/rcbc-logo.png', desc: 'Transferred to your RCBC account.', fee: null },
                     { value: 'Other Bank Transfer', logo: '/bank-logo.png', desc: 'Instapay/PESONet. Borrower covers fee.', fee: 'You cover fee' },
                   ].map(opt => (
@@ -411,7 +411,7 @@ export default function PublicApplyPage() {
                 const total = principal + interest
                 const perInst = total / 4
                 let feeAmt = 0, feeLabel = ''
-                if (form.release_method === 'GCash') { feeAmt = Math.max(15, principal * 0.01); feeLabel = 'GCash fee (₱15 or 1%, whichever is higher)' }
+                if (form.release_method === 'GCash') { feeAmt = 15; feeLabel = 'GCash transaction fee — flat ₱15 (free if GCash to GCash)' }
                 else if (form.release_method === 'Other Bank Transfer') { feeLabel = 'Transfer fee varies (Instapay/PESONet)' }
                 const received = feeAmt > 0 ? principal - feeAmt : null
                 const dueDates = calcDueDates()
