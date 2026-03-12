@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { ToastProvider } from './components/Toast'
@@ -16,7 +15,11 @@ import ApplicationsPage from './pages/ApplicationsPage'
 import PublicApplyPage from './pages/PublicApplyPage'
 import BorrowerPortalPage from './pages/BorrowerPortalPage'
 import FAQPage from './pages/FAQPage'
+import LoginLogsPage from './pages/LoginLogsPage'
 import NotificationBell from './components/NotificationBell'
+import { useAutoLogout } from './hooks/useAutoLogout'
+import { useEffect, useState } from 'react'
+import { supabase } from './lib/supabase'
 import './index.css'
 
 function ProtectedRoute({ children }) {
@@ -26,6 +29,15 @@ function ProtectedRoute({ children }) {
 }
 
 function AppLayout({ children }) {
+  const [timeoutMinutes, setTimeoutMinutes] = useState(30)
+
+  useEffect(() => {
+    supabase.from('settings').select('auto_logout_minutes').eq('id', 1).single()
+      .then(({ data }) => { if (data?.auto_logout_minutes) setTimeoutMinutes(data.auto_logout_minutes) })
+  }, [])
+
+  useAutoLogout(timeoutMinutes)
+
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg)' }}>
       <Sidebar />
@@ -60,6 +72,7 @@ function AppRoutes() {
       <Route path="/admin/audit"        element={<ProtectedRoute><AppLayout><AuditPage /></AppLayout></ProtectedRoute>} />
       <Route path="/admin/settings"     element={<ProtectedRoute><AppLayout><SettingsPage /></AppLayout></ProtectedRoute>} />
       <Route path="/admin/applications" element={<ProtectedRoute><AppLayout><ApplicationsPage /></AppLayout></ProtectedRoute>} />
+      <Route path="/admin/login-logs"    element={<ProtectedRoute><AppLayout><LoginLogsPage /></AppLayout></ProtectedRoute>} />
 
       {/* ── Catch old routes ── */}
       <Route path="/dashboard"   element={<Navigate to="/admin/dashboard" replace />} />

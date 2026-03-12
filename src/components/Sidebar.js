@@ -1,7 +1,7 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, Users, FileText, TrendingUp,
-  Calendar, History, Settings, LogOut, ClipboardList
+  Calendar, History, Settings, LogOut, ClipboardList, Shield
 } from 'lucide-react'
 
 function LedgerIcon({ size = 20 }) {
@@ -29,6 +29,7 @@ const navItems = [
   { to: '/admin/forecast', icon: TrendingUp, label: 'Profit Forecast' },
   { to: '/admin/audit', icon: History, label: 'Audit History' },
   { to: '/admin/applications', icon: ClipboardList, label: 'Applications' },
+  { to: '/admin/login-logs', icon: Shield, label: 'Login Logs' },
 ]
 
 export default function Sidebar() {

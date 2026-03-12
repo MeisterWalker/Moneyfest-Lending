@@ -660,6 +660,45 @@ function EmailSection({ adminEmail }) {
   )
 }
 
+// ─── Security Settings ────────────────────────────────────────
+function SecuritySection({ settings, onSave }) {
+  const TIMEOUT_OPTIONS = [15, 30, 60, 120, 240]
+  const [minutes, setMinutes] = useState(30)
+  const [saved, setSaved] = useState(false)
+
+  useEffect(() => {
+    if (settings?.auto_logout_minutes) setMinutes(settings.auto_logout_minutes)
+  }, [settings])
+
+  const handleSave = async () => {
+    await onSave({ auto_logout_minutes: minutes })
+    setSaved(true)
+    setTimeout(() => setSaved(false), 2000)
+  }
+
+  return (
+    <Section icon={Shield} title="Security" color="var(--purple)">
+      <div style={{ marginBottom: 20 }}>
+        <label className="form-label" style={{ marginBottom: 10, display: 'block' }}>Auto Logout on Inactivity</label>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          {TIMEOUT_OPTIONS.map(opt => (
+            <button key={opt} onClick={() => setMinutes(opt)}
+              style={{ padding: '8px 18px', borderRadius: 9, border: `1px solid ${minutes === opt ? 'rgba(139,92,246,0.5)' : 'rgba(255,255,255,0.08)'}`, background: minutes === opt ? 'rgba(139,92,246,0.15)' : 'rgba(255,255,255,0.03)', color: minutes === opt ? '#a78bfa' : '#7A8AAA', fontSize: 13, fontWeight: minutes === opt ? 700 : 400, cursor: 'pointer' }}>
+              {opt < 60 ? `${opt} min` : `${opt / 60} hr`}
+            </button>
+          ))}
+        </div>
+        <div style={{ fontSize: 12, color: '#4B5580', marginTop: 10, lineHeight: 1.6 }}>
+          Admin will be automatically signed out after <strong style={{ color: '#F0F4FF' }}>{minutes < 60 ? `${minutes} minutes` : `${minutes / 60} hour${minutes > 60 ? 's' : ''}`}</strong> of no activity. A 1-minute warning will appear before logout.
+        </div>
+      </div>
+      <button onClick={handleSave} className="btn-primary" style={{ padding: '9px 22px', fontSize: 13 }}>
+        {saved ? '✓ Saved' : 'Save Security Settings'}
+      </button>
+    </Section>
+  )
+}
+
 // ─── Main Settings Page ───────────────────────────────────────
 export default function SettingsPage() {
   const [settings, setSettings] = useState(null)
@@ -738,6 +777,7 @@ export default function SettingsPage() {
       </div>
 
       <LoanConfigSection settings={settings} onSave={handleSaveConfig} />
+      <SecuritySection settings={settings} onSave={handleSaveConfig} />
       <DepartmentsSection departments={departments} onRefresh={fetchData} adminEmail={user?.email} />
       <EmailSection adminEmail={user?.email} />
       <AuditCleanupSection adminEmail={user?.email} />
