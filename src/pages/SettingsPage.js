@@ -4,7 +4,7 @@ import { logAudit, formatCurrency } from '../lib/helpers'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../components/Toast'
 import {
-  Settings, Building2, Sliders, ShieldAlert,
+  Settings, Building2, Sliders, ShieldAlert, Shield,
   Plus, Trash2, Save, RefreshCw, AlertTriangle,
   Download, Lock, Eye, EyeOff, Check, Mail, Send, Eye as PreviewIcon, Clock, DatabaseBackup
 } from 'lucide-react'
