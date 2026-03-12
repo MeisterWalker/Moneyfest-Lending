@@ -2,7 +2,41 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../components/Toast'
+import { supabase } from '../lib/supabase'
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react'
+
+async function logLoginAttempt({ email, success, failReason = null }) {
+  try {
+    // Get IP + geo from ipapi.co (HTTPS, free, no key needed)
+    const geo = await fetch('https://ipapi.co/json/')
+      .then(r => r.json()).catch(() => null)
+
+    const ip = geo?.ip || 'Unknown'
+    const city = geo?.city || ''
+    const region = geo?.region || ''
+    const country = geo?.country_name || ''
+    const countryCode = geo?.country_code || ''
+    const location = [city, region, country].filter(Boolean).join(', ') || 'Unknown location'
+    const flag = countryCode
+      ? String.fromCodePoint(...[...countryCode.toUpperCase()].map(c => 0x1F1E6 - 65 + c.charCodeAt(0)))
+      : ''
+
+    await supabase.from('login_logs').insert({
+      email,
+      success,
+      fail_reason: failReason,
+      ip_address: ip,
+      city,
+      region,
+      country,
+      location_display: `${flag} ${location}`.trim(),
+      user_agent: navigator.userAgent,
+      logged_at: new Date().toISOString()
+    })
+  } catch (e) {
+    console.warn('Login log failed:', e)
+  }
+}
 
 function LedgerIcon({ size = 32 }) {
   return (
@@ -42,9 +76,11 @@ export default function LoginPage() {
     const { error } = await signIn(email, password)
     setLoading(false)
     if (error) {
+      logLoginAttempt({ email, success: false, failReason: error.message })
       if (error.message.includes('Invalid login')) toast('Invalid email or password', 'error')
       else toast(error.message, 'error')
     } else {
+      logLoginAttempt({ email, success: true })
       toast('Welcome back!', 'success')
       navigate('/dashboard')
     }
