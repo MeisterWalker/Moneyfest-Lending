@@ -211,6 +211,14 @@ function ProofReviewSection({ supabase, user, logAudit }) {
   const handleConfirm = async (proof) => {
     await supabase.from('payment_proofs').update({ status: 'Confirmed', reviewed_by: user?.email, reviewed_at: new Date().toISOString() }).eq('id', proof.id)
     await logAudit({ action_type: 'PAYMENT_PROOF_CONFIRMED', module: 'Applications', description: `Payment proof confirmed for ${proof.borrowers?.full_name} — Installment ${proof.installment_number}`, changed_by: user?.email })
+    if (proof.borrower_id) {
+      await notifyBorrower({
+        borrower_id: proof.borrower_id,
+        type: 'payment_confirmed',
+        title: '✅ Payment Confirmed',
+        message: `Your Installment ${proof.installment_number} payment of ₱${Number(proof.loans?.installment_amount || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })} has been confirmed by the admin.`
+      })
+    }
     toast('Payment proof confirmed', 'success')
     fetchProofs()
   }
@@ -218,6 +226,14 @@ function ProofReviewSection({ supabase, user, logAudit }) {
   const handleReject = async (proof) => {
     await supabase.from('payment_proofs').update({ status: 'Rejected', reviewed_by: user?.email, reviewed_at: new Date().toISOString() }).eq('id', proof.id)
     await logAudit({ action_type: 'PAYMENT_PROOF_REJECTED', module: 'Applications', description: `Payment proof rejected for ${proof.borrowers?.full_name} — Installment ${proof.installment_number}`, changed_by: user?.email })
+    if (proof.borrower_id) {
+      await notifyBorrower({
+        borrower_id: proof.borrower_id,
+        type: 'payment_rejected',
+        title: '❌ Payment Proof Rejected',
+        message: `Your Installment ${proof.installment_number} payment proof was rejected. Please re-upload a clear screenshot and try again.`
+      })
+    }
     toast('Payment proof rejected', 'success')
     fetchProofs()
   }
@@ -363,6 +379,13 @@ export default function ApplicationsPage() {
 
     // 7. Log audit
     await logAudit({ action_type: 'APPLICATION_APPROVED', module: 'Applications', description: `Application approved for ${app.full_name} — ₱${loanAmount.toLocaleString()} loan created. Access code: ${accessCode}`, changed_by: user?.email })
+
+    await notifyBorrower({
+      borrower_id: borrower.id,
+      type: 'loan_approved',
+      title: '🎉 Loan Approved!',
+      message: `Your loan of ₱${loanAmount.toLocaleString('en-PH')} has been approved! Your funds will be released on ${releaseDateDisplay}. Check your loan details in the portal.`
+    })
 
     toast(`✅ Approved! Access code ${accessCode} sent to ${app.email || app.full_name}`, 'success')
     fetchData()

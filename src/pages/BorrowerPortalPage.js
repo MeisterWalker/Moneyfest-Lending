@@ -168,6 +168,8 @@ export default function BorrowerPortalPage() {
   const [page, setPage] = useState('home') // 'home' | 'payment-methods' | 'profile' | 'payment-history'
   const [pendingApp, setPendingApp] = useState(null)
   const [allLoans, setAllLoans] = useState([])
+  const [notifications, setNotifications] = useState([])
+  const [showNotifs, setShowNotifs] = useState(false)
 
   const fetchPortalData = useCallback(async (accessCode) => {
     setLoading(true)
@@ -194,10 +196,59 @@ export default function BorrowerPortalPage() {
         .eq('borrower_id', b.id)
         .order('created_at', { ascending: false })
 
+      let { data: notifs } = await supabase
+        .from('portal_notifications')
+        .select('*')
+        .eq('borrower_id', b.id)
+        .order('created_at', { ascending: false })
+        .limit(20)
+
       setBorrower(b)
       setAllLoans(allL || [])
       setLoan(allL?.[0] || null)
       setProofs(p || [])
+      // Check for upcoming due dates — notify if within 2 days and not already notified today
+      const activeLoans = (allL || []).filter(l => l.status === 'Active')
+      for (const activeLoan of activeLoans) {
+        if (!activeLoan.release_date) continue
+        const [yr, mo, dy] = activeLoan.release_date.split('-').map(Number)
+        const releaseDate = new Date(yr, mo - 1, dy)
+        const today = new Date(); today.setHours(0,0,0,0)
+        const paid = activeLoan.payments_made || 0
+        // Generate next due date
+        for (let i = paid; i < 4; i++) {
+          const due = new Date(releaseDate)
+          if (releaseDate.getDate() <= 5) {
+            due.setMonth(due.getMonth() + Math.floor(i / 2))
+            due.setDate(i % 2 === 0 ? 20 : 5)
+          } else {
+            due.setMonth(due.getMonth() + Math.ceil((i + 1) / 2))
+            due.setDate(i % 2 === 0 ? 5 : 20)
+          }
+          const diffDays = Math.ceil((due - today) / (1000 * 60 * 60 * 24))
+          if (diffDays >= 0 && diffDays <= 2) {
+            // Check if we already sent this notif recently (within last 3 days)
+            const alreadyNotified = (notifs || []).some(n =>
+              n.type === 'due_soon' &&
+              new Date(n.created_at) > new Date(Date.now() - 3 * 24 * 60 * 60 * 1000)
+            )
+            if (!alreadyNotified) {
+              const msg = diffDays === 0
+                ? `Installment ${i + 1} of ₱${Number(activeLoan.installment_amount).toLocaleString('en-PH', { minimumFractionDigits: 2 })} is due TODAY. Please submit your payment proof.`
+                : `Installment ${i + 1} of ₱${Number(activeLoan.installment_amount).toLocaleString('en-PH', { minimumFractionDigits: 2 })} is due in ${diffDays} day${diffDays > 1 ? 's' : ''} (${due.toLocaleDateString('en-PH', { month: 'short', day: 'numeric' })}). Don't forget to pay!`
+              const { data: newNotif } = await supabase.from('portal_notifications').insert({
+                borrower_id: b.id, type: 'due_soon',
+                title: diffDays === 0 ? '⏰ Payment Due Today!' : '⏰ Payment Due Soon',
+                message: msg
+              }).select().single()
+              if (newNotif) notifs = [...(notifs || []), newNotif]
+            }
+          }
+          break // only check the next upcoming installment
+        }
+      }
+
+      setNotifications(notifs || [])
       setLoading(false)
       return
     }
@@ -241,6 +292,13 @@ export default function BorrowerPortalPage() {
     setUploadSuccess(true)
     fetchPortalData(code)
     setTimeout(() => setUploadSuccess(false), 5000)
+  }
+
+  const markAllRead = async () => {
+    const unread = notifications.filter(n => !n.is_read).map(n => n.id)
+    if (unread.length === 0) return
+    await supabase.from('portal_notifications').update({ is_read: true }).in('id', unread)
+    setNotifications(prev => prev.map(n => ({ ...n, is_read: true })))
   }
 
   const dueDates = loan ? getDueDates(loan.release_date, loan.payments_made || 0) : []
@@ -627,7 +685,7 @@ export default function BorrowerPortalPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           {[
             { logo: '/cash-logo.png', label: 'Physical Cash', fee: '✓ Free', feeBg: 'rgba(34,197,94,0.08)', feeColor: '#22C55E', feeBorder: 'rgba(34,197,94,0.2)', border: 'rgba(34,197,94,0.25)', desc: 'Pay your admin directly in person. Coordinate with John Paul Lacaron or Charlou John Ramil to arrange your payment. No fees, no transfer needed.', steps: ['Prepare the exact installment amount in cash', 'Coordinate with your admin via Teams Chat', 'Hand over payment and request acknowledgement', 'Upload a photo of the receipt or acknowledgement in the portal'] },
-            { logo: '/gcash-logo.png', label: 'GCash', fee: 'P15 or 1%', feeBg: 'rgba(245,158,11,0.08)', feeColor: '#F59E0B', feeBorder: 'rgba(245,158,11,0.2)', border: 'rgba(0,163,255,0.25)', desc: 'Send via GCash to the admin number. A transaction fee of P15 or 1% of the amount (whichever is higher) applies - please send the exact installment amount and cover any fees separately.', steps: ['Open GCash and send to admin number', 'Send the exact installment amount', 'Screenshot the successful transaction screen', 'Upload the screenshot in the portal'] },
+            { logo: '/gcash-logo.png', label: 'GCash', fee: '₱15', feeBg: 'rgba(245,158,11,0.08)', feeColor: '#F59E0B', feeBorder: 'rgba(245,158,11,0.2)', border: 'rgba(0,163,255,0.25)', desc: 'Send via GCash to the admin number. A transaction fee of ₱15 flat applies — please send the exact installment amount and cover any fees separately.', steps: ['Open GCash and send to admin number', 'Send the exact installment amount', 'Screenshot the successful transaction screen', 'Upload the screenshot in the portal'] },
             { logo: '/rcbc-logo.png', label: 'RCBC to RCBC', fee: '✓ Free', feeBg: 'rgba(34,197,94,0.08)', feeColor: '#22C55E', feeBorder: 'rgba(34,197,94,0.2)', border: 'rgba(220,38,38,0.25)', desc: 'Transfer directly to the admin RCBC account. Same-bank RCBC-to-RCBC transfers are completely free with no deductions.', steps: ['Log in to RCBC Online or App', 'Transfer exact installment amount to admin RCBC account', 'Screenshot the successful transfer confirmation', 'Upload the screenshot in the portal'] },
             { logo: '/bank-logo.png', label: 'Other Bank (Instapay/PESONet)', fee: 'You cover fee', feeBg: 'rgba(245,158,11,0.08)', feeColor: '#F59E0B', feeBorder: 'rgba(245,158,11,0.2)', border: 'rgba(139,92,246,0.25)', desc: 'Transfer from any other bank using Instapay or PESONet. You are responsible for covering any transfer fees - send the exact installment amount plus fees so the full amount arrives.', steps: ['Use your bank online transfer or app', 'Choose Instapay (faster) or PESONet', 'Send exact installment amount + transfer fee', 'Screenshot the transaction confirmation', 'Upload the screenshot in the portal'] },
           ].map((item, i) => (
@@ -683,6 +741,49 @@ export default function BorrowerPortalPage() {
               <div style={{ fontSize: 13, fontWeight: 600, color: '#F0F4FF' }}>{borrower.full_name}</div>
               <div style={{ fontSize: 11, color: '#4B5580' }}>{borrower.department}</div>
             </div>
+
+            {/* Notification Bell */}
+            <div style={{ position: 'relative' }}>
+              <button onClick={() => { setShowNotifs(v => !v); if (!showNotifs) markAllRead() }}
+                style={{ position: 'relative', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                <span style={{ fontSize: 16 }}>🔔</span>
+                {notifications.filter(n => !n.is_read).length > 0 && (
+                  <div style={{ position: 'absolute', top: -4, right: -4, width: 16, height: 16, borderRadius: '50%', background: '#EF4444', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 800, color: '#fff' }}>
+                    {notifications.filter(n => !n.is_read).length}
+                  </div>
+                )}
+              </button>
+
+              {/* Dropdown */}
+              {showNotifs && (
+                <div style={{ position: 'absolute', right: 0, top: 44, width: 320, background: '#141B2D', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 14, boxShadow: '0 12px 40px rgba(0,0,0,0.5)', zIndex: 200, overflow: 'hidden' }}>
+                  <div style={{ padding: '14px 16px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 13, color: '#F0F4FF' }}>Notifications</div>
+                    <button onClick={() => setShowNotifs(false)} style={{ background: 'none', border: 'none', color: '#4B5580', cursor: 'pointer', fontSize: 16 }}>✕</button>
+                  </div>
+                  <div style={{ maxHeight: 360, overflowY: 'auto' }}>
+                    {notifications.length === 0 ? (
+                      <div style={{ padding: '32px 16px', textAlign: 'center', fontSize: 13, color: '#4B5580' }}>No notifications yet.</div>
+                    ) : notifications.map((n, i) => (
+                      <div key={i} style={{ padding: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.04)', background: n.is_read ? 'transparent' : 'rgba(59,130,246,0.04)', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                        <div style={{ fontSize: 20, flexShrink: 0, marginTop: 1 }}>
+                          {n.type === 'loan_approved' ? '🎉' : n.type === 'payment_confirmed' ? '✅' : n.type === 'payment_rejected' ? '❌' : '⏰'}
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: '#F0F4FF', marginBottom: 3 }}>{n.title}</div>
+                          <div style={{ fontSize: 12, color: '#7A8AAA', lineHeight: 1.5 }}>{n.message}</div>
+                          <div style={{ fontSize: 10, color: '#4B5580', marginTop: 5 }}>
+                            {new Date(n.created_at).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                          </div>
+                        </div>
+                        {!n.is_read && <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#3B82F6', flexShrink: 0, marginTop: 5 }} />}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
             <button onClick={() => { setBorrower(null); setLoan(null); setAllLoans([]); setCode(''); setInputCode(''); localStorage.removeItem('lm_portal_code') }}
               style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, padding: '6px 12px', color: 'var(--text-muted)', fontSize: 12, cursor: 'pointer' }}>
               Sign out
