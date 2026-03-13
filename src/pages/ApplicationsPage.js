@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../components/Toast'
 import { logAudit } from '../lib/helpers'
-import { ClipboardList, Check, X, Clock, ChevronDown, ChevronUp, User, Phone, Mail, MapPin, Users, DollarSign } from 'lucide-react'
+import { ClipboardList, Check, X, Clock, ChevronDown, ChevronUp, User, Phone, Mail, MapPin, Users, DollarSign, ExternalLink, Image } from 'lucide-react'
 
 const STATUS_COLORS = {
   Pending: { bg: 'rgba(245,158,11,0.1)', border: 'rgba(245,158,11,0.3)', text: '#F59E0B' },
@@ -145,6 +145,34 @@ function ApplicationCard({ app, onApprove, onReject }) {
               </div>
             )}
           </div>
+
+          {/* Valid ID */}
+          {app.valid_id_path && (() => {
+            const { data } = supabase.storage.from('valid-ids').getPublicUrl(app.valid_id_path)
+            const idUrl = data?.publicUrl
+            const isImage = /\.(jpg|jpeg|png)$/i.test(app.valid_id_path)
+            return (
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <Image size={12} /> Valid ID Submitted
+                </div>
+                {isImage ? (
+                  <div style={{ position: 'relative', borderRadius: 10, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)', maxHeight: 200 }}>
+                    <img src={idUrl} alt="Valid ID" style={{ width: '100%', maxHeight: 200, objectFit: 'cover', display: 'block' }} />
+                    <a href={idUrl} target="_blank" rel="noreferrer"
+                      style={{ position: 'absolute', bottom: 8, right: 8, display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px', borderRadius: 8, background: 'rgba(0,0,0,0.7)', color: '#fff', fontSize: 12, fontWeight: 600, textDecoration: 'none', backdropFilter: 'blur(4px)' }}>
+                      <ExternalLink size={11} /> View Full
+                    </a>
+                  </div>
+                ) : (
+                  <a href={idUrl} target="_blank" rel="noreferrer"
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '9px 16px', borderRadius: 9, background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.25)', color: '#a78bfa', fontSize: 13, fontWeight: 600, textDecoration: 'none' }}>
+                    <ExternalLink size={13} /> View Submitted ID (PDF)
+                  </a>
+                )}
+              </div>
+            )
+          })()}
 
           {/* Reject reason if rejected */}
           {app.status === 'Rejected' && app.reject_reason && (

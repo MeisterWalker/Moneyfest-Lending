@@ -42,6 +42,7 @@ export default function PublicApplyPage() {
     gcash_number: '', gcash_name: '', bank_account_number: '', bank_name: '',
     agreed: false
   })
+  const [idFile, setIdFile] = useState(null)
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
   const startDisclaimer = (amt) => { setPendingAmount(amt); setDisclaimerCountdown(4); setShowDisclaimer(true) }
@@ -69,6 +70,14 @@ export default function PublicApplyPage() {
   }
 
   const validateStep2 = () => {
+    if (!idFile) return 'Please upload at least 1 valid ID'
+    const allowed = ['image/jpeg','image/png','image/jpg','application/pdf']
+    if (!allowed.includes(idFile.type)) return 'Please upload a JPG, PNG, or PDF file'
+    if (idFile.size > 5 * 1024 * 1024) return 'File must be under 5MB'
+    return null
+  }
+
+  const validateStep3 = () => {
     if (!form.loan_amount) return 'Please select a loan amount'
     if (!form.loan_purpose.trim()) return 'Please enter your loan purpose'
     if (!form.release_method) return 'Please select a preferred release method'
@@ -86,16 +95,39 @@ export default function PublicApplyPage() {
   }
 
   const handleNext = () => {
-    const err = validateStep1()
-    if (err) { setError(err); return }
-    setError(''); setStep(2)
+    if (step === 1) {
+      const err = validateStep1()
+      if (err) { setError(err); return }
+      setError(''); setStep(2)
+    } else if (step === 2) {
+      const err = validateStep2()
+      if (err) { setError(err); return }
+      setError(''); setStep(3)
+    }
   }
 
   const handleSubmit = async () => {
-    const err = validateStep2()
+    const err = validateStep3()
     if (err) { setError(err); return }
     setError(''); setLoading(true)
     const code = 'LM-' + Math.random().toString(36).substring(2, 6).toUpperCase()
+
+    // Upload ID to Supabase Storage
+    let validIdPath = null
+    if (idFile) {
+      const ext = idFile.name.split('.').pop()
+      const filePath = `${code}/${Date.now()}-valid-id.${ext}`
+      const { error: uploadErr } = await supabase.storage
+        .from('valid-ids')
+        .upload(filePath, idFile, { contentType: idFile.type, upsert: false })
+      if (uploadErr) {
+        setError('Failed to upload ID. Please try again.')
+        setLoading(false)
+        return
+      }
+      validIdPath = filePath
+    }
+
     const { error: dbErr } = await supabase.from('applications').insert({
       full_name: form.full_name.trim(), department: form.department,
       tenure_years: parseFloat(form.tenure_years) || 0,
@@ -106,6 +138,7 @@ export default function PublicApplyPage() {
       release_method: form.release_method,
       gcash_number: form.gcash_number.trim() || null, gcash_name: form.gcash_name.trim() || null,
       bank_account_number: form.bank_account_number.trim() || null, bank_name: form.bank_name.trim() || null,
+      valid_id_path: validIdPath,
       status: 'Pending', access_code: code, created_at: new Date().toISOString()
     })
     setLoading(false)
@@ -239,7 +272,7 @@ export default function PublicApplyPage() {
 
         {/* Step indicator */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0, marginBottom: 36 }}>
-          {['Personal & Trustee Info', 'Loan Details'].map((label, i) => {
+          {['Personal & Trustee Info', 'ID Verification', 'Loan Details'].map((label, i) => {
             const num = i + 1; const done = step > num; const active = step === num
             return (
               <div key={num} style={{ display: 'flex', alignItems: 'center' }}>
@@ -247,7 +280,7 @@ export default function PublicApplyPage() {
                   <div style={{ width: 26, height: 26, borderRadius: '50%', background: done ? '#22C55E' : active ? '#3B82F6' : 'rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, color: done || active ? '#fff' : '#4B5580', flexShrink: 0 }}>{done ? '✓' : num}</div>
                   <span style={{ fontSize: 13, fontWeight: active ? 700 : 500, color: active ? '#F0F4FF' : done ? '#22C55E' : '#4B5580', whiteSpace: 'nowrap', fontFamily: 'Space Grotesk' }}>{label}</span>
                 </div>
-                {i < 1 && <div style={{ width: 40, height: 2, background: step > 1 ? '#22C55E' : 'rgba(255,255,255,0.06)', margin: '0 4px' }} />}
+                {i < 2 && <div style={{ width: 40, height: 2, background: step > num ? '#22C55E' : 'rgba(255,255,255,0.06)', margin: '0 4px' }} />}
               </div>
             )
           })}
@@ -320,8 +353,64 @@ export default function PublicApplyPage() {
           </div>
         )}
 
-        {/* ── STEP 2: Loan Details — two-column ── */}
+
+        {/* ── STEP 2: ID Verification ── */}
         {step === 2 && (
+          <div style={{ maxWidth: 560, margin: '0 auto', width: '100%' }}>
+            <div style={{ background: '#141B2D', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 18, padding: 28 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 22 }}>
+                <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>🪪</div>
+                <div>
+                  <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 16, color: '#F0F4FF' }}>ID Verification</div>
+                  <div style={{ fontSize: 11, color: '#4B5580' }}>Upload at least 1 valid government-issued ID</div>
+                </div>
+              </div>
+
+              {/* Accepted IDs info */}
+              <div style={{ background: 'rgba(59,130,246,0.05)', border: '1px solid rgba(59,130,246,0.15)', borderRadius: 12, padding: '14px 16px', marginBottom: 20, fontSize: 12, color: '#7A8AAA', lineHeight: 1.8 }}>
+                <div style={{ fontWeight: 700, color: '#60A5FA', marginBottom: 6 }}>✅ Accepted IDs</div>
+                SSS · GSIS · PhilHealth · Pag-IBIG · Passport · Driver's License · Postal ID · Voter's ID · PRC ID · Senior Citizen ID · or any government-issued photo ID
+              </div>
+
+              {/* File upload area */}
+              <div style={{ marginBottom: 20 }}>
+                <label style={{ display: 'block', fontSize: 11, color: '#7A8AAA', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>
+                  Upload Valid ID *
+                </label>
+                <label style={{
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                  gap: 10, padding: '32px 20px', borderRadius: 12,
+                  border: `2px dashed ${idFile ? 'rgba(34,197,94,0.4)' : 'rgba(255,255,255,0.1)'}`,
+                  background: idFile ? 'rgba(34,197,94,0.04)' : 'rgba(255,255,255,0.02)',
+                  cursor: 'pointer', transition: 'all 0.2s'
+                }}>
+                  <div style={{ fontSize: 36 }}>{idFile ? '✅' : '🪪'}</div>
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: idFile ? '#22C55E' : '#F0F4FF', marginBottom: 4 }}>
+                      {idFile ? idFile.name : 'Click to upload your ID'}
+                    </div>
+                    <div style={{ fontSize: 12, color: '#4B5580' }}>
+                      {idFile ? `${(idFile.size / 1024).toFixed(0)} KB · ${idFile.type.split('/')[1].toUpperCase()}` : 'JPG, PNG, or PDF · Max 5MB'}
+                    </div>
+                  </div>
+                  <input type="file" accept="image/jpeg,image/png,image/jpg,application/pdf" style={{ display: 'none' }} onChange={e => { setIdFile(e.target.files[0] || null); setError('') }} />
+                </label>
+                {idFile && (
+                  <button onClick={() => setIdFile(null)} style={{ marginTop: 8, background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: '#EF4444', display: 'flex', alignItems: 'center', gap: 4 }}>
+                    ✕ Remove file
+                  </button>
+                )}
+              </div>
+
+              <div style={{ padding: '12px 16px', background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 10, fontSize: 12, color: '#F59E0B', lineHeight: 1.7 }}>
+                ⚠️ Make sure your ID is <strong>clear and readable</strong>. Blurry or cropped photos may delay your application.
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── STEP 3: Loan Details — two-column ── */}
+        {step === 3 && (
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, alignItems: 'start' }}>
 
             {/* Left: Amount + Release */}
@@ -493,20 +582,26 @@ export default function PublicApplyPage() {
           </div>
         )}
 
-        {/* Error (step 1) */}
-        {step === 1 && error && (
+        {/* Error (step 1 & 2) */}
+        {(step === 1 || step === 2) && error && (
           <div style={{ marginTop: 16, padding: '10px 14px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, fontSize: 13, color: '#EF4444' }}>⚠️ {error}</div>
         )}
 
         {/* Navigation */}
-        <div style={{ display: 'flex', gap: 12, marginTop: 24, maxWidth: step === 1 ? '100%' : 'none' }}>
-          {step === 2 && (
-            <button onClick={() => { setStep(1); setError('') }}
+        <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
+          {(step === 2 || step === 3) && (
+            <button onClick={() => { setStep(step - 1); setError('') }}
               style={{ padding: '13px 28px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.08)', background: 'transparent', color: '#7A8AAA', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>
               ← Back
             </button>
           )}
           {step === 1 && (
+            <button onClick={handleNext}
+              style={{ marginLeft: 'auto', padding: '13px 36px', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#3B82F6,#8B5CF6)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'Space Grotesk' }}>
+              Continue →
+            </button>
+          )}
+          {step === 2 && (
             <button onClick={handleNext}
               style={{ marginLeft: 'auto', padding: '13px 36px', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#3B82F6,#8B5CF6)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'Space Grotesk' }}>
               Continue to Loan Details →
