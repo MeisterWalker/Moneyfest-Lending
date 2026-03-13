@@ -73,7 +73,7 @@ function ApplicationCard({ app, onApprove, onReject }) {
             </div>
             {/* Trustee */}
             <div>
-              <div style={{ fontSize: 11, fontWeight: 700, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}><span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><img src="/list.png" alt="info" style={{ width: 13, height: 13, objectFit: 'contain', marginRight: 5, verticalAlign: 'middle' }} />Trustee / Guarantor</span></div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}><span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><img src="/handshake.png" alt="trustee" style={{ width: 13, height: 13, objectFit: 'contain', marginRight: 5, verticalAlign: 'middle' }} />Trustee / Guarantor</span></div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {[
                   { icon: <User size={13} />, label: app.trustee_name },

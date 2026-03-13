@@ -347,7 +347,7 @@ export default function PublicApplyPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
               <div style={{ background: '#141B2D', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 18, padding: 28 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 22 }}>
-                  <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 4 }}><img src="/list.png" alt="info" style={{ width: 24, height: 24, objectFit: 'contain' }} /></div>
+                  <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 4 }}><img src="/handshake.png" alt="trustee" style={{ width: 24, height: 24, objectFit: 'contain' }} /></div>
                   <div>
                     <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 16, color: '#F0F4FF' }}>Trustee / Guarantor</div>
                     <div style={{ fontSize: 11, color: '#4B5580' }}>Someone who can vouch for you</div>
