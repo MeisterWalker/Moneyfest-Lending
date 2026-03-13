@@ -146,30 +146,42 @@ function ApplicationCard({ app, onApprove, onReject }) {
             )}
           </div>
 
-          {/* Valid ID */}
-          {app.valid_id_path && (() => {
-            const { data } = supabase.storage.from('valid-ids').getPublicUrl(app.valid_id_path)
-            const idUrl = data?.publicUrl
-            const isImage = /\.(jpg|jpeg|png)$/i.test(app.valid_id_path)
+          {/* Valid ID - Front & Back */}
+          {(app.valid_id_path || app.valid_id_back_path) && (() => {
+            const renderIdCard = (path, label) => {
+              if (!path) return null
+              const { data } = supabase.storage.from('valid-ids').getPublicUrl(path)
+              const url = data?.publicUrl
+              const isImage = /\.(jpg|jpeg|png)$/i.test(path)
+              return (
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 11, color: '#4B5580', marginBottom: 6, fontWeight: 600 }}>{label}</div>
+                  {isImage ? (
+                    <div style={{ position: 'relative', borderRadius: 10, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)' }}>
+                      <img src={url} alt={label} style={{ width: '100%', height: 140, objectFit: 'cover', display: 'block' }} />
+                      <a href={url} target="_blank" rel="noreferrer"
+                        style={{ position: 'absolute', bottom: 6, right: 6, display: 'flex', alignItems: 'center', gap: 4, padding: '5px 10px', borderRadius: 7, background: 'rgba(0,0,0,0.75)', color: '#fff', fontSize: 11, fontWeight: 600, textDecoration: 'none' }}>
+                        <ExternalLink size={10} /> View Full
+                      </a>
+                    </div>
+                  ) : (
+                    <a href={url} target="_blank" rel="noreferrer"
+                      style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '12px 14px', borderRadius: 10, background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.2)', color: '#a78bfa', fontSize: 12, fontWeight: 600, textDecoration: 'none' }}>
+                      <ExternalLink size={13} /> View PDF
+                    </a>
+                  )}
+                </div>
+              )
+            }
             return (
               <div style={{ marginBottom: 16 }}>
                 <div style={{ fontSize: 11, fontWeight: 700, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
                   <Image size={12} /> Valid ID Submitted
                 </div>
-                {isImage ? (
-                  <div style={{ position: 'relative', borderRadius: 10, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)', maxHeight: 200 }}>
-                    <img src={idUrl} alt="Valid ID" style={{ width: '100%', maxHeight: 200, objectFit: 'cover', display: 'block' }} />
-                    <a href={idUrl} target="_blank" rel="noreferrer"
-                      style={{ position: 'absolute', bottom: 8, right: 8, display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px', borderRadius: 8, background: 'rgba(0,0,0,0.7)', color: '#fff', fontSize: 12, fontWeight: 600, textDecoration: 'none', backdropFilter: 'blur(4px)' }}>
-                      <ExternalLink size={11} /> View Full
-                    </a>
-                  </div>
-                ) : (
-                  <a href={idUrl} target="_blank" rel="noreferrer"
-                    style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '9px 16px', borderRadius: 9, background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.25)', color: '#a78bfa', fontSize: 13, fontWeight: 600, textDecoration: 'none' }}>
-                    <ExternalLink size={13} /> View Submitted ID (PDF)
-                  </a>
-                )}
+                <div style={{ display: 'flex', gap: 10 }}>
+                  {renderIdCard(app.valid_id_path, 'Front')}
+                  {renderIdCard(app.valid_id_back_path, 'Back')}
+                </div>
               </div>
             )
           })()}

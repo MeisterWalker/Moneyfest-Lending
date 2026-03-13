@@ -43,6 +43,7 @@ export default function PublicApplyPage() {
     agreed: false
   })
   const [idFile, setIdFile] = useState(null)
+  const [idFileBack, setIdFileBack] = useState(null)
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
   const startDisclaimer = (amt) => { setPendingAmount(amt); setDisclaimerCountdown(4); setShowDisclaimer(true) }
@@ -71,10 +72,13 @@ export default function PublicApplyPage() {
   }
 
   const validateStep2 = () => {
-    if (!idFile) return 'Please upload at least 1 valid ID'
     const allowed = ['image/jpeg','image/png','image/jpg','application/pdf']
-    if (!allowed.includes(idFile.type)) return 'Please upload a JPG, PNG, or PDF file'
-    if (idFile.size > 5 * 1024 * 1024) return 'File must be under 5MB'
+    if (!idFile) return 'Please upload the front of your ID'
+    if (!allowed.includes(idFile.type)) return 'ID front must be a JPG, PNG, or PDF file'
+    if (idFile.size > 5 * 1024 * 1024) return 'ID front must be under 5MB'
+    if (!idFileBack) return 'Please upload the back of your ID'
+    if (!allowed.includes(idFileBack.type)) return 'ID back must be a JPG, PNG, or PDF file'
+    if (idFileBack.size > 5 * 1024 * 1024) return 'ID back must be under 5MB'
     return null
   }
 
@@ -113,20 +117,34 @@ export default function PublicApplyPage() {
     setError(''); setLoading(true)
     const code = 'LM-' + Math.random().toString(36).substring(2, 6).toUpperCase()
 
-    // Upload ID to Supabase Storage
+    // Upload ID front and back to Supabase Storage
     let validIdPath = null
+    let validIdBackPath = null
     if (idFile) {
       const ext = idFile.name.split('.').pop()
-      const filePath = `${code}/${Date.now()}-valid-id.${ext}`
+      const filePath = `${code}/${Date.now()}-id-front.${ext}`
       const { error: uploadErr } = await supabase.storage
         .from('valid-ids')
         .upload(filePath, idFile, { contentType: idFile.type, upsert: false })
       if (uploadErr) {
-        setError('Failed to upload ID. Please try again.')
+        setError('Failed to upload ID front. Please try again.')
         setLoading(false)
         return
       }
       validIdPath = filePath
+    }
+    if (idFileBack) {
+      const ext = idFileBack.name.split('.').pop()
+      const filePath = `${code}/${Date.now()}-id-back.${ext}`
+      const { error: uploadErr } = await supabase.storage
+        .from('valid-ids')
+        .upload(filePath, idFileBack, { contentType: idFileBack.type, upsert: false })
+      if (uploadErr) {
+        setError('Failed to upload ID back. Please try again.')
+        setLoading(false)
+        return
+      }
+      validIdBackPath = filePath
     }
 
     const { error: dbErr } = await supabase.from('applications').insert({
@@ -140,6 +158,7 @@ export default function PublicApplyPage() {
       gcash_number: form.gcash_number.trim() || null, gcash_name: form.gcash_name.trim() || null,
       bank_account_number: form.bank_account_number.trim() || null, bank_name: form.bank_name.trim() || null,
       valid_id_path: validIdPath,
+      valid_id_back_path: validIdBackPath,
       status: 'Pending', access_code: code, created_at: new Date().toISOString()
     })
     setLoading(false)
@@ -363,7 +382,7 @@ export default function PublicApplyPage() {
                 <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>🆔</div>
                 <div>
                   <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 16, color: '#F0F4FF' }}>ID Verification</div>
-                  <div style={{ fontSize: 11, color: '#4B5580' }}>Upload at least 1 valid government-issued ID</div>
+                  <div style={{ fontSize: 11, color: '#4B5580' }}>Upload front and back of your government-issued ID</div>
                 </div>
               </div>
 
@@ -373,34 +392,67 @@ export default function PublicApplyPage() {
                 SSS · GSIS · PhilHealth · Pag-IBIG · Passport · Driver's License · Postal ID · Voter's ID · PRC ID · Senior Citizen ID · or any government-issued photo ID
               </div>
 
-              {/* File upload area */}
-              <div style={{ marginBottom: 20 }}>
-                <label style={{ display: 'block', fontSize: 11, color: '#7A8AAA', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>
-                  Upload Valid ID *
-                </label>
-                <label style={{
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                  gap: 10, padding: '32px 20px', borderRadius: 12,
-                  border: `2px dashed ${idFile ? 'rgba(34,197,94,0.4)' : 'rgba(255,255,255,0.1)'}`,
-                  background: idFile ? 'rgba(34,197,94,0.04)' : 'rgba(255,255,255,0.02)',
-                  cursor: 'pointer', transition: 'all 0.2s'
-                }}>
-                  <div style={{ fontSize: 36 }}>{idFile ? '✅' : '🆔'}</div>
-                  <div style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: idFile ? '#22C55E' : '#F0F4FF', marginBottom: 4 }}>
-                      {idFile ? idFile.name : 'Click to upload your ID'}
+              {/* File upload area - Front & Back */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 20 }}>
+                {/* Front */}
+                <div>
+                  <label style={{ display: 'block', fontSize: 11, color: '#7A8AAA', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>
+                    Front of ID *
+                  </label>
+                  <label style={{
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                    gap: 8, padding: '24px 12px', borderRadius: 12,
+                    border: `2px dashed ${idFile ? 'rgba(34,197,94,0.4)' : 'rgba(255,255,255,0.1)'}`,
+                    background: idFile ? 'rgba(34,197,94,0.04)' : 'rgba(255,255,255,0.02)',
+                    cursor: 'pointer', transition: 'all 0.2s', minHeight: 130
+                  }}>
+                    <div style={{ fontSize: 28 }}>{idFile ? '✅' : '🆔'}</div>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: idFile ? '#22C55E' : '#F0F4FF', marginBottom: 3 }}>
+                        {idFile ? idFile.name : 'Upload front side'}
+                      </div>
+                      <div style={{ fontSize: 11, color: '#4B5580' }}>
+                        {idFile ? `${(idFile.size / 1024).toFixed(0)} KB` : 'JPG, PNG, PDF · Max 5MB'}
+                      </div>
                     </div>
-                    <div style={{ fontSize: 12, color: '#4B5580' }}>
-                      {idFile ? `${(idFile.size / 1024).toFixed(0)} KB · ${idFile.type.split('/')[1].toUpperCase()}` : 'JPG, PNG, or PDF · Max 5MB'}
+                    <input type="file" accept="image/jpeg,image/png,image/jpg,application/pdf" style={{ display: 'none' }} onChange={e => { setIdFile(e.target.files[0] || null); setError('') }} />
+                  </label>
+                  {idFile && (
+                    <button onClick={() => setIdFile(null)} style={{ marginTop: 6, background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: '#EF4444', display: 'flex', alignItems: 'center', gap: 4 }}>
+                      ✕ Remove
+                    </button>
+                  )}
+                </div>
+
+                {/* Back */}
+                <div>
+                  <label style={{ display: 'block', fontSize: 11, color: '#7A8AAA', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>
+                    Back of ID *
+                  </label>
+                  <label style={{
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                    gap: 8, padding: '24px 12px', borderRadius: 12,
+                    border: `2px dashed ${idFileBack ? 'rgba(34,197,94,0.4)' : 'rgba(255,255,255,0.1)'}`,
+                    background: idFileBack ? 'rgba(34,197,94,0.04)' : 'rgba(255,255,255,0.02)',
+                    cursor: 'pointer', transition: 'all 0.2s', minHeight: 130
+                  }}>
+                    <div style={{ fontSize: 28 }}>{idFileBack ? '✅' : '🔄'}</div>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: idFileBack ? '#22C55E' : '#F0F4FF', marginBottom: 3 }}>
+                        {idFileBack ? idFileBack.name : 'Upload back side'}
+                      </div>
+                      <div style={{ fontSize: 11, color: '#4B5580' }}>
+                        {idFileBack ? `${(idFileBack.size / 1024).toFixed(0)} KB` : 'JPG, PNG, PDF · Max 5MB'}
+                      </div>
                     </div>
-                  </div>
-                  <input type="file" accept="image/jpeg,image/png,image/jpg,application/pdf" style={{ display: 'none' }} onChange={e => { setIdFile(e.target.files[0] || null); setError('') }} />
-                </label>
-                {idFile && (
-                  <button onClick={() => setIdFile(null)} style={{ marginTop: 8, background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: '#EF4444', display: 'flex', alignItems: 'center', gap: 4 }}>
-                    ✕ Remove file
-                  </button>
-                )}
+                    <input type="file" accept="image/jpeg,image/png,image/jpg,application/pdf" style={{ display: 'none' }} onChange={e => { setIdFileBack(e.target.files[0] || null); setError('') }} />
+                  </label>
+                  {idFileBack && (
+                    <button onClick={() => setIdFileBack(null)} style={{ marginTop: 6, background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: '#EF4444', display: 'flex', alignItems: 'center', gap: 4 }}>
+                      ✕ Remove
+                    </button>
+                  )}
+                </div>
               </div>
 
               <div style={{ padding: '12px 16px', background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 10, fontSize: 12, color: '#F59E0B', lineHeight: 1.7 }}>
