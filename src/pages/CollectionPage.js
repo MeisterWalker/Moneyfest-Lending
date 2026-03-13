@@ -155,7 +155,7 @@ function EmailReminderModal({ events, onClose, onLog }) {
 
               {noEmail.length > 0 && (
                 <div style={{ padding: '12px 14px', background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 8, fontSize: 12, color: 'var(--gold)', marginBottom: 20 }}>
-                  ⚠️ {noEmail.length} borrower{noEmail.length > 1 ? 's have' : ' has'} no email: {noEmail.map(b => b?.full_name).join(', ')}. Update their profile to include them.
+                  <img src="/warning.png" alt="warning" style={{ width: 14, height: 14, objectFit: 'contain', verticalAlign: 'middle', marginRight: 4 }} />{noEmail.length} borrower{noEmail.length > 1 ? 's have' : ' has'} no email: {noEmail.map(b => b?.full_name).join(', ')}. Update their profile to include them.
                 </div>
               )}
 

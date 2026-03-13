@@ -433,7 +433,7 @@ export default function DashboardPage() {
           }}>
             <AlertTriangle size={20} color="var(--red)" style={{ flexShrink: 0, marginTop: 2 }} />
             <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 600, marginBottom: 4 }}>⚠️ Overdue — {b?.full_name}</div>
+              <div style={{ fontWeight: 600, marginBottom: 4 }}><span style={{ display: "flex", alignItems: "center", gap: 6 }}><img src="/warning.png" alt="warning" style={{ width: 16, height: 16, objectFit: "contain" }} />Overdue — {b?.full_name}</span></div>
               <div style={{ fontSize: 13, color: 'var(--text-label)' }}>
                 Loan of {formatCurrency(loan.loan_amount)} · {loan.payments_made} of 4 paid · Balance {formatCurrency(loan.remaining_balance)}
               </div>

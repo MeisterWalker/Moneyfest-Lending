@@ -239,7 +239,7 @@ export default function PublicApplyPage() {
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: 20 }}>
           <div style={{ background: '#141B2D', border: '1px solid rgba(245,158,11,0.3)', borderRadius: 20, padding: 32, width: '100%', maxWidth: 460 }}>
             <div style={{ textAlign: 'center', marginBottom: 24 }}>
-              <div style={{ fontSize: 44, marginBottom: 12 }}>⚠️</div>
+              <div style={{ marginBottom: 12 }}><img src="/warning.png" alt="warning" style={{ width: 44, height: 44, objectFit: 'contain' }} /></div>
               <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 20, color: '#F59E0B', marginBottom: 6 }}>Important Loan Disclaimer</div>
               <div style={{ fontSize: 13, color: '#7A8AAA' }}>Please read carefully before proceeding</div>
             </div>
@@ -336,7 +336,7 @@ export default function PublicApplyPage() {
                   <label style={lbl}>Email Address *</label>
                   <input value={form.email} onChange={e => set('email', e.target.value)} placeholder="your@gmail.com" type="email"
                     style={{ ...inp, borderColor: form.email && validateEmail(form.email) ? 'rgba(239,68,68,0.5)' : form.email && !validateEmail(form.email) ? 'rgba(34,197,94,0.4)' : 'rgba(255,255,255,0.08)' }} />
-                  {form.email && validateEmail(form.email) && <div style={{ fontSize: 11, color: '#EF4444', marginTop: 4 }}>⚠️ {validateEmail(form.email)}</div>}
+                  {form.email && validateEmail(form.email) && <div style={{ fontSize: 11, color: '#EF4444', marginTop: 4 }}><span style={{ display: "flex", alignItems: "center", gap: 4 }}><img src="/warning.png" alt="warning" style={{ width: 13, height: 13, objectFit: "contain" }} />{validateEmail(form.email)}</span></div>}
                   {form.email && !validateEmail(form.email) && <div style={{ fontSize: 11, color: '#22C55E', marginTop: 4 }}>✓ Valid email</div>}
                 </div>
                 <div><label style={lbl}>Home Address *</label><textarea value={form.address} onChange={e => set('address', e.target.value)} placeholder="Enter your complete home address" rows={2} style={{ ...inp, resize: 'none' }} /></div>
@@ -456,7 +456,7 @@ export default function PublicApplyPage() {
               </div>
 
               <div style={{ padding: '12px 16px', background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 10, fontSize: 12, color: '#F59E0B', lineHeight: 1.7 }}>
-                ⚠️ Make sure your ID is <strong>clear and readable</strong>. Blurry or cropped photos may delay your application.
+                <img src="/warning.png" alt="warning" style={{ width: 14, height: 14, objectFit: 'contain', verticalAlign: 'middle', marginRight: 4 }} />Make sure your ID is <strong>clear and readable</strong>. Blurry or cropped photos may delay your application.
               </div>
             </div>
           </div>
@@ -582,7 +582,7 @@ export default function PublicApplyPage() {
                     </div>
                     {feeLabel && (
                       <div style={{ margin: '0 22px 12px', padding: '10px 14px', background: 'rgba(245,158,11,0.07)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 9 }}>
-                        <div style={{ fontSize: 12, color: '#F59E0B' }}>⚠️ {feeLabel}</div>
+                        <div style={{ fontSize: 12, color: '#F59E0B' }}><span style={{ display: "flex", alignItems: "center", gap: 4 }}><img src="/warning.png" alt="warning" style={{ width: 13, height: 13, objectFit: "contain" }} />{feeLabel}</span></div>
                         {received && <div style={{ fontSize: 13, fontWeight: 700, color: '#F0F4FF', marginTop: 4 }}>You will receive: <span style={{ color: '#22C55E' }}>₱{received.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span></div>}
                       </div>
                     )}
@@ -623,7 +623,7 @@ export default function PublicApplyPage() {
                   <span style={{ fontSize: 13, color: '#7A8AAA', lineHeight: 1.6 }}>I have read and agree to the <strong style={{ color: '#F0F4FF' }}>Terms & Conditions</strong>.</span>
                 </label>
                 {error && (
-                  <div style={{ padding: '10px 14px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, fontSize: 13, color: '#EF4444', marginBottom: 14 }}>⚠️ {error}</div>
+                  <div style={{ padding: '10px 14px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, fontSize: 13, color: '#EF4444', marginBottom: 14 }}><span style={{ display: "flex", alignItems: "center", gap: 4 }}><img src="/warning.png" alt="warning" style={{ width: 13, height: 13, objectFit: "contain" }} />{error}</span></div>
                 )}
                 <button onClick={handleSubmit} disabled={loading}
                   style={{ width: '100%', padding: '14px', borderRadius: 12, border: 'none', background: loading ? 'rgba(255,255,255,0.05)' : 'linear-gradient(135deg,#22C55E,#3B82F6)', color: loading ? '#4B5580' : '#fff', fontSize: 14, fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', fontFamily: 'Space Grotesk', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
@@ -637,7 +637,7 @@ export default function PublicApplyPage() {
 
         {/* Error (step 1 & 2) */}
         {(step === 1 || step === 2) && error && (
-          <div style={{ marginTop: 16, padding: '10px 14px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, fontSize: 13, color: '#EF4444' }}>⚠️ {error}</div>
+          <div style={{ marginTop: 16, padding: '10px 14px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, fontSize: 13, color: '#EF4444' }}><span style={{ display: "flex", alignItems: "center", gap: 4 }}><img src="/warning.png" alt="warning" style={{ width: 13, height: 13, objectFit: "contain" }} />{error}</span></div>
         )}
 
         {/* Navigation */}

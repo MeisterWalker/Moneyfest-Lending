@@ -358,7 +358,7 @@ function DangerZoneSection({ loans, adminEmail, onReset }) {
             <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
               <AlertTriangle size={20} color="var(--red)" style={{ flexShrink: 0, marginTop: 2 }} />
               <div>
-                <div style={{ fontWeight: 600, marginBottom: 4 }}>⚠️ Are you sure?</div>
+                <div style={{ fontWeight: 600, marginBottom: 4 }}><span style={{ display: "flex", alignItems: "center", gap: 6 }}><img src="/warning.png" alt="warning" style={{ width: 18, height: 18, objectFit: "contain" }} />Are you sure?</span></div>
                 <div style={{ fontSize: 13, color: 'var(--text-label)' }}>
                   This will clear dashboard statistics and revert starting capital. A CSV archive of all loans will be downloaded automatically before the reset.
                 </div>

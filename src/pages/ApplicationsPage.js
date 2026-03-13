@@ -141,7 +141,7 @@ function ApplicationCard({ app, onApprove, onReject }) {
               </div>
             ) : (
               <div style={{ marginTop: 10, padding: '10px 14px', background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.15)', borderRadius: 10, fontSize: 12, color: '#EF4444' }}>
-                ⚠️ No release method specified
+                <img src="/warning.png" alt="warning" style={{ width: 14, height: 14, objectFit: 'contain', verticalAlign: 'middle', marginRight: 4 }} />No release method specified
               </div>
             )}
           </div>

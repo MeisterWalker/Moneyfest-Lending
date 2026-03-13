@@ -741,7 +741,7 @@ export default function BorrowerPortalPage() {
           ))}
         </div>
         <div style={{ marginTop: 20, padding: '14px 18px', background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 12, fontSize: 13, color: '#F59E0B', lineHeight: 1.7 }}>
-          ⚠️ <strong>Important:</strong> Always upload your proof of payment in the portal after every transaction. Your payment is only confirmed once your admin reviews and approves the proof.
+          <img src="/warning.png" alt="warning" style={{ width: 14, height: 14, objectFit: 'contain', verticalAlign: 'middle', marginRight: 4 }} /><strong>Important:</strong> Always upload your proof of payment in the portal after every transaction. Your payment is only confirmed once your admin reviews and approves the proof.
         </div>
       </div>
     </div>
