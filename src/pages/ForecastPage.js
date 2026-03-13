@@ -150,7 +150,7 @@ export default function ForecastPage() {
 
       {/* Forecast Controls */}
       <div className="card" style={{ padding: '22px 24px', marginBottom: 24 }}>
-        <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 15, marginBottom: 18 }}>⚙️ Simulation Parameters</div>
+        <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 15, marginBottom: 18 }}><div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><img src="/calculator.png" alt="calculator" style={{ width: 18, height: 18, objectFit: 'contain' }} />Simulation Parameters</div></div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 20 }}>
           <div className="form-group">
             <label className="form-label">Starting Capital (₱)</label>
@@ -210,7 +210,7 @@ export default function ForecastPage() {
       {/* Break-even */}
       {breakEvenMonth && (
         <div style={{ background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 10, padding: '14px 20px', marginBottom: 24, display: 'flex', alignItems: 'center', gap: 12 }}>
-          <img src="/summary-check.png" alt="summary" style={{ width: 24, height: 24, objectFit: 'contain' }} />
+          <img src="/calculator.png" alt="calculator" style={{ width: 24, height: 24, objectFit: 'contain' }} />
           <div>
             <div style={{ fontWeight: 600, fontSize: 14 }}>Capital Doubles in Month {breakEvenMonth}</div>
             <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>

@@ -560,7 +560,7 @@ export default function PublicApplyPage() {
                 return (
                   <div style={{ background: 'linear-gradient(135deg,#0f1a2e,#141B2D)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 18, overflow: 'hidden' }}>
                     <div style={{ padding: '18px 22px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <div style={{ width: 34, height: 34, borderRadius: 9, background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 3 }}><img src="/summary-check.png" alt="summary" style={{ width: 24, height: 24, objectFit: 'contain' }} /></div>
+                      <div style={{ width: 34, height: 34, borderRadius: 9, background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 3 }}><img src="/calculator.png" alt="calculator" style={{ width: 24, height: 24, objectFit: 'contain' }} /></div>
                       <div>
                         <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 15, color: '#F0F4FF' }}>Loan Summary</div>
                         <div style={{ fontSize: 11, color: '#4B5580' }}>Based on your selections</div>
@@ -607,7 +607,7 @@ export default function PublicApplyPage() {
                 )
               })() : (
                 <div style={{ background: '#141B2D', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 18, padding: 32, textAlign: 'center' }}>
-                  <img src="/summary-check.png" alt="summary" style={{ width: 48, height: 48, objectFit: 'contain', marginBottom: 12, opacity: 0.5 }} />
+                  <img src="/calculator.png" alt="calculator" style={{ width: 52, height: 52, objectFit: 'contain', marginBottom: 12, opacity: 0.55 }} />
                   <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 15, color: '#F0F4FF', marginBottom: 6 }}>Loan Calculator</div>
                   <div style={{ fontSize: 13, color: '#4B5580' }}>Select a loan amount on the left to see your payment breakdown and schedule.</div>
                 </div>
