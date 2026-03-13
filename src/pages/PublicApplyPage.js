@@ -436,7 +436,7 @@ export default function PublicApplyPage() {
                     background: idFileBack ? 'rgba(34,197,94,0.04)' : 'rgba(255,255,255,0.02)',
                     cursor: 'pointer', transition: 'all 0.2s', minHeight: 130
                   }}>
-                    <div style={{ fontSize: 28 }}>{idFileBack ? '✅' : '🔄'}</div>
+                    <div style={{ width: 48, height: 48, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{idFileBack ? <span style={{ fontSize: 28 }}>✅</span> : <img src="/refresh.png" alt="Back ID" style={{ width: 44, height: 44, objectFit: 'contain', opacity: 0.7 }} />}</div>
                     <div style={{ textAlign: 'center' }}>
                       <div style={{ fontSize: 12, fontWeight: 600, color: idFileBack ? '#22C55E' : '#F0F4FF', marginBottom: 3 }}>
                         {idFileBack ? idFileBack.name : 'Upload back side'}
