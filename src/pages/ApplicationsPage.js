@@ -57,7 +57,7 @@ function ApplicationCard({ app, onApprove, onReject }) {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 20 }}>
             {/* Personal */}
             <div>
-              <div style={{ fontSize: 11, fontWeight: 700, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>Personal Info</div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}><span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><img src="/list.png" alt="info" style={{ width: 13, height: 13, objectFit: 'contain', marginRight: 5, verticalAlign: 'middle' }} />Personal Info</span></div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {[
                   { icon: <Phone size={13} />, label: app.phone },
@@ -73,7 +73,7 @@ function ApplicationCard({ app, onApprove, onReject }) {
             </div>
             {/* Trustee */}
             <div>
-              <div style={{ fontSize: 11, fontWeight: 700, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>Trustee / Guarantor</div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}><span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><img src="/list.png" alt="info" style={{ width: 13, height: 13, objectFit: 'contain', marginRight: 5, verticalAlign: 'middle' }} />Trustee / Guarantor</span></div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {[
                   { icon: <User size={13} />, label: app.trustee_name },

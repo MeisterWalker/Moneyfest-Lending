@@ -330,7 +330,7 @@ export default function BorrowerPortalPage() {
 
           {/* Application summary */}
           <div style={{ background: '#0B0F1A', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: '14px 18px', marginBottom: 20 }}>
-            <div style={{ fontSize: 11, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>Application Details</div>
+            <div style={{ fontSize: 11, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}><span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><img src="/list.png" alt="info" style={{ width: 13, height: 13, objectFit: 'contain', marginRight: 5, verticalAlign: 'middle' }} />Application Details</span></div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
                 <span style={{ color: '#4B5580' }}>Name</span>
@@ -405,10 +405,10 @@ export default function BorrowerPortalPage() {
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
             <a href="/apply" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 9, background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', color: '#22C55E', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>
-              📝 Apply
+              <img src="/startup.png" alt="launch" style={{ width: 14, height: 14, objectFit: 'contain', marginRight: 5 }} />Apply
             </a>
             <a href="/faq" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 9, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', color: '#7A8AAA', fontSize: 13, fontWeight: 600, textDecoration: 'none' }}>
-              ❓ FAQ
+              <img src="/faq.png" alt="faq" style={{ width: 14, height: 14, objectFit: 'contain', marginRight: 5, verticalAlign: 'middle' }} />FAQ
             </a>
           </div>
         </div>
@@ -462,7 +462,7 @@ export default function BorrowerPortalPage() {
             disabled={loading}
             style={{ width: '100%', padding: '13px', borderRadius: 10, border: 'none', background: loading ? 'rgba(139,92,246,0.3)' : 'linear-gradient(135deg,#3B82F6,#8B5CF6)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', fontFamily: 'Space Grotesk' }}
           >
-            {loading ? 'Checking...' : "Access My Loan →"}
+            {loading ? 'Checking...' : <><img src="/startup.png" alt="launch" style={{ width: 16, height: 16, objectFit: 'contain', marginRight: 7 }} />Access My Loan</>}
           </button>
 
           <div style={{ marginTop: 18, padding: '12px 14px', background: 'rgba(59,130,246,0.06)', borderRadius: 8, fontSize: 12, color: '#4B5580', lineHeight: 1.6 }}>
@@ -573,7 +573,7 @@ export default function BorrowerPortalPage() {
 
         {/* Personal Details */}
         <div style={{ background: '#141B2D', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, padding: 24 }}>
-          <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 14, color: '#F0F4FF', marginBottom: 16 }}>Personal Details</div>
+          <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 14, color: '#F0F4FF', marginBottom: 16 }}><span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><img src="/list.png" alt="info" style={{ width: 13, height: 13, objectFit: 'contain', marginRight: 5, verticalAlign: 'middle' }} />Personal Details</span></div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {[
               { label: 'Email', value: borrower.email },
@@ -699,7 +699,7 @@ export default function BorrowerPortalPage() {
         <div style={{ maxWidth: 640, margin: '0 auto', display: 'flex', alignItems: 'center', gap: 14 }}>
           <button onClick={() => setPage('home')} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, padding: '7px 14px', color: '#F0F4FF', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>← Back</button>
           <div>
-            <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 16, color: '#F0F4FF' }}>Accepted Payment Methods</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><img src="/payment-method.png" alt="payment" style={{ width: 22, height: 22, objectFit: 'contain' }} /><div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 16, color: '#F0F4FF' }}>Accepted Payment Methods</div></div>
             <div style={{ fontSize: 11, color: '#4B5580' }}>How to repay your loan</div>
           </div>
         </div>
@@ -984,11 +984,7 @@ export default function BorrowerPortalPage() {
 
             <div onClick={() => setPage('payment-methods')} style={{ background: '#141B2D', border: '1px solid rgba(139,92,246,0.2)', borderRadius: 16, padding: '16px 20px', marginBottom: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', transition: 'border-color 0.2s' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                <div style={{ display: 'flex', gap: -4 }}>
-                  {['/cash-logo.png', '/gcash-logo.png', '/rcbc-logo.png', '/bank-logo.png'].map((logo, i) => (
-                    <img key={i} src={logo} alt="" style={{ width: 28, height: 28, objectFit: 'contain', marginLeft: i > 0 ? -6 : 0, borderRadius: '50%', background: '#0B0F1A', border: '1px solid rgba(255,255,255,0.06)' }} />
-                  ))}
-                </div>
+                <div style={{ width: 44, height: 44, borderRadius: 12, background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 6 }}><img src="/payment-method.png" alt="payment" style={{ width: 30, height: 30, objectFit: 'contain' }} /></div>
                 <div>
                   <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 14, color: '#F0F4FF' }}>Accepted Payment Methods</div>
                   <div style={{ fontSize: 12, color: '#4B5580', marginTop: 2 }}>Cash, GCash, RCBC, Bank Transfer</div>
@@ -1000,7 +996,7 @@ export default function BorrowerPortalPage() {
             {/* Contact admin */}
             <div style={{ background: '#141B2D', border: '1px solid rgba(59,130,246,0.15)', borderRadius: 16, padding: 20 }}>
               <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 14, color: '#F0F4FF', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
-                💬 Need Help?
+                <span style={{ display: "flex", alignItems: "center", gap: 7 }}><img src="/faq.png" alt="faq" style={{ width: 16, height: 16, objectFit: 'contain', marginRight: 6, verticalAlign: 'middle' }} />Need Help?</span>
               </div>
               <div style={{ fontSize: 13, color: '#7A8AAA', marginBottom: 14 }}>Contact any of the following admins via <strong style={{ color: '#F0F4FF' }}>Microsoft Teams Chat</strong>:</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>

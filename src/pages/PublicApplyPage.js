@@ -279,7 +279,7 @@ export default function PublicApplyPage() {
           </div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             <a href="/faq" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 9, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: '#7A8AAA', fontSize: 13, fontWeight: 600, textDecoration: 'none', whiteSpace: 'nowrap' }}>
-              ❓ FAQ
+              <img src="/faq.png" alt="faq" style={{ width: 14, height: 14, objectFit: 'contain', marginRight: 5, verticalAlign: 'middle' }} />FAQ
             </a>
             <a href="/portal" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 9, background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.3)', color: '#a78bfa', fontSize: 13, fontWeight: 700, textDecoration: 'none', whiteSpace: 'nowrap', fontFamily: 'Space Grotesk' }}>
               My Portal →
@@ -313,7 +313,7 @@ export default function PublicApplyPage() {
             {/* Left: Personal Info */}
             <div style={{ background: '#141B2D', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 18, padding: 28 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 22 }}>
-                <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(59,130,246,0.12)', border: '1px solid rgba(59,130,246,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>👤</div>
+                <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 4 }}><img src="/list.png" alt="info" style={{ width: 24, height: 24, objectFit: 'contain' }} /></div>
                 <div>
                   <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 16, color: '#F0F4FF' }}>Personal Information</div>
                   <div style={{ fontSize: 11, color: '#4B5580' }}>Your basic details</div>
@@ -347,7 +347,7 @@ export default function PublicApplyPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
               <div style={{ background: '#141B2D', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 18, padding: 28 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 22 }}>
-                  <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>🤝</div>
+                  <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 4 }}><img src="/list.png" alt="info" style={{ width: 24, height: 24, objectFit: 'contain' }} /></div>
                   <div>
                     <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 16, color: '#F0F4FF' }}>Trustee / Guarantor</div>
                     <div style={{ fontSize: 11, color: '#4B5580' }}>Someone who can vouch for you</div>
@@ -362,7 +362,7 @@ export default function PublicApplyPage() {
 
               {/* Info blurb */}
               <div style={{ background: 'rgba(59,130,246,0.05)', border: '1px solid rgba(59,130,246,0.15)', borderRadius: 14, padding: '18px 20px' }}>
-                <div style={{ fontSize: 12, color: '#60A5FA', fontWeight: 700, marginBottom: 8 }}>ℹ️ What to expect</div>
+                <div style={{ fontSize: 12, color: '#60A5FA', fontWeight: 700, marginBottom: 8 }}><span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><img src="/list.png" alt="info" style={{ width: 13, height: 13, objectFit: 'contain', marginRight: 5, verticalAlign: 'middle' }} />What to expect</span></div>
                 <div style={{ fontSize: 12, color: '#4B5580', lineHeight: 1.8 }}>
                   Applications are reviewed manually. You'll receive an access code after submitting — use it to track your status in the Borrower Portal.
                 </div>
@@ -627,7 +627,7 @@ export default function PublicApplyPage() {
                 )}
                 <button onClick={handleSubmit} disabled={loading}
                   style={{ width: '100%', padding: '14px', borderRadius: 12, border: 'none', background: loading ? 'rgba(255,255,255,0.05)' : 'linear-gradient(135deg,#22C55E,#3B82F6)', color: loading ? '#4B5580' : '#fff', fontSize: 14, fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', fontFamily: 'Space Grotesk', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-                  {loading ? 'Submitting...' : '🚀 Submit Application'}
+                  {loading ? 'Submitting...' : <><img src="/startup.png" alt="launch" style={{ width: 18, height: 18, objectFit: 'contain', marginRight: 7 }} />Submit Application</>}
                 </button>
               </div>
 

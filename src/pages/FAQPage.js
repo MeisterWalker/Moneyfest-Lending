@@ -141,7 +141,7 @@ export default function FAQPage() {
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
             <a href="/apply" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: 10, background: 'linear-gradient(135deg,rgba(59,130,246,0.15),rgba(139,92,246,0.15))', border: '1px solid rgba(139,92,246,0.3)', color: '#a78bfa', fontSize: 13, fontWeight: 700, textDecoration: 'none', fontFamily: 'Space Grotesk', whiteSpace: 'nowrap' }}>
-              Apply Now →
+              <img src="/startup.png" alt="launch" style={{ width: 15, height: 15, objectFit: 'contain', marginRight: 5 }} />Apply Now
             </a>
             <a href="/portal" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: 10, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: '#7A8AAA', fontSize: 13, fontWeight: 600, textDecoration: 'none', whiteSpace: 'nowrap' }}>
               My Portal
@@ -154,7 +154,7 @@ export default function FAQPage() {
 
         {/* Hero */}
         <div style={{ textAlign: 'center', marginBottom: 40 }}>
-          <div style={{ fontSize: 44, marginBottom: 14 }}>❓</div>
+          <div style={{ marginBottom: 14 }}><img src="/faq.png" alt="faq" style={{ width: 44, height: 44, objectFit: 'contain', marginBottom: 14 }} /></div>
           <h1 style={{ fontFamily: 'Space Grotesk', fontWeight: 900, fontSize: 32, color: '#F0F4FF', margin: '0 0 12px', letterSpacing: -1 }}>Frequently Asked Questions</h1>
           <p style={{ color: '#7A8AAA', fontSize: 15, maxWidth: 500, margin: '0 auto', lineHeight: 1.7 }}>Everything you need to know about the LoanMoneyfest employee lending program.</p>
         </div>
@@ -192,7 +192,7 @@ export default function FAQPage() {
             <div style={{ fontSize: 14, color: '#7A8AAA' }}>Fill out the form and get your access code instantly.</div>
           </div>
           <a href="/apply" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '13px 28px', borderRadius: 12, background: 'linear-gradient(135deg,#3B82F6,#8B5CF6)', color: '#fff', textDecoration: 'none', fontSize: 14, fontWeight: 700, fontFamily: 'Space Grotesk', whiteSpace: 'nowrap' }}>
-            Start Application →
+            <img src="/startup.png" alt="launch" style={{ width: 18, height: 18, objectFit: 'contain', marginRight: 7 }} />Start Application
           </a>
         </div>
 
