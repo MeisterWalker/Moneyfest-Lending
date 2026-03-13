@@ -379,7 +379,7 @@ export default function PublicApplyPage() {
           <div style={{ maxWidth: 560, margin: '0 auto', width: '100%' }}>
             <div style={{ background: '#141B2D', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 18, padding: 28 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 22 }}>
-                <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><img src="/id-logo.png" alt="ID" style={{ width: 22, height: 22, objectFit: 'contain', filter: 'invert(1) brightness(2)' }} /></div>
+                <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><img src="/id-logo.png" alt="ID" style={{ width: 22, height: 22, objectFit: 'contain', filter: 'invert(1)', opacity: 0.9 }} /></div>
                 <div>
                   <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 16, color: '#F0F4FF' }}>ID Verification</div>
                   <div style={{ fontSize: 11, color: '#4B5580' }}>Upload front and back of your government-issued ID</div>
@@ -388,7 +388,7 @@ export default function PublicApplyPage() {
 
               {/* Accepted IDs info */}
               <div style={{ background: 'rgba(59,130,246,0.05)', border: '1px solid rgba(59,130,246,0.15)', borderRadius: 12, padding: '14px 16px', marginBottom: 20, fontSize: 12, color: '#7A8AAA', lineHeight: 1.8 }}>
-                <div style={{ fontWeight: 700, color: '#60A5FA', marginBottom: 6 }}>✅ Accepted IDs</div>
+                <div style={{ fontWeight: 700, color: '#60A5FA', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 7 }}><img src="/checkbox.png" alt="check" style={{ width: 18, height: 18, objectFit: 'contain' }} /> Accepted IDs</div>
                 SSS · GSIS · PhilHealth · Pag-IBIG · Passport · Driver's License · Postal ID · Voter's ID · PRC ID · Senior Citizen ID · or any government-issued photo ID
               </div>
 
@@ -406,7 +406,7 @@ export default function PublicApplyPage() {
                     background: idFile ? 'rgba(34,197,94,0.04)' : 'rgba(255,255,255,0.02)',
                     cursor: 'pointer', transition: 'all 0.2s', minHeight: 130
                   }}>
-                    <div style={{ width: 48, height: 48, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{idFile ? <span style={{ fontSize: 28 }}>✅</span> : <img src="/id-logo.png" alt="ID" style={{ width: 44, height: 44, objectFit: 'contain', filter: 'invert(1) brightness(1.5) opacity(0.5)' }} />}</div>
+                    <div style={{ width: 48, height: 48, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{idFile ? <span style={{ fontSize: 28 }}>✅</span> : <img src="/id-logo.png" alt="ID" style={{ width: 44, height: 44, objectFit: 'contain', filter: 'invert(1)', opacity: 0.5 }} />}</div>
                     <div style={{ textAlign: 'center' }}>
                       <div style={{ fontSize: 12, fontWeight: 600, color: idFile ? '#22C55E' : '#F0F4FF', marginBottom: 3 }}>
                         {idFile ? idFile.name : 'Upload front side'}
