@@ -562,14 +562,14 @@ export default function ApplicationsPage() {
     })
 
     toast(`✅ Approved! Access code ${accessCode} sent to ${app.email || app.full_name}`, 'success')
-    fetchData()
+    setApplications(prev => prev.map(a => a.id === app.id ? { ...a, status: 'Approved' } : a))
   }
 
   const handleReject = async (app, reason) => {
     await supabase.from('applications').update({ status: 'Rejected', reject_reason: reason }).eq('id', app.id)
     await logAudit({ action_type: 'APPLICATION_REJECTED', module: 'Applications', description: `Application rejected for ${app.full_name}. Reason: ${reason}`, changed_by: user?.email })
     toast(`Application rejected`, 'success')
-    fetchData()
+    setApplications(prev => prev.map(a => a.id === app.id ? { ...a, status: 'Rejected', reject_reason: reason } : a))
   }
 
   const filtered = applications.filter(a => filter === 'All' ? true : a.status === filter)
