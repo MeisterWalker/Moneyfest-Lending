@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import {
   Lock, CheckCircle, Clock, AlertCircle, Upload,
@@ -153,6 +153,42 @@ function UploadModal({ installmentNum, loan, borrower, onClose, onUploaded }) {
 
     </div>
   )
+}
+
+function LottieHourglass() {
+  const ref = useRef(null)
+  useEffect(() => {
+    // Load lottie-web from CDN dynamically
+    const script = document.createElement('script')
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js'
+    script.onload = () => {
+      if (ref.current && window.lottie) {
+        window.lottie.loadAnimation({
+          container: ref.current,
+          renderer: 'svg',
+          loop: true,
+          autoplay: true,
+          path: '/gold_hourglass.json'
+        })
+      }
+    }
+    // If already loaded
+    if (window.lottie) {
+      window.lottie.loadAnimation({
+        container: ref.current,
+        renderer: 'svg',
+        loop: true,
+        autoplay: true,
+        path: '/gold_hourglass.json'
+      })
+    } else {
+      document.head.appendChild(script)
+    }
+    return () => {
+      if (window.lottie) window.lottie.destroy()
+    }
+  }, [])
+  return <div ref={ref} style={{ width: 80, height: 80, margin: '0 auto' }} />
 }
 
 export default function BorrowerPortalPage() {
