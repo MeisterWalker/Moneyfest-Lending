@@ -289,11 +289,8 @@ export default function InvestorPitchPage() {
                   </div>
                 </div>
 
-                {/* Divider with arrow */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 0, position: 'relative' }}>
-                  <div style={{ flex: 1, height: 1, background: 'linear-gradient(90deg, transparent, rgba(245,158,11,0.3), rgba(34,197,94,0.3), transparent)' }} />
-                  <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', background: '#080A0F', padding: '0 12px', fontSize: 12, color: '#4B5580' }}>split into</div>
-                </div>
+                {/* Divider */}
+                <div style={{ height: 1, background: 'linear-gradient(90deg, transparent, rgba(245,158,11,0.3), rgba(34,197,94,0.3), transparent)' }} />
 
                 {/* Row 2 — Investor */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 20, padding: '18px 24px', background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.2)', borderBottom: 'none', position: 'relative', overflow: 'hidden' }}>
@@ -333,15 +330,15 @@ export default function InvestorPitchPage() {
             {/* What the 2% covers */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10 }}>
               {[
-                { icon: '/list.png',            label: 'Platform & Tech',     desc: 'The system you are using right now' },
-                { icon: '/warning.png',         label: 'Default Risk',        desc: 'We absorb losses if a borrower defaults' },
-                { icon: '/summary-check.png',   label: 'Collections',         desc: 'Admin time managing repayments' },
-                { icon: '/padlock.png',         label: 'Operations',          desc: 'ID verification, approvals, payouts' },
+                { icon: '/list.png',            label: 'Platform & Tech',     desc: 'The system you are using right now',       color: 'rgba(99,102,241,0.12)',  border: 'rgba(99,102,241,0.25)'  },
+                { icon: '/warning.png',         label: 'Default Risk',        desc: 'We absorb losses if a borrower defaults',  color: 'rgba(239,68,68,0.08)',   border: 'rgba(239,68,68,0.2)'    },
+                { icon: '/summary-check.png',   label: 'Collections',         desc: 'Admin time managing repayments',           color: 'rgba(34,197,94,0.08)',   border: 'rgba(34,197,94,0.2)'    },
+                { icon: '/padlock.png',         label: 'Operations',          desc: 'ID verification, approvals, payouts',      color: 'rgba(245,158,11,0.08)',  border: 'rgba(245,158,11,0.2)'   },
               ].map((item, i) => (
-                <div key={i} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: '14px 16px', textAlign: 'center' }}>
-                  <img src={item.icon} alt="" style={{ width: 22, height: 22, objectFit: 'contain', marginBottom: 8, filter: 'brightness(0.7)' }} />
-                  <div style={{ fontSize: 12, fontWeight: 700, color: '#7A8AAA', marginBottom: 4 }}>{item.label}</div>
-                  <div style={{ fontSize: 11, color: '#4B5580', lineHeight: 1.5 }}>{item.desc}</div>
+                <div key={i} style={{ background: item.color, border: '1px solid ' + item.border, borderRadius: 14, padding: '18px 16px', textAlign: 'center' }}>
+                  <img src={item.icon} alt="" style={{ width: 26, height: 26, objectFit: 'contain', marginBottom: 10 }} />
+                  <div style={{ fontSize: 12, fontWeight: 700, color: '#CBD5F0', marginBottom: 5 }}>{item.label}</div>
+                  <div style={{ fontSize: 11, color: '#7A8AAA', lineHeight: 1.6 }}>{item.desc}</div>
                 </div>
               ))}
             </div>
