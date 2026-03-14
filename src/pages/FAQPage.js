@@ -40,7 +40,7 @@ export default function FAQPage() {
 
   const faqByCategory = {
     eligibility: [
-      { q: 'Who can apply for a loan?', a: 'This lending program is exclusively available to active employees of MySource Solutions. You must be currently employed and in good standing to be eligible. Applicants from outside the company will not be processed.' },
+      { q: 'Who can apply for a loan?', a: 'LoanMoneyfest is an exclusive workplace lending program — only active team members within our office who are in good standing are eligible to apply. This is a private, internal program and is not open to the general public. If you are unsure about your eligibility, reach out to the admins via Microsoft Teams.' },
       { q: 'Do I need a trustee to apply?', a: 'Yes. Every applicant is required to provide a trustee or guarantor — someone who can vouch for you and may be contacted for follow-up. Your trustee should be someone who knows you personally, such as a spouse, parent, or close colleague.' },
       { q: 'Can I apply if I already have an active loan?', a: 'No. You must fully settle your current loan before applying for a new one. No rollovers or loan stacking is allowed under any circumstance.' },
       { q: 'Do I need to submit a valid ID?', a: 'Yes. All applicants are required to upload at least 1 valid government-issued ID as part of the application process. Accepted IDs include SSS, GSIS, PhilHealth, Pag-IBIG, Passport, Driver\'s License, Postal ID, Voter\'s ID, or any other government-issued photo ID. Applications without a valid ID submission will not be processed.' },
@@ -159,6 +159,39 @@ export default function FAQPage() {
           <div style={{ marginBottom: 14 }}><img src="/faq.png" alt="faq" style={{ width: 44, height: 44, objectFit: 'contain', marginBottom: 14 }} /></div>
           <h1 style={{ fontFamily: 'Space Grotesk', fontWeight: 900, fontSize: 32, color: '#F0F4FF', margin: '0 0 12px', letterSpacing: -1 }}>Frequently Asked Questions</h1>
           <p style={{ color: '#7A8AAA', fontSize: 15, maxWidth: 500, margin: '0 auto', lineHeight: 1.7 }}>Everything you need to know about the LoanMoneyfest employee lending program.</p>
+        </div>
+
+        {/* About Banner */}
+        <div style={{ background: 'linear-gradient(135deg,rgba(59,130,246,0.08),rgba(139,92,246,0.06))', border: '1px solid rgba(99,102,241,0.2)', borderRadius: 20, padding: '32px 36px', marginBottom: 32 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+            <img src="/favicon-96x96.png" alt="LoanMoneyfest" style={{ width: 36, height: 36, objectFit: 'contain' }} />
+            <div style={{ fontFamily: 'Space Grotesk', fontWeight: 900, fontSize: 20, color: '#F0F4FF' }}>
+              Loan<span style={{ background: 'linear-gradient(90deg,#60a5fa,#a78bfa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Moneyfest</span>
+            </div>
+          </div>
+          <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 22, color: '#F0F4FF', marginBottom: 12, lineHeight: 1.3 }}>
+            The smarter way to borrow — <span style={{ background: 'linear-gradient(90deg,#60a5fa,#a78bfa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>built for your team.</span>
+          </div>
+          <div style={{ fontSize: 14, color: '#8892B0', lineHeight: 1.9, marginBottom: 20 }}>
+            LoanMoneyfest is a private, exclusive micro-lending program built by and for our workmates. We know how it feels to need money before payday — so we made the whole process simple, digital, and stress-free. Apply in minutes, get approved fast, and track everything from your phone.
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
+            {[
+              { icon: '/philippine-peso.png', title: 'Only 7% flat interest', desc: 'One of the lowest rates around — no hidden fees, no surprises.' },
+              { icon: '/startup.png', title: 'Fast & fully digital', desc: 'Apply, upload proof, and track status — all from your browser.' },
+              { icon: '/giftbox.png', title: 'Earn Rebate Credits', desc: 'Pay your final installment early and get rewarded automatically.' },
+              { icon: '/padlock.png', title: 'Private & exclusive', desc: 'This is an internal program — just for our team, no outsiders.' },
+            ].map((item, i) => (
+              <div key={i} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: '16px 18px' }}>
+                <img src={item.icon} alt={item.title} style={{ width: 28, height: 28, objectFit: 'contain', marginBottom: 10 }} />
+                <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 13, color: '#F0F4FF', marginBottom: 5 }}>{item.title}</div>
+                <div style={{ fontSize: 12, color: '#7A8AAA', lineHeight: 1.6 }}>{item.desc}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.06)', fontSize: 13, color: '#4B5580', fontStyle: 'italic' }}>
+            "Borrow smart. Pay early. Get rewarded." — LoanMoneyfest
+          </div>
         </div>
 
         {/* Two-column layout: Category tabs left, FAQs right */}

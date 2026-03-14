@@ -336,7 +336,7 @@ function generateApprovalHTML({ borrowerName, accessCode, loanAmount, releaseDat
           <tr>
             <td style="background:#0d1226;border-top:1px solid #1E2640;border-radius:0 0 16px 16px;padding:24px 36px;text-align:center;">
               <p style="font-size:13px;color:#CBD5F0;margin:0 0 4px;font-weight:600;">From LM Management</p>
-              <p style="font-size:11px;color:#4B5580;margin:0;">MySource Solutions · Workplace Lending Program</p>
+              <p style="font-size:11px;color:#4B5580;margin:0;">LoanMoneyfest · Workplace Lending Program</p>
             </td>
           </tr>
 
@@ -422,7 +422,7 @@ export async function sendPendingEmail({ to, borrowerName, accessCode, loanAmoun
 
         <tr><td style="background:#0d1226;border-top:1px solid #1E2640;border-radius:0 0 16px 16px;padding:24px 36px;text-align:center;">
           <p style="font-size:13px;color:#CBD5F0;margin:0 0 4px;font-weight:600;">From LM Management</p>
-          <p style="font-size:11px;color:#4B5580;margin:0;">MySource Solutions - Workplace Lending Program</p>
+          <p style="font-size:11px;color:#4B5580;margin:0;">LoanMoneyfest · Workplace Lending Program</p>
         </td></tr>
 
       </table>
