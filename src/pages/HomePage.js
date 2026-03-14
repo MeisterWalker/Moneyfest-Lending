@@ -223,6 +223,105 @@ export default function HomePage() {
         </div>
       </section>
 
+
+      {/* ── REWARDS & TIERS ─────────────────────────────────── */}
+      <section style={{ padding: '80px 32px' }}>
+        <div style={{ maxWidth: 1080, margin: '0 auto' }}>
+
+          {/* Header */}
+          <div ref={ref('rewards-header')} className={`reveal ${visible['rewards-header'] ? 'visible' : ''}`} style={{ textAlign: 'center', marginBottom: 52 }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 14px', borderRadius: 20, background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.25)', marginBottom: 16 }}>
+              <span style={{ fontSize: 11, fontWeight: 700, color: '#F59E0B', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Loyalty Rewards</span>
+            </div>
+            <h2 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 900, fontSize: 'clamp(28px,4vw,44px)', color: '#F0F4FF', letterSpacing: -1, margin: '0 0 14px', lineHeight: 1.1 }}>
+              The more you pay,<br />
+              <span style={{ background: 'linear-gradient(90deg,#F59E0B,#22C55E)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>the more you earn.</span>
+            </h2>
+            <p style={{ fontSize: 16, color: '#7A8AAA', maxWidth: 520, margin: '0 auto', lineHeight: 1.7 }}>
+              LoanMoneyfest rewards good borrowers with lower Security Hold rates, higher loan limits, and exclusive perks — automatically.
+            </p>
+          </div>
+
+          {/* Tier Cards */}
+          <div ref={ref('tiers')} className={`reveal ${visible['tiers'] ? 'visible' : ''}`} style={{ position: 'relative', marginBottom: 24 }}>
+            {/* Connector arrow line */}
+            <div style={{ position: 'absolute', top: 52, left: '12%', right: '12%', height: 2, background: 'linear-gradient(90deg,#7A8AAA,#F59E0B,#3B82F6,#8B5CF6)', borderRadius: 1, zIndex: 0, pointerEvents: 'none' }} />
+            {/* Arrow heads */}
+            {[33, 66].map((pos, i) => (
+              <div key={i} style={{ position: 'absolute', top: 44, left: pos + '%', zIndex: 1, fontSize: 16, color: '#4B5580', pointerEvents: 'none' }}>›</div>
+            ))}
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16, position: 'relative', zIndex: 1 }}>
+              {[
+                { badge: '🌱', tier: 'New',      hold: '10%', limit: '₱5,000', loans: 'Starting',    color: '#7A8AAA', bg: 'rgba(122,138,170,0.08)',  border: 'rgba(122,138,170,0.2)',  score: '750+',  perks: ['Standard access', 'Apply immediately', '10% Security Hold'] },
+                { badge: '⭐', tier: 'Trusted',   hold: '8%',  limit: '₱7,000', loans: '1 clean loan', color: '#F59E0B', bg: 'rgba(245,158,11,0.08)',  border: 'rgba(245,158,11,0.3)',   score: '650+',  perks: ['Hold reduced to 8%', 'Limit raised to ₱7K', '1 clean loan needed'] },
+                { badge: '🤝', tier: 'Reliable',  hold: '6%',  limit: '₱9,000', loans: '2 clean loans', color: '#3B82F6', bg: 'rgba(59,130,246,0.08)', border: 'rgba(59,130,246,0.3)',   score: '720+',  perks: ['Hold reduced to 6%', 'Limit raised to ₱9K', 'Priority processing'] },
+                { badge: '👑', tier: 'VIP',       hold: '5%',  limit: '₱10,000', loans: '3 clean loans', color: '#8B5CF6', bg: 'rgba(139,92,246,0.1)', border: 'rgba(139,92,246,0.4)',  score: '780+',  perks: ['Lowest hold — just 5%', 'Max limit ₱10K', 'Top borrower status'] },
+              ].map((t, i) => (
+                <div key={i} style={{ background: t.bg, border: `1px solid ${t.border}`, borderRadius: 20, padding: '28px 20px', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
+                  {/* Glow */}
+                  <div style={{ position: 'absolute', top: -20, left: '50%', transform: 'translateX(-50%)', width: 80, height: 80, borderRadius: '50%', background: `radial-gradient(circle, ${t.color}22 0%, transparent 70%)`, pointerEvents: 'none' }} />
+                  {/* Badge */}
+                  <div style={{ fontSize: 36, marginBottom: 10 }}>{t.badge}</div>
+                  <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 900, fontSize: 16, color: t.color, marginBottom: 4 }}>{t.tier}</div>
+                  <div style={{ fontSize: 11, color: '#4B5580', marginBottom: 16, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{t.loans}</div>
+
+                  {/* Hold & Limit */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 16 }}>
+                    <div style={{ background: 'rgba(0,0,0,0.2)', borderRadius: 10, padding: '10px 8px' }}>
+                      <div style={{ fontSize: 10, color: '#4B5580', marginBottom: 3, textTransform: 'uppercase' }}>Hold</div>
+                      <div style={{ fontFamily: 'Syne', fontWeight: 900, fontSize: 20, color: t.color }}>{t.hold}</div>
+                    </div>
+                    <div style={{ background: 'rgba(0,0,0,0.2)', borderRadius: 10, padding: '10px 8px' }}>
+                      <div style={{ fontSize: 10, color: '#4B5580', marginBottom: 3, textTransform: 'uppercase' }}>Limit</div>
+                      <div style={{ fontFamily: 'Syne', fontWeight: 900, fontSize: 13, color: '#F0F4FF', marginTop: 3 }}>{t.limit}</div>
+                    </div>
+                  </div>
+
+                  {/* Perks */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                    {t.perks.map((p, j) => (
+                      <div key={j} style={{ fontSize: 11, color: '#7A8AAA', display: 'flex', alignItems: 'center', gap: 5, textAlign: 'left' }}>
+                        <div style={{ width: 5, height: 5, borderRadius: '50%', background: t.color, flexShrink: 0 }} />
+                        {p}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Score badge */}
+                  <div style={{ marginTop: 14, display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 10px', borderRadius: 20, background: 'rgba(0,0,0,0.25)', border: `1px solid ${t.border}`, fontSize: 10, color: t.color, fontWeight: 700 }}>
+                    Score {t.score}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Bottom callouts */}
+          <div ref={ref('rewards-bottom')} className={`reveal ${visible['rewards-bottom'] ? 'visible' : ''}`} style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 14, marginBottom: 28 }}>
+            {[
+              { icon: '/giftbox.png',         text: 'Security Hold drops from 10% down to just 5% as you level up',    color: '#F59E0B' },
+              { icon: '/philippine-peso.png', text: 'Loan limit grows from ₱5,000 all the way up to ₱10,000',          color: '#22C55E' },
+              { icon: '/verified.png',        text: 'Most borrowers reach ⭐ Trusted after just 1 clean loan',          color: '#3B82F6' },
+            ].map((c, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '16px 20px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14 }}>
+                <img src={c.icon} alt="" style={{ width: 28, height: 28, objectFit: 'contain', flexShrink: 0 }} />
+                <div style={{ fontSize: 13, color: '#8892B0', lineHeight: 1.6 }}>{c.text}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* CTA nudge */}
+          <div ref={ref('rewards-cta')} className={`reveal ${visible['rewards-cta'] ? 'visible' : ''}`} style={{ textAlign: 'center' }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '14px 28px', borderRadius: 14, background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.2)' }}>
+              <span style={{ fontSize: 13, color: '#8892B0' }}>Start at 🌱 New today —</span>
+              <a href="/apply" style={{ fontSize: 13, fontWeight: 700, color: '#a78bfa', textDecoration: 'none' }}>work your way to 👑 VIP →</a>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
       {/* ── HOW IT WORKS ────────────────────────────────────── */}
       <section style={{ padding: '80px 32px', background: 'rgba(255,255,255,0.01)', borderTop: '1px solid rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
         <div style={{ maxWidth: 1080, margin: '0 auto' }}>
@@ -335,7 +434,7 @@ export default function HomePage() {
           <span style={{ fontSize: 12, color: '#4B5580' }}>· Workplace Lending Program</span>
         </div>
         <div style={{ display: 'flex', gap: 20 }}>
-          {[{ label: 'Apply', href: '/apply' }, { label: 'My Portal', href: '/portal' }, { label: 'FAQ', href: '/faq' }, { label: 'Privacy Notice', href: '/privacy' }].map((l, i) => (
+          {[{ label: 'Apply', href: '/apply' }, { label: 'My Portal', href: '/portal' }, { label: 'FAQ', href: '/faq' }, { label: 'Privacy Notice', href: '/privacy' }, { label: 'Terms & Conditions', href: '/terms' }].map((l, i) => (
             <a key={i} href={l.href} style={{ fontSize: 12, color: '#4B5580', textDecoration: 'none', transition: 'color 0.2s' }}
               onMouseEnter={e => e.currentTarget.style.color = '#7A8AAA'}
               onMouseLeave={e => e.currentTarget.style.color = '#4B5580'}>{l.label}</a>
