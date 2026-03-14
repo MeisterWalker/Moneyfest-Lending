@@ -179,9 +179,55 @@ export default function PublicApplyPage() {
 
   // ── Success screen ──────────────────────────────────────────
   if (submitted) return (
-    <div style={{ minHeight: '100vh', background: '#0B0F1A', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-      <div style={{ textAlign: 'center', maxWidth: 480, width: '100%' }}>
-        <div style={{ fontSize: 60, marginBottom: 16 }}>🎉</div>
+    <div style={{ minHeight: '100vh', background: '#0B0F1A', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, position: 'relative', overflow: 'hidden' }}>
+
+      {/* Confetti canvas */}
+      <style>{`
+        @keyframes confettiFall {
+          0%   { transform: translateY(-20px) rotate(0deg);   opacity: 1; }
+          100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+        }
+        @keyframes confettiSway {
+          0%, 100% { margin-left: 0px; }
+          25%       { margin-left: 30px; }
+          75%       { margin-left: -30px; }
+        }
+        .confetti-piece {
+          position: fixed;
+          top: -20px;
+          animation: confettiFall linear forwards, confettiSway ease-in-out infinite;
+          z-index: 0;
+          border-radius: 2px;
+          pointer-events: none;
+        }
+      `}</style>
+
+      {/* Generate confetti pieces */}
+      {Array.from({ length: 80 }, (_, i) => {
+        const colors = ['#3B82F6','#8B5CF6','#22C55E','#F59E0B','#EF4444','#14B8A6','#EC4899','#F97316','#A78BFA','#34D399']
+        const color = colors[i % colors.length]
+        const left = (i * 1.27) % 100
+        const delay = (i * 0.07) % 3
+        const duration = 2.5 + (i % 4) * 0.5
+        const width = 6 + (i % 3) * 4
+        const height = 8 + (i % 4) * 4
+        const isCircle = i % 5 === 0
+        return (
+          <div key={i} className="confetti-piece" style={{
+            left: left + 'vw',
+            width: isCircle ? width : width,
+            height: isCircle ? width : height,
+            borderRadius: isCircle ? '50%' : '2px',
+            background: color,
+            animationDuration: duration + 's, ' + (duration * 0.8) + 's',
+            animationDelay: delay + 's, ' + delay + 's',
+            opacity: 0.9,
+          }} />
+        )
+      })}
+
+      <div style={{ textAlign: 'center', maxWidth: 480, width: '100%', position: 'relative', zIndex: 1 }}>
+        <img src="/verified.png" alt="verified" style={{ width: 80, height: 80, objectFit: "contain", marginBottom: 16 }} />
         <h2 style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 28, color: '#F0F4FF', margin: '0 0 12px', letterSpacing: -0.5 }}>Application Submitted!</h2>
         <p style={{ color: '#7A8AAA', fontSize: 15, lineHeight: 1.7, marginBottom: 20 }}>
           Thank you <strong style={{ color: '#F0F4FF' }}>{form.full_name}</strong>! Your application is now under review. Our admin will get back to you shortly.
@@ -308,18 +354,18 @@ export default function PublicApplyPage() {
 
         {/* ── STEP 1: Two-column layout ── */}
         {step === 1 && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, alignItems: 'start' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, alignItems: 'start' }}>
 
             {/* Left: Personal Info */}
-            <div style={{ background: '#141B2D', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 18, padding: 28 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 22 }}>
-                <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 4 }}><img src="/list.png" alt="info" style={{ width: 24, height: 24, objectFit: 'contain' }} /></div>
+            <div style={{ background: 'linear-gradient(135deg,#1a2236,#1e2a40)', border: '1px solid rgba(59,130,246,0.18)', borderRadius: 18, padding: 32, boxShadow: '0 4px 24px rgba(0,0,0,0.3)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24, paddingBottom: 18, borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                <div style={{ width: 42, height: 42, borderRadius: 12, background: 'rgba(59,130,246,0.15)', border: '1px solid rgba(59,130,246,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 5 }}><img src="/list.png" alt="info" style={{ width: 26, height: 26, objectFit: 'contain' }} /></div>
                 <div>
-                  <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 16, color: '#F0F4FF' }}>Personal Information</div>
-                  <div style={{ fontSize: 11, color: '#4B5580' }}>Your basic details</div>
+                  <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 17, color: '#F0F4FF' }}>Personal Information</div>
+                  <div style={{ fontSize: 12, color: '#7A8AAA', marginTop: 2 }}>Your basic details</div>
                 </div>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 <div><label style={lbl}>Full Name *</label><input value={form.full_name} onChange={e => set('full_name', e.target.value)} placeholder="Enter your full name" style={inp} /></div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                   <div>
@@ -343,17 +389,17 @@ export default function PublicApplyPage() {
               </div>
             </div>
 
-            {/* Right: Trustee */}
+            {/* Right: Trustee + Info */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-              <div style={{ background: '#141B2D', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 18, padding: 28 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 22 }}>
-                  <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 4 }}><img src="/handshake.png" alt="trustee" style={{ width: 24, height: 24, objectFit: 'contain' }} /></div>
+              <div style={{ background: 'linear-gradient(135deg,#1a2236,#1e2a40)', border: '1px solid rgba(99,102,241,0.2)', borderRadius: 18, padding: 32, boxShadow: '0 4px 24px rgba(0,0,0,0.3)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24, paddingBottom: 18, borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                  <div style={{ width: 42, height: 42, borderRadius: 12, background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 5 }}><img src="/handshake.png" alt="trustee" style={{ width: 26, height: 26, objectFit: 'contain' }} /></div>
                   <div>
-                    <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 16, color: '#F0F4FF' }}>Trustee / Guarantor</div>
-                    <div style={{ fontSize: 11, color: '#4B5580' }}>Someone who can vouch for you</div>
+                    <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 17, color: '#F0F4FF' }}>Trustee / Guarantor</div>
+                    <div style={{ fontSize: 12, color: '#7A8AAA', marginTop: 2 }}>Someone who can vouch for you</div>
                   </div>
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                   <div><label style={lbl}>Trustee Full Name *</label><input value={form.trustee_name} onChange={e => set('trustee_name', e.target.value)} placeholder="Enter trustee full name" style={inp} /></div>
                   <div><label style={lbl}>Trustee Phone *</label><input value={form.trustee_phone} onChange={e => set('trustee_phone', e.target.value)} placeholder="09XX XXX XXXX" style={inp} /></div>
                   <div><label style={lbl}>Relationship *</label><input value={form.trustee_relationship} onChange={e => set('trustee_relationship', e.target.value)} placeholder="e.g. Spouse, Parent, Colleague" style={inp} /></div>
@@ -361,12 +407,21 @@ export default function PublicApplyPage() {
               </div>
 
               {/* Info blurb */}
-              <div style={{ background: 'rgba(59,130,246,0.05)', border: '1px solid rgba(59,130,246,0.15)', borderRadius: 14, padding: '18px 20px' }}>
-                <div style={{ fontSize: 12, color: '#60A5FA', fontWeight: 700, marginBottom: 8 }}><span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><img src="/list.png" alt="info" style={{ width: 13, height: 13, objectFit: 'contain', marginRight: 5, verticalAlign: 'middle' }} />What to expect</span></div>
-                <div style={{ fontSize: 12, color: '#4B5580', lineHeight: 1.8 }}>
-                  Applications are reviewed manually. You'll receive an access code after submitting — use it to track your status in the Borrower Portal.
+              <div style={{ background: 'linear-gradient(135deg,rgba(59,130,246,0.08),rgba(139,92,246,0.06))', border: '1px solid rgba(59,130,246,0.2)', borderRadius: 14, padding: '20px 22px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                  <img src="/list.png" alt="info" style={{ width: 15, height: 15, objectFit: 'contain' }} />
+                  <span style={{ fontSize: 13, color: '#60A5FA', fontWeight: 700 }}>What to expect</span>
                 </div>
-                <a href="/faq" style={{ display: 'inline-block', marginTop: 10, fontSize: 12, color: '#3B82F6', textDecoration: 'none', fontWeight: 600 }}>Read the FAQ →</a>
+                <div style={{ fontSize: 13, color: '#8892B0', lineHeight: 1.8, marginBottom: 14 }}>
+                  Applications are reviewed manually by our admin team. You'll receive a unique <strong style={{ color: '#CBD5F0' }}>access code</strong> after submitting — use it to track your status anytime in the Borrower Portal.
+                </div>
+                <div style={{ height: 1, background: 'rgba(59,130,246,0.15)', marginBottom: 14 }} />
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+                  <span style={{ fontSize: 12, color: '#7A8AAA' }}>For more info visit our FAQ</span>
+                  <a href="/faq" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 14px', borderRadius: 8, background: 'rgba(59,130,246,0.12)', border: '1px solid rgba(59,130,246,0.25)', fontSize: 12, color: '#60A5FA', textDecoration: 'none', fontWeight: 600 }}>
+                    <img src="/faq.png" alt="faq" style={{ width: 12, height: 12, objectFit: 'contain' }} /> View FAQ →
+                  </a>
+                </div>
               </div>
             </div>
 
