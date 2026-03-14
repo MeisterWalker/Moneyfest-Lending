@@ -11,6 +11,65 @@ const STATUS_COLORS = {
   Rejected: { bg: 'rgba(239,68,68,0.1)', border: 'rgba(239,68,68,0.3)', text: '#EF4444' },
 }
 
+function IdViewer({ app }) {
+  const [frontUrl, setFrontUrl] = useState(null)
+  const [backUrl, setBackUrl] = useState(null)
+
+  useEffect(() => {
+    const load = async () => {
+      if (app.valid_id_path) {
+        const { data } = await supabase.storage.from('valid-ids').createSignedUrl(app.valid_id_path, 3600)
+        if (data?.signedUrl) setFrontUrl(data.signedUrl)
+      }
+      if (app.valid_id_back_path) {
+        const { data } = await supabase.storage.from('valid-ids').createSignedUrl(app.valid_id_back_path, 3600)
+        if (data?.signedUrl) setBackUrl(data.signedUrl)
+      }
+    }
+    load()
+  }, [app.valid_id_path, app.valid_id_back_path])
+
+  const renderCard = (url, path, label) => {
+    if (!path) return null
+    const isImage = /\.(jpg|jpeg|png)$/i.test(path)
+    return (
+      <div style={{ flex: 1 }}>
+        <div style={{ fontSize: 11, color: '#4B5580', marginBottom: 6, fontWeight: 600 }}>{label}</div>
+        {!url ? (
+          <div style={{ height: 140, borderRadius: 10, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, color: '#4B5580' }}>
+            Loading...
+          </div>
+        ) : isImage ? (
+          <div style={{ position: 'relative', borderRadius: 10, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)' }}>
+            <img src={url} alt={label} style={{ width: '100%', height: 140, objectFit: 'cover', display: 'block' }} />
+            <a href={url} target="_blank" rel="noreferrer"
+              style={{ position: 'absolute', bottom: 6, right: 6, display: 'flex', alignItems: 'center', gap: 4, padding: '5px 10px', borderRadius: 7, background: 'rgba(0,0,0,0.75)', color: '#fff', fontSize: 11, fontWeight: 600, textDecoration: 'none' }}>
+              <ExternalLink size={10} /> View Full
+            </a>
+          </div>
+        ) : (
+          <a href={url} target="_blank" rel="noreferrer"
+            style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '12px 14px', borderRadius: 10, background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.2)', color: '#a78bfa', fontSize: 12, fontWeight: 600, textDecoration: 'none' }}>
+            <ExternalLink size={13} /> View PDF
+          </a>
+        )}
+      </div>
+    )
+  }
+
+  return (
+    <div style={{ marginBottom: 16 }}>
+      <div style={{ fontSize: 11, fontWeight: 700, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
+        <Image size={12} /> Valid ID Submitted
+      </div>
+      <div style={{ display: 'flex', gap: 10 }}>
+        {renderCard(frontUrl, app.valid_id_path, 'Front')}
+        {renderCard(backUrl, app.valid_id_back_path, 'Back')}
+      </div>
+    </div>
+  )
+}
+
 function ApplicationCard({ app, onApprove, onReject }) {
   const [expanded, setExpanded] = useState(false)
   const [rejectReason, setRejectReason] = useState('')
@@ -147,44 +206,9 @@ function ApplicationCard({ app, onApprove, onReject }) {
           </div>
 
           {/* Valid ID - Front & Back */}
-          {(app.valid_id_path || app.valid_id_back_path) && (() => {
-            const renderIdCard = (path, label) => {
-              if (!path) return null
-              const { data } = supabase.storage.from('valid-ids').getPublicUrl(path)
-              const url = data?.publicUrl
-              const isImage = /\.(jpg|jpeg|png)$/i.test(path)
-              return (
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 11, color: '#4B5580', marginBottom: 6, fontWeight: 600 }}>{label}</div>
-                  {isImage ? (
-                    <div style={{ position: 'relative', borderRadius: 10, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)' }}>
-                      <img src={url} alt={label} style={{ width: '100%', height: 140, objectFit: 'cover', display: 'block' }} />
-                      <a href={url} target="_blank" rel="noreferrer"
-                        style={{ position: 'absolute', bottom: 6, right: 6, display: 'flex', alignItems: 'center', gap: 4, padding: '5px 10px', borderRadius: 7, background: 'rgba(0,0,0,0.75)', color: '#fff', fontSize: 11, fontWeight: 600, textDecoration: 'none' }}>
-                        <ExternalLink size={10} /> View Full
-                      </a>
-                    </div>
-                  ) : (
-                    <a href={url} target="_blank" rel="noreferrer"
-                      style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '12px 14px', borderRadius: 10, background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.2)', color: '#a78bfa', fontSize: 12, fontWeight: 600, textDecoration: 'none' }}>
-                      <ExternalLink size={13} /> View PDF
-                    </a>
-                  )}
-                </div>
-              )
-            }
-            return (
-              <div style={{ marginBottom: 16 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <Image size={12} /> Valid ID Submitted
-                </div>
-                <div style={{ display: 'flex', gap: 10 }}>
-                  {renderIdCard(app.valid_id_path, 'Front')}
-                  {renderIdCard(app.valid_id_back_path, 'Back')}
-                </div>
-              </div>
-            )
-          })()}
+          {(app.valid_id_path || app.valid_id_back_path) && (
+            <IdViewer app={app} />
+          )}
 
           {/* Reject reason if rejected */}
           {app.status === 'Rejected' && app.reject_reason && (
