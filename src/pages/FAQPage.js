@@ -95,6 +95,7 @@ export default function FAQPage() {
         </div>
       )},
       { q: 'What happens if I miss a payment?', a: 'Missed payments will negatively affect your credit score and may freeze your loan limit increase. Consistent late payments may result in your loan being flagged as defaulted, which affects your eligibility for future loans.' },
+      { q: 'Can I earn rewards for paying early?', a: 'Yes! If you pay your final (4th) installment ahead of its due date, you earn an early payoff rebate credited to your in-app wallet. Paying 7 to 13 days early earns 1% of your loan amount. Paying 14 or more days early earns 1.5%. The rebate only applies to the last installment and is automatically added to your wallet when the admin records your payment.' },
     ],
     release: [
       { q: 'How will my loan be released?', a: 'Once approved, your loan will be released via your chosen method — Physical Cash, GCash, RCBC, or Other Bank Transfer. Release fees vary: Physical Cash and RCBC-to-RCBC are free, GCash is free if sending GCash to GCash — otherwise a ₱15 fee applies, and other bank transfers require the borrower to cover the transfer fee. Fees are deducted from your approved amount before release.' },
@@ -103,6 +104,7 @@ export default function FAQPage() {
     ],
     other: [
       { q: 'How do I track my application?', a: 'After submitting, you will receive an access code. Use this code to log in to the Borrower Portal at loanmoneyfest.vercel.app/portal — you can track your application status, view your loan schedule, and upload payment proofs from there.' },
+      { q: 'What is the Wallet and how does it work?', a: 'Your wallet is a built-in rewards balance that stores rebates you earn from paying off loans early. You cannot add funds manually — only the system credits it. Once your balance reaches ₱500, a withdrawal button becomes available in the Borrower Portal under the Wallet section. Withdrawal requests are reviewed and processed by the admin.' },
       { q: 'Who can I contact for questions?', children: (
         <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
           {[

@@ -815,7 +815,7 @@ export default function BorrowerPortalPage() {
 
         {/* How rebates work */}
         <div style={{ background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 14, padding: '16px 18px', marginBottom: 20 }}>
-          <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 13, color: '#22C55E', marginBottom: 10 }}>🎁 How to earn rebates</div>
+          <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 13, color: '#22C55E', marginBottom: 10 }}><span style={{ display: 'flex', alignItems: 'center', gap: 7 }}><img src='/giftbox.png' alt='rebate' style={{ width: 18, height: 18, objectFit: 'contain' }} />How to earn rebates</span></div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {[
               { days: '7–13 days early', rate: '1%', example: '₱50 on ₱5,000 loan' },
@@ -848,7 +848,7 @@ export default function BorrowerPortalPage() {
                 <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 18px', borderBottom: i < walletTxns.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                     <div style={{ width: 36, height: 36, borderRadius: '50%', background: txn.type === 'rebate' ? 'rgba(34,197,94,0.15)' : txn.status === 'pending' ? 'rgba(245,158,11,0.15)' : txn.status === 'rejected' ? 'rgba(239,68,68,0.15)' : 'rgba(59,130,246,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>
-                      {txn.type === 'rebate' ? '🎁' : txn.status === 'pending' ? '⏳' : txn.status === 'rejected' ? '❌' : '💸'}
+                      {txn.type === 'rebate' ? <img src='/giftbox.png' alt='rebate' style={{ width: 18, height: 18, objectFit: 'contain' }} /> : txn.status === 'pending' ? '⏳' : txn.status === 'rejected' ? '❌' : '💸'}
                     </div>
                     <div>
                       <div style={{ fontSize: 13, fontWeight: 600, color: '#F0F4FF' }}>{txn.type === 'rebate' ? 'Early Payoff Rebate' : 'Withdrawal'}</div>
@@ -1020,15 +1020,15 @@ export default function BorrowerPortalPage() {
             <div style={{ position: 'relative', marginBottom: 20 }}>
               <div style={{ position: 'absolute', top: -12, right: 12, display: 'flex', gap: 6, zIndex: 10 }}>
                 <button onClick={() => setPage('payment-history')} style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'linear-gradient(135deg,#0f2a1a,#141B2D)', border: '1px solid rgba(34,197,94,0.35)', borderRadius: 20, padding: '5px 12px', cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.3)' }}>
-                  <span style={{ fontSize: 13 }}>🧾</span>
+                  <img src='/history.png' alt='history' style={{ width: 16, height: 16, objectFit: 'contain' }} />
                   <span style={{ fontSize: 11, fontWeight: 700, color: '#22C55E' }}>History</span>
                 </button>
                 <button onClick={() => setPage('profile')} style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'linear-gradient(135deg,#160f2a,#141B2D)', border: '1px solid rgba(139,92,246,0.35)', borderRadius: 20, padding: '5px 12px', cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.3)' }}>
-                  <span style={{ fontSize: 13 }}>👤</span>
+                  <img src='/user.png' alt='profile' style={{ width: 16, height: 16, objectFit: 'contain' }} />
                   <span style={{ fontSize: 11, fontWeight: 700, color: '#8B5CF6' }}>Profile</span>
                 </button>
                 <button onClick={() => setPage('wallet')} style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'linear-gradient(135deg,#0f2a1a,#141B2D)', border: '1px solid rgba(34,197,94,0.35)', borderRadius: 20, padding: '5px 12px', cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.3)', position: 'relative' }}>
-                  <span style={{ fontSize: 13 }}>💰</span>
+                  <img src='/wallet.png' alt='wallet' style={{ width: 16, height: 16, objectFit: 'contain' }} />
                   <span style={{ fontSize: 11, fontWeight: 700, color: '#22C55E' }}>Wallet {wallet && wallet.balance > 0 ? `₱${wallet.balance.toLocaleString('en-PH', { minimumFractionDigits: 2 })}` : ''}</span>
                 </button>
               </div>
@@ -1058,7 +1058,7 @@ export default function BorrowerPortalPage() {
                 return (
                   <div style={{ background: 'linear-gradient(135deg,rgba(245,158,11,0.08),rgba(239,68,68,0.05))', border: '1px solid rgba(245,158,11,0.3)', borderRadius: 14, padding: '18px 20px', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 16 }}>
                     <div style={{ width: 48, height: 48, borderRadius: 12, background: 'rgba(245,158,11,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, flexShrink: 0 }}>
-                      {isToday ? '🎉' : isPast ? '⏳' : '📅'}
+                      {isToday ? '🎉' : isPast ? '⏳' : <img src='/calendar.png' alt='calendar' style={{ width: 28, height: 28, objectFit: 'contain' }} />}
                     </div>
                     <div style={{ flex: 1 }}>
                       <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#F59E0B', fontWeight: 700, marginBottom: 4 }}>
