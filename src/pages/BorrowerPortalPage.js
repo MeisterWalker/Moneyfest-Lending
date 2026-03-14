@@ -1140,10 +1140,12 @@ export default function BorrowerPortalPage() {
               </div>
 
               {/* Stats row */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 12 }}>
                 {[
-                  { label: 'Loan Amount', value: 'P' + Number(loan.loan_amount).toLocaleString('en-PH'), color: '#F0F4FF' },
-                  { label: 'Per Installment', value: 'P' + Number(loan.installment_amount).toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#8B5CF6' },
+                  { label: 'Approved Amount', value: '₱' + Number(loan.loan_amount).toLocaleString('en-PH'), color: '#F0F4FF' },
+                  { label: 'You Received', value: '₱' + (loan.funds_released ? Number(loan.funds_released).toLocaleString('en-PH') : (Number(loan.loan_amount) * 0.80).toLocaleString('en-PH')), color: '#22C55E' },
+                  { label: 'Security Hold', value: (loan.security_hold_returned ? '✅ ' : '🔒 ') + '₱' + (loan.security_hold ? Number(loan.security_hold).toLocaleString('en-PH') : (Number(loan.loan_amount) * 0.20).toLocaleString('en-PH')), color: loan.security_hold_returned ? '#22C55E' : '#F59E0B' },
+                  { label: 'Per Installment', value: '₱' + Number(loan.installment_amount).toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#8B5CF6' },
                   { label: 'Release Date', value: formatDate(loan.release_date), color: '#F59E0B' },
                 ].map(s => (
                   <div key={s.label} style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 10, padding: '10px 12px' }}>
@@ -1247,7 +1249,9 @@ export default function BorrowerPortalPage() {
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
                     {[
-                      { label: 'Principal Amount', value: '₱' + principal.toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#F0F4FF' },
+                      { label: 'Approved Loan Amount', value: '₱' + principal.toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#F0F4FF' },
+                      { label: 'Security Hold (20%)', value: '₱' + (loan.security_hold ? Number(loan.security_hold).toLocaleString('en-PH', { minimumFractionDigits: 2 }) : (principal * 0.20).toLocaleString('en-PH', { minimumFractionDigits: 2 })), color: '#F59E0B' },
+                      { label: 'Funds Released to You', value: '₱' + (loan.funds_released ? Number(loan.funds_released).toLocaleString('en-PH', { minimumFractionDigits: 2 }) : (principal * 0.80).toLocaleString('en-PH', { minimumFractionDigits: 2 })), color: '#22C55E' },
                       { label: 'Finance Charge', value: '₱' + financeCharge.toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#F59E0B' },
                       { label: 'Flat Interest Rate', value: flatRate.toFixed(0) + '% of principal', color: '#60A5FA' },
                       { label: 'Effective Interest Rate (per annum)', value: effectiveAnnual + '% p.a.', color: '#a78bfa' },
@@ -1262,6 +1266,11 @@ export default function BorrowerPortalPage() {
                     ))}
                   </div>
                   <div style={{ padding: '10px 12px', background: 'rgba(99,102,241,0.06)', border: '1px solid rgba(99,102,241,0.15)', borderRadius: 8, fontSize: 11, color: '#4B5580', lineHeight: 1.7 }}>
+                    {loan.security_hold_returned && (
+                      <div style={{ marginBottom: 8, display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 10px', background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 20, fontSize: 11, color: '#22C55E', fontWeight: 700 }}>
+                        ✅ Security Hold of ₱{Number(loan.security_hold).toLocaleString('en-PH', { minimumFractionDigits: 2 })} has been returned to your Rebate Credits
+                      </div>
+                    )}
                     <strong style={{ color: '#818CF8' }}>RA 3765 — Truth in Lending Act Disclosure.</strong> This statement discloses all finance charges and terms applicable to your loan in compliance with Republic Act No. 3765 of the Philippines. The effective interest rate is computed based on the loan term of 2 months annualized over 12 months.
                   </div>
                 </div>

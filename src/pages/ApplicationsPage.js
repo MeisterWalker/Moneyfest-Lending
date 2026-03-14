@@ -512,13 +512,18 @@ export default function ApplicationsPage() {
     const currentRate = settingsData?.interest_rate || 0.07
 
     const loanAmount = Number(app.loan_amount)
-    const totalRepayment = loanAmount * (1 + currentRate)
+    const SECURITY_HOLD_RATE = 0.20  // 20% holdback
+    const securityHold = parseFloat((loanAmount * SECURITY_HOLD_RATE).toFixed(2))
+    const fundsReleased = loanAmount - securityHold
+    const totalRepayment = loanAmount * (1 + currentRate)  // interest on full amount
     const installmentAmount = totalRepayment / 4
 
     const { error: lErr } = await supabase.from('loans').insert({
       borrower_id: borrower.id, loan_amount: loanAmount,
       interest_rate: currentRate, total_repayment: totalRepayment,
       installment_amount: installmentAmount, remaining_balance: totalRepayment,
+      security_hold: securityHold, funds_released: fundsReleased,
+      security_hold_returned: false,
       payments_made: 0, release_date: releaseDateStr,
       status: 'Pending', created_at: new Date().toISOString()
     })
@@ -543,13 +548,13 @@ export default function ApplicationsPage() {
     }
 
     // 7. Log audit
-    await logAudit({ action_type: 'APPLICATION_APPROVED', module: 'Applications', description: `Application approved for ${app.full_name} — ₱${loanAmount.toLocaleString()} loan created. Access code: ${accessCode}`, changed_by: user?.email })
+    await logAudit({ action_type: 'APPLICATION_APPROVED', module: 'Applications', description: `Application approved for ${app.full_name} — ₱${loanAmount.toLocaleString()} loan, ₱${fundsReleased.toLocaleString()} released, ₱${securityHold.toLocaleString()} security hold. Access code: ${accessCode}`, changed_by: user?.email })
 
     await notifyBorrower({
       borrower_id: borrower.id,
       type: 'loan_approved',
       title: '🎉 Loan Approved!',
-      message: `Your loan of ₱${loanAmount.toLocaleString('en-PH')} has been approved! Your funds will be released on ${releaseDateDisplay}. Check your loan details in the portal.`
+      message: `Your loan of ₱${loanAmount.toLocaleString('en-PH')} has been approved! You will receive ₱${fundsReleased.toLocaleString('en-PH')} on ${releaseDateDisplay}. A Security Hold of ₱${securityHold.toLocaleString('en-PH')} will be returned after your 4th installment is paid. Check your loan details in the portal.`
     })
 
     toast(`✅ Approved! Access code ${accessCode} sent to ${app.email || app.full_name}`, 'success')

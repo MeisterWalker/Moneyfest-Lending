@@ -520,6 +520,39 @@ export default function LoansPage() {
         }).eq('id', borrower.id)
       }
 
+      // ── Return Security Hold to borrower portal ─────────────
+      if (loan.security_hold && loan.security_hold > 0 && !loan.security_hold_returned) {
+        // Credit security hold back to borrower's rebate credits / security hold balance
+        await supabase.from('loans').update({ security_hold_returned: true }).eq('id', loan.id)
+
+        // Log as a special wallet transaction so borrower can see it
+        const { data: existingCredits } = await supabase
+          .from('wallets').select('id, balance').eq('borrower_id', borrower.id).single()
+        const holdAmount = parseFloat(loan.security_hold)
+        if (existingCredits) {
+          await supabase.from('wallets').update({
+            balance: parseFloat((existingCredits.balance + holdAmount).toFixed(2)),
+            updated_at: new Date().toISOString()
+          }).eq('id', existingCredits.id)
+        } else {
+          await supabase.from('wallets').insert({ borrower_id: borrower.id, balance: holdAmount })
+        }
+        await supabase.from('wallet_transactions').insert({
+          borrower_id: borrower.id,
+          loan_id: loan.id,
+          type: 'rebate',
+          amount: holdAmount,
+          description: `Security Hold of ₱${holdAmount.toLocaleString('en-PH', { minimumFractionDigits: 2 })} returned — loan fully paid`,
+          status: 'completed'
+        })
+        await logAudit({
+          action_type: 'SECURITY_HOLD_RETURNED',
+          module: 'Loan',
+          description: `Security Hold of ₱${holdAmount} returned to ${borrower.full_name}'s Rebate Credits`,
+          changed_by: user?.email
+        })
+      }
+
       // ── Early payoff rebate (only on final installment) ──────
       if (loan.due_date) {
         const today = new Date(); today.setHours(0,0,0,0)

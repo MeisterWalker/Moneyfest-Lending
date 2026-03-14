@@ -363,19 +363,23 @@ export default function PublicApplyPage() {
                   body: "A valid government-issued ID is required for all applications. Accepted IDs include SSS, GSIS, PhilHealth, Pag-IBIG, Passport, Driver's License, Postal ID, Voter's ID, PRC ID, and Senior Citizen ID. Your ID images are stored securely and handled in accordance with our Privacy Notice."
                 },
                 {
-                  title: '9. Loan Limit & Level System',
+                  title: '9. Security Hold',
+                  body: 'To protect the program and ensure commitment from borrowers, 20% of your approved loan amount is withheld as a Security Hold. For example, on a ₱5,000 loan you will receive ₱4,000 and ₱1,000 will be held. Interest is charged on the full approved amount. The Security Hold is automatically returned to your Rebate Credits balance after your 4th and final installment is paid. It is not a deposit, not savings, and not collateral — it is a contractual security condition of the loan.'
+                },
+                {
+                  title: '13. Loan Limit & Level System',
                   body: 'All first-time borrowers are approved at a maximum of ₱5,000 regardless of the amount requested. Subsequent loan limits increase based on your repayment history through our Level Attainment System. The program administrators reserve the right to adjust loan limits at their discretion.'
                 },
                 {
-                  title: '10. Program Rules',
+                  title: '13. Program Rules',
                   body: 'Only one active loan is permitted per borrower at a time. New applications will not be processed while an existing loan is outstanding. The program administrators reserve the right to reject any application without disclosure of specific reasons.'
                 },
                 {
-                  title: '11. Amendments',
+                  title: '13. Amendments',
                   body: 'LoanMoneyfest reserves the right to amend these Terms & Conditions at any time. Continued use of the program constitutes acceptance of any updated terms. Borrowers will be notified of significant changes where possible.'
                 },
                 {
-                  title: '12. Governing Law',
+                  title: '13. Governing Law',
                   body: 'These Terms & Conditions are governed by the laws of the Republic of the Philippines, including but not limited to Republic Act 3765 (Truth in Lending Act), Republic Act 10173 (Data Privacy Act of 2012), and Republic Act 9474 (Lending Company Regulation Act of 2007).'
                 },
               ].map((sec, i) => (
@@ -704,10 +708,12 @@ export default function PublicApplyPage() {
                 const interest = principal * interestRate
                 const total = principal + interest
                 const perInst = total / 4
+                const securityHold = parseFloat((principal * 0.20).toFixed(2))
+                const fundsReleased = parseFloat((principal - securityHold).toFixed(2))
                 let feeAmt = 0, feeLabel = ''
                 if (form.release_method === 'GCash') { feeAmt = 15; feeLabel = 'GCash transaction fee — flat ₱15 (free if GCash to GCash)' }
                 else if (form.release_method === 'Other Bank Transfer') { feeLabel = 'Transfer fee varies (Instapay/PESONet)' }
-                const received = feeAmt > 0 ? principal - feeAmt : null
+                const received = feeAmt > 0 ? fundsReleased - feeAmt : null
                 const dueDates = calcDueDates()
                 return (
                   <div style={{ background: 'linear-gradient(135deg,#0f1a2e,#141B2D)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 18, overflow: 'hidden' }}>
@@ -718,12 +724,14 @@ export default function PublicApplyPage() {
                         <div style={{ fontSize: 11, color: '#4B5580' }}>Based on your selections</div>
                       </div>
                     </div>
-                    <div style={{ padding: '18px 22px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                    <div style={{ padding: '18px 22px', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
                       {[
-                        { label: 'Loan Amount', value: '₱' + principal.toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#F0F4FF', sub: 'Principal' },
-                        { label: `Interest (${(interestRate * 100).toFixed(0)}% flat)`, value: '₱' + interest.toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#F59E0B', sub: 'One-time' },
+                        { label: 'Approved Amount', value: '₱' + principal.toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#F0F4FF', sub: 'Principal' },
+                        { label: 'You Will Receive', value: '₱' + fundsReleased.toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#22C55E', sub: 'Released to you' },
+                        { label: 'Security Hold (20%)', value: '₱' + securityHold.toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#F59E0B', sub: 'Returned after 4th payment' },
+                        { label: 'Interest (' + (interestRate * 100).toFixed(0) + '% flat)', value: '₱' + interest.toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#a78bfa', sub: 'On full amount' },
                         { label: 'Total Repayment', value: '₱' + total.toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#EF4444', sub: 'Over 4 payments' },
-                        { label: 'Per Installment', value: '₱' + perInst.toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#22C55E', sub: 'Every cutoff' },
+                        { label: 'Per Installment', value: '₱' + perInst.toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#60A5FA', sub: 'Every cutoff' },
                       ].map((item, i) => (
                         <div key={i} style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 10, padding: '12px 14px' }}>
                           <div style={{ fontSize: 10, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 5 }}>{item.label}</div>
