@@ -535,7 +535,7 @@ export default function ApplicationsPage() {
     // Dynamic security hold based on borrower's credit score
     const borrowerCreditScore = borrower?.credit_score || CREDIT_CONFIG.STARTING_SCORE
     const borrowerCleanLoans = borrower?.clean_loans || 0
-    const holdTier = getSecurityHoldRate(borrowerCreditScore, borrowerCleanLoans)
+    const holdTier = getSecurityHoldRate(borrowerCreditScore)
     const securityHold = parseFloat((loanAmount * holdTier.rate).toFixed(2))
     const fundsReleased = parseFloat((loanAmount - securityHold).toFixed(2))
     const totalRepayment = loanAmount * (1 + currentRate)  // interest on full amount
@@ -553,35 +553,17 @@ export default function ApplicationsPage() {
 
     if (lErr) { toast('Borrower created but loan failed', 'error'); return }
 
-    // 5. Update application status
+    // 5. Update application status in DB — this is the critical step
     await supabase.from('applications').update({ status: 'Approved' }).eq('id', app.id)
 
-    // 6. Send approval email with access code
-    if (app.email) {
-      const emailResult = await sendApprovalEmail({
-        to: app.email,
-        borrowerName: app.full_name,
-        accessCode,
-        loanAmount,
-        totalRepayment,
-        installmentAmount,
-        releaseDate: releaseDateDisplay
-      })
-      console.log('Approval email result:', emailResult)
-    }
-
-    // 7. Log audit
-    await logAudit({ action_type: 'APPLICATION_APPROVED', module: 'Applications', description: `Application approved for ${app.full_name} — ₱${loanAmount.toLocaleString()} loan, ₱${fundsReleased.toLocaleString()} released, ₱${securityHold.toLocaleString()} security hold (${holdTier.label} rate, score: ${borrowerCreditScore}). Access code: ${accessCode}`, changed_by: user?.email })
-
-    await notifyBorrower({
-      borrower_id: borrower.id,
-      type: 'loan_approved',
-      title: '🎉 Loan Approved!',
-      message: `Your loan of ₱${loanAmount.toLocaleString('en-PH')} has been approved! You will receive ₱${fundsReleased.toLocaleString('en-PH')} on ${releaseDateDisplay}. A ${holdTier.label} Security Hold of ₱${securityHold.toLocaleString('en-PH')} (${(holdTier.rate*100).toFixed(0)}%) will be returned after your 4th installment is paid. Check your loan details in the portal.`
-    })
-
-    toast(`✅ Approved! Access code ${accessCode} sent to ${app.email || app.full_name}`, 'success')
+    // 6. Update UI immediately
+    toast(`✅ Approved! Access code: ${accessCode}`, 'success')
     setApplications(prev => prev.map(a => a.id === app.id ? { ...a, status: 'Approved' } : a))
+
+    // 7. Fire-and-forget background tasks — won't block UI
+    sendApprovalEmail({ to: app.email, borrowerName: app.full_name, accessCode, loanAmount, totalRepayment, installmentAmount, releaseDate: releaseDateDisplay }).catch(console.error)
+    logAudit({ action_type: 'APPLICATION_APPROVED', module: 'Applications', description: `Approved: ${app.full_name} — ₱${loanAmount.toLocaleString()} loan. Access code: ${accessCode}`, changed_by: user?.email }).catch(console.error)
+    notifyBorrower({ borrower_id: borrower.id, type: 'loan_approved', title: '🎉 Loan Approved!', message: `Your loan of ₱${loanAmount.toLocaleString('en-PH')} has been approved! You will receive ₱${fundsReleased.toLocaleString('en-PH')} on ${releaseDateDisplay}.` }).catch(console.error)
   }
 
   const handleReject = async (app, reason) => {
