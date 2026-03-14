@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { calcSecurityHold, CREDIT_CONFIG } from '../lib/creditSystem'
 import { supabase } from '../lib/supabase'
 import { sendPendingEmail } from '../lib/emailService'
 
@@ -708,7 +709,7 @@ export default function PublicApplyPage() {
                 const interest = principal * interestRate
                 const total = principal + interest
                 const perInst = total / 4
-                const securityHold = parseFloat((principal * 0.20).toFixed(2))
+                const securityHold = parseFloat((principal * 0.10).toFixed(2)) // standard rate; actual rate set by credit score
                 const fundsReleased = parseFloat((principal - securityHold).toFixed(2))
                 let feeAmt = 0, feeLabel = ''
                 if (form.release_method === 'GCash') { feeAmt = 15; feeLabel = 'GCash transaction fee — flat ₱15 (free if GCash to GCash)' }
@@ -728,7 +729,7 @@ export default function PublicApplyPage() {
                       {[
                         { label: 'Approved Amount', value: '₱' + principal.toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#F0F4FF', sub: 'Principal' },
                         { label: 'You Will Receive', value: '₱' + fundsReleased.toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#22C55E', sub: 'Released to you' },
-                        { label: 'Security Hold (20%)', value: '₱' + securityHold.toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#F59E0B', sub: 'Returned after 4th payment' },
+                        { label: 'Security Hold', value: '₱' + securityHold.toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#F59E0B', sub: '10% standard · lower with good score' },
                         { label: 'Interest (' + (interestRate * 100).toFixed(0) + '% flat)', value: '₱' + interest.toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#a78bfa', sub: 'On full amount' },
                         { label: 'Total Repayment', value: '₱' + total.toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#EF4444', sub: 'Over 4 payments' },
                         { label: 'Per Installment', value: '₱' + perInst.toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#60A5FA', sub: 'Every cutoff' },

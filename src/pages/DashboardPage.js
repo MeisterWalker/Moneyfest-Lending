@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
+import { CREDIT_CONFIG } from '../lib/creditSystem'
 import { logAudit } from '../lib/helpers'
 import { formatCurrency, formatDate } from '../lib/helpers'
 import { useNavigate } from 'react-router-dom'
@@ -193,7 +194,7 @@ function CountdownWidget({ loans, borrowers }) {
 function TopBorrowersWidget({ borrowers, navigate }) {
   const sorted = [...borrowers].sort((a, b) => b.credit_score - a.credit_score)
   const top = sorted.slice(0, 3)
-  const atRisk = [...borrowers].filter(b => b.credit_score < 750).sort((a, b) => a.credit_score - b.credit_score).slice(0, 3)
+  const atRisk = [...borrowers].filter(b => b.credit_score < 600).sort((a, b) => a.credit_score - b.credit_score).slice(0, 3)
 
   const BADGE = { New: "🆕", Trusted: "✅", Reliable: "⭐", VIP: "👑" }
 
@@ -323,8 +324,8 @@ export default function DashboardPage() {
     await supabase.from('loans').update({ payments_made: newPaid, remaining_balance: newBalance, status: newStatus }).eq('id', loan.id)
     const b = borrowers.find(x => x.id === loan.borrower_id)
     if (b) {
-      const newScore = Math.min(850, b.credit_score + 15)
-      await supabase.from('borrowers').update({ credit_score: newScore, risk_score: newScore >= 650 ? 'Low' : newScore >= 550 ? 'Medium' : 'High' }).eq('id', b.id)
+      const newScore = Math.min(CREDIT_CONFIG.MAX_SCORE, b.credit_score + CREDIT_CONFIG.ON_TIME_PAYMENT)
+      await supabase.from('borrowers').update({ credit_score: newScore, risk_score: CREDIT_CONFIG.riskFromScore(newScore) }).eq('id', b.id)
     }
     await logAudit({
       action_type: 'INSTALLMENT_PAID',

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
-import { getSecurityHoldRate, getLoyaltyBadge, getRiskScore, CREDIT_CONFIG } from '../lib/creditSystem'
+import { CREDIT_CONFIG, getBadgeFromScore, getBadgeFromCleanLoans, calcSecurityHold, getSecurityHoldRate } from '../lib/creditSystem'
 import { logAudit, formatCurrency, formatDate } from '../lib/helpers'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../components/Toast'
@@ -449,13 +449,21 @@ export default function LoansPage() {
     // ── Penalty calculation ─────────────────────────────────────
     const borrower = borrowers.find(b => b.id === loan.borrower_id)
     const PENALTY_PER_DAY = 20
-    const PENALTY_CAP_RATE = 0.20 // 20% of installment amount
+    const PENALTY_CAP_RATE = 0.20
     let penaltyAmount = 0
     let daysLate = 0
 
-    if (nextDue) {
+    // Recalculate next due date here (can't use LoanCard's nextDue — different scope)
+    if (loan.release_date) {
+      const release = new Date(loan.release_date)
+      const installmentNum = loan.payments_made // current installment being paid
+      let dueDate = new Date(release)
+      for (let i = 0; i <= installmentNum; i++) {
+        if (dueDate.getDate() === 5) dueDate = new Date(dueDate.getFullYear(), dueDate.getMonth(), 20)
+        else dueDate = new Date(dueDate.getFullYear(), dueDate.getMonth() + 1, 5)
+      }
       const today2 = new Date(); today2.setHours(0,0,0,0)
-      const dueDate = new Date(nextDue); dueDate.setHours(0,0,0,0)
+      dueDate.setHours(0,0,0,0)
       daysLate = Math.max(0, Math.ceil((today2 - dueDate) / (1000 * 60 * 60 * 24)))
       if (daysLate > 0) {
         const cap = loan.installment_amount * PENALTY_CAP_RATE
@@ -489,9 +497,9 @@ export default function LoansPage() {
     if (borrower) {
       const scoreChange = daysLate > 0 ? CREDIT_CONFIG.latePenalty : CREDIT_CONFIG.onTimeBonus
       const newScore = Math.min(CREDIT_CONFIG.max, Math.max(CREDIT_CONFIG.min, borrower.credit_score + scoreChange))
-      const newRisk = getRiskScore(newScore)
+      const newRisk = CREDIT_CONFIG.riskFromScore(newScore)
       const cleanLoans = loans.filter(l => l.borrower_id === borrower.id && l.status === 'Paid').length
-      const newBadgeTemp = getLoyaltyBadge(cleanLoans, newScore)
+      const newBadgeTemp = getBadgeFromScore(newScore)
       await supabase.from('borrowers').update({
         credit_score: newScore,
         risk_score: newRisk,
@@ -519,11 +527,11 @@ export default function LoansPage() {
         const { data: freshBorrower } = await supabase.from('borrowers').select('credit_score').eq('id', borrower.id).single()
         const currentScore = freshBorrower?.credit_score || borrower.credit_score
         const bonusScore = Math.min(CREDIT_CONFIG.max, currentScore + (cleanLoans % 2 === 0 ? CREDIT_CONFIG.fullPayBonus : 0))
-        const newBadge = getLoyaltyBadge(cleanLoans, bonusScore)
+        const newBadge = getBadgeFromScore(bonusScore)
         await supabase.from('borrowers').update({
           loan_limit_level: newLevel, loan_limit: newLimit,
           loyalty_badge: newBadge, credit_score: bonusScore,
-          risk_score: getRiskScore(bonusScore)
+          risk_score: CREDIT_CONFIG.riskFromScore(bonusScore)
         }).eq('id', borrower.id)
       }
 
@@ -646,7 +654,7 @@ export default function LoansPage() {
       const newScore = Math.max(CREDIT_CONFIG.min, borrower.credit_score + CREDIT_CONFIG.defaultPenalty)
       await supabase.from('borrowers').update({
         credit_score: newScore,
-        risk_score: getRiskScore(newScore)
+        risk_score: CREDIT_CONFIG.riskFromScore(newScore)
       }).eq('id', borrower.id)
     }
     await logAudit({ action_type: 'LOAN_DEFAULTED', module: 'Loan', description: `Loan marked as defaulted for ${borrower?.full_name}`, changed_by: user?.email })

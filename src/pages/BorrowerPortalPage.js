@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { getSecurityHoldRate, getLoyaltyBadge, getRiskScore, getCreditLabel, BADGE_DISPLAY, getHoldPerksMessage } from '../lib/creditSystem'
-import { supabase } from '../lib/supabase'
 import { CREDIT_CONFIG, BADGE_TIERS, SECURITY_HOLD_TIERS, getBadgeConfig, getBadgeFromScore, getSecurityHoldRate } from '../lib/creditSystem'
+import { supabase } from '../lib/supabase'
 import {
   Lock, CheckCircle, Clock, AlertCircle, Upload,
   FileText, Calendar, CreditCard, ChevronDown, ChevronUp, X
@@ -64,6 +63,25 @@ function UploadModal({ installmentNum, loan, borrower, onClose, onUploaded }) {
   const handleUpload = async () => {
     if (!file) { setError('Please select a file'); return }
     if (file.size > 5 * 1024 * 1024) { setError('File must be under 5MB'); return }
+
+    // Guard: check if proof already exists for this installment
+    const { data: existing } = await supabase
+      .from('payment_proofs')
+      .select('id, status')
+      .eq('loan_id', loan.id)
+      .eq('installment_number', installmentNum)
+      .single()
+
+    if (existing) {
+      setError(existing.status === 'Pending'
+        ? 'You already submitted proof for this installment. Please wait for admin confirmation.'
+        : existing.status === 'Confirmed'
+        ? 'This installment has already been confirmed. No further upload needed.'
+        : 'A previous proof was rejected. Please contact your admin before re-uploading.')
+      setUploading(false)
+      return
+    }
+
     setUploading(true)
     setError('')
 
@@ -600,11 +618,11 @@ export default function BorrowerPortalPage() {
           </div>
           <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 20, color: '#F0F4FF', marginBottom: 4 }}>{borrower.full_name}</div>
           <div style={{ fontSize: 13, color: '#7A8AAA', marginBottom: 12 }}>{borrower.department}</div>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: (BADGE_DISPLAY[borrower.loyalty_badge] || BADGE_DISPLAY['New']).bg, border: '1px solid ' + (BADGE_DISPLAY[borrower.loyalty_badge] || BADGE_DISPLAY['New']).border, borderRadius: 20, padding: '4px 14px' }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: getBadgeConfig(borrower.loyalty_badge || 'New').bg, border: '1px solid ' + getBadgeConfig(borrower.loyalty_badge || 'New').border, borderRadius: 20, padding: '4px 14px' }}>
             <span style={{ fontSize: 14 }}>
-              {(BADGE_DISPLAY[borrower.loyalty_badge] || BADGE_DISPLAY['New']).icon}
+              {getBadgeConfig(borrower.loyalty_badge || 'New').emoji}
             </span>
-            <span style={{ fontSize: 12, fontWeight: 700, color: (BADGE_DISPLAY[borrower.loyalty_badge] || BADGE_DISPLAY['New']).color }}>{borrower.loyalty_badge || 'New'} Borrower</span>
+            <span style={{ fontSize: 12, fontWeight: 700, color: getBadgeConfig(borrower.loyalty_badge || 'New').color }}>{getBadgeConfig(borrower.loyalty_badge || 'New').label}</span>
           </div>
         </div>
 
@@ -614,7 +632,8 @@ export default function BorrowerPortalPage() {
           {(() => {
             const score = borrower.credit_score || 750
             const pct = ((score - CREDIT_CONFIG.MIN_SCORE) / (CREDIT_CONFIG.MAX_SCORE - CREDIT_CONFIG.MIN_SCORE)) * 100
-            const { label, color } = getCreditLabel(score)
+            const label = CREDIT_CONFIG.labelFromScore(score)
+            const color = CREDIT_CONFIG.colorFromScore(score)
             return (
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 10 }}>
@@ -640,7 +659,7 @@ export default function BorrowerPortalPage() {
           const score = borrower.credit_score || 750
           const cleanLoans = borrower.clean_loans || 0
           const tier = getSecurityHoldRate(score, cleanLoans)
-          const msg = getHoldPerksMessage(tier.rate, tier.label, score)
+          const msg = tier.perk
           return (
             <div style={{ background: '#141B2D', border: `1px solid ${tier.color}33`, borderRadius: 16, padding: '16px 20px', marginBottom: 16 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>

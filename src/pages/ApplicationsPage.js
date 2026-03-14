@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
-import { getSecurityHoldRate, getLoyaltyBadge, getRiskScore } from '../lib/creditSystem'
+import { CREDIT_CONFIG, calcSecurityHold } from '../lib/creditSystem'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../components/Toast'
 import { logAudit } from '../lib/helpers'
