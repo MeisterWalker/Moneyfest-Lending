@@ -161,47 +161,6 @@ export default function FAQPage() {
           <p style={{ color: '#7A8AAA', fontSize: 15, maxWidth: 500, margin: '0 auto', lineHeight: 1.7 }}>Everything you need to know about the LoanMoneyfest employee lending program.</p>
         </div>
 
-        {/* About Banner */}
-        <div style={{ background: 'linear-gradient(135deg,rgba(59,130,246,0.08),rgba(139,92,246,0.06))', border: '1px solid rgba(99,102,241,0.2)', borderRadius: 20, padding: '32px 36px', marginBottom: 32 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-            <img src="/favicon-96x96.png" alt="LoanMoneyfest" style={{ width: 36, height: 36, objectFit: 'contain' }} />
-            <div style={{ fontFamily: 'Space Grotesk', fontWeight: 900, fontSize: 20, color: '#F0F4FF' }}>
-              Loan<span style={{ background: 'linear-gradient(90deg,#60a5fa,#a78bfa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Moneyfest</span>
-            </div>
-          </div>
-          <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 22, color: '#F0F4FF', marginBottom: 16, lineHeight: 1.3 }}>
-            The smarter way to borrow — <span style={{ background: 'linear-gradient(90deg,#60a5fa,#a78bfa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>built for your team.</span>
-          </div>
-          <div style={{ fontSize: 14, color: '#8892B0', lineHeight: 1.9, marginBottom: 10 }}>
-            At LoanMoneyfest, we believe your salary shouldn't be your ceiling. We're a private, exclusive workplace micro-lending program built by and for our workmates — designed to be fast, fair, and fully transparent.
-          </div>
-          <div style={{ fontSize: 14, color: '#8892B0', lineHeight: 1.9, marginBottom: 10 }}>
-            Unlike traditional lenders and informal <em>5-6</em> schemes, we charge only <strong style={{ color: '#60A5FA' }}>7% flat interest</strong> — one of the lowest rates you'll find in any micro-lending setup in Cebu. No hidden fees, no surprise deductions, no collectors knocking on your door. Just a simple online application, quick admin approval, and funds released straight to you.
-          </div>
-          <div style={{ fontSize: 14, color: '#8892B0', lineHeight: 1.9, marginBottom: 24 }}>
-            We built LoanMoneyfest because we know life doesn't always go as planned — whether it's an unexpected bill, a medical expense, an unforeseen emergency, or that one thing you've been wanting but just need a little extra for. So we made the whole process digital — apply in minutes, track your loan anytime, upload payments from your phone, and even <strong style={{ color: '#22C55E' }}>earn Rebate Credits</strong> when you pay early.
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 20 }}>
-            {[
-              { icon: '/philippine-peso.png', title: 'Only 7% flat interest', desc: 'One of the lowest rates in Cebu — no hidden fees, no surprise deductions.' },
-              { icon: '/startup.png', title: 'Fast & fully digital', desc: 'Apply in minutes, get approved fast, and track everything from your phone.' },
-              { icon: '/giftbox.png', title: 'Earn Rebate Credits', desc: 'Pay your final installment early and get rewarded automatically.' },
-              { icon: '/padlock.png', title: 'Private & exclusive', desc: 'An internal program just for our team — not open to the public.' },
-              { icon: '/handshake.png', title: 'No collectors, no stress', desc: 'Everything is handled digitally — payments, proofs, and approvals.' },
-              { icon: '/verified.png', title: 'Transparent & fair', desc: 'What you see is what you get. Fixed rates, clear schedules, no surprises.' },
-            ].map((item, i) => (
-              <div key={i} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: '16px 18px' }}>
-                <img src={item.icon} alt={item.title} style={{ width: 28, height: 28, objectFit: 'contain', marginBottom: 10 }} />
-                <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 13, color: '#F0F4FF', marginBottom: 5 }}>{item.title}</div>
-                <div style={{ fontSize: 12, color: '#7A8AAA', lineHeight: 1.6 }}>{item.desc}</div>
-              </div>
-            ))}
-          </div>
-          <div style={{ paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.06)', fontSize: 13, color: '#4B5580', fontStyle: 'italic' }}>
-            "Borrow smart. Pay early. Get rewarded." — LoanMoneyfest
-          </div>
-        </div>
-
         {/* Two-column layout: Category tabs left, FAQs right */}
         <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: 24, alignItems: 'start' }}>
 
