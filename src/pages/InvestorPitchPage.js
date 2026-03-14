@@ -41,10 +41,10 @@ const TIERS = [
 ]
 
 const COMPARISONS = [
-  { label: 'BDO / BPI Savings', rate: '0.25–0.50%', annual: '~₱25–50', color: '#EF4444', bar: 2 },
-  { label: 'Bank Time Deposit', rate: '3–5%', annual: '~₱300–500', color: '#F97316', bar: 15 },
-  { label: 'UITF / Mutual Fund', rate: '8–12%', annual: '~₱800–1,200', color: '#F59E0B', bar: 35, note: 'Not guaranteed' },
-  { label: 'LoanMoneyfest', rate: '4–6%', annual: '₱800–4,800', color: '#22C55E', bar: 100, highlight: true },
+  { label: 'BDO / BPI Savings', rate: '0.0625% p.a.', annual: '~₱6', color: '#EF4444', bar: 1, note: 'Actual current rate as of 2026' },
+  { label: 'BDO / BPI Time Deposit', rate: '0.75–1.07% p.a.', annual: '~₱75–107', color: '#F97316', bar: 5, note: '90–360 day term' },
+  { label: 'UITF / Mutual Fund', rate: '8–12% avg', annual: '~₱800–1,200', color: '#F59E0B', bar: 35, note: 'Variable — not guaranteed' },
+  { label: 'LoanMoneyfest', rate: '4–6% per 3 months', annual: '₱800–4,800', color: '#22C55E', bar: 100, highlight: true },
 ]
 
 const FAQS = [
@@ -225,7 +225,7 @@ export default function InvestorPitchPage() {
           </div>
 
           <div ref={ref('vs-note')} className={`reveal ${visible['vs-note'] ? 'on' : ''}`} style={{ marginTop: 20, padding: '16px 22px', background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 12, fontSize: 13, color: '#7A8AAA', lineHeight: 1.7 }}>
-            💡 <strong style={{ color: '#F59E0B' }}>Put simply:</strong> A bank pays you ₱25–50 a year on ₱10,000. They then lend that same money at 6–15% and keep the difference. LoanMoneyfest gives you ₱500–₱2,000 on the same amount. We just cut out the middleman.
+            💡 <strong style={{ color: '#F59E0B' }}>Put simply:</strong> BDO and BPI savings accounts currently earn just 0.0625% per year — that's ₱6.25 on ₱10,000. Their time deposits aren't much better at 0.75–1.07%. They take your money, lend it out at 6–15%, and keep the difference. LoanMoneyfest gives you up to ₱2,000 on the same ₱10,000. Same concept — we just share the profit with you.
           </div>
         </div>
       </section>
