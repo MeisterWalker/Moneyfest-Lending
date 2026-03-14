@@ -760,7 +760,7 @@ export default function BorrowerPortalPage() {
   <div class="sig-grid">
     <div>
       <div class="sig-label">Borrower E-Signature (RA 8792)</div>
-      \${img ? `<img src="\${img}" style="height:52px;max-width:220px;display:block;margin-bottom:2px;" />` : '<div style="height:52px;"></div>'}
+      \${img ? '<img src="' + img + '" style="height:52px;max-width:220px;display:block;margin-bottom:2px;" />' : '<div style="height:52px;"></div>'}
       <div class="sig-line"></div>
       <div style="font-size:18px;font-style:italic;font-family:'Caveat',cursive;color:#111827;margin-bottom:2px;">\${name}</div>
       <div class="sig-sub">\${name} · Signed electronically · \${signedDateStr}</div>
