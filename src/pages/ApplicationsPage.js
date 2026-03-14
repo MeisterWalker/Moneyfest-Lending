@@ -545,18 +545,23 @@ export default function ApplicationsPage() {
       borrower_id: borrower.id, loan_amount: loanAmount,
       interest_rate: currentRate, total_repayment: totalRepayment,
       installment_amount: installmentAmount, remaining_balance: totalRepayment,
-      security_hold: securityHold, funds_released: fundsReleased, security_hold_rate: holdTier.rate,
+      security_hold: securityHold, funds_released: fundsReleased,
       security_hold_returned: false,
       payments_made: 0, release_date: releaseDateStr,
       status: 'Pending', created_at: new Date().toISOString()
     })
 
-    if (lErr) { toast('Borrower created but loan failed', 'error'); return }
+    if (lErr) {
+      console.error('Loan insert error:', lErr)
+      toast('Loan failed: ' + lErr.message, 'error')
+      return
+    }
 
-    // 5. Update application status in DB — this is the critical step
-    await supabase.from('applications').update({ status: 'Approved' }).eq('id', app.id)
+    // 5. Update application status
+    const { error: appErr } = await supabase.from('applications').update({ status: 'Approved' }).eq('id', app.id)
+    if (appErr) console.error('App update error:', appErr)
 
-    // 6. Update UI immediately
+    // 6. Update UI immediately regardless
     toast(`✅ Approved! Access code: ${accessCode}`, 'success')
     setApplications(prev => prev.map(a => a.id === app.id ? { ...a, status: 'Approved' } : a))
 
