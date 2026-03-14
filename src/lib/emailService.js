@@ -415,7 +415,7 @@ export async function sendPendingEmail({ to, borrowerName, accessCode, loanAmoun
               1. Our admin will review your application<br/>
               2. You will receive an email once approved or rejected<br/>
               3. Check your status anytime using your access code at the portal<br/>
-              4. For follow-ups, contact <strong style="color:#F0F4FF;">John Paul Lacaron</strong> or <strong style="color:#F0F4FF;">Charlou John Ramil</strong> via Microsoft Teams Chat
+              4. For follow-ups, contact <strong style="color:#F0F4FF;">John Paul Lacaron</strong> or <strong style="color:#F0F4FF;">Charlou June Ramil</strong> via Microsoft Teams Chat
             </p>
           </div>
         </td></tr>

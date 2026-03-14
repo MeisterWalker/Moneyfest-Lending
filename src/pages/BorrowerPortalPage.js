@@ -207,7 +207,10 @@ export default function BorrowerPortalPage() {
   const [error, setError] = useState('')
   const [uploadModal, setUploadModal] = useState(null)
   const [uploadSuccess, setUploadSuccess] = useState(false)
-  const [page, setPage] = useState('home') // 'home' | 'payment-methods' | 'profile' | 'payment-history'
+  const [page, setPage] = useState('home') // 'home' | 'payment-methods' | 'profile' | 'payment-history' | 'wallet'
+  const [wallet, setWallet] = useState(null)
+  const [walletTxns, setWalletTxns] = useState([])
+  const [withdrawing, setWithdrawing] = useState(false)
   const [pendingApp, setPendingApp] = useState(null)
   const [allLoans, setAllLoans] = useState([])
   const [notifications, setNotifications] = useState([])
@@ -291,6 +294,16 @@ export default function BorrowerPortalPage() {
       }
 
       setNotifications(notifs || [])
+
+      // Fetch wallet
+      const { data: walletData } = await supabase
+        .from('wallets').select('*').eq('borrower_id', b.id).single()
+      const { data: txnData } = await supabase
+        .from('wallet_transactions').select('*').eq('borrower_id', b.id)
+        .order('created_at', { ascending: false }).limit(20)
+      setWallet(walletData || null)
+      setWalletTxns(txnData || [])
+
       setLoading(false)
       return
     }
@@ -409,7 +422,7 @@ export default function BorrowerPortalPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {[
               { initials: 'JP', name: 'John Paul Lacaron', gradient: 'linear-gradient(135deg,#3B82F6,#8B5CF6)' },
-              { initials: 'CJ', name: 'Charlou John Ramil', gradient: 'linear-gradient(135deg,#14B8A6,#3B82F6)' },
+              { initials: 'CJ', name: 'Charlou June Ramil', gradient: 'linear-gradient(135deg,#14B8A6,#3B82F6)' },
             ].map(a => (
               <div key={a.name} style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.03)', borderRadius: 10, padding: '10px 14px' }}>
                 <div style={{ width: 32, height: 32, borderRadius: '50%', background: a.gradient, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, color: '#fff', flexShrink: 0 }}>{a.initials}</div>
@@ -508,7 +521,7 @@ export default function BorrowerPortalPage() {
           </button>
 
           <div style={{ marginTop: 18, padding: '12px 14px', background: 'rgba(59,130,246,0.06)', borderRadius: 8, fontSize: 12, color: '#4B5580', lineHeight: 1.6 }}>
-            💡 Your access code was sent to your email when your loan was approved. Contact <strong style={{ color: '#7A8AAA' }}>John Paul Lacaron</strong> or <strong style={{ color: '#7A8AAA' }}>Charlou John Ramil</strong> via Teams if you need help.
+            💡 Your access code was sent to your email when your loan was approved. Contact <strong style={{ color: '#7A8AAA' }}>John Paul Lacaron</strong> or <strong style={{ color: '#7A8AAA' }}>Charlou June Ramil</strong> via Teams if you need help.
           </div>
         </div>
 
@@ -735,6 +748,132 @@ export default function BorrowerPortalPage() {
     </div>
   )
 
+  if (borrower && page === 'wallet') return (
+    <div style={{ minHeight: '100vh', background: '#0B0F1A', fontFamily: 'DM Sans, sans-serif' }}>
+      <div style={{ background: 'linear-gradient(135deg,#0d1226,#141B2D)', borderBottom: '1px solid rgba(139,92,246,0.2)', padding: '16px 24px' }}>
+        <div style={{ maxWidth: 480, margin: '0 auto', display: 'flex', alignItems: 'center', gap: 12 }}>
+          <button onClick={() => setPage('home')} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, padding: '7px 14px', color: '#F0F4FF', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>← Back</button>
+          <div>
+            <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 16, color: '#F0F4FF' }}>My Wallet</div>
+            <div style={{ fontSize: 11, color: '#4B5580' }}>Rebates & withdrawals</div>
+          </div>
+        </div>
+      </div>
+
+      <div style={{ maxWidth: 480, margin: '0 auto', padding: '28px 20px' }}>
+
+        {/* Balance card */}
+        <div style={{ background: 'linear-gradient(135deg,#1a1040,#0f1729)', border: '1px solid rgba(139,92,246,0.35)', borderRadius: 20, padding: '28px 24px', marginBottom: 20, textAlign: 'center', boxShadow: '0 8px 32px rgba(139,92,246,0.15)' }}>
+          <div style={{ fontSize: 12, color: '#7A8AAA', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>💰 Wallet Balance</div>
+          <div style={{ fontFamily: 'Space Grotesk', fontWeight: 900, fontSize: 44, color: '#F0F4FF', letterSpacing: -1, marginBottom: 6 }}>
+            ₱{(wallet?.balance || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
+          </div>
+          <div style={{ fontSize: 12, color: '#4B5580', marginBottom: 24 }}>
+            {(wallet?.balance || 0) >= 500
+              ? '✅ Eligible for withdrawal'
+              : `₱${(500 - (wallet?.balance || 0)).toLocaleString('en-PH', { minimumFractionDigits: 2 })} more needed to withdraw`}
+          </div>
+
+          {/* Withdraw button */}
+          <button
+            disabled={!wallet || wallet.balance < 500 || withdrawing}
+            onClick={async () => {
+              setWithdrawing(true)
+              // Check for existing pending withdrawal
+              const { data: existing } = await supabase
+                .from('wallet_transactions')
+                .select('id').eq('borrower_id', borrower.id)
+                .eq('type', 'withdrawal').eq('status', 'pending').single()
+              if (existing) {
+                alert('You already have a pending withdrawal request. Please wait for admin to process it.')
+                setWithdrawing(false)
+                return
+              }
+              await supabase.from('wallet_transactions').insert({
+                borrower_id: borrower.id,
+                loan_id: null,
+                type: 'withdrawal',
+                amount: wallet.balance,
+                description: `Withdrawal request of ₱${wallet.balance.toLocaleString('en-PH', { minimumFractionDigits: 2 })}`,
+                status: 'pending'
+              })
+              setWalletTxns(prev => [{ type: 'withdrawal', amount: wallet.balance, description: `Withdrawal request of ₱${wallet.balance.toLocaleString('en-PH', { minimumFractionDigits: 2 })}`, status: 'pending', created_at: new Date().toISOString() }, ...prev])
+              setWithdrawing(false)
+              alert('✅ Withdrawal request submitted! Admin will process it shortly.')
+            }}
+            style={{
+              width: '100%', padding: '14px', borderRadius: 12, border: 'none', fontSize: 14, fontWeight: 700,
+              fontFamily: 'Space Grotesk', cursor: !wallet || wallet.balance < 500 ? 'not-allowed' : 'pointer',
+              background: !wallet || wallet.balance < 500 ? 'rgba(255,255,255,0.05)' : 'linear-gradient(135deg,#8B5CF6,#3B82F6)',
+              color: !wallet || wallet.balance < 500 ? '#4B5580' : '#fff',
+              transition: 'all 0.2s'
+            }}
+          >
+            {withdrawing ? 'Submitting...' : wallet && wallet.balance >= 500 ? `💸 Withdraw ₱${wallet.balance.toLocaleString('en-PH', { minimumFractionDigits: 2 })}` : `🔒 Min. ₱500 required`}
+          </button>
+        </div>
+
+        {/* How rebates work */}
+        <div style={{ background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 14, padding: '16px 18px', marginBottom: 20 }}>
+          <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 13, color: '#22C55E', marginBottom: 10 }}>🎁 How to earn rebates</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {[
+              { days: '7–13 days early', rate: '1%', example: '₱50 on ₱5,000 loan' },
+              { days: '14+ days early', rate: '1.5%', example: '₱75 on ₱5,000 loan' },
+            ].map((item, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', background: 'rgba(34,197,94,0.05)', borderRadius: 9, border: '1px solid rgba(34,197,94,0.12)' }}>
+                <div>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: '#F0F4FF' }}>{item.days}</div>
+                  <div style={{ fontSize: 11, color: '#4B5580', marginTop: 1 }}>{item.example}</div>
+                </div>
+                <div style={{ fontFamily: 'Space Grotesk', fontWeight: 900, fontSize: 18, color: '#22C55E' }}>{item.rate}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{ fontSize: 11, color: '#4B5580', marginTop: 10 }}>Rebate is applied on your final (4th) installment only when paid early.</div>
+        </div>
+
+        {/* Transaction history */}
+        <div style={{ background: '#141B2D', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, overflow: 'hidden' }}>
+          <div style={{ padding: '14px 18px', borderBottom: '1px solid rgba(255,255,255,0.06)', fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 14, color: '#F0F4FF' }}>
+            Transaction History
+          </div>
+          {walletTxns.length === 0 ? (
+            <div style={{ padding: '40px 20px', textAlign: 'center', fontSize: 13, color: '#4B5580' }}>
+              No transactions yet. Pay off a loan early to earn rebates!
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              {walletTxns.map((txn, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 18px', borderBottom: i < walletTxns.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div style={{ width: 36, height: 36, borderRadius: '50%', background: txn.type === 'rebate' ? 'rgba(34,197,94,0.15)' : txn.status === 'pending' ? 'rgba(245,158,11,0.15)' : txn.status === 'rejected' ? 'rgba(239,68,68,0.15)' : 'rgba(59,130,246,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>
+                      {txn.type === 'rebate' ? '🎁' : txn.status === 'pending' ? '⏳' : txn.status === 'rejected' ? '❌' : '💸'}
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: '#F0F4FF' }}>{txn.type === 'rebate' ? 'Early Payoff Rebate' : 'Withdrawal'}</div>
+                      <div style={{ fontSize: 11, color: '#4B5580', marginTop: 2 }}>
+                        {new Date(txn.created_at).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}
+                        {txn.status === 'pending' && <span style={{ color: '#F59E0B', marginLeft: 6 }}>· Pending</span>}
+                        {txn.status === 'rejected' && <span style={{ color: '#EF4444', marginLeft: 6 }}>· Rejected</span>}
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 15, color: txn.type === 'rebate' ? '#22C55E' : '#F0F4FF' }}>
+                      {txn.type === 'rebate' ? '+' : '-'}₱{Number(txn.amount).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+      </div>
+    </div>
+  )
+
   if (borrower && page === 'payment-methods') return (
     <div style={{ minHeight: '100vh', background: '#0B0F1A', fontFamily: 'DM Sans, sans-serif' }}>
       <div style={{ background: 'linear-gradient(135deg,#0d1226,#141B2D)', borderBottom: '1px solid rgba(139,92,246,0.2)', padding: '16px 24px' }}>
@@ -752,7 +891,7 @@ export default function BorrowerPortalPage() {
         </p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           {[
-            { logo: '/cash-logo.png', label: 'Physical Cash', fee: '✓ Free', feeBg: 'rgba(34,197,94,0.08)', feeColor: '#22C55E', feeBorder: 'rgba(34,197,94,0.2)', border: 'rgba(34,197,94,0.25)', desc: 'Pay your admin directly in person. Coordinate with John Paul Lacaron or Charlou John Ramil to arrange your payment. No fees, no transfer needed.', steps: ['Prepare the exact installment amount in cash', 'Coordinate with your admin via Teams Chat', 'Hand over payment and request acknowledgement', 'Upload a photo of the receipt or acknowledgement in the portal'] },
+            { logo: '/cash-logo.png', label: 'Physical Cash', fee: '✓ Free', feeBg: 'rgba(34,197,94,0.08)', feeColor: '#22C55E', feeBorder: 'rgba(34,197,94,0.2)', border: 'rgba(34,197,94,0.25)', desc: 'Pay your admin directly in person. Coordinate with John Paul Lacaron or Charlou June Ramil to arrange your payment. No fees, no transfer needed.', steps: ['Prepare the exact installment amount in cash', 'Coordinate with your admin via Teams Chat', 'Hand over payment and request acknowledgement', 'Upload a photo of the receipt or acknowledgement in the portal'] },
             { logo: '/gcash-logo.png', label: 'GCash', fee: '₱15', feeBg: 'rgba(245,158,11,0.08)', feeColor: '#F59E0B', feeBorder: 'rgba(245,158,11,0.2)', border: 'rgba(0,163,255,0.25)', desc: 'Send via GCash to the admin number. A transaction fee of ₱15 flat applies — please send the exact installment amount and cover any fees separately.', steps: ['Open GCash and send to admin number', 'Send the exact installment amount', 'Screenshot the successful transaction screen', 'Upload the screenshot in the portal'] },
             { logo: '/rcbc-logo.png', label: 'RCBC to RCBC', fee: '✓ Free', feeBg: 'rgba(34,197,94,0.08)', feeColor: '#22C55E', feeBorder: 'rgba(34,197,94,0.2)', border: 'rgba(220,38,38,0.25)', desc: 'Transfer directly to the admin RCBC account. Same-bank RCBC-to-RCBC transfers are completely free with no deductions.', steps: ['Log in to RCBC Online or App', 'Transfer exact installment amount to admin RCBC account', 'Screenshot the successful transfer confirmation', 'Upload the screenshot in the portal'] },
             { logo: '/bank-logo.png', label: 'Other Bank (Instapay/PESONet)', fee: 'You cover fee', feeBg: 'rgba(245,158,11,0.08)', feeColor: '#F59E0B', feeBorder: 'rgba(245,158,11,0.2)', border: 'rgba(139,92,246,0.25)', desc: 'Transfer from any other bank using Instapay or PESONet. You are responsible for covering any transfer fees - send the exact installment amount plus fees so the full amount arrives.', steps: ['Use your bank online transfer or app', 'Choose Instapay (faster) or PESONet', 'Send exact installment amount + transfer fee', 'Screenshot the transaction confirmation', 'Upload the screenshot in the portal'] },
@@ -887,6 +1026,10 @@ export default function BorrowerPortalPage() {
                 <button onClick={() => setPage('profile')} style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'linear-gradient(135deg,#160f2a,#141B2D)', border: '1px solid rgba(139,92,246,0.35)', borderRadius: 20, padding: '5px 12px', cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.3)' }}>
                   <span style={{ fontSize: 13 }}>👤</span>
                   <span style={{ fontSize: 11, fontWeight: 700, color: '#8B5CF6' }}>Profile</span>
+                </button>
+                <button onClick={() => setPage('wallet')} style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'linear-gradient(135deg,#0f2a1a,#141B2D)', border: '1px solid rgba(34,197,94,0.35)', borderRadius: 20, padding: '5px 12px', cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.3)', position: 'relative' }}>
+                  <span style={{ fontSize: 13 }}>💰</span>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: '#22C55E' }}>Wallet {wallet && wallet.balance > 0 ? `₱${wallet.balance.toLocaleString('en-PH', { minimumFractionDigits: 2 })}` : ''}</span>
                 </button>
               </div>
             <div style={{ background: 'linear-gradient(135deg,#141B2D,#1a1040)', border: '1px solid rgba(139,92,246,0.2)', borderRadius: 16, padding: 24 }}>
@@ -1044,7 +1187,7 @@ export default function BorrowerPortalPage() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {[
                   { initials: 'JP', name: 'John Paul Lacaron', gradient: 'linear-gradient(135deg,#3B82F6,#8B5CF6)' },
-                  { initials: 'CJ', name: 'Charlou John Ramil', gradient: 'linear-gradient(135deg,#14B8A6,#3B82F6)' },
+                  { initials: 'CJ', name: 'Charlou June Ramil', gradient: 'linear-gradient(135deg,#14B8A6,#3B82F6)' },
                 ].map(a => (
                   <div key={a.name} style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.03)', borderRadius: 10, padding: '10px 14px' }}>
                     <div style={{ width: 32, height: 32, borderRadius: '50%', background: a.gradient, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, color: '#fff', flexShrink: 0 }}>{a.initials}</div>

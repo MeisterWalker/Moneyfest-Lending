@@ -107,7 +107,7 @@ export default function FAQPage() {
         <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
           {[
             { initials: 'JP', name: 'John Paul Lacaron', gradient: 'linear-gradient(135deg,#3B82F6,#8B5CF6)' },
-            { initials: 'CJ', name: 'Charlou John Ramil', gradient: 'linear-gradient(135deg,#14B8A6,#3B82F6)' },
+            { initials: 'CJ', name: 'Charlou June Ramil', gradient: 'linear-gradient(135deg,#14B8A6,#3B82F6)' },
           ].map((p, i) => (
             <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(59,130,246,0.07)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: 10, padding: '12px 16px' }}>
               <div style={{ width: 36, height: 36, borderRadius: '50%', background: p.gradient, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 14, color: '#fff', flexShrink: 0 }}>{p.initials}</div>

@@ -357,6 +357,90 @@ function ProofReviewSection({ supabase, user, logAudit }) {
   )
 }
 
+
+function WithdrawalPanel({ supabase, user, logAudit }) {
+  const [withdrawals, setWithdrawals] = useState([])
+  const [expanded, setExpanded] = useState(false)
+  const { toast } = useToast()
+
+  const fetchWithdrawals = async () => {
+    const { data } = await supabase
+      .from('wallet_transactions')
+      .select('*, borrowers(full_name, access_code)')
+      .eq('type', 'withdrawal').eq('status', 'pending')
+      .order('created_at', { ascending: false })
+    setWithdrawals(data || [])
+  }
+
+  useEffect(() => { fetchWithdrawals() }, [])
+
+  const handleApprove = async (txn) => {
+    // Deduct from wallet
+    const { data: wallet } = await supabase.from('wallets').select('id, balance').eq('borrower_id', txn.borrower_id).single()
+    if (wallet) {
+      const newBalance = Math.max(0, wallet.balance - txn.amount)
+      await supabase.from('wallets').update({ balance: newBalance, updated_at: new Date().toISOString() }).eq('id', wallet.id)
+    }
+    await supabase.from('wallet_transactions').update({ status: 'completed' }).eq('id', txn.id)
+    await logAudit({ action_type: 'WALLET_WITHDRAWAL_APPROVED', module: 'Applications', description: `Withdrawal of ₱${txn.amount} approved for ${txn.borrowers?.full_name}`, changed_by: user?.email })
+    toast(`Withdrawal approved for ${txn.borrowers?.full_name}`, 'success')
+    fetchWithdrawals()
+  }
+
+  const handleReject = async (txn) => {
+    await supabase.from('wallet_transactions').update({ status: 'rejected' }).eq('id', txn.id)
+    await logAudit({ action_type: 'WALLET_WITHDRAWAL_REJECTED', module: 'Applications', description: `Withdrawal of ₱${txn.amount} rejected for ${txn.borrowers?.full_name}`, changed_by: user?.email })
+    toast(`Withdrawal rejected`, 'info')
+    fetchWithdrawals()
+  }
+
+  return (
+    <div style={{ background: '#141B2D', border: '1px solid rgba(34,197,94,0.25)', borderRadius: 14, padding: '18px 20px', marginBottom: 24 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }} onClick={() => setExpanded(e => !e)}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ width: 32, height: 32, borderRadius: 9, background: 'rgba(34,197,94,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>💸</div>
+          <div>
+            <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 14, color: '#F0F4FF' }}>Wallet Withdrawals</div>
+            <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{withdrawals.length === 0 ? 'No pending requests' : withdrawals.length + ' pending approval'}</div>
+          </div>
+          {withdrawals.length > 0 && <span style={{ background: '#22C55E', color: '#000', fontSize: 11, fontWeight: 800, borderRadius: 20, padding: '2px 10px' }}>{withdrawals.length}</span>}
+        </div>
+        <div style={{ color: 'var(--text-muted)' }}>{expanded ? '▲' : '▼'}</div>
+      </div>
+
+      {expanded && (
+        <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {withdrawals.length === 0 && (
+            <div style={{ textAlign: 'center', padding: '24px 20px', fontSize: 13, color: '#4B5580' }}>
+              💸 No pending withdrawal requests right now.
+            </div>
+          )}
+          {withdrawals.map((txn, i) => (
+            <div key={i} style={{ background: '#0B0F1A', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+              <div style={{ flex: 1, minWidth: 200 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#F0F4FF' }}>{txn.borrowers?.full_name}</div>
+                <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>Requesting full wallet balance</div>
+                <div style={{ fontSize: 11, color: '#4B5580', marginTop: 4 }}>{new Date(txn.created_at).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
+              </div>
+              <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 20, color: '#22C55E' }}>₱{Number(txn.amount).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button onClick={() => handleApprove(txn)}
+                  style={{ padding: '7px 14px', borderRadius: 8, border: 'none', background: 'rgba(34,197,94,0.15)', color: '#22C55E', fontSize: 12, fontWeight: 700, cursor: 'pointer', border: '1px solid rgba(34,197,94,0.3)' }}>
+                  ✓ Approve
+                </button>
+                <button onClick={() => handleReject(txn)}
+                  style={{ padding: '7px 14px', borderRadius: 8, border: '1px solid rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.08)', color: '#EF4444', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                  ✗ Reject
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function ApplicationsPage() {
   const [applications, setApplications] = useState([])
   const [loading, setLoading] = useState(true)
@@ -490,6 +574,7 @@ export default function ApplicationsPage() {
       <div style={{ display: 'flex', gap: 6, background: 'rgba(255,255,255,0.03)', borderRadius: 10, padding: 4, marginBottom: 24, width: 'fit-content' }}>
         {/* Payment Proofs Section */}
       <ProofReviewSection supabase={supabase} user={user} logAudit={logAudit} />
+      <WithdrawalPanel supabase={supabase} user={user} logAudit={logAudit} />
 
       {['Pending', 'Approved', 'Rejected', 'All'].map(f => (
           <button key={f} onClick={() => setFilter(f)} style={{ padding: '7px 16px', borderRadius: 7, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600, background: filter === f ? '#3B82F6' : 'transparent', color: filter === f ? '#fff' : '#4B5580', transition: 'all 0.15s' }}>
