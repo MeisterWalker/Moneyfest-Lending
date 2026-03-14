@@ -263,6 +263,178 @@ function LottieHourglass() {
   return <div ref={ref} style={{ width: 90, height: 90, margin: '0 auto' }} />
 }
 
+// ── E-Signature Modal ─────────────────────────────────────────
+function SignatureModal({ borrower, loan, onSave, onClose }) {
+  const [typedName, setTypedName] = useState('')
+  const [signing, setSigning] = useState(false)
+  const [signed, setSigned] = useState(false)
+  const canvasRef = useRef(null)
+  const drawing = useRef(false)
+  const lastPos = useRef(null)
+
+  const getPos = (e, canvas) => {
+    const rect = canvas.getBoundingClientRect()
+    const scaleX = canvas.width / rect.width
+    const scaleY = canvas.height / rect.height
+    if (e.touches) {
+      return {
+        x: (e.touches[0].clientX - rect.left) * scaleX,
+        y: (e.touches[0].clientY - rect.top) * scaleY
+      }
+    }
+    return {
+      x: (e.clientX - rect.left) * scaleX,
+      y: (e.clientY - rect.top) * scaleY
+    }
+  }
+
+  const startDraw = (e) => {
+    e.preventDefault()
+    drawing.current = true
+    const canvas = canvasRef.current
+    const ctx = canvas.getContext('2d')
+    const pos = getPos(e, canvas)
+    ctx.beginPath()
+    ctx.moveTo(pos.x, pos.y)
+    lastPos.current = pos
+  }
+
+  const draw = (e) => {
+    e.preventDefault()
+    if (!drawing.current) return
+    const canvas = canvasRef.current
+    const ctx = canvas.getContext('2d')
+    const pos = getPos(e, canvas)
+    ctx.lineWidth = 2.5
+    ctx.lineCap = 'round'
+    ctx.lineJoin = 'round'
+    ctx.strokeStyle = '#F0F4FF'
+    ctx.lineTo(pos.x, pos.y)
+    ctx.stroke()
+    lastPos.current = pos
+  }
+
+  const endDraw = () => { drawing.current = false }
+
+  const clearCanvas = () => {
+    const canvas = canvasRef.current
+    const ctx = canvas.getContext('2d')
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+  }
+
+  const handleSave = async () => {
+    if (!typedName.trim()) return
+    setSigning(true)
+    const canvas = canvasRef.current
+    const signatureImage = canvas.toDataURL('image/png')
+    await onSave({ typedName: typedName.trim(), signatureImage, signedAt: new Date().toISOString() })
+    setSigned(true)
+    setSigning(false)
+  }
+
+  const nameMatches = typedName.trim().toLowerCase() === (borrower.full_name || '').toLowerCase()
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: 20 }}>
+      <div style={{ background: '#141B2D', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 20, padding: 28, width: '100%', maxWidth: 520, maxHeight: '90vh', overflowY: 'auto' }}>
+
+        {/* Header */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+          <div>
+            <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 16, color: '#F0F4FF' }}>E-Signature</div>
+            <div style={{ fontSize: 11, color: '#4B5580', marginTop: 2 }}>Sign your Loan Agreement</div>
+          </div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#4B5580', fontSize: 18 }}>✕</button>
+        </div>
+
+        {signed ? (
+          <div style={{ textAlign: 'center', padding: '32px 0' }}>
+            <div style={{ fontSize: 48, marginBottom: 12 }}>✅</div>
+            <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 16, color: '#22C55E', marginBottom: 8 }}>Signature Saved!</div>
+            <div style={{ fontSize: 13, color: '#7A8AAA', marginBottom: 20 }}>Your loan agreement has been signed. You can now download it.</div>
+            <button onClick={onClose} style={{ padding: '10px 28px', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#22C55E,#16A34A)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+              Close & Download
+            </button>
+          </div>
+        ) : (
+          <>
+            {/* Loan summary */}
+            <div style={{ background: 'rgba(99,102,241,0.06)', border: '1px solid rgba(99,102,241,0.18)', borderRadius: 12, padding: '12px 16px', marginBottom: 20, fontSize: 12, color: '#7A8AAA', lineHeight: 1.7 }}>
+              By signing, you confirm you have read and agree to the loan terms: <strong style={{ color: '#F0F4FF' }}>₱{Number(loan.loan_amount).toLocaleString('en-PH')} loan</strong> at <strong style={{ color: '#F0F4FF' }}>{((loan.interest_rate || 0.07) * 100).toFixed(0)}% flat interest</strong>, repayable in <strong style={{ color: '#F0F4FF' }}>4 installments</strong> of <strong style={{ color: '#60A5FA' }}>₱{Number(loan.installment_amount).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</strong> each.
+            </div>
+
+            {/* Step 1 — Type name */}
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: '#7A8AAA', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
+                Step 1 — Type your full name exactly as registered
+              </div>
+              <input
+                value={typedName}
+                onChange={e => setTypedName(e.target.value)}
+                placeholder={borrower.full_name}
+                style={{ width: '100%', background: '#0B0F1A', border: `1px solid ${nameMatches && typedName ? 'rgba(34,197,94,0.4)' : 'rgba(255,255,255,0.08)'}`, borderRadius: 10, color: nameMatches && typedName ? '#22C55E' : '#F0F4FF', fontSize: 15, fontFamily: 'Caveat, cursive', padding: '12px 14px', boxSizing: 'border-box', outline: 'none', transition: 'border-color 0.2s' }}
+              />
+              {typedName && !nameMatches && (
+                <div style={{ fontSize: 11, color: '#EF4444', marginTop: 5 }}>⚠️ Name must exactly match: <strong>{borrower.full_name}</strong></div>
+              )}
+              {nameMatches && typedName && (
+                <div style={{ fontSize: 11, color: '#22C55E', marginTop: 5 }}>✅ Name verified</div>
+              )}
+            </div>
+
+            {/* Step 2 — Draw signature */}
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: '#7A8AAA', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                  Step 2 — Draw your signature below
+                </div>
+                <button onClick={clearCanvas} style={{ fontSize: 11, color: '#4B5580', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>Clear</button>
+              </div>
+              <div style={{ position: 'relative', borderRadius: 12, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)', background: '#0B0F1A' }}>
+                {/* Typed name watermark */}
+                {typedName && (
+                  <div style={{ position: 'absolute', bottom: 8, left: '50%', transform: 'translateX(-50%)', fontSize: 13, color: 'rgba(245,158,11,0.25)', fontFamily: 'Caveat, cursive', pointerEvents: 'none', whiteSpace: 'nowrap', letterSpacing: 1 }}>
+                    {typedName}
+                  </div>
+                )}
+                {/* Signature line */}
+                <div style={{ position: 'absolute', bottom: 32, left: 20, right: 20, height: 1, background: 'rgba(255,255,255,0.06)', pointerEvents: 'none' }} />
+                <canvas
+                  ref={canvasRef}
+                  width={460}
+                  height={150}
+                  style={{ width: '100%', height: 150, display: 'block', cursor: 'crosshair', touchAction: 'none' }}
+                  onMouseDown={startDraw}
+                  onMouseMove={draw}
+                  onMouseUp={endDraw}
+                  onMouseLeave={endDraw}
+                  onTouchStart={startDraw}
+                  onTouchMove={draw}
+                  onTouchEnd={endDraw}
+                />
+              </div>
+              <div style={{ fontSize: 11, color: '#4B5580', marginTop: 5 }}>Draw using your mouse or touchscreen. Your typed name appears as a watermark.</div>
+            </div>
+
+            {/* Sign button */}
+            <button
+              onClick={handleSave}
+              disabled={!nameMatches || signing}
+              style={{ width: '100%', padding: '13px', borderRadius: 12, border: 'none', background: nameMatches ? 'linear-gradient(135deg,#3B82F6,#8B5CF6)' : 'rgba(255,255,255,0.06)', color: nameMatches ? '#fff' : '#4B5580', fontSize: 14, fontWeight: 700, cursor: nameMatches ? 'pointer' : 'not-allowed', fontFamily: 'Space Grotesk', transition: 'all 0.2s' }}>
+              {signing ? 'Saving signature...' : '✍️ Sign Loan Agreement'}
+            </button>
+
+            <div style={{ fontSize: 11, color: '#4B5580', textAlign: 'center', marginTop: 10, lineHeight: 1.6 }}>
+              By signing, you acknowledge full understanding of the loan terms and agree to be bound by them. This serves as your electronic signature under the E-Commerce Act (RA 8792).
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+
+
 export default function BorrowerPortalPage() {
   const [code, setCode] = useState('')
   const [inputCode, setInputCode] = useState('')
@@ -272,6 +444,10 @@ export default function BorrowerPortalPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [uploadModal, setUploadModal] = useState(null)
+  const [showSignModal, setShowSignModal] = useState(false)
+  const [signatureData, setSignatureData] = useState(null) // base64 canvas drawing
+  const [typedName, setTypedName] = useState('')
+  const [signatureSaved, setSignatureSaved] = useState(false)
   const [uploadSuccess, setUploadSuccess] = useState(false)
   const [page, setPage] = useState('home') // 'home' | 'payment-methods' | 'profile' | 'payment-history' | 'wallet'
   const [rebateCredits, setRebateCredits] = useState(null)
@@ -413,6 +589,130 @@ export default function BorrowerPortalPage() {
     setUploadSuccess(true)
     fetchPortalData(code)
     setTimeout(() => setUploadSuccess(false), 5000)
+  }
+
+  const handleSaveSignature = async ({ typedName, signatureImage, signedAt }) => {
+    // Store signature in borrowers table
+    await supabase.from('borrowers').update({
+      e_signature_name: typedName,
+      e_signature_image: signatureImage,
+      e_signature_date: signedAt
+    }).eq('id', borrower.id)
+    setBorrower(prev => ({ ...prev, e_signature_name: typedName, e_signature_image: signatureImage, e_signature_date: signedAt }))
+    setSignatureSaved(true)
+    setShowSignModal(false)
+    // Auto-trigger download after signing
+    setTimeout(() => generateLoanAgreementPDF(typedName, signatureImage, signedAt), 500)
+  }
+
+  const generateLoanAgreementPDF = (sigName, sigImage, sigDate) => {
+    const name = sigName || borrower.e_signature_name || borrower.full_name
+    const img = sigImage || borrower.e_signature_image
+    const date = sigDate || borrower.e_signature_date || new Date().toISOString()
+    const principal = Number(loan.loan_amount)
+    const holdAmt = loan.security_hold ? Number(loan.security_hold) : principal * 0.10
+    const holdRate = principal > 0 ? ((holdAmt / principal) * 100).toFixed(0) : 10
+    const released = loan.funds_released ? Number(loan.funds_released) : principal - holdAmt
+    const total = Number(loan.total_repayment)
+    const perInst = Number(loan.installment_amount)
+    const rate = ((loan.interest_rate || 0.07) * 100).toFixed(0)
+    const signedDateStr = new Date(date).toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' })
+    const releaseDateStr = loan.release_date ? new Date(loan.release_date).toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' }) : 'TBD'
+
+    const html = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8"/>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;600;700&display=swap');
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'EB Garamond', Georgia, serif; color:#1a1a2e; background:#fff; font-size:13px; line-height:1.7; padding:60px; }
+  .header { text-align:center; border-bottom:2px solid #1a1a2e; padding-bottom:20px; margin-bottom:28px; }
+  .logo { font-size:26px; font-weight:700; letter-spacing:-0.5px; margin-bottom:4px; }
+  .logo span { color:#6366F1; }
+  .doc-title { font-size:16px; font-weight:600; color:#4B5580; text-transform:uppercase; letter-spacing:2px; }
+  .section { margin-bottom:22px; }
+  .section-title { font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; color:#4B5580; border-bottom:1px solid #e5e7eb; padding-bottom:6px; margin-bottom:12px; }
+  .row { display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid #f3f4f6; font-size:13px; }
+  .row .label { color:#6B7280; }
+  .row .value { font-weight:600; color:#1a1a2e; }
+  .highlight { background:#F0F4FF; border:1px solid #C7D2FE; border-radius:8px; padding:14px 18px; margin:16px 0; }
+  .sig-section { margin-top:40px; padding-top:24px; border-top:2px solid #1a1a2e; }
+  .sig-box { display:inline-block; border-bottom:1px solid #1a1a2e; padding-bottom:2px; min-width:260px; }
+  .sig-name { font-size:22px; font-style:italic; color:#1a1a2e; font-family:'Caveat', cursive; }
+  .disclaimer { font-size:10px; color:#9CA3AF; margin-top:24px; line-height:1.6; border-top:1px solid #e5e7eb; padding-top:14px; }
+  .badge { display:inline-block; background:#EEF2FF; color:#4338CA; padding:2px 10px; border-radius:4px; font-size:11px; font-weight:600; }
+</style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">Loan<span>Moneyfest</span></div>
+    <div class="doc-title">Loan Agreement & Disclosure Statement</div>
+    <div style="font-size:11px;color:#9CA3AF;margin-top:6px;">Document Reference: LM-${borrower.id?.slice(-6).toUpperCase()} | Signed: ${signedDateStr}</div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Parties</div>
+    <div class="row"><span class="label">Borrower</span><span class="value">${borrower.full_name}</span></div>
+    <div class="row"><span class="label">Department</span><span class="value">${borrower.department || 'N/A'}</span></div>
+    <div class="row"><span class="label">Access Code</span><span class="value">${borrower.access_code}</span></div>
+    <div class="row"><span class="label">Lender</span><span class="value">LoanMoneyfest Private Lending Program</span></div>
+    <div class="row"><span class="label">Release Date</span><span class="value">${releaseDateStr}</span></div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">RA 3765 — Truth in Lending Act Disclosure</div>
+    <div class="row"><span class="label">Approved Loan Amount</span><span class="value">₱${principal.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span></div>
+    <div class="row"><span class="label">Security Hold (${holdRate}%)</span><span class="value">₱${holdAmt.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span></div>
+    <div class="row"><span class="label">Funds Released to Borrower</span><span class="value">₱${released.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span></div>
+    <div class="row"><span class="label">Finance Charge (Interest)</span><span class="value">₱${(total - principal).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span></div>
+    <div class="row"><span class="label">Flat Interest Rate</span><span class="value">${rate}% of principal (one-time)</span></div>
+    <div class="row"><span class="label">Effective Annual Rate</span><span class="value">${((total - principal) / principal / 2 * 12 * 100).toFixed(2)}% per annum</span></div>
+    <div class="row"><span class="label">Total Amount Payable</span><span class="value">₱${total.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span></div>
+    <div class="row"><span class="label">Number of Installments</span><span class="value">4 payments</span></div>
+    <div class="row"><span class="label">Per Installment Amount</span><span class="value">₱${perInst.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span></div>
+    <div class="row"><span class="label">Payment Schedule</span><span class="value">Every 5th and 20th of the month</span></div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Terms & Conditions</div>
+    <p style="margin-bottom:8px;color:#374151;">1. <strong>Interest</strong> — A flat interest rate of ${rate}% is charged on the full approved amount regardless of early settlement.</p>
+    <p style="margin-bottom:8px;color:#374151;">2. <strong>Security Hold</strong> — ${holdRate}% of the loan amount is withheld upon release and returned to Rebate Credits after the 4th installment is paid.</p>
+    <p style="margin-bottom:8px;color:#374151;">3. <strong>Late Penalties</strong> — ₱20 per day per missed installment, capped at 10% of the installment amount. Late payments reduce credit score by 10 points.</p>
+    <p style="margin-bottom:8px;color:#374151;">4. <strong>Default</strong> — Non-payment of two or more installments may result in the loan being declared in default. A 150-point credit score deduction applies.</p>
+    <p style="margin-bottom:8px;color:#374151;">5. <strong>Rebate Credits</strong> — Paying the final installment 7–13 days early earns 1% rebate; 14+ days early earns 1.5% rebate, credited to Rebate Credits balance.</p>
+    <p style="margin-bottom:8px;color:#374151;">6. <strong>Privacy</strong> — Personal information is processed in compliance with RA 10173 (Data Privacy Act of 2012).</p>
+  </div>
+
+  <div class="sig-section">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:end;">
+      <div>
+        <div style="font-size:11px;color:#9CA3AF;margin-bottom:8px;text-transform:uppercase;letter-spacing:1px;">Borrower E-Signature</div>
+        ${img ? `<img src="${img}" style="height:70px;max-width:260px;display:block;margin-bottom:4px;" />` : '<div style="height:70px;"></div>'}
+        <div class="sig-box"><span class="sig-name">${name}</span></div>
+        <div style="font-size:11px;color:#9CA3AF;margin-top:6px;">${name} — Signed electronically on ${signedDateStr}</div>
+      </div>
+      <div>
+        <div style="font-size:11px;color:#9CA3AF;margin-bottom:8px;text-transform:uppercase;letter-spacing:1px;">Admin / Authorized Representative</div>
+        <div style="height:70px;border-bottom:1px solid #1a1a2e;"></div>
+        <div style="font-size:11px;color:#9CA3AF;margin-top:6px;">LoanMoneyfest Administration</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="disclaimer">
+    This Loan Agreement is executed in compliance with Republic Act No. 3765 (Truth in Lending Act), Republic Act No. 10173 (Data Privacy Act), and Republic Act No. 8792 (E-Commerce Act). The electronic signature affixed herein is legally binding under RA 8792. This document is private and confidential. LoanMoneyfest is a private colleague lending program and is not a bank or financial institution. Returns and terms are subject to program policies.
+  </div>
+</body>
+</html>`
+
+    const win = window.open('', '_blank')
+    if (win) {
+      win.document.write(html)
+      win.document.close()
+      win.focus()
+      setTimeout(() => { win.print(); }, 800)
+    }
   }
 
   const markAllRead = async () => {
@@ -1210,8 +1510,8 @@ export default function BorrowerPortalPage() {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 12 }}>
                 {[
                   { label: 'Approved Amount', value: '₱' + Number(loan.loan_amount).toLocaleString('en-PH'), color: '#F0F4FF' },
-                  { label: 'You Received', value: '₱' + (loan.funds_released ? Number(loan.funds_released).toLocaleString('en-PH') : (Number(loan.loan_amount) * 0.80).toLocaleString('en-PH')), color: '#22C55E' },
-                  { label: 'Security Hold', value: (loan.security_hold_returned ? '✅ ' : '🔒 ') + '₱' + (loan.security_hold ? Number(loan.security_hold).toLocaleString('en-PH') : (Number(loan.loan_amount) * 0.20).toLocaleString('en-PH')), color: loan.security_hold_returned ? '#22C55E' : '#F59E0B' },
+                  { label: 'You Received', value: '₱' + (loan.funds_released ? Number(loan.funds_released).toLocaleString('en-PH') : (Number(loan.loan_amount) * 0.90).toLocaleString('en-PH')), color: '#22C55E' },
+                  { label: 'Security Hold', value: (loan.security_hold_returned ? '✅ ' : '🔒 ') + '₱' + (loan.security_hold ? Number(loan.security_hold).toLocaleString('en-PH') : (loan.security_hold ? Number(loan.security_hold) : Number(loan.loan_amount) * 0.10).toLocaleString('en-PH')), color: loan.security_hold_returned ? '#22C55E' : '#F59E0B' },
                   { label: 'Per Installment', value: '₱' + Number(loan.installment_amount).toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#8B5CF6' },
                   { label: 'Release Date', value: formatDate(loan.release_date), color: '#F59E0B' },
                 ].map(s => (
@@ -1327,7 +1627,7 @@ export default function BorrowerPortalPage() {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
                     {[
                       { label: 'Approved Loan Amount', value: '₱' + principal.toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#F0F4FF' },
-                      { label: 'Security Hold (20%)', value: '₱' + (loan.security_hold ? Number(loan.security_hold).toLocaleString('en-PH', { minimumFractionDigits: 2 }) : (principal * 0.20).toLocaleString('en-PH', { minimumFractionDigits: 2 })), color: '#F59E0B' },
+                      { label: 'Security Hold (' + (loan.security_hold && principal ? ((Number(loan.security_hold)/principal*100).toFixed(0)) : '10') + '%)', value: '₱' + (loan.security_hold ? Number(loan.security_hold).toLocaleString('en-PH', { minimumFractionDigits: 2 }) : (principal * 0.10).toLocaleString('en-PH', { minimumFractionDigits: 2 })), color: '#F59E0B' },
                       { label: 'Funds Released to You', value: '₱' + (loan.funds_released ? Number(loan.funds_released).toLocaleString('en-PH', { minimumFractionDigits: 2 }) : (principal * 0.80).toLocaleString('en-PH', { minimumFractionDigits: 2 })), color: '#22C55E' },
                       { label: 'Finance Charge', value: '₱' + financeCharge.toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#F59E0B' },
                       { label: 'Flat Interest Rate', value: flatRate.toFixed(0) + '% of principal', color: '#60A5FA' },
@@ -1349,6 +1649,27 @@ export default function BorrowerPortalPage() {
                       </div>
                     )}
                     <strong style={{ color: '#818CF8' }}>RA 3765 — Truth in Lending Act Disclosure.</strong> This statement discloses all finance charges and terms applicable to your loan in compliance with Republic Act No. 3765 of the Philippines. The effective interest rate is computed based on the loan term of 2 months annualized over 12 months.
+                  </div>
+                  {/* Sign & Download buttons */}
+                  <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
+                    {!borrower.e_signature_name ? (
+                      <button onClick={() => setShowSignModal(true)}
+                        style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '11px', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#6366F1,#8B5CF6)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+                        ✍️ Sign Loan Agreement
+                      </button>
+                    ) : (
+                      <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 10 }}>
+                        <span style={{ fontSize: 14 }}>✅</span>
+                        <div>
+                          <div style={{ fontSize: 12, fontWeight: 700, color: '#22C55E' }}>Signed by {borrower.e_signature_name}</div>
+                          <div style={{ fontSize: 10, color: '#4B5580' }}>{borrower.e_signature_date ? new Date(borrower.e_signature_date).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' }) : ''}</div>
+                        </div>
+                      </div>
+                    )}
+                    <button onClick={() => generateLoanAgreementPDF()}
+                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '11px 18px', borderRadius: 10, border: '1px solid rgba(99,102,241,0.3)', background: 'rgba(99,102,241,0.08)', color: '#818CF8', fontSize: 13, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                      📄 Download PDF
+                    </button>
                   </div>
                 </div>
               )
@@ -1441,6 +1762,15 @@ export default function BorrowerPortalPage() {
           </>
         )}
       </div>
+
+      {showSignModal && loan && (
+        <SignatureModal
+          borrower={borrower}
+          loan={loan}
+          onSave={handleSaveSignature}
+          onClose={() => setShowSignModal(false)}
+        />
+      )}
 
       {uploadModal && (
         <UploadModal

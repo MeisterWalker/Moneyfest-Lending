@@ -365,7 +365,7 @@ export default function PublicApplyPage() {
                 },
                 {
                   title: '9. Security Hold',
-                  body: 'To protect the program and ensure commitment from borrowers, 20% of your approved loan amount is withheld as a Security Hold. For example, on a ₱5,000 loan you will receive ₱4,000 and ₱1,000 will be held. Interest is charged on the full approved amount. The Security Hold is automatically returned to your Rebate Credits balance after your 4th and final installment is paid. It is not a deposit, not savings, and not collateral — it is a contractual security condition of the loan.'
+                  body: 'To protect the program and ensure commitment from borrowers, a Security Hold is withheld from your approved loan amount upon release. The rate depends on your credit score: VIP (1000) pays 5%, Reliable (920+) pays 6%, Trusted (835+) pays 8%, Standard (750+) pays 10%, Caution (500+) pays 15%, and High Risk (below 500) pays 20%. For example, a standard borrower on a ₱5,000 loan receives ₱4,500 and ₱500 is held. Interest is charged on the full approved amount. The Security Hold is automatically returned to your Rebate Credits balance after your 4th and final installment is paid. It is not a deposit, not savings, and not collateral — it is a contractual security condition of the loan.'
                 },
                 {
                   title: '13. Loan Limit & Level System',
