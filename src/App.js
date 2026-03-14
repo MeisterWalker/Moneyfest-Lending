@@ -17,6 +17,7 @@ import BorrowerPortalPage from './pages/BorrowerPortalPage'
 import FAQPage from './pages/FAQPage'
 import LoginLogsPage from './pages/LoginLogsPage'
 import ApprovalsPage from './pages/ApprovalsPage'
+import HomePage from './pages/HomePage'
 import NotificationBell from './components/NotificationBell'
 import { useAutoLogout } from './hooks/useAutoLogout'
 import { useEffect, useState } from 'react'
@@ -55,7 +56,7 @@ function AppRoutes() {
   return (
     <Routes>
       {/* ── Public routes ── */}
-      <Route path="/"              element={<PublicApplyPage />} />
+      <Route path="/"              element={<HomePage />} />
       <Route path="/apply"         element={<PublicApplyPage />} />
       <Route path="/portal"        element={<BorrowerPortalPage />} />
       <Route path="/faq"           element={<FAQPage />} />
