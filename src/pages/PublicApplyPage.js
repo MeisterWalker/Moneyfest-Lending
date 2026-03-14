@@ -418,9 +418,14 @@ export default function PublicApplyPage() {
                 <div style={{ height: 1, background: 'rgba(59,130,246,0.15)', marginBottom: 14 }} />
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
                   <span style={{ fontSize: 12, color: '#7A8AAA' }}>For more info visit our FAQ</span>
-                  <a href="/faq" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 14px', borderRadius: 8, background: 'rgba(59,130,246,0.12)', border: '1px solid rgba(59,130,246,0.25)', fontSize: 12, color: '#60A5FA', textDecoration: 'none', fontWeight: 600 }}>
-                    <img src="/faq.png" alt="faq" style={{ width: 12, height: 12, objectFit: 'contain' }} /> View FAQ →
-                  </a>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <a href="/faq" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 14px', borderRadius: 8, background: 'rgba(59,130,246,0.12)', border: '1px solid rgba(59,130,246,0.25)', fontSize: 12, color: '#60A5FA', textDecoration: 'none', fontWeight: 600 }}>
+                      <img src="/faq.png" alt="faq" style={{ width: 12, height: 12, objectFit: 'contain' }} /> View FAQ →
+                    </a>
+                    <a href="/privacy" target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 14px', borderRadius: 8, background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.25)', fontSize: 12, color: '#a78bfa', textDecoration: 'none', fontWeight: 600 }}>
+                      <img src="/padlock.png" alt="privacy" style={{ width: 12, height: 12, objectFit: 'contain' }} /> Privacy →
+                    </a>
+                  </div>
                 </div>
               </div>
             </div>
@@ -675,7 +680,7 @@ export default function PublicApplyPage() {
                 </div>
                 <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer', marginBottom: 14 }}>
                   <input type="checkbox" checked={form.agreed} onChange={e => set('agreed', e.target.checked)} style={{ marginTop: 2, width: 16, height: 16, accentColor: '#3B82F6', flexShrink: 0 }} />
-                  <span style={{ fontSize: 13, color: '#7A8AAA', lineHeight: 1.6 }}>I have read and agree to the <strong style={{ color: '#F0F4FF' }}>Terms & Conditions</strong>.</span>
+                  <span style={{ fontSize: 13, color: '#7A8AAA', lineHeight: 1.6 }}>I have read and agree to the <strong style={{ color: '#F0F4FF' }}>Terms & Conditions</strong> and the <a href='/privacy' target='_blank' rel='noreferrer' style={{ color: '#60A5FA', textDecoration: 'none', fontWeight: 600 }}>Privacy Notice</a>.</span>
                 </label>
                 {error && (
                   <div style={{ padding: '10px 14px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, fontSize: 13, color: '#EF4444', marginBottom: 14 }}><span style={{ display: "flex", alignItems: "center", gap: 4 }}><img src="/warning.png" alt="warning" style={{ width: 13, height: 13, objectFit: "contain" }} />{error}</span></div>
@@ -718,7 +723,7 @@ export default function PublicApplyPage() {
         </div>
 
         <p style={{ textAlign: 'center', fontSize: 12, color: '#4B5580', marginTop: 24, lineHeight: 1.7 }}>
-          Your information is kept private and secure. This is an exclusive internal program for our team members only. · <a href="/faq" style={{ color: '#3B82F6', textDecoration: 'none' }}>View FAQ</a>
+          Your information is kept private and secure. This is an exclusive internal program for our team members only. · <a href="/faq" style={{ color: '#3B82F6', textDecoration: 'none' }}>View FAQ</a> · <a href="/privacy" style={{ color: '#3B82F6', textDecoration: 'none' }}>Privacy Notice</a>
         </p>
 
       </div>
