@@ -336,7 +336,7 @@ export default function PublicApplyPage() {
                 },
                 {
                   title: '2. Loan Terms & Interest',
-                  body: 
+                  body: `Approved loans are subject to a flat interest rate of ${(interestRate * 100).toFixed(0)}% applied once to the principal amount. This is not a compounding rate. The total repayable amount is fixed at the time of approval and will not change provided payments are made on schedule.`
                 },
                 {
                   title: '3. Repayment Schedule',
