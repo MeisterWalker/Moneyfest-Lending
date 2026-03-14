@@ -526,7 +526,7 @@ export default function ApplicationsPage() {
         if (day <= 5) releaseDate = new Date(today.getFullYear(), today.getMonth(), 5)
         else if (day <= 20) releaseDate = new Date(today.getFullYear(), today.getMonth(), 20)
         else releaseDate = new Date(today.getFullYear(), today.getMonth() + 1, 5)
-        const releaseDateStr = releaseDate.toISOString().split('T')[0]
+        const releaseDateStr = releaseDate.getFullYear() + '-' + String(releaseDate.getMonth()+1).padStart(2,'0') + '-' + String(releaseDate.getDate()).padStart(2,'0')
 
         // 5. Create loan — use only confirmed existing columns
         const loanAmount = Number(app.loan_amount) || 5000
