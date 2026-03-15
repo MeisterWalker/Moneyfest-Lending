@@ -124,7 +124,7 @@ export default function HomePage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <img src="/favicon-96x96.png" alt="MoneyfestLending" style={{ width: 32, height: 32, objectFit: 'contain' }} />
             <span style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 17, color: '#F0F4FF', letterSpacing: -0.3 }}>
-              Loan<span className="shimmer-text">Moneyfest</span>
+              Moneyfest<span className="shimmer-text">Lending</span>
             </span>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>

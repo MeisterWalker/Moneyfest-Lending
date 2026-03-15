@@ -678,7 +678,7 @@ export default function BorrowerPortalPage() {
   <!-- HEADER -->
   <div class="header">
     <div>
-      <div class="logo">Loan<span>Moneyfest</span></div>
+      <div class="logo">Moneyfest<span>Lending</span></div>
       <div style="font-size:10.5px;color:#6B7280;margin-top:3px;">Private Lending Program — Loan Agreement</div>
     </div>
     <div class="doc-meta">
@@ -831,7 +831,7 @@ export default function BorrowerPortalPage() {
         <div style={{ textAlign: 'center', marginBottom: 28 }}>
           <img src="/favicon-96x96.png" alt="MoneyfestLending" style={{ width: 48, height: 48, objectFit: 'contain', marginBottom: 10 }} />
           <div style={{ fontFamily: 'Space Grotesk', fontWeight: 900, fontSize: 24, color: '#F0F4FF' }}>
-            Loan<span style={{ background: 'linear-gradient(90deg,#60a5fa,#a78bfa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Moneyfest</span>
+            Moneyfest<span style={{ background: 'linear-gradient(90deg,#60a5fa,#a78bfa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Lending</span>
           </div>
         </div>
 
@@ -918,7 +918,7 @@ export default function BorrowerPortalPage() {
             <img src="/favicon-96x96.png" alt="MoneyfestLending" style={{ width: 44, height: 44, objectFit: 'contain' }} />
             <div>
               <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 20, color: '#F0F4FF' }}>
-                Loan<span style={{ background: 'linear-gradient(90deg,#60a5fa,#a78bfa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Moneyfest</span>
+                Moneyfest<span style={{ background: 'linear-gradient(90deg,#60a5fa,#a78bfa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Lending</span>
               </div>
               <div style={{ fontSize: 11, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Borrower Portal</div>
             </div>
@@ -940,7 +940,7 @@ export default function BorrowerPortalPage() {
         <div style={{ textAlign: 'center', marginBottom: 36 }}>
           <img src="/favicon-96x96.png" alt="MoneyfestLending" style={{ width: 56, height: 56, objectFit: 'contain', marginBottom: 12 }} />
           <div style={{ fontFamily: 'Space Grotesk', fontWeight: 900, fontSize: 28, color: '#F0F4FF', letterSpacing: -1 }}>
-            Loan<span style={{ background: 'linear-gradient(90deg,#60a5fa,#a78bfa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Moneyfest</span>
+            Moneyfest<span style={{ background: 'linear-gradient(90deg,#60a5fa,#a78bfa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Lending</span>
           </div>
           <div style={{ fontSize: 13, color: '#4B5580', marginTop: 4 }}>Borrower Portal</div>
         </div>
@@ -1001,7 +1001,7 @@ export default function BorrowerPortalPage() {
     <div style={{ minHeight: '100vh', background: '#0B0F1A', fontFamily: 'DM Sans, sans-serif' }}>
       <div style={{ background: 'linear-gradient(135deg,#0d1226,#141B2D)', borderBottom: '1px solid rgba(139,92,246,0.2)', padding: '16px 24px' }}>
         <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 16, color: '#F0F4FF' }}>
-          Loan<span style={{ background: 'linear-gradient(90deg,#60a5fa,#a78bfa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Moneyfest</span>
+          Moneyfest<span style={{ background: 'linear-gradient(90deg,#60a5fa,#a78bfa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Lending</span>
           <span style={{ fontFamily: 'DM Sans', fontWeight: 400, fontSize: 13, color: '#4B5580', marginLeft: 8 }}>· My Profile</span>
         </div>
       </div>
@@ -1155,7 +1155,7 @@ export default function BorrowerPortalPage() {
     <div style={{ minHeight: '100vh', background: '#0B0F1A', fontFamily: 'DM Sans, sans-serif' }}>
       <div style={{ background: 'linear-gradient(135deg,#0d1226,#141B2D)', borderBottom: '1px solid rgba(59,130,246,0.2)', padding: '16px 24px' }}>
         <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 16, color: '#F0F4FF' }}>
-          Loan<span style={{ background: 'linear-gradient(90deg,#60a5fa,#a78bfa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Moneyfest</span>
+          Moneyfest<span style={{ background: 'linear-gradient(90deg,#60a5fa,#a78bfa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Lending</span>
           <span style={{ fontFamily: 'DM Sans', fontWeight: 400, fontSize: 13, color: '#4B5580', marginLeft: 8 }}>· Payment History</span>
         </div>
       </div>
@@ -1440,7 +1440,7 @@ export default function BorrowerPortalPage() {
               <img src="/favicon-96x96.png" alt="MoneyfestLending" style={{ width: 36, height: 36, objectFit: 'contain' }} />
               <div>
                 <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 16, color: '#F0F4FF' }}>
-                  Loan<span style={{ background: 'linear-gradient(90deg,#60a5fa,#a78bfa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Moneyfest</span>
+                  Moneyfest<span style={{ background: 'linear-gradient(90deg,#60a5fa,#a78bfa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Lending</span>
                 </div>
                 <div style={{ fontSize: 11, color: '#4B5580' }}>Borrower Portal</div>
               </div>

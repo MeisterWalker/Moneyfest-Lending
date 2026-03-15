@@ -55,7 +55,7 @@ function generateReceiptHTML({ loan, borrower, installmentNum, amount, date }) {
     </head>
     <body>
       <div class="header">
-        <div class="logo">Loan<span>Moneyfest</span></div>
+        <div class="logo">Moneyfest<span>Lending</span></div>
         <div style="text-align:right">
           <div class="receipt-label">Receipt No.</div>
           <div class="receipt-num">LM-${Date.now().toString().slice(-8)}</div>

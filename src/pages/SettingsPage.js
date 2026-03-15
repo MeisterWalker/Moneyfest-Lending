@@ -539,7 +539,7 @@ function EmailSection({ adminEmail }) {
   const previewHTML = `
     <div style="font-family:sans-serif;background:#0B0F1A;padding:24px;border-radius:12px;color:#F0F4FF;">
       <div style="background:linear-gradient(135deg,#141B2D,#1a1040);border-radius:12px;padding:20px 24px;margin-bottom:16px;border:1px solid rgba(139,92,246,0.3);">
-        <div style="font-size:20px;font-weight:900;margin-bottom:2px;">Loan<span style="color:#8B5CF6;">Moneyfest</span></div>
+        <div style="font-size:20px;font-weight:900;margin-bottom:2px;">Moneyfest<span style="color:#8B5CF6;">Lending</span></div>
         <div style="font-size:11px;color:#4B5580;text-transform:uppercase;letter-spacing:0.08em;">Payment Reminder</div>
       </div>
       <div style="background:#141B2D;border-radius:12px;padding:20px 24px;margin-bottom:12px;">
