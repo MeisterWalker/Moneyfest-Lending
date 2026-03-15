@@ -5,7 +5,7 @@ export default function PrivacyPage() {
     {
       number: '1',
       title: 'Who We Are',
-      content: `LoanMoneyfest is a private, internal workplace micro-lending program operated by its administrators ("we," "us," or "our"). This program is exclusively available to active team members within our office and is not open to the general public. We are committed to protecting the personal information you share with us in accordance with Republic Act No. 10173, otherwise known as the Data Privacy Act of 2012 of the Philippines, and its Implementing Rules and Regulations.`
+      content: `MoneyfestLending is a private, internal workplace micro-lending program operated by its administrators ("we," "us," or "our"). This program is exclusively available to active team members within our office and is not open to the general public. We are committed to protecting the personal information you share with us in accordance with Republic Act No. 10173, otherwise known as the Data Privacy Act of 2012 of the Philippines, and its Implementing Rules and Regulations.`
     },
     {
       number: '2',
@@ -93,12 +93,12 @@ export default function PrivacyPage() {
     {
       number: '9',
       title: 'Cookies and Tracking',
-      content: 'LoanMoneyfest does not use third-party tracking cookies, advertising pixels, or analytics services that share your data with external platforms. We do not display advertisements. Any session data stored in your browser is used solely to maintain your login state within the Borrower Portal and is not shared with anyone.'
+      content: 'MoneyfestLending does not use third-party tracking cookies, advertising pixels, or analytics services that share your data with external platforms. We do not display advertisements. Any session data stored in your browser is used solely to maintain your login state within the Borrower Portal and is not shared with anyone.'
     },
     {
       number: '10',
       title: 'Changes to This Privacy Notice',
-      content: 'We may update this Privacy Notice from time to time to reflect changes in our practices or applicable law. When we do, we will update the effective date below. We encourage you to review this notice periodically. Continued use of the LoanMoneyfest platform after any changes constitutes your acceptance of the updated notice.'
+      content: 'We may update this Privacy Notice from time to time to reflect changes in our practices or applicable law. When we do, we will update the effective date below. We encourage you to review this notice periodically. Continued use of the MoneyfestLending platform after any changes constitutes your acceptance of the updated notice.'
     },
     {
       number: '11',
@@ -119,7 +119,7 @@ export default function PrivacyPage() {
         <div style={{ maxWidth: 860, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <a href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
-              <img src="/favicon-96x96.png" alt="LoanMoneyfest" style={{ width: 36, height: 36, objectFit: 'contain' }} />
+              <img src="/favicon-96x96.png" alt="MoneyfestLending" style={{ width: 36, height: 36, objectFit: 'contain' }} />
               <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 18, color: '#F0F4FF' }}>
                 Loan<span style={{ background: 'linear-gradient(90deg,#60a5fa,#a78bfa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Moneyfest</span>
               </div>
@@ -143,7 +143,7 @@ export default function PrivacyPage() {
           </div>
           <h1 style={{ fontFamily: 'Space Grotesk', fontWeight: 900, fontSize: 36, color: '#F0F4FF', margin: '0 0 12px', letterSpacing: -1 }}>Privacy Notice</h1>
           <p style={{ fontSize: 15, color: '#7A8AAA', lineHeight: 1.7, margin: '0 0 8px', maxWidth: 620 }}>
-            This Privacy Notice explains how LoanMoneyfest collects, uses, stores, and protects your personal information in accordance with the <strong style={{ color: '#CBD5F0' }}>Data Privacy Act of 2012 (RA 10173)</strong> of the Philippines.
+            This Privacy Notice explains how MoneyfestLending collects, uses, stores, and protects your personal information in accordance with the <strong style={{ color: '#CBD5F0' }}>Data Privacy Act of 2012 (RA 10173)</strong> of the Philippines.
           </p>
           <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginTop: 16 }}>
             <span style={{ fontSize: 12, color: '#4B5580' }}>📅 Effective date: <strong style={{ color: '#7A8AAA' }}>{effectiveDate}</strong></span>
@@ -201,6 +201,8 @@ export default function PrivacyPage() {
             <a href="/apply" style={{ fontSize: 13, color: '#60A5FA', textDecoration: 'none', fontWeight: 600 }}>← Back to Application</a>
             <span style={{ color: '#4B5580' }}>·</span>
             <a href="/faq" style={{ fontSize: 13, color: '#60A5FA', textDecoration: 'none', fontWeight: 600 }}>View FAQ</a>
+            <span style={{ color: '#4B5580' }}>·</span>
+            <a href="/terms" style={{ fontSize: 13, color: '#60A5FA', textDecoration: 'none', fontWeight: 600 }}>Terms & Conditions</a>
             <span style={{ color: '#4B5580' }}>·</span>
             <a href="/portal" style={{ fontSize: 13, color: '#60A5FA', textDecoration: 'none', fontWeight: 600 }}>My Portal</a>
           </div>

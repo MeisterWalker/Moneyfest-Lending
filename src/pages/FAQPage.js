@@ -40,11 +40,11 @@ export default function FAQPage() {
 
   const faqByCategory = {
     eligibility: [
-      { q: 'Who can apply for a loan?', a: 'LoanMoneyfest is an exclusive workplace lending program — only active team members within our office who are in good standing are eligible to apply. This is a private, internal program and is not open to the general public. If you are unsure about your eligibility, reach out to the admins via Microsoft Teams.' },
+      { q: 'Who can apply for a loan?', a: 'MoneyfestLending is an exclusive workplace lending program — only active team members within our office who are in good standing are eligible to apply. This is a private, internal program and is not open to the general public. If you are unsure about your eligibility, reach out to the admins via Microsoft Teams.' },
       { q: 'Do I need a trustee to apply?', a: 'Yes. Every applicant is required to provide a trustee or guarantor — someone who can vouch for you and may be contacted for follow-up. Your trustee should be someone who knows you personally, such as a spouse, parent, or close colleague.' },
       { q: 'What is the Security Hold?', a: 'When your loan is approved, a percentage of the loan amount is withheld as a Security Hold — you receive the rest. The exact rate depends on your credit score: VIP borrowers (780+) pay only 5%, Reliable (720+) pay 6%, Trusted (650+) pay 8%, standard (580+) pay 10%, Caution (500+) pay 15%, and High Risk (below 500) pay 20%. For example, a standard borrower on a ₱5,000 loan receives ₱4,500 and ₱500 is held. Interest is computed on the full approved amount. The Security Hold is automatically returned to your Rebate Credits after your 4th installment is paid. It is not a fee — you always get it back in full.' },
       { q: 'What is the credit score system?', a: 'Every borrower starts with a credit score of 750. The maximum score is 1,000 which is the VIP tier. Your score goes up by 15 points for each on-time payment, and you earn a bonus of 25 points when you fully pay off a loan — so 1 perfect loan adds 85 points total (60 from 4 payments + 25 bonus), bringing you from 750 to 835. If a payment is late, your score drops by 10 points. A loan default deducts 150 points. Your credit score directly affects your Security Hold rate and your borrower tier.' },
-      { q: 'What are the borrower tiers and perks?', a: 'LoanMoneyfest has 4 borrower tiers. 🌱 New — starting at score 750, 10% Security Hold, ₱5,000 limit. ⭐ Trusted — score 835+ (after 1 perfect loan), 8% hold, ₱7,000 limit. 🤝 Reliable — score 920+ (after 2 perfect loans), 6% hold, ₱9,000 limit. 👑 VIP — score 1,000 (after 3 perfect loans), 5% hold, ₱10,000 limit. The maximum possible score is 1,000.' },
+      { q: 'What are the borrower tiers and perks?', a: 'MoneyfestLending has 4 borrower tiers. 🌱 New — starting at score 750, 10% Security Hold, ₱5,000 limit. ⭐ Trusted — score 835+ (after 1 perfect loan), 8% hold, ₱7,000 limit. 🤝 Reliable — score 920+ (after 2 perfect loans), 6% hold, ₱9,000 limit. 👑 VIP — score 1,000 (after 3 perfect loans), 5% hold, ₱10,000 limit. The maximum possible score is 1,000.' },
       { q: 'How do I reduce my Security Hold rate?', a: 'Pay every installment on time to earn +15 points per payment, plus +25 bonus when you complete the full loan. After 1 perfect loan your score goes from 750 to 835 — unlocking ⭐ Trusted status and dropping your hold from 10% to 8%. After 2 perfect loans (score 920) you become 🤝 Reliable at 6%. After 3 perfect loans you hit the maximum score of 1,000 — 👑 VIP status with only 5% hold.' },
       { q: 'Can I apply if I already have an active loan?', a: 'No. You must fully settle your current loan before applying for a new one. No rollovers or loan stacking is allowed under any circumstance.' },
       { q: 'Do I need to submit a valid ID?', a: 'Yes. All applicants are required to upload at least 1 valid government-issued ID as part of the application process. Accepted IDs include SSS, GSIS, PhilHealth, Pag-IBIG, Passport, Driver\'s License, Postal ID, Voter\'s ID, or any other government-issued photo ID. Applications without a valid ID submission will not be processed.' },
@@ -107,7 +107,7 @@ export default function FAQPage() {
       { q: 'How long does approval take?', a: 'Applications are reviewed manually by the admin. You will be notified via email and can track your status through the Borrower Portal using your access code.' },
     ],
     other: [
-      { q: 'How do I track my application?', a: 'After submitting, you will receive an access code. Use this code to log in to the Borrower Portal at loanmoneyfest.vercel.app/portal — you can track your application status, view your loan schedule, and upload payment proofs from there.' },
+      { q: 'How do I track my application?', a: 'After submitting, you will receive an access code. Use this code to log in to the Borrower Portal at moneyfestlending.online/portal — you can track your application status, view your loan schedule, and upload payment proofs from there.' },
       { q: 'What are Rebate Credits and how do they work?', a: 'Rebate Credits is your in-app rewards balance. Two things are credited here automatically by the system: (1) Early Payoff Rebates — if you pay your final installment 7 or more days early, you earn 1% to 1.5% of your loan amount as a rebate. (2) Security Hold Return — once you fully pay your 4th installment, the Security Hold that was withheld when your loan was released is automatically returned here in full. You cannot add funds manually. Once your total Rebate Credits balance reaches ₱500, a withdrawal button becomes available in the Borrower Portal. Withdrawal requests are reviewed and processed by the admin.' },
       { q: 'Who can I contact for questions?', children: (
         <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -137,7 +137,7 @@ export default function FAQPage() {
       <div style={{ background: 'linear-gradient(135deg,#0d1226,#141B2D)', borderBottom: '1px solid rgba(139,92,246,0.2)', padding: '20px 24px' }}>
         <div style={{ maxWidth: 860, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <img src="/favicon-96x96.png" alt="LoanMoneyfest" style={{ width: 44, height: 44, objectFit: 'contain' }} />
+            <img src="/favicon-96x96.png" alt="MoneyfestLending" style={{ width: 44, height: 44, objectFit: 'contain' }} />
             <div>
               <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 20, color: '#F0F4FF' }}>
                 Loan<span style={{ background: 'linear-gradient(90deg,#60a5fa,#a78bfa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Moneyfest</span>
@@ -162,7 +162,7 @@ export default function FAQPage() {
         <div style={{ textAlign: 'center', marginBottom: 40 }}>
           <div style={{ marginBottom: 14 }}><img src="/faq.png" alt="faq" style={{ width: 44, height: 44, objectFit: 'contain', marginBottom: 14 }} /></div>
           <h1 style={{ fontFamily: 'Space Grotesk', fontWeight: 900, fontSize: 32, color: '#F0F4FF', margin: '0 0 12px', letterSpacing: -1 }}>Frequently Asked Questions</h1>
-          <p style={{ color: '#7A8AAA', fontSize: 15, maxWidth: 500, margin: '0 auto', lineHeight: 1.7 }}>Everything you need to know about the LoanMoneyfest employee lending program.</p>
+          <p style={{ color: '#7A8AAA', fontSize: 15, maxWidth: 500, margin: '0 auto', lineHeight: 1.7 }}>Everything you need to know about the MoneyfestLending employee lending program.</p>
         </div>
 
         {/* Two-column layout: Category tabs left, FAQs right */}

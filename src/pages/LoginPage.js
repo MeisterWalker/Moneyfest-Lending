@@ -7,15 +7,15 @@ import { Mail, Lock, Eye, EyeOff } from 'lucide-react'
 
 async function logLoginAttempt({ email, success, failReason = null }) {
   try {
-    // Get IP + geo from ipapi.co (HTTPS, free, no key needed)
-    const geo = await fetch('https://ipapi.co/json/')
+    // Get IP + geo from ip-api.com (free, no key needed)
+    const geo = await fetch('http://ip-api.com/json/?fields=status,city,regionName,country,countryCode,query')
       .then(r => r.json()).catch(() => null)
 
-    const ip = geo?.ip || 'Unknown'
+    const ip = geo?.query || 'Unknown'
     const city = geo?.city || ''
-    const region = geo?.region || ''
-    const country = geo?.country_name || ''
-    const countryCode = geo?.country_code || ''
+    const region = geo?.regionName || ''
+    const country = geo?.country || ''
+    const countryCode = geo?.countryCode || ''
     const location = [city, region, country].filter(Boolean).join(', ') || 'Unknown location'
     const flag = countryCode
       ? String.fromCodePoint(...[...countryCode.toUpperCase()].map(c => 0x1F1E6 - 65 + c.charCodeAt(0)))
@@ -156,7 +156,7 @@ export default function LoginPage() {
             marginBottom: 6,
             lineHeight: 1.1
           }}>
-            LoanMoneyfest
+            MoneyfestLending
           </h1>
           <p style={{ color: 'var(--text-label)', fontSize: 14 }}>
             {isSetup ? 'Create your admin account' : 'Admin access only'}
@@ -226,7 +226,7 @@ export default function LoginPage() {
         </div>
 
         <p style={{ textAlign: 'center', marginTop: 24, color: 'var(--text-muted)', fontSize: 12 }}>
-          LoanMoneyfest • Private Admin System
+          MoneyfestLending • Private Admin System
         </p>
       </div>
     </div>

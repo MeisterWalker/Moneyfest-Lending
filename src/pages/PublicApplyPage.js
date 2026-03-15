@@ -323,7 +323,7 @@ export default function PublicApplyPage() {
                 <img src="/list.png" alt="terms" style={{ width: 22, height: 22, objectFit: 'contain' }} />
                 <div>
                   <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 17, color: '#F0F4FF' }}>Terms & Conditions</div>
-                  <div style={{ fontSize: 11, color: '#4B5580', marginTop: 1 }}>LoanMoneyfest Workplace Lending Program</div>
+                  <div style={{ fontSize: 11, color: '#4B5580', marginTop: 1 }}>MoneyfestLending Workplace Lending Program</div>
                 </div>
               </div>
               <button onClick={() => setShowTnC(false)} style={{ width: 30, height: 30, borderRadius: '50%', border: 'none', background: 'rgba(255,255,255,0.07)', color: '#7A8AAA', fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
@@ -357,7 +357,7 @@ export default function PublicApplyPage() {
                 },
                 {
                   title: '7. Authorization',
-                  body: 'You authorize LoanMoneyfest administrators to verify your submitted information, contact your designated trustee or guarantor if necessary, and process your personal data in accordance with our Privacy Notice and the Data Privacy Act of 2012 (RA 10173).'
+                  body: 'You authorize MoneyfestLending administrators to verify your submitted information, contact your designated trustee or guarantor if necessary, and process your personal data in accordance with our Privacy Notice and the Data Privacy Act of 2012 (RA 10173).'
                 },
                 {
                   title: '8. ID Verification',
@@ -377,7 +377,7 @@ export default function PublicApplyPage() {
                 },
                 {
                   title: '13. Amendments',
-                  body: 'LoanMoneyfest reserves the right to amend these Terms & Conditions at any time. Continued use of the program constitutes acceptance of any updated terms. Borrowers will be notified of significant changes where possible.'
+                  body: 'MoneyfestLending reserves the right to amend these Terms & Conditions at any time. Continued use of the program constitutes acceptance of any updated terms. Borrowers will be notified of significant changes where possible.'
                 },
                 {
                   title: '13. Governing Law',
@@ -412,7 +412,7 @@ export default function PublicApplyPage() {
       <div style={{ background: 'linear-gradient(135deg,#0d1226,#141B2D)', borderBottom: '1px solid rgba(139,92,246,0.2)', padding: '18px 28px' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <img src="/favicon-96x96.png" alt="LoanMoneyfest" style={{ width: 44, height: 44, objectFit: 'contain' }} />
+            <img src="/favicon-96x96.png" alt="MoneyfestLending" style={{ width: 44, height: 44, objectFit: 'contain' }} />
             <div>
               <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 20, color: '#F0F4FF' }}>
                 Loan<span style={{ background: 'linear-gradient(90deg,#60a5fa,#a78bfa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Moneyfest</span>

@@ -122,7 +122,7 @@ export default function HomePage() {
       <nav style={{ position: 'sticky', top: 0, zIndex: 100, background: 'rgba(7,9,15,0.85)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(255,255,255,0.06)', padding: '0 32px' }}>
         <div style={{ maxWidth: 1080, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 64 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <img src="/favicon-96x96.png" alt="LoanMoneyfest" style={{ width: 32, height: 32, objectFit: 'contain' }} />
+            <img src="/favicon-96x96.png" alt="MoneyfestLending" style={{ width: 32, height: 32, objectFit: 'contain' }} />
             <span style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 17, color: '#F0F4FF', letterSpacing: -0.3 }}>
               Loan<span className="shimmer-text">Moneyfest</span>
             </span>
@@ -209,7 +209,7 @@ export default function HomePage() {
 
           <div ref={ref('features-header')} className={`reveal ${visible['features-header'] ? 'visible' : ''}`} style={{ textAlign: 'center', marginBottom: 52 }}>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 14px', borderRadius: 20, background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.2)', marginBottom: 16 }}>
-              <span style={{ fontSize: 11, fontWeight: 700, color: '#22C55E', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Why LoanMoneyfest</span>
+              <span style={{ fontSize: 11, fontWeight: 700, color: '#22C55E', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Why MoneyfestLending</span>
             </div>
             <h2 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 900, fontSize: 'clamp(28px, 4vw, 44px)', color: '#F0F4FF', letterSpacing: -1, margin: '0 0 12px' }}>
               Unlike <em style={{ fontStyle: 'italic', color: '#6366F1' }}>anything</em> else in Cebu.
@@ -253,7 +253,7 @@ export default function HomePage() {
               <span style={{ background: 'linear-gradient(90deg,#F59E0B,#22C55E)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>the more you earn.</span>
             </h2>
             <p style={{ fontSize: 16, color: '#7A8AAA', maxWidth: 520, margin: '0 auto', lineHeight: 1.7 }}>
-              LoanMoneyfest rewards good borrowers with lower Security Hold rates, higher loan limits, and exclusive perks — automatically.
+              MoneyfestLending rewards good borrowers with lower Security Hold rates, higher loan limits, and exclusive perks — automatically.
             </p>
           </div>
 
@@ -387,7 +387,7 @@ export default function HomePage() {
                 <span style={{ color: '#22C55E' }}>Get rewarded.</span>
               </h2>
               <p style={{ fontSize: 14, color: '#7A8AAA', lineHeight: 1.8, marginBottom: 24 }}>
-                LoanMoneyfest is the only workplace lending program that gives you back a portion of your interest when you pay ahead of schedule. Earn Rebate Credits automatically — no forms, no requests.
+                MoneyfestLending is the only workplace lending program that gives you back a portion of your interest when you pay ahead of schedule. Earn Rebate Credits automatically — no forms, no requests.
               </p>
               <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
                 {[
@@ -421,7 +421,7 @@ export default function HomePage() {
             Ready to get started?
           </h2>
           <p style={{ fontSize: 16, color: '#7A8AAA', lineHeight: 1.8, marginBottom: 36, maxWidth: 480, margin: '0 auto 36px' }}>
-            Join your workmates who already trust LoanMoneyfest for fast, fair, and stress-free borrowing.
+            Join your workmates who already trust MoneyfestLending for fast, fair, and stress-free borrowing.
           </p>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
             <a href="/apply" className="cta-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '16px 36px', borderRadius: 12, background: 'linear-gradient(135deg,#6366F1,#8B5CF6)', color: '#fff', textDecoration: 'none', fontSize: 16, fontWeight: 700, fontFamily: 'Syne, sans-serif' }}>
@@ -445,7 +445,7 @@ export default function HomePage() {
       <footer style={{ borderTop: '1px solid rgba(255,255,255,0.05)', padding: '28px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <img src="/favicon-96x96.png" alt="" style={{ width: 22, height: 22, objectFit: 'contain' }} />
-          <span style={{ fontFamily: 'Syne', fontWeight: 800, fontSize: 13, color: '#4B5580' }}>LoanMoneyfest</span>
+          <span style={{ fontFamily: 'Syne', fontWeight: 800, fontSize: 13, color: '#4B5580' }}>MoneyfestLending</span>
           <span style={{ fontSize: 12, color: '#4B5580' }}>· Workplace Lending Program</span>
         </div>
         <div style={{ display: 'flex', gap: 20 }}>

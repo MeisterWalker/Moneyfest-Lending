@@ -93,7 +93,7 @@ export default function LoadingScreen({ onComplete }) {
         }}>
           <img
             src="/favicon-96x96.png"
-            alt="Loan Moneyfest"
+            alt="Moneyfest Lending"
             style={{
               width: 52,
               height: 52,
@@ -117,7 +117,7 @@ export default function LoadingScreen({ onComplete }) {
           backgroundClip: 'text',
           marginBottom: 6
         }}>
-          Loan Moneyfest
+          Moneyfest Lending
         </div>
         <div style={{
           fontSize: 12,

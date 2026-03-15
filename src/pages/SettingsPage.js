@@ -297,7 +297,7 @@ function DangerZoneSection({ loans, adminEmail, onReset }) {
     const now = new Date()
     const dateStr = now.toISOString().slice(0, 10).replace(/-/g, '')
     const timeStr = now.toTimeString().slice(0, 8).replace(/:/g, '')
-    const filename = `LoanMoneyfest_Archive_${dateStr}_${timeStr}.csv`
+    const filename = `MoneyfestLending_Archive_${dateStr}_${timeStr}.csv`
     const blob = new Blob([csv], { type: 'text/csv' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')

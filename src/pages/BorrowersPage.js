@@ -134,7 +134,7 @@ function BorrowerCard({ borrower, departments, onEdit, onDelete }) {
                     Copy
                   </button>
                   <a
-                    href={'https://loanmoneyfest.vercel.app/portal'}
+                    href={'https://moneyfestlending.online/portal'}
                     target="_blank"
                     rel="noreferrer"
                     style={{ background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: 7, padding: '6px 12px', color: '#3B82F6', fontSize: 12, fontWeight: 600, textDecoration: 'none' }}

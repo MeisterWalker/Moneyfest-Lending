@@ -1,4 +1,4 @@
-const APP_NAME = 'LoanMoneyfest'
+const APP_NAME = 'MoneyfestLending'
 
 function generateReminderHTML({ borrowerName, installmentNum, amount, dueDate, loanAmount, remainingBalance, daysUntilDue, customMessages, customFooter }) {
   const urgencyColor = daysUntilDue === 0 ? '#EF4444' : daysUntilDue === 1 ? '#F59E0B' : '#3B82F6'
@@ -32,7 +32,7 @@ function generateReminderHTML({ borrowerName, installmentNum, amount, dueDate, l
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Payment Reminder — LoanMoneyfest</title>
+  <title>Payment Reminder — MoneyfestLending</title>
 </head>
 <body style="margin:0;padding:0;background:#0B0F1A;font-family:'Segoe UI',Arial,sans-serif;">
 
@@ -248,7 +248,7 @@ function generateApprovalHTML({ borrowerName, accessCode, loanAmount, releaseDat
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Loan Approved — LoanMoneyfest</title>
+  <title>Loan Approved — MoneyfestLending</title>
 </head>
 <body style="margin:0;padding:0;background:#0B0F1A;font-family:'Segoe UI',Arial,sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#0B0F1A;padding:40px 20px;">
@@ -336,7 +336,7 @@ function generateApprovalHTML({ borrowerName, accessCode, loanAmount, releaseDat
           <tr>
             <td style="background:#0d1226;border-top:1px solid #1E2640;border-radius:0 0 16px 16px;padding:24px 36px;text-align:center;">
               <p style="font-size:13px;color:#CBD5F0;margin:0 0 4px;font-weight:600;">From LM Management</p>
-              <p style="font-size:11px;color:#4B5580;margin:0;">LoanMoneyfest · Workplace Lending Program</p>
+              <p style="font-size:11px;color:#4B5580;margin:0;">MoneyfestLending · Workplace Lending Program</p>
             </td>
           </tr>
 
@@ -351,7 +351,7 @@ function generateApprovalHTML({ borrowerName, accessCode, loanAmount, releaseDat
 
 export async function sendApprovalEmail({ to, borrowerName, accessCode, loanAmount, releaseDate, installmentAmount, totalRepayment }) {
   if (!to || !to.includes('@')) return { success: false, error: 'Invalid email' }
-  const portalUrl = 'https://loanmoneyfest.vercel.app/portal'
+  const portalUrl = 'https://moneyfestlending.online/portal'
   try {
     const SUPABASE_URL = 'https://swwedyfgbqhtavxmbmhv.supabase.co'
     const SUPABASE_ANON_KEY = process.env.REACT_APP_SUPABASE_ANON_KEY
@@ -375,11 +375,11 @@ export async function sendApprovalEmail({ to, borrowerName, accessCode, loanAmou
 
 export async function sendPendingEmail({ to, borrowerName, accessCode, loanAmount }) {
   if (!to || !to.includes('@')) return { success: false, error: 'Invalid email' }
-  const portalUrl = 'https://loanmoneyfest.vercel.app/portal'
+  const portalUrl = 'https://moneyfestlending.online/portal'
   const html = `
 <!DOCTYPE html>
 <html lang="en">
-<head><meta charset="UTF-8" /><title>Application Received — LoanMoneyfest</title></head>
+<head><meta charset="UTF-8" /><title>Application Received — MoneyfestLending</title></head>
 <body style="margin:0;padding:0;background:#0B0F1A;font-family:'Segoe UI',Arial,sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#0B0F1A;padding:40px 20px;">
     <tr><td align="center">
@@ -422,7 +422,7 @@ export async function sendPendingEmail({ to, borrowerName, accessCode, loanAmoun
 
         <tr><td style="background:#0d1226;border-top:1px solid #1E2640;border-radius:0 0 16px 16px;padding:24px 36px;text-align:center;">
           <p style="font-size:13px;color:#CBD5F0;margin:0 0 4px;font-weight:600;">From LM Management</p>
-          <p style="font-size:11px;color:#4B5580;margin:0;">LoanMoneyfest · Workplace Lending Program</p>
+          <p style="font-size:11px;color:#4B5580;margin:0;">MoneyfestLending · Workplace Lending Program</p>
         </td></tr>
 
       </table>

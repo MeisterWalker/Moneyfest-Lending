@@ -695,7 +695,7 @@ export default function BorrowerPortalPage() {
       <div class="row"><span class="lbl">Borrower</span><span class="val">\${borrower.full_name}</span></div>
       <div class="row"><span class="lbl">Department</span><span class="val">\${borrower.department || 'N/A'}</span></div>
       <div class="row"><span class="lbl">Access Code</span><span class="val">\${borrower.access_code}</span></div>
-      <div class="row"><span class="lbl">Lender</span><span class="val">LoanMoneyfest</span></div>
+      <div class="row"><span class="lbl">Lender</span><span class="val">MoneyfestLending</span></div>
       <div class="row"><span class="lbl">Release Date</span><span class="val">\${releaseDateStr}</span></div>
       <div class="row"><span class="lbl">Maturity Date</span><span class="val" style="color:#D97706;font-weight:700;">\${maturityDate}</span></div>
     </div>
@@ -747,7 +747,7 @@ export default function BorrowerPortalPage() {
 
   <!-- Page 2 mini header -->
   <div class="page2-header">
-    <div><strong style="color:#1e1b4b;">LoanMoneyfest</strong> — Loan Agreement (continued)</div>
+    <div><strong style="color:#1e1b4b;">MoneyfestLending</strong> — Loan Agreement (continued)</div>
     <div>Ref: LM-\${borrower.id?.slice(-6).toUpperCase()} · \${borrower.full_name}</div>
   </div>
 
@@ -790,7 +790,7 @@ export default function BorrowerPortalPage() {
         </div>
         <div class="sig-line"></div>
         <div style="height:28px;margin-bottom:4px;"></div>
-        <div class="sig-sub">LoanMoneyfest Administration</div>
+        <div class="sig-sub">MoneyfestLending Administration</div>
         <div class="sig-sub">Authorized Representative</div>
         <div class="sig-sub" style="margin-top:3px;">Date: ___________________________</div>
       </div>
@@ -798,7 +798,7 @@ export default function BorrowerPortalPage() {
   </div>
 
   <div class="disclaimer">
-    This Loan Agreement is executed in compliance with Republic Act No. 3765 (Truth in Lending Act), Republic Act No. 10173 (Data Privacy Act of 2012), and Republic Act No. 8792 (Electronic Commerce Act of 2000). The electronic signature affixed herein constitutes a valid and binding signature under RA 8792 and has the same legal effect as a handwritten signature. This document is private and confidential. LoanMoneyfest is a private colleague lending program and is not a bank, quasi-bank, or BSP-supervised financial institution. This document is for the exclusive use of the named parties only.
+    This Loan Agreement is executed in compliance with Republic Act No. 3765 (Truth in Lending Act), Republic Act No. 10173 (Data Privacy Act of 2012), and Republic Act No. 8792 (Electronic Commerce Act of 2000). The electronic signature affixed herein constitutes a valid and binding signature under RA 8792 and has the same legal effect as a handwritten signature. This document is private and confidential. MoneyfestLending is a private colleague lending program and is not a bank, quasi-bank, or BSP-supervised financial institution. This document is for the exclusive use of the named parties only.
   </div>
 
 </div>
@@ -829,7 +829,7 @@ export default function BorrowerPortalPage() {
     <div style={{ minHeight: '100vh', background: '#0B0F1A', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, fontFamily: 'DM Sans, sans-serif' }}>
       <div style={{ width: '100%', maxWidth: 460 }}>
         <div style={{ textAlign: 'center', marginBottom: 28 }}>
-          <img src="/favicon-96x96.png" alt="LoanMoneyfest" style={{ width: 48, height: 48, objectFit: 'contain', marginBottom: 10 }} />
+          <img src="/favicon-96x96.png" alt="MoneyfestLending" style={{ width: 48, height: 48, objectFit: 'contain', marginBottom: 10 }} />
           <div style={{ fontFamily: 'Space Grotesk', fontWeight: 900, fontSize: 24, color: '#F0F4FF' }}>
             Loan<span style={{ background: 'linear-gradient(90deg,#60a5fa,#a78bfa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Moneyfest</span>
           </div>
@@ -915,7 +915,7 @@ export default function BorrowerPortalPage() {
       <div style={{ background: 'linear-gradient(135deg,#0d1226,#141B2D)', borderBottom: '1px solid rgba(139,92,246,0.2)', padding: '18px 28px' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <img src="/favicon-96x96.png" alt="LoanMoneyfest" style={{ width: 44, height: 44, objectFit: 'contain' }} />
+            <img src="/favicon-96x96.png" alt="MoneyfestLending" style={{ width: 44, height: 44, objectFit: 'contain' }} />
             <div>
               <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 20, color: '#F0F4FF' }}>
                 Loan<span style={{ background: 'linear-gradient(90deg,#60a5fa,#a78bfa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Moneyfest</span>
@@ -938,7 +938,7 @@ export default function BorrowerPortalPage() {
       <div style={{ width: '100%', maxWidth: 400 }}>
         {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: 36 }}>
-          <img src="/favicon-96x96.png" alt="LoanMoneyfest" style={{ width: 56, height: 56, objectFit: 'contain', marginBottom: 12 }} />
+          <img src="/favicon-96x96.png" alt="MoneyfestLending" style={{ width: 56, height: 56, objectFit: 'contain', marginBottom: 12 }} />
           <div style={{ fontFamily: 'Space Grotesk', fontWeight: 900, fontSize: 28, color: '#F0F4FF', letterSpacing: -1 }}>
             Loan<span style={{ background: 'linear-gradient(90deg,#60a5fa,#a78bfa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Moneyfest</span>
           </div>
@@ -1437,7 +1437,7 @@ export default function BorrowerPortalPage() {
         <div style={{ maxWidth: 640, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
 <a href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
-              <img src="/favicon-96x96.png" alt="LoanMoneyfest" style={{ width: 36, height: 36, objectFit: 'contain' }} />
+              <img src="/favicon-96x96.png" alt="MoneyfestLending" style={{ width: 36, height: 36, objectFit: 'contain' }} />
               <div>
                 <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 16, color: '#F0F4FF' }}>
                   Loan<span style={{ background: 'linear-gradient(90deg,#60a5fa,#a78bfa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Moneyfest</span>

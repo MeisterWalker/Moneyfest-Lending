@@ -44,7 +44,7 @@ const COMPARISONS = [
   { label: 'BDO / BPI Savings', rate: '0.0625% p.a.', annual: '~₱6', color: '#EF4444', bar: 1, note: 'Actual current rate as of 2026' },
   { label: 'BDO / BPI Time Deposit', rate: '0.75–1.07% p.a.', annual: '~₱75–107', color: '#F97316', bar: 5, note: '90–360 day term' },
   { label: 'UITF / Mutual Fund', rate: '8–12% avg', annual: '~₱800–1,200', color: '#F59E0B', bar: 35, note: 'Variable — not guaranteed' },
-  { label: 'LoanMoneyfest', rate: '4–6% per 3 months', annual: '₱800–4,800', color: '#22C55E', bar: 100, highlight: true },
+  { label: 'MoneyfestLending', rate: '4–6% per 3 months', annual: '₱800–4,800', color: '#22C55E', bar: 100, highlight: true },
 ]
 
 const FAQS = [
@@ -52,7 +52,7 @@ const FAQS = [
   { q: 'What happens if a borrower defaults?', a: 'We have multiple safeguards — Security Hold, penalty system, credit scoring, and trustee/guarantor requirements. In the unlikely event of default, your principal remains intact; only that cycle\'s return may be affected.' },
   { q: 'How do I get paid?', a: 'Payouts are processed every 3 months. You receive your original investment plus the agreed interest rate, coordinated directly with the admin via Teams Chat.' },
   { q: 'Can I withdraw early?', a: 'Investments are locked for the full 3-month term to align with our lending cycle. Early withdrawal is not available once a cycle has started.' },
-  { q: 'How is LoanMoneyfest different from 5-6?', a: 'We charge borrowers 7% flat — far below the 20% per month that 5-6 schemes charge. We\'re a fair, digital, colleague-first program. No collectors, no harassment, no predatory rates.' },
+  { q: 'How is MoneyfestLending different from 5-6?', a: 'We charge borrowers 7% flat — far below the 20% per month that 5-6 schemes charge. We\'re a fair, digital, colleague-first program. No collectors, no harassment, no predatory rates.' },
 ]
 
 function Counter({ target, duration = 1500, prefix = '', suffix = '' }) {
@@ -166,7 +166,7 @@ export default function InvestorPitchPage() {
           </h1>
 
           <p className="hero-3" style={{ fontSize: 'clamp(16px,2vw,20px)', color: '#7A8AAA', lineHeight: 1.8, maxWidth: 580, margin: '24px auto 48px', fontWeight: 400 }}>
-            Partner with LoanMoneyfest and earn up to <strong style={{ color: '#F59E0B' }}>6% every 3 months</strong> — that's <strong style={{ color: '#22C55E' }}>24% per year</strong> — on capital deployed through our verified colleague lending program.
+            Partner with MoneyfestLending and earn up to <strong style={{ color: '#F59E0B' }}>6% every 3 months</strong> — that's <strong style={{ color: '#22C55E' }}>24% per year</strong> — on capital deployed through our verified colleague lending program.
           </p>
 
           {/* Hero stats */}
@@ -225,7 +225,7 @@ export default function InvestorPitchPage() {
           </div>
 
           <div ref={ref('vs-note')} className={`reveal ${visible['vs-note'] ? 'on' : ''}`} style={{ marginTop: 20, padding: '16px 22px', background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 12, fontSize: 13, color: '#7A8AAA', lineHeight: 1.7 }}>
-            💡 <strong style={{ color: '#F59E0B' }}>Put simply:</strong> BDO and BPI savings accounts currently earn just 0.0625% per year — that's ₱6.25 on ₱10,000. Their time deposits aren't much better at 0.75–1.07%. They take your money, lend it out at 6–15%, and keep the difference. LoanMoneyfest gives you up to ₱2,000 on the same ₱10,000. Same concept — we just share the profit with you.
+            💡 <strong style={{ color: '#F59E0B' }}>Put simply:</strong> BDO and BPI savings accounts currently earn just 0.0625% per year — that's ₱6.25 on ₱10,000. Their time deposits aren't much better at 0.75–1.07%. They take your money, lend it out at 6–15%, and keep the difference. MoneyfestLending gives you up to ₱2,000 on the same ₱10,000. Same concept — we just share the profit with you.
           </div>
         </div>
       </section>
@@ -431,7 +431,7 @@ export default function InvestorPitchPage() {
             <div style={{ position: 'absolute', top: 32, left: '12%', right: '12%', height: 1, background: 'linear-gradient(90deg,transparent,rgba(245,158,11,0.3),rgba(34,197,94,0.3),transparent)', pointerEvents: 'none' }} />
             {[
               { step: '01', icon: '/philippine-peso.png', title: 'Commit capital', desc: 'Tell the admin how much you want to invest and at which tier. Sign a simple written agreement.' },
-              { step: '02', icon: '/startup.png', title: 'We deploy it', desc: 'Your funds are deployed as loans to verified colleagues through the LoanMoneyfest platform.' },
+              { step: '02', icon: '/startup.png', title: 'We deploy it', desc: 'Your funds are deployed as loans to verified colleagues through the MoneyfestLending platform.' },
               { step: '03', icon: '/calendar.png', title: 'Wait 3 months', desc: 'Borrowers repay every 5th and 20th. Your returns accumulate over 1.5 lending cycles.' },
               { step: '04', icon: '/giftbox.png', title: 'Collect returns', desc: 'Receive your original investment plus the agreed interest. Reinvest or cash out — your choice.' },
             ].map((s, i) => (
@@ -537,7 +537,7 @@ export default function InvestorPitchPage() {
             </div>
             {/* Legal disclaimer */}
             <div style={{ padding: '16px 24px', background: 'rgba(239,68,68,0.04)', border: '1px solid rgba(239,68,68,0.15)', borderRadius: 12, fontSize: 11, color: '#4B5580', lineHeight: 1.8 }}>
-              <strong style={{ color: '#EF4444' }}>Important Disclaimer:</strong> This is not a bank deposit and is not insured by PDIC. Returns are projected and not guaranteed. Past performance does not guarantee future results. This investment opportunity is offered strictly on a private, invitation-only basis to trusted individuals. By investing, you acknowledge understanding of the risks involved. LoanMoneyfest reserves the right to decline any investment without disclosure of specific reasons.
+              <strong style={{ color: '#EF4444' }}>Important Disclaimer:</strong> This is not a bank deposit and is not insured by PDIC. Returns are projected and not guaranteed. Past performance does not guarantee future results. This investment opportunity is offered strictly on a private, invitation-only basis to trusted individuals. By investing, you acknowledge understanding of the risks involved. MoneyfestLending reserves the right to decline any investment without disclosure of specific reasons.
             </div>
           </div>
         </div>

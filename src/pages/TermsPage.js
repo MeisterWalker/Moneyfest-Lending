@@ -48,7 +48,7 @@ export default function TermsPage() {
       <div className="no-print" style={{ background: 'linear-gradient(135deg,#0d1226,#141B2D)', borderBottom: '1px solid rgba(139,92,246,0.2)', padding: '18px 28px' }}>
         <div style={{ maxWidth: 860, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
           <a href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
-            <img src="/favicon-96x96.png" alt="LoanMoneyfest" style={{ width: 36, height: 36, objectFit: 'contain' }} />
+            <img src="/favicon-96x96.png" alt="MoneyfestLending" style={{ width: 36, height: 36, objectFit: 'contain' }} />
             <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 18, color: '#F0F4FF' }}>
               Loan<span style={{ background: 'linear-gradient(90deg,#60a5fa,#a78bfa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Moneyfest</span>
             </div>
@@ -87,9 +87,9 @@ export default function TermsPage() {
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 20, flexWrap: 'wrap' }}>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-                <img src="/favicon-96x96.png" alt="LoanMoneyfest" className="no-print" style={{ width: 40, height: 40, objectFit: 'contain' }} />
+                <img src="/favicon-96x96.png" alt="MoneyfestLending" className="no-print" style={{ width: 40, height: 40, objectFit: 'contain' }} />
                 <div style={{ fontFamily: 'Space Grotesk', fontWeight: 900, fontSize: 22, color: '#F0F4FF' }} className="print-title">
-                  LoanMoneyfest
+                  MoneyfestLending
                 </div>
               </div>
               <h1 style={{ fontFamily: 'Space Grotesk', fontWeight: 900, fontSize: 32, color: '#F0F4FF', margin: '0 0 8px', letterSpacing: -1 }} className="print-title">
@@ -108,7 +108,7 @@ export default function TermsPage() {
 
           {/* Notice */}
           <div style={{ marginTop: 20, padding: '12px 16px', background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 10, fontSize: 13, color: '#FDE68A', lineHeight: 1.7 }} className="print-badge">
-            <strong>Important:</strong> By submitting a loan application through LoanMoneyfest, you confirm that you have read, understood, and agreed to all terms and conditions stated in this document. This is a legally binding agreement between you (the Borrower) and LoanMoneyfest (the Lender).
+            <strong>Important:</strong> By submitting a loan application through MoneyfestLending, you confirm that you have read, understood, and agreed to all terms and conditions stated in this document. This is a legally binding agreement between you (the Borrower) and MoneyfestLending (the Lender).
           </div>
         </div>
 
@@ -119,7 +119,7 @@ export default function TermsPage() {
             title: 'Definitions',
             content: null,
             items: [
-              { term: '"Lender"', def: 'refers to LoanMoneyfest and its administrators, John Paul Lacaron and Charlou June Ramil.' },
+              { term: '"Lender"', def: 'refers to MoneyfestLending and its administrators, John Paul Lacaron and Charlou June Ramil.' },
               { term: '"Borrower"', def: 'refers to the active team member who submits a loan application and is approved.' },
               { term: '"Loan Amount" or "Principal"', def: 'refers to the actual amount of money borrowed, exclusive of interest.' },
               { term: '"Finance Charge"', def: 'refers to the total peso amount of interest charged on the principal.' },
@@ -132,7 +132,7 @@ export default function TermsPage() {
           {
             num: '2',
             title: 'Eligibility',
-            content: 'To qualify for a loan under LoanMoneyfest, the Borrower must:',
+            content: 'To qualify for a loan under MoneyfestLending, the Borrower must:',
             items: [
               { term: null, def: 'Be an active team member in good standing within the office.' },
               { term: null, def: 'Not have an existing active loan that has not been fully repaid, unless otherwise approved by the Lender.' },
@@ -178,7 +178,7 @@ export default function TermsPage() {
           {
             num: '6',
             title: 'Early Payoff Rebate Credits',
-            content: 'LoanMoneyfest rewards Borrowers who settle their final installment ahead of schedule:',
+            content: 'MoneyfestLending rewards Borrowers who settle their final installment ahead of schedule:',
             items: [
               { term: '7 to 13 days early', def: 'A rebate of 1% of the original loan amount is credited to the Borrower\'s Rebate Credits balance.' },
               { term: '14 or more days early', def: 'A rebate of 1.5% of the original loan amount is credited to the Borrower\'s Rebate Credits balance.' },
@@ -195,7 +195,7 @@ export default function TermsPage() {
               { term: 'Loan Limit Freeze', def: 'Consistent late payments may result in the Borrower\'s loan limit being frozen at the current level.' },
               { term: 'Default', def: 'A loan is considered in default if two (2) consecutive installments are missed without prior arrangement with the Lender.' },
               { term: 'Trustee Contact', def: 'In cases of default, the Lender reserves the right to contact the nominated Trustee/Guarantor for follow-up.' },
-              { term: 'Future Eligibility', def: 'A defaulted loan may permanently affect the Borrower\'s eligibility for future loans under LoanMoneyfest.' },
+              { term: 'Future Eligibility', def: 'A defaulted loan may permanently affect the Borrower\'s eligibility for future loans under MoneyfestLending.' },
             ]
           },
           {
@@ -238,19 +238,19 @@ export default function TermsPage() {
           {
             num: '11',
             title: 'Data Privacy',
-            content: `Personal information collected during the application process is handled in strict compliance with Republic Act No. 10173 — the Data Privacy Act of 2012. The Borrower's data is used solely for loan processing, identity verification, and internal record-keeping. Full details are available in the LoanMoneyfest Privacy Notice at loanmoneyfest.vercel.app/privacy.`,
+            content: `Personal information collected during the application process is handled in strict compliance with Republic Act No. 10173 — the Data Privacy Act of 2012. The Borrower's data is used solely for loan processing, identity verification, and internal record-keeping. Full details are available in the MoneyfestLending Privacy Notice at moneyfestlending.online/privacy.`,
             items: null
           },
           {
             num: '12',
             title: 'Truth in Lending Disclosure (RA 3765)',
-            content: `In compliance with Republic Act No. 3765 (Truth in Lending Act), LoanMoneyfest discloses the following for all loans: the principal amount, the finance charge in peso terms, the flat interest rate of ${flatRate}%, the effective annual interest rate of approximately ${effectiveAnnual}%, the total amount payable, and the full installment schedule. This disclosure is accessible at any time through the Borrower Portal.`,
+            content: `In compliance with Republic Act No. 3765 (Truth in Lending Act), MoneyfestLending discloses the following for all loans: the principal amount, the finance charge in peso terms, the flat interest rate of ${flatRate}%, the effective annual interest rate of approximately ${effectiveAnnual}%, the total amount payable, and the full installment schedule. This disclosure is accessible at any time through the Borrower Portal.`,
             items: null
           },
           {
             num: '13',
             title: 'Amendments',
-            content: 'LoanMoneyfest reserves the right to amend these Terms & Conditions at any time. Any changes will be communicated to active borrowers via the Borrower Portal or email. Continued use of the LoanMoneyfest platform after such changes constitutes acceptance of the updated terms.',
+            content: 'MoneyfestLending reserves the right to amend these Terms & Conditions at any time. Any changes will be communicated to active borrowers via the Borrower Portal or email. Continued use of the MoneyfestLending platform after such changes constitutes acceptance of the updated terms.',
             items: null
           },
           {
@@ -295,7 +295,7 @@ export default function TermsPage() {
         <div style={{ marginTop: 40, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: '28px 24px' }}>
           <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 15, color: '#F0F4FF', marginBottom: 6 }} className="print-title">Borrower Acknowledgment</div>
           <p style={{ fontSize: 13, color: '#7A8AAA', lineHeight: 1.7, marginBottom: 28 }} className="print-body">
-            By submitting a loan application through LoanMoneyfest, I confirm that I have read, understood, and agreed to all of the above Terms & Conditions. I acknowledge that this constitutes a binding agreement.
+            By submitting a loan application through MoneyfestLending, I confirm that I have read, understood, and agreed to all of the above Terms & Conditions. I acknowledge that this constitutes a binding agreement.
           </p>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
             {[
@@ -313,7 +313,7 @@ export default function TermsPage() {
             <div>
               <div style={{ fontSize: 11, color: '#4B5580', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.06em' }} className="print-muted">Approved by</div>
               <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 13, color: '#F0F4FF' }} className="print-title">John Paul Lacaron</div>
-              <div style={{ fontSize: 12, color: '#4B5580' }} className="print-muted">Administrator / Developer — LoanMoneyfest</div>
+              <div style={{ fontSize: 12, color: '#4B5580' }} className="print-muted">Administrator / Developer — MoneyfestLending</div>
               <div style={{ borderBottom: '1px solid rgba(255,255,255,0.15)', marginTop: 20, paddingBottom: 8 }} className="signature-box">
                 <div style={{ fontSize: 11, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.06em' }} className="print-muted">Signature</div>
               </div>
@@ -321,7 +321,7 @@ export default function TermsPage() {
             <div>
               <div style={{ fontSize: 11, color: '#4B5580', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.06em' }} className="print-muted">Approved by</div>
               <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 13, color: '#F0F4FF' }} className="print-title">Charlou June Ramil</div>
-              <div style={{ fontSize: 12, color: '#4B5580' }} className="print-muted">Administrator — LoanMoneyfest</div>
+              <div style={{ fontSize: 12, color: '#4B5580' }} className="print-muted">Administrator — MoneyfestLending</div>
               <div style={{ borderBottom: '1px solid rgba(255,255,255,0.15)', marginTop: 20, paddingBottom: 8 }} className="signature-box">
                 <div style={{ fontSize: 11, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.06em' }} className="print-muted">Signature</div>
               </div>
@@ -332,7 +332,7 @@ export default function TermsPage() {
         {/* Footer */}
         <div className="print-footer" style={{ marginTop: 36, paddingTop: 20, borderTop: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
           <div style={{ fontSize: 12, color: '#4B5580' }} className="print-muted">
-            LoanMoneyfest · Workplace Lending Program · loanmoneyfest.vercel.app
+            MoneyfestLending · Workplace Lending Program · moneyfestlending.online
           </div>
           <div style={{ fontSize: 12, color: '#4B5580' }} className="print-muted">
             Effective: {effectiveDate} · Version 1.0
