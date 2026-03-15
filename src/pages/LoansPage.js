@@ -484,13 +484,30 @@ export default function LoansPage() {
         cap_applied: penaltyAmount < (daysLate * PENALTY_PER_DAY),
         created_at: new Date().toISOString()
       })
+
+      // ── Auto-deduct penalty from Security Hold ───────────
+      const currentHold = parseFloat(loan.security_hold || 0)
+      if (currentHold > 0 && !loan.security_hold_returned) {
+        const deductAmt = Math.min(penaltyAmount, currentHold)
+        const newHold = parseFloat((currentHold - deductAmt).toFixed(2))
+        await supabase.from('loans').update({ security_hold: newHold }).eq('id', loan.id)
+        await logAudit({
+          action_type: 'PENALTY_DEDUCTED_FROM_HOLD',
+          module: 'Loan',
+          description: `₱${deductAmt} penalty auto-deducted from Security Hold for ${borrower?.full_name} — Hold reduced from ₱${currentHold} to ₱${newHold}`,
+          changed_by: user?.email
+        })
+        toast(`⚠️ Late penalty of ₱${penaltyAmount} auto-deducted from Security Hold (${daysLate} days late)`, 'error')
+      } else {
+        toast(`⚠️ Late penalty of ₱${penaltyAmount} applied (${daysLate} days late)`, 'error')
+      }
+
       await logAudit({
         action_type: 'PENALTY_CHARGED',
         module: 'Loan',
         description: `Late penalty of ₱${penaltyAmount} charged to ${borrower?.full_name} — Installment ${newPaymentsMade} was ${daysLate} day${daysLate > 1 ? 's' : ''} late`,
         changed_by: user?.email
       })
-      toast(`⚠️ Late penalty of ₱${penaltyAmount} applied (${daysLate} days late)`, 'error')
     }
 
     // Update credit score (+15 on-time, -10 if late)
@@ -574,15 +591,12 @@ export default function LoansPage() {
         const finalDue = new Date(loan.due_date); finalDue.setHours(0,0,0,0)
         const daysEarly = Math.ceil((finalDue - today) / (1000 * 60 * 60 * 24))
 
-        let rebateRate = 0
-        if (daysEarly >= 14) rebateRate = 0.015
-        else if (daysEarly >= 7) rebateRate = 0.01
+        // Fixed 1% rebate regardless of how early
+        const rebateRate = daysEarly >= 1 ? 0.01 : 0
 
         if (rebateRate > 0) {
           const rebateAmount = parseFloat((loan.loan_amount * rebateRate).toFixed(2))
-          const rebateLabel = rebateRate === 0.015
-            ? `Early payoff rebate (1.5% — \${daysEarly} days early)`
-            : `Early payoff rebate (1% — \${daysEarly} days early)`
+          const rebateLabel = `Early payoff rebate (1% — \${daysEarly} day\${daysEarly !== 1 ? 's' : ''} early)`
 
           // Upsert Rebate Credits
           const { data: existingCredits } = await supabase

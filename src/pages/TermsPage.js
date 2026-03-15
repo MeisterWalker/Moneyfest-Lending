@@ -50,7 +50,7 @@ export default function TermsPage() {
           <a href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
             <img src="/favicon-96x96.png" alt="MoneyfestLending" style={{ width: 36, height: 36, objectFit: 'contain' }} />
             <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 18, color: '#F0F4FF' }}>
-              Loan<span style={{ background: 'linear-gradient(90deg,#60a5fa,#a78bfa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Moneyfest</span>
+              Moneyfest<span style={{ background: 'linear-gradient(90deg,#60a5fa,#a78bfa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Lending</span>
             </div>
           </a>
           <div style={{ display: 'flex', gap: 8 }}>
@@ -180,8 +180,8 @@ export default function TermsPage() {
             title: 'Early Payoff Rebate Credits',
             content: 'MoneyfestLending rewards Borrowers who settle their final installment ahead of schedule:',
             items: [
-              { term: '7 to 13 days early', def: 'A rebate of 1% of the original loan amount is credited to the Borrower\'s Rebate Credits balance.' },
-              { term: '14 or more days early', def: 'A rebate of 1.5% of the original loan amount is credited to the Borrower\'s Rebate Credits balance.' },
+              { term: 'Any early payment (1+ days)', def: 'A fixed rebate of 1% of the original loan amount is credited to the Borrower\'s Rebate Credits balance regardless of how many days early the final installment is paid.' },
+              
               { term: 'Rebate Credits Withdrawal', def: 'Rebate Credits can be withdrawn once the balance reaches a minimum of ₱500. Withdrawal requests are subject to admin approval.' },
               { term: 'Scope', def: 'The rebate applies exclusively to the 4th and final installment. Installments 1, 2, and 3 do not qualify for any rebate regardless of timing.' },
             ]
@@ -192,6 +192,7 @@ export default function TermsPage() {
             content: null,
             items: [
               { term: 'Credit Score Deduction', def: 'Late installment payments result in a deduction of 10 points per missed payment. A loan default results in a deduction of 150 points.' },
+              { term: 'Security Hold — Penalty Deduction', def: 'Late payment penalties will be automatically deducted from the Borrower\'s Security Hold balance. The Security Hold amount returned upon full loan completion will reflect any penalty deductions applied during the loan term.' },
               { term: 'Loan Limit Freeze', def: 'Consistent late payments may result in the Borrower\'s loan limit being frozen at the current level.' },
               { term: 'Default', def: 'A loan is considered in default if two (2) consecutive installments are missed without prior arrangement with the Lender.' },
               { term: 'Trustee Contact', def: 'In cases of default, the Lender reserves the right to contact the nominated Trustee/Guarantor for follow-up.' },

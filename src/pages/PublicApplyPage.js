@@ -39,7 +39,7 @@ export default function PublicApplyPage() {
 
   const [form, setForm] = useState({
     full_name: '', department: '', tenure_years: '', phone: '', email: '', address: '',
-    trustee_name: '', trustee_phone: '', trustee_relationship: '',
+
     loan_amount: '', loan_purpose: '', release_method: '',
     gcash_number: '', gcash_name: '', bank_account_number: '', bank_name: '',
     agreed: false
@@ -67,9 +67,6 @@ export default function PublicApplyPage() {
     const emailErr = validateEmail(form.email)
     if (emailErr) return emailErr
     if (!form.address.trim()) return 'Please enter your address'
-    if (!form.trustee_name.trim()) return 'Please enter trustee full name'
-    if (!form.trustee_phone.trim()) return 'Please enter trustee phone number'
-    if (!form.trustee_relationship.trim()) return 'Please enter trustee relationship'
     return null
   }
 
@@ -153,8 +150,6 @@ export default function PublicApplyPage() {
       full_name: form.full_name.trim(), department: form.department,
       tenure_years: parseFloat(form.tenure_years) || 0,
       phone: form.phone.trim(), email: form.email.trim(), address: form.address.trim(),
-      trustee_name: form.trustee_name.trim(), trustee_phone: form.trustee_phone.trim(),
-      trustee_relationship: form.trustee_relationship.trim(),
       loan_amount: parseFloat(form.loan_amount), loan_purpose: form.loan_purpose.trim(),
       release_method: form.release_method,
       gcash_number: form.gcash_number.trim() || null, gcash_name: form.gcash_name.trim() || null,
@@ -345,7 +340,7 @@ export default function PublicApplyPage() {
                 },
                 {
                   title: '4. Late Payments & Default',
-                  body: 'A late payment penalty of ₱20 per day will be charged for each installment not paid by its due date (the 5th or 20th of the month). The penalty is capped at 20% of the installment amount — for example, a ₱1,337.50 installment has a maximum penalty of ₱267.50 regardless of how many days late. In addition, late payments result in a -10 point deduction to your credit score per missed installment, compared to the +15 points earned for on-time payment. Consistent non-payment may result in your loan being marked as defaulted, which will affect your eligibility for future loans. The program administrators reserve the right to contact your designated trustee or guarantor in case of default.'
+                  body: 'A late payment penalty of ₱20 per day will be charged for each installment not paid by its due date (the 5th or 20th of the month). The penalty is capped at 20% of the installment amount — for example, a ₱1,337.50 installment has a maximum penalty of ₱267.50 regardless of how many days late. In addition, late payments result in a -10 point deduction to your credit score per missed installment, compared to the +15 points earned for on-time payment. Consistent non-payment may result in your loan being marked as defaulted, which will affect your eligibility for future loans. The program administrators reserve the right to pursue collection through legal means in the event of loan default.'
                 },
                 {
                   title: '5. Early Payoff Rebate',
@@ -353,11 +348,11 @@ export default function PublicApplyPage() {
                 },
                 {
                   title: '6. Accuracy of Information',
-                  body: 'By submitting an application, you confirm that all information provided — including personal details, employment information, trustee information, and government-issued ID — is accurate, complete, and truthful. Providing false or misleading information is grounds for immediate rejection or cancellation of your loan.'
+                  body: 'By submitting an application, you confirm that all information provided — including personal details, employment information, and government-issued ID — is accurate, complete, and truthful. Providing false or misleading information is grounds for immediate rejection or cancellation of your loan.'
                 },
                 {
                   title: '7. Authorization',
-                  body: 'You authorize MoneyfestLending administrators to verify your submitted information, contact your designated trustee or guarantor if necessary, and process your personal data in accordance with our Privacy Notice and the Data Privacy Act of 2012 (RA 10173).'
+                  body: 'You authorize MoneyfestLending administrators to verify your submitted information, and process your personal data in accordance with our Privacy Notice and the Data Privacy Act of 2012 (RA 10173).'
                 },
                 {
                   title: '8. ID Verification',
@@ -435,7 +430,7 @@ export default function PublicApplyPage() {
 
         {/* Step indicator */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0, marginBottom: 36 }}>
-          {['Personal & Trustee Info', 'ID Verification', 'Loan Details'].map((label, i) => {
+          {['Personal Info', 'ID Verification', 'Loan Details'].map((label, i) => {
             const num = i + 1; const done = step > num; const active = step === num
             return (
               <div key={num} style={{ display: 'flex', alignItems: 'center' }}>
@@ -451,7 +446,7 @@ export default function PublicApplyPage() {
 
         {/* ── STEP 1: Two-column layout ── */}
         {step === 1 && (
-          <div className="apply-two-col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, alignItems: 'start' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 24, alignItems: 'start', maxWidth: 560, margin: '0 auto', width: '100%' }}>
 
             {/* Left: Personal Info */}
             <div style={{ background: 'linear-gradient(145deg,#1c2d4a,#1a2640)', border: '1px solid rgba(59,130,246,0.4)', borderRadius: 18, padding: 32, boxShadow: '0 0 0 1px rgba(59,130,246,0.1), 0 8px 32px rgba(59,130,246,0.15)' }}>
@@ -488,20 +483,7 @@ export default function PublicApplyPage() {
 
             {/* Right: Trustee + Info */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-              <div style={{ background: 'linear-gradient(145deg,#221c40,#1e1a3a)', border: '1px solid rgba(139,92,246,0.4)', borderRadius: 18, padding: 32, boxShadow: '0 0 0 1px rgba(139,92,246,0.1), 0 8px 32px rgba(139,92,246,0.15)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24, paddingBottom: 18, borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-                  <div style={{ width: 42, height: 42, borderRadius: 12, background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 5 }}><img src="/handshake.png" alt="trustee" style={{ width: 26, height: 26, objectFit: 'contain' }} /></div>
-                  <div>
-                    <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 17, color: '#F0F4FF' }}>Trustee / Guarantor</div>
-                    <div style={{ fontSize: 12, color: '#7A8AAA', marginTop: 2 }}>Someone who can vouch for you</div>
-                  </div>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                  <div><label style={lbl}>Trustee Full Name *</label><input value={form.trustee_name} onChange={e => set('trustee_name', e.target.value)} placeholder="Enter trustee full name" style={inp} /></div>
-                  <div><label style={lbl}>Trustee Phone *</label><input value={form.trustee_phone} onChange={e => set('trustee_phone', e.target.value)} placeholder="09XX XXX XXXX" style={inp} /></div>
-                  <div><label style={lbl}>Relationship *</label><input value={form.trustee_relationship} onChange={e => set('trustee_relationship', e.target.value)} placeholder="e.g. Spouse, Parent, Colleague" style={inp} /></div>
-                </div>
-              </div>
+
 
               {/* Info blurb */}
               <div style={{ background: 'linear-gradient(135deg,rgba(59,130,246,0.12),rgba(139,92,246,0.1))', border: '1px solid rgba(59,130,246,0.35)', borderRadius: 14, padding: '20px 22px', boxShadow: '0 4px 16px rgba(59,130,246,0.1)' }}>
