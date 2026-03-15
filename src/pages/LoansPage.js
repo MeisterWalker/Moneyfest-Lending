@@ -265,7 +265,7 @@ function LoanCard({ loan, borrowers, onEdit, onDelete, onRecordPayment, onDefaul
               { label: 'Installment', value: formatCurrency(loan.installment_amount) },
               { label: 'Payments Made', value: `${loan.payments_made} of 4` },
               { label: 'Remaining', value: formatCurrency(loan.remaining_balance) },
-              { label: 'Final Due', value: formatDate(loan.due_date) },
+              { label: 'Final Due', value: (() => { try { const d = loan.release_date ? (() => { const [y,m,dy] = loan.release_date.split('-').map(Number); const rel = new Date(y,m-1,dy); let fd = new Date(rel); for(let i=1;i<=4;i++){if(rel.getDate()<=5){fd=new Date(rel.getFullYear(),rel.getMonth()+Math.floor((i-1)/2),i%2===1?20:5);if(i%2===0)fd.setMonth(fd.getMonth()+1)}else{fd=new Date(rel.getFullYear(),rel.getMonth()+Math.ceil(i/2),i%2===1?5:20)}} return fd.toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'}) })() : '—'; return d } catch(e){return '—'} })() },
             ].map(item => (
               <div key={item.label}>
                 <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 3, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{item.label}</div>
@@ -512,8 +512,8 @@ export default function LoansPage() {
 
     // Update credit score (+15 on-time, -10 if late)
     if (borrower) {
-      const scoreChange = daysLate > 0 ? CREDIT_CONFIG.latePenalty : CREDIT_CONFIG.onTimeBonus
-      const newScore = Math.min(CREDIT_CONFIG.max, Math.max(CREDIT_CONFIG.min, borrower.credit_score + scoreChange))
+      const scoreChange = daysLate > 0 ? CREDIT_CONFIG.LATE_PAYMENT : CREDIT_CONFIG.ON_TIME_PAYMENT
+      const newScore = Math.min(CREDIT_CONFIG.MAX_SCORE, Math.max(CREDIT_CONFIG.MIN_SCORE, borrower.credit_score + scoreChange))
       const newRisk = CREDIT_CONFIG.riskFromScore(newScore)
       const cleanLoans = loans.filter(l => l.borrower_id === borrower.id && l.status === 'Paid').length
       const newBadgeTemp = getBadgeFromScore(newScore)
@@ -543,7 +543,7 @@ export default function LoansPage() {
         // Use already-updated score from payment recording above
         const { data: freshBorrower } = await supabase.from('borrowers').select('credit_score').eq('id', borrower.id).single()
         const currentScore = freshBorrower?.credit_score || borrower.credit_score
-        const bonusScore = Math.min(CREDIT_CONFIG.max, currentScore + (cleanLoans % 2 === 0 ? CREDIT_CONFIG.fullPayBonus : 0))
+        const bonusScore = Math.min(CREDIT_CONFIG.MAX_SCORE, currentScore + (cleanLoans % 2 === 0 ? CREDIT_CONFIG.FULL_LOAN_COMPLETE : 0))
         const newBadge = getBadgeFromScore(bonusScore)
         await supabase.from('borrowers').update({
           loan_limit_level: newLevel, loan_limit: newLimit,
@@ -586,9 +586,21 @@ export default function LoansPage() {
       }
 
       // ── Early payoff rebate (only on final installment) ──────
-      if (loan.due_date) {
+      if (loan.release_date) {
+        // Calculate the 4th due date from release_date
+        const [ry, rm, rd] = loan.release_date.split('-').map(Number)
+        const rel = new Date(ry, rm - 1, rd)
+        let finalDue = new Date(rel)
+        for (let i = 1; i <= 4; i++) {
+          if (rel.getDate() <= 5) {
+            finalDue = new Date(rel.getFullYear(), rel.getMonth() + Math.floor((i-1)/2), i % 2 === 1 ? 20 : 5)
+            if (i % 2 === 0) finalDue.setMonth(finalDue.getMonth() + 1)
+          } else {
+            finalDue = new Date(rel.getFullYear(), rel.getMonth() + Math.ceil(i/2), i % 2 === 1 ? 5 : 20)
+          }
+        }
         const today = new Date(); today.setHours(0,0,0,0)
-        const finalDue = new Date(loan.due_date); finalDue.setHours(0,0,0,0)
+        finalDue.setHours(0,0,0,0)
         const daysEarly = Math.ceil((finalDue - today) / (1000 * 60 * 60 * 24))
 
         // Fixed 1% rebate regardless of how early
@@ -665,7 +677,7 @@ export default function LoansPage() {
     await supabase.from('loans').update({ status: 'Defaulted', updated_at: new Date().toISOString() }).eq('id', loan.id)
     // Deduct credit score -150 for default
     if (borrower) {
-      const newScore = Math.max(CREDIT_CONFIG.min, borrower.credit_score + CREDIT_CONFIG.defaultPenalty)
+      const newScore = Math.max(CREDIT_CONFIG.MIN_SCORE, borrower.credit_score + CREDIT_CONFIG.LOAN_DEFAULT)
       await supabase.from('borrowers').update({
         credit_score: newScore,
         risk_score: CREDIT_CONFIG.riskFromScore(newScore)
