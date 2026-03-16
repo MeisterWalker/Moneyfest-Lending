@@ -1611,6 +1611,59 @@ export default function BorrowerPortalPage() {
                 )
               })()}
 
+              {/* Loan Agreement Signature Reminder — shown when Pending and not yet signed */}
+              {loan.status === 'Pending' && !loan.e_signature_name && (
+                <div style={{
+                  background: 'linear-gradient(135deg,rgba(99,102,241,0.1),rgba(139,92,246,0.08))',
+                  border: '1px solid rgba(99,102,241,0.35)',
+                  borderLeft: '4px solid #6366F1',
+                  borderRadius: 14, padding: '18px 20px', marginBottom: 16,
+                  display: 'flex', alignItems: 'flex-start', gap: 14
+                }}>
+                  <div style={{ width: 40, height: 40, borderRadius: 10, background: 'rgba(99,102,241,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0 }}>✍️</div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 15, color: '#F0F4FF', marginBottom: 6 }}>
+                      Action Required — Sign Your Loan Agreement
+                    </div>
+                    <div style={{ fontSize: 13, color: '#8892B0', lineHeight: 1.7, marginBottom: 14 }}>
+                      Your loan has been approved! To avoid delays in the release of your funds, please sign your Loan Agreement as soon as possible. Fund release will only be processed once your signed agreement is on file.
+                    </div>
+                    <button
+                      onClick={() => setShowSignModal(true)}
+                      style={{
+                        display: 'inline-flex', alignItems: 'center', gap: 8,
+                        padding: '10px 20px', borderRadius: 10, border: 'none',
+                        background: 'linear-gradient(135deg,#6366F1,#8B5CF6)',
+                        color: '#fff', fontSize: 13, fontWeight: 700,
+                        cursor: 'pointer', fontFamily: 'Space Grotesk'
+                      }}>
+                      ✍️ Sign Loan Agreement Now
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Signed confirmation banner — shown when Pending and already signed */}
+              {loan.status === 'Pending' && loan.e_signature_name && (
+                <div style={{
+                  background: 'rgba(34,197,94,0.06)',
+                  border: '1px solid rgba(34,197,94,0.25)',
+                  borderLeft: '4px solid #22C55E',
+                  borderRadius: 14, padding: '14px 18px', marginBottom: 16,
+                  display: 'flex', alignItems: 'center', gap: 12
+                }}>
+                  <span style={{ fontSize: 20 }}>✅</span>
+                  <div>
+                    <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 14, color: '#22C55E', marginBottom: 2 }}>
+                      Loan Agreement Signed
+                    </div>
+                    <div style={{ fontSize: 12, color: '#4B5580' }}>
+                      Signed by <strong style={{ color: '#CBD5F0' }}>{loan.e_signature_name}</strong> on {loan.e_signature_date ? new Date(loan.e_signature_date).toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' }) : '—'} · Your fund release will proceed as scheduled.
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Progress bar */}
               <div style={{ marginBottom: 16 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#4B5580', marginBottom: 8 }}>
