@@ -40,7 +40,8 @@ function ActionBadge({ action }) {
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: 5,
       padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600,
-      color: cfg.color, background: cfg.bg, whiteSpace: 'nowrap'
+      color: cfg.color, background: cfg.bg,
+      whiteSpace: 'normal', wordBreak: 'break-word', lineHeight: 1.4
     }}>
       {icon} {label}
     </span>
@@ -164,7 +165,7 @@ export default function AuditPage() {
           <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
             {/* Table header */}
             <div style={{
-              display: 'grid', gridTemplateColumns: '180px 1fr 100px 150px',
+              display: 'grid', gridTemplateColumns: '220px 1fr 100px 150px',
               padding: '12px 22px', borderBottom: '1px solid var(--card-border)',
               background: 'rgba(255,255,255,0.015)'
             }}>
@@ -178,16 +179,17 @@ export default function AuditPage() {
               <div
                 key={log.id}
                 style={{
-                  display: 'grid', gridTemplateColumns: '180px 1fr 100px 150px',
+                  display: 'grid', gridTemplateColumns: '220px 1fr 100px 150px',
                   padding: '14px 22px',
                   borderBottom: i < paginated.length - 1 ? '1px solid rgba(255,255,255,0.03)' : 'none',
                   transition: 'background 0.1s ease',
+                  alignItems: 'start',
                   cursor: 'default'
                 }}
                 onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.015)'}
                 onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
               >
-                <div style={{ display: 'flex', alignItems: 'center' }}>
+                <div style={{ paddingRight: 12, paddingTop: 2 }}>
                   <ActionBadge action={log.action_type} />
                 </div>
                 <div style={{ paddingRight: 16 }}>
