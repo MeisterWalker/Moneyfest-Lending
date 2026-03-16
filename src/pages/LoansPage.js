@@ -229,11 +229,25 @@ function LoanCard({ loan, borrowers, onEdit, onDelete, onRecordPayment, onDefaul
 
         {/* Pending status info */}
         {loan.status === 'Pending' && (
-          <div style={{ marginTop: 10, padding: '10px 14px', background: 'rgba(59,130,246,0.06)', border: '1px solid rgba(59,130,246,0.15)', borderRadius: 8, fontSize: 12, color: 'var(--blue)' }}>
-            <Clock size={12} style={{ display: 'inline', marginRight: 6 }} />
-            Loan releases on {formatDate(loan.release_date)}
-            {daysUntilDue > 0 && ` (in ${daysUntilDue} day${daysUntilDue !== 1 ? 's' : ''})`}
-            {daysUntilDue <= 0 && " — activating today"}
+          <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div style={{ padding: '10px 14px', background: 'rgba(59,130,246,0.06)', border: '1px solid rgba(59,130,246,0.15)', borderRadius: 8, fontSize: 12, color: 'var(--blue)' }}>
+              <Clock size={12} style={{ display: 'inline', marginRight: 6 }} />
+              Loan releases on {formatDate(loan.release_date)}
+              {daysUntilDue > 0 && ` (in ${daysUntilDue} day${daysUntilDue !== 1 ? 's' : ''})`}
+              {daysUntilDue <= 0 && " — activating today"}
+            </div>
+            {/* LA Signature status */}
+            {loan.e_signature_name ? (
+              <div style={{ padding: '10px 14px', background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 8, fontSize: 12, color: 'var(--green)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                <CheckCircle size={13} />
+                <span>Loan Agreement signed by <strong>{loan.e_signature_name}</strong> on {loan.e_signature_date ? new Date(loan.e_signature_date).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'} — ready for fund release</span>
+              </div>
+            ) : (
+              <div style={{ padding: '10px 14px', background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.25)', borderRadius: 8, fontSize: 12, color: 'var(--gold)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                <AlertTriangle size={13} />
+                <span>⚠️ Loan Agreement <strong>not yet signed</strong> — borrower must sign via portal before funds can be released</span>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -247,12 +261,24 @@ function LoanCard({ loan, borrowers, onEdit, onDelete, onRecordPayment, onDefaul
               { label: 'Payments Made', value: `${loan.payments_made} of 4` },
               { label: 'Remaining', value: formatCurrency(loan.remaining_balance) },
               { label: 'Final Due', value: (() => { try { const d = loan.release_date ? (() => { const [y,m,dy] = loan.release_date.split('-').map(Number); const rel = new Date(y,m-1,dy); let fd = new Date(rel); for(let i=1;i<=4;i++){if(rel.getDate()<=5){fd=new Date(rel.getFullYear(),rel.getMonth()+Math.floor((i-1)/2),i%2===1?20:5);if(i%2===0)fd.setMonth(fd.getMonth()+1)}else{fd=new Date(rel.getFullYear(),rel.getMonth()+Math.ceil(i/2),i%2===1?5:20)}} return fd.toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'}) })() : '—'; return d } catch(e){return '—'} })() },
+              { label: 'Security Hold', value: loan.security_hold > 0 ? `${formatCurrency(loan.security_hold)} ${loan.security_hold_returned ? '(returned)' : '(held)'}` : '—' },
             ].map(item => (
               <div key={item.label}>
                 <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 3, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{item.label}</div>
                 <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{item.value}</div>
               </div>
             ))}
+          </div>
+          {/* LA Signature status row */}
+          <div style={{ marginTop: 14, padding: '10px 14px', borderRadius: 8, fontSize: 12, display: 'flex', alignItems: 'center', gap: 8,
+            background: loan.e_signature_name ? 'rgba(34,197,94,0.05)' : 'rgba(245,158,11,0.05)',
+            border: `1px solid ${loan.e_signature_name ? 'rgba(34,197,94,0.2)' : 'rgba(245,158,11,0.2)'}`,
+            color: loan.e_signature_name ? 'var(--green)' : 'var(--gold)'
+          }}>
+            {loan.e_signature_name
+              ? <><CheckCircle size={13} /><span>Loan Agreement signed by <strong>{loan.e_signature_name}</strong> · {loan.e_signature_date ? new Date(loan.e_signature_date).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}</span></>
+              : <><AlertTriangle size={13} /><span>Loan Agreement <strong>not yet signed</strong> by borrower — remind them to sign via portal</span></>
+            }
           </div>
           {loan.notes && (
             <div style={{ marginTop: 12, padding: '8px 12px', background: 'rgba(255,255,255,0.02)', borderRadius: 8, fontSize: 13, color: 'var(--text-label)' }}>
