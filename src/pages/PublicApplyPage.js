@@ -276,7 +276,18 @@ export default function PublicApplyPage() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0B0F1A', fontFamily: 'DM Sans, sans-serif' }}>
+    <div style={{ minHeight: '100vh', background: '#07090F', fontFamily: 'DM Sans, sans-serif', position: 'relative', overflowX: 'hidden' }}>
+      <style>{`
+        .apply-grid-bg {
+          position: fixed; inset: 0; pointer-events: none; opacity: 0.03; z-index: 0;
+          background-image: linear-gradient(rgba(255,255,255,0.8) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.8) 1px, transparent 1px);
+          background-size: 48px 48px;
+        }
+      `}</style>
+      <div className="apply-grid-bg" />
+      <div style={{ position: 'fixed', width: 500, height: 500, borderRadius: '50%', background: 'radial-gradient(circle, rgba(99,102,241,0.1) 0%, transparent 70%)', top: '-10%', right: '-8%', pointerEvents: 'none', zIndex: 0 }} />
+      <div style={{ position: 'fixed', width: 350, height: 350, borderRadius: '50%', background: 'radial-gradient(circle, rgba(59,130,246,0.08) 0%, transparent 70%)', bottom: '5%', left: '-5%', pointerEvents: 'none', zIndex: 0 }} />
+      <div style={{ position: 'relative', zIndex: 1 }}>
 
       {/* Disclaimer Modal */}
       {showDisclaimer && (
@@ -814,6 +825,7 @@ export default function PublicApplyPage() {
           Your information is kept private and secure. This is an exclusive internal program for our team members only. · <a href="/faq" style={{ color: '#3B82F6', textDecoration: 'none' }}>View FAQ</a> · <a href="/privacy" style={{ color: '#3B82F6', textDecoration: 'none' }}>Privacy Notice</a> · <a href="/terms" style={{ color: '#3B82F6', textDecoration: 'none' }}>Terms & Conditions</a>
         </p>
 
+      </div>
       </div>
     </div>
   )

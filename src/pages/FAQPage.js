@@ -132,7 +132,18 @@ export default function FAQPage() {
   const activeFAQs = faqByCategory[activeCategory] || []
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0B0F1A', fontFamily: 'DM Sans, sans-serif' }}>
+    <div style={{ minHeight: '100vh', background: '#07090F', fontFamily: 'DM Sans, sans-serif', position: 'relative', overflowX: 'hidden' }}>
+      <style>{`
+        .faq-grid-bg {
+          position: fixed; inset: 0; pointer-events: none; opacity: 0.03; z-index: 0;
+          background-image: linear-gradient(rgba(255,255,255,0.8) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.8) 1px, transparent 1px);
+          background-size: 48px 48px;
+        }
+      `}</style>
+      <div className="faq-grid-bg" />
+      <div style={{ position: 'fixed', width: 400, height: 400, borderRadius: '50%', background: 'radial-gradient(circle, rgba(99,102,241,0.12) 0%, transparent 70%)', top: '-5%', right: '-5%', pointerEvents: 'none', zIndex: 0 }} />
+      <div style={{ position: 'fixed', width: 300, height: 300, borderRadius: '50%', background: 'radial-gradient(circle, rgba(59,130,246,0.1) 0%, transparent 70%)', bottom: '10%', left: '-3%', pointerEvents: 'none', zIndex: 0 }} />
+      <div style={{ position: 'relative', zIndex: 1 }}>
 
       {/* Header */}
       <div style={{ background: 'linear-gradient(135deg,#0d1226,#141B2D)', borderBottom: '1px solid rgba(139,92,246,0.2)', padding: '20px 24px' }}>
@@ -219,6 +230,7 @@ export default function FAQPage() {
           </a>
         </div>
 
+      </div>
       </div>
     </div>
   )
