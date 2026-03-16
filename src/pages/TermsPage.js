@@ -15,6 +15,49 @@ export default function TermsPage() {
 
   const handlePrint = () => window.print()
 
+  const handleDownload = () => {
+    const content = document.querySelector('.print-container')
+    if (!content) return
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>MoneyfestLending — Terms and Conditions</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=Space+Grotesk:wght@700;800;900&display=swap" rel="stylesheet"/>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'DM Sans',sans-serif; background:#fff; color:#111; padding:40px; max-width:860px; margin:0 auto; font-size:13px; line-height:1.7; }
+  h1,h2 { font-family:'Space Grotesk',sans-serif; color:#111; }
+  .print-title { color:#111 !important; }
+  .print-subtitle { color:#555 !important; }
+  .print-body { color:#333 !important; }
+  .print-muted { color:#777 !important; }
+  .print-highlight { color:#111 !important; font-weight:700; }
+  .print-header { border-bottom:2px solid #111; padding-bottom:20px; margin-bottom:28px; }
+  .print-section { background:#f9f9f9; border:1px solid #ddd; border-radius:8px; padding:16px 18px; margin-bottom:18px; }
+  .section-num { background:#111; color:#fff; width:28px; height:28px; border-radius:6px; display:inline-flex; align-items:center; justify-content:center; font-family:'Space Grotesk',sans-serif; font-weight:800; font-size:11px; margin-right:10px; flex-shrink:0; }
+  .print-badge { border:1px solid #b45309; background:#fffbeb; color:#92400e; padding:10px 14px; border-radius:8px; margin-top:14px; font-size:12px; }
+  .print-row { background:#f5f5f5; border:1px solid #e5e5e5; border-radius:6px; padding:8px 12px; margin-bottom:6px; font-size:12px; }
+  .print-footer { border-top:2px solid #111; padding-top:16px; margin-top:28px; font-size:11px; color:#777; }
+  .signature-box { border-bottom:1px solid #333; padding-bottom:8px; margin-bottom:16px; }
+  .no-print { display:none !important; }
+  @media print { @page { size:A4; margin:15mm 18mm; } }
+</style>
+</head>
+<body>
+${content.innerHTML}
+</body>
+</html>`
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `MoneyfestLending_Terms_and_Conditions.html`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   return (
     <div style={{ minHeight: '100vh', background: '#0B0F1A', fontFamily: 'DM Sans, sans-serif' }}>
 
@@ -67,10 +110,14 @@ export default function TermsPage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <img src="/verified.png" alt="verified" style={{ width: 18, height: 18, objectFit: 'contain' }} />
             <span style={{ fontSize: 13, color: '#86EFAC', fontWeight: 600 }}>
-              You can download this as a PDF or print a physical copy.
+              Save a copy of this document for your records.
             </span>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
+            <button onClick={handleDownload}
+              style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 18px', borderRadius: 9, background: 'rgba(59,130,246,0.12)', border: '1px solid rgba(59,130,246,0.3)', color: '#60a5fa', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Space Grotesk' }}>
+              ⬇️ Download HTML
+            </button>
             <button onClick={handlePrint}
               style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 18px', borderRadius: 9, background: 'linear-gradient(135deg,#22C55E,#16A34A)', border: 'none', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Space Grotesk' }}>
               🖨️ Print / Save as PDF
@@ -125,8 +172,8 @@ export default function TermsPage() {
               { term: '"Finance Charge"', def: 'refers to the total peso amount of interest charged on the principal.' },
               { term: '"Installment"', def: 'refers to each of the four (4) equal payments due every 5th and 20th of the month.' },
               { term: '"Cutoff Date"', def: 'refers to the 5th and 20th of each month, which are the scheduled payment collection dates.' },
-              { term: '"Rebate Credits"', def: 'refers to the in-app reward balance credited to a Borrower who pays the final installment early.' },
-              { term: '"Trustee/Guarantor"', def: 'refers to the person nominated by the Borrower who can be contacted in case of default or missed payments.' },
+              { term: '"Rebate Credits"', def: 'refers to the in-app reward balance credited to a Borrower who pays the final installment early or whose Security Hold is returned.' },
+              { term: '"Security Hold"', def: 'refers to the percentage of the approved loan amount withheld upon release, returned to the Borrower\'s Rebate Credits upon full repayment.' },
             ]
           },
           {
@@ -135,10 +182,9 @@ export default function TermsPage() {
             content: 'To qualify for a loan under MoneyfestLending, the Borrower must:',
             items: [
               { term: null, def: 'Be an active team member in good standing within the office.' },
-              { term: null, def: 'Not have an existing active loan that has not been fully repaid, unless otherwise approved by the Lender.' },
+              { term: null, def: 'Not have an existing active loan that has not been fully repaid.' },
               { term: null, def: 'Submit a valid government-issued ID for identity verification.' },
               { term: null, def: 'Provide accurate and truthful information in the loan application.' },
-              { term: null, def: 'Nominate a Trustee/Guarantor who is reachable via phone.' },
             ]
           },
           {
@@ -151,7 +197,7 @@ export default function TermsPage() {
               { term: 'Level 3 (After 2 clean loans)', def: '₱9,000' },
               { term: 'Level 4 (After 3 clean loans)', def: '₱10,000 (Maximum)' },
             ],
-            footer: 'A "clean loan" means a fully repaid loan with no defaults or missed payments.'
+            footer: 'A "clean loan" means a fully repaid loan with no defaults. Loan limit upgrades are subject to the Borrower maintaining a credit score of at least 750.'
           },
           {
             num: '4',
@@ -161,7 +207,7 @@ export default function TermsPage() {
               { term: 'Interest Rate', def: `${flatRate}% flat rate applied once on the principal amount. Interest does not compound.` },
               { term: 'Effective Annual Rate', def: `Approximately ${effectiveAnnual}% per annum, based on the 2-month loan term, in compliance with Republic Act No. 3765 (Truth in Lending Act).` },
               { term: 'Finance Charge Example', def: `A ₱5,000 loan incurs a finance charge of ₱350.00, for a total repayment of ₱5,350.00 in 4 installments of ₱1,337.50 each.` },
-              { term: 'No Hidden Fees', def: 'There are no application fees, processing fees, or any other charges beyond the stated flat interest rate.' },
+              { term: 'No Hidden Fees', def: 'There are no application fees, processing fees, or any other charges beyond the stated flat interest rate and applicable late payment penalties.' },
             ]
           },
           {
@@ -180,8 +226,7 @@ export default function TermsPage() {
             title: 'Early Payoff Rebate Credits',
             content: 'MoneyfestLending rewards Borrowers who settle their final installment ahead of schedule:',
             items: [
-              { term: 'Any early payment (1+ days)', def: 'A fixed rebate of 1% of the original loan amount is credited to the Borrower\'s Rebate Credits balance regardless of how many days early the final installment is paid.' },
-              
+              { term: 'Fixed 1% Rebate', def: 'A fixed rebate of 1% of the original loan amount is credited to the Borrower\'s Rebate Credits balance when the final (4th) installment is paid at least 1 day before its due date. The rate is fixed at 1% regardless of how many days early the payment is made.' },
               { term: 'Rebate Credits Withdrawal', def: 'Rebate Credits can be withdrawn once the balance reaches a minimum of ₱500. Withdrawal requests are subject to admin approval.' },
               { term: 'Scope', def: 'The rebate applies exclusively to the 4th and final installment. Installments 1, 2, and 3 do not qualify for any rebate regardless of timing.' },
             ]
@@ -191,11 +236,12 @@ export default function TermsPage() {
             title: 'Late Payment and Default',
             content: null,
             items: [
-              { term: 'Credit Score Deduction', def: 'Late installment payments result in a deduction of 10 points per missed payment. A loan default results in a deduction of 150 points.' },
+              { term: 'Late Payment Penalty', def: 'A penalty of ₱20.00 per calendar day is charged starting the day after the missed cutoff date (5th or 20th of the month). The penalty accrues daily with no cap until the installment is fully settled.' },
+              { term: 'Credit Score Deduction', def: 'Late installment payments result in a deduction of 10 points per late installment. A loan default results in a deduction of 150 points.' },
               { term: 'Security Hold — Penalty Deduction', def: 'Late payment penalties will be automatically deducted from the Borrower\'s Security Hold balance. The Security Hold amount returned upon full loan completion will reflect any penalty deductions applied during the loan term.' },
               { term: 'Loan Limit Freeze', def: 'Consistent late payments may result in the Borrower\'s loan limit being frozen at the current level.' },
               { term: 'Default', def: 'A loan is considered in default if two (2) consecutive installments are missed without prior arrangement with the Lender.' },
-              { term: 'Trustee Contact', def: 'In cases of default, the Lender reserves the right to contact the nominated Trustee/Guarantor for follow-up.' },
+              { term: 'Trustee Contact', def: 'In cases of default or consistent non-payment, the Lender reserves the right to contact any emergency contact on file for follow-up.' },
               { term: 'Future Eligibility', def: 'A defaulted loan may permanently affect the Borrower\'s eligibility for future loans under MoneyfestLending.' },
             ]
           },
@@ -205,14 +251,26 @@ export default function TermsPage() {
             content: null,
             items: [
               { term: 'Starting Score', def: '750 points for all new borrowers.' },
-              { term: 'On-time Payment Bonus', def: '+15 points per confirmed installment payment.' },
-              { term: 'Missed Payment Penalty', def: '-150 points per missed installment.' },
+              { term: 'On-time Payment Bonus', def: '+15 points per confirmed on-time installment payment.' },
+              { term: 'Late Payment Deduction', def: '-10 points per late installment payment.' },
+              { term: 'Loan Completion Bonus', def: '+25 bonus points upon full repayment of a loan.' },
+              { term: 'Default Penalty', def: '-150 points upon loan being marked as defaulted.' },
               { term: 'Score Range', def: '300 (minimum) to 1,000 (maximum). Starting score is 750.' },
-              { term: 'Impact', def: 'Credit scores affect loan eligibility and risk classification. Borrowers with scores below 550 are classified as high risk.' },
+              { term: 'Impact', def: 'Credit scores determine borrower tier, loan limit level, and Security Hold rate. Borrowers with scores below 600 are classified as High Risk.' },
             ]
           },
           {
             num: '9',
+            title: 'Security Hold',
+            content: 'To protect the lending program, a Security Hold is withheld from the approved loan amount upon fund release:',
+            items: [
+              { term: 'Rate', def: 'The Security Hold rate is determined by the Borrower\'s credit score: VIP (1000) — 5%, Reliable (920+) — 6%, Trusted (835+) — 8%, Standard (750+) — 10%, Caution (500+) — 15%, High Risk (below 500) — 20%.' },
+              { term: 'Deductions', def: 'Late payment penalties are automatically deducted from the Security Hold balance before return.' },
+              { term: 'Return', def: 'The remaining Security Hold balance is automatically credited to the Borrower\'s Rebate Credits upon confirmed payment of the 4th and final installment.' },
+            ]
+          },
+          {
+            num: '10',
             title: 'Borrower Obligations',
             content: 'By accepting a loan, the Borrower agrees to:',
             items: [
@@ -220,44 +278,46 @@ export default function TermsPage() {
               { term: null, def: 'Make payments on or before the scheduled cutoff dates.' },
               { term: null, def: 'Upload valid proof of payment through the Borrower Portal.' },
               { term: null, def: 'Notify the Lender immediately of any changes in employment status or personal contact information.' },
-              { term: null, def: 'Ensure the nominated Trustee/Guarantor is aware of and consents to their nomination.' },
-              { term: null, def: 'Not transfer or assign the loan to another person.' },
-            ]
-          },
-          {
-            num: '10',
-            title: 'Lender Rights and Obligations',
-            content: null,
-            items: [
-              { term: null, def: 'The Lender reserves the right to approve, reject, or adjust any loan application at its sole discretion.' },
-              { term: null, def: 'The Lender will disclose all finance charges and terms clearly before loan release, in compliance with RA 3765.' },
-              { term: null, def: 'The Lender will protect all personal information in accordance with RA 10173 (Data Privacy Act of 2012) as stated in the Privacy Notice.' },
-              { term: null, def: 'The Lender will not charge fees beyond the stated flat interest rate.' },
-              { term: null, def: 'The Lender will notify the Borrower of approval or rejection of the loan application via email or the Borrower Portal.' },
+              { term: null, def: 'Not transfer or assign the loan obligation to another person.' },
             ]
           },
           {
             num: '11',
+            title: 'Lender Rights and Remedies',
+            content: 'MoneyfestLending, as the Lender, reserves the following rights:',
+            items: [
+              { term: 'Loan Approval Discretion', def: 'The Lender reserves the right to approve, reject, or adjust any loan application at its sole discretion, without obligation to disclose specific reasons for rejection.' },
+              { term: 'Disclosure Compliance', def: 'The Lender will disclose all finance charges and terms clearly before loan release, in compliance with RA 3765 (Truth in Lending Act).' },
+              { term: 'Data Protection', def: 'The Lender will protect all personal information in accordance with RA 10173 (Data Privacy Act of 2012) as stated in the Privacy Notice.' },
+              { term: 'No Extra Charges', def: 'The Lender will not charge fees beyond the stated flat interest rate and applicable late payment penalties.' },
+              { term: 'Notification', def: 'The Lender will notify the Borrower of approval or rejection of the loan application via email or the Borrower Portal.' },
+              { term: 'Demand for Full Payment', def: 'In the event of default or consecutive missed payments, the Lender reserves the right to declare the entire outstanding loan balance immediately due and payable, pursuant to the terms of this agreement and applicable Philippine law.' },
+              { term: 'Legal Remedies', def: 'In cases of default, persistent non-payment, or willful evasion of loan obligations, the Lender reserves the right to pursue all available legal remedies under Philippine law, including but not limited to the filing of a civil complaint for collection of sum of money under the Rules of Court, referral to the appropriate barangay for conciliation under the Katarungang Pambarangay Law (RA 7160) prior to court action, and other remedies available under RA 9474 (Lending Company Regulation Act of 2007). The Borrower shall be liable for all costs of collection, including reasonable attorney\'s fees, if legal action becomes necessary.' },
+              { term: 'Program Suspension', def: 'The Lender reserves the right to suspend or terminate the Borrower\'s participation in the MoneyfestLending program in cases of fraud, misrepresentation, or repeated non-compliance with these terms.' },
+            ]
+          },
+          {
+            num: '12',
             title: 'Data Privacy',
             content: `Personal information collected during the application process is handled in strict compliance with Republic Act No. 10173 — the Data Privacy Act of 2012. The Borrower's data is used solely for loan processing, identity verification, and internal record-keeping. Full details are available in the MoneyfestLending Privacy Notice at moneyfestlending.online/privacy.`,
             items: null
           },
           {
-            num: '12',
+            num: '13',
             title: 'Truth in Lending Disclosure (RA 3765)',
             content: `In compliance with Republic Act No. 3765 (Truth in Lending Act), MoneyfestLending discloses the following for all loans: the principal amount, the finance charge in peso terms, the flat interest rate of ${flatRate}%, the effective annual interest rate of approximately ${effectiveAnnual}%, the total amount payable, and the full installment schedule. This disclosure is accessible at any time through the Borrower Portal.`,
             items: null
           },
           {
-            num: '13',
+            num: '14',
             title: 'Amendments',
             content: 'MoneyfestLending reserves the right to amend these Terms & Conditions at any time. Any changes will be communicated to active borrowers via the Borrower Portal or email. Continued use of the MoneyfestLending platform after such changes constitutes acceptance of the updated terms.',
             items: null
           },
           {
-            num: '14',
+            num: '15',
             title: 'Governing Law',
-            content: 'These Terms & Conditions shall be governed by and construed in accordance with the laws of the Republic of the Philippines. Any disputes arising from or in connection with these terms shall be settled amicably between the parties, and if unresolved, through the appropriate courts or agencies of the Philippines.',
+            content: 'These Terms & Conditions shall be governed by and construed in accordance with the laws of the Republic of the Philippines. Any disputes arising from or in connection with these terms shall be settled amicably between the parties in accordance with the Katarungang Pambarangay Law (RA 7160) before escalation to formal legal proceedings. If amicable settlement fails, disputes shall be resolved through the appropriate courts or agencies of the Philippines having jurisdiction over the matter.',
             items: null
           },
         ].map((sec, idx) => (
@@ -345,11 +405,15 @@ export default function TermsPage() {
 
       </div>
 
-      {/* Bottom print button — hidden on print */}
-      <div className="no-print" style={{ position: 'fixed', bottom: 24, right: 24, zIndex: 100 }}>
+      {/* Bottom buttons — hidden on print */}
+      <div className="no-print" style={{ position: 'fixed', bottom: 24, right: 24, zIndex: 100, display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <button onClick={handleDownload}
+          style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '11px 20px', borderRadius: 12, background: 'rgba(15,23,42,0.95)', border: '1px solid rgba(59,130,246,0.4)', color: '#60a5fa', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Space Grotesk', backdropFilter: 'blur(8px)' }}>
+          ⬇️ Download
+        </button>
         <button onClick={handlePrint}
-          style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 22px', borderRadius: 12, background: 'linear-gradient(135deg,#22C55E,#16A34A)', border: 'none', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'Space Grotesk', boxShadow: '0 4px 20px rgba(34,197,94,0.4)' }}>
-          🖨️ Print / Download PDF
+          style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '11px 20px', borderRadius: 12, background: 'linear-gradient(135deg,#22C55E,#16A34A)', border: 'none', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Space Grotesk', boxShadow: '0 4px 20px rgba(34,197,94,0.4)' }}>
+          🖨️ Print / PDF
         </button>
       </div>
 
