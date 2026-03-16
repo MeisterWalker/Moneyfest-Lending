@@ -614,9 +614,9 @@ export default function BorrowerPortalPage() {
   }
 
   const generateLoanAgreementPDF = (sigName, sigImage, sigDate) => {
-    const name = sigName || borrower.e_signature_name || borrower.full_name
-    const img = sigImage || borrower.e_signature_image
-    const date = sigDate || borrower.e_signature_date || new Date().toISOString()
+    const name = sigName || loan.e_signature_name || borrower.e_signature_name || borrower.full_name
+    const img = sigImage || loan.e_signature_image || borrower.e_signature_image
+    const date = sigDate || loan.e_signature_date || borrower.e_signature_date || new Date().toISOString()
     const principal = Number(loan.loan_amount)
     const holdAmt = loan.security_hold ? Number(loan.security_hold) : principal * 0.10
     const holdRate = principal > 0 ? ((holdAmt / principal) * 100).toFixed(0) : 10
@@ -625,9 +625,8 @@ export default function BorrowerPortalPage() {
     const perInst = Number(loan.installment_amount)
     const rate = ((loan.interest_rate || 0.07) * 100).toFixed(0)
     const signedDateStr = new Date(date).toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' })
-    const releaseDateStr = loan.release_date ? new Date(loan.release_date).toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' }) : 'TBD'
+    const releaseDateStr = loan.release_date ? (() => { const [y,m,d] = loan.release_date.split('-').map(Number); return new Date(y,m-1,d).toLocaleDateString('en-PH',{year:'numeric',month:'long',day:'numeric'}) })() : 'TBD'
 
-    // Generate payment schedule using same logic as getDueDates()
     const dueDatesForPDF = getDueDates(loan.release_date, loan.payments_made || 0)
     const maturityDate = dueDatesForPDF.length >= 4
       ? dueDatesForPDF[3].date.toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' })
@@ -636,10 +635,16 @@ export default function BorrowerPortalPage() {
       return `<tr style="background:${due.paid ? '#f0fdf4' : i % 2 === 0 ? '#fafafa' : '#fff'}">
         <td style="padding:5px 8px;border:1px solid #e5e7eb;text-align:center;font-weight:600;">${due.num}</td>
         <td style="padding:5px 8px;border:1px solid #e5e7eb;">${due.date.toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' })}</td>
-        <td style="padding:5px 8px;border:1px solid #e5e7eb;text-align:right;font-weight:600;">₱${perInst.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</td>
-        <td style="padding:5px 8px;border:1px solid #e5e7eb;text-align:center;color:${due.paid ? '#16a34a' : '#9CA3AF'}">${due.paid ? '✓ Paid' : 'Pending'}</td>
+        <td style="padding:5px 8px;border:1px solid #e5e7eb;text-align:right;font-weight:600;">&#8369;${perInst.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</td>
+        <td style="padding:5px 8px;border:1px solid #e5e7eb;text-align:center;color:${due.paid ? '#16a34a' : '#9CA3AF'}">${due.paid ? '&#10003; Paid' : 'Pending'}</td>
       </tr>`
     }).join('')
+
+    const refId = `LM-${(borrower.id || '').slice(-6).toUpperCase()}`
+    const borrowerName = borrower.full_name || ''
+    const borrowerDept = borrower.department || 'N/A'
+    const borrowerCode = borrower.access_code || '—'
+    const imgTag = img ? `<img src="${img}" style="height:68px;max-width:240px;display:block;" />` : '<div style="height:68px;"></div>'
 
     const html = `<!DOCTYPE html>
 <html>
@@ -667,7 +672,7 @@ export default function BorrowerPortalPage() {
   .schedule-table td { padding:6px 10px; border:1px solid #E5E7EB; }
   .tc-item { font-size:11.5px; color:#374151; margin-bottom:10px; line-height:1.65; }
   .tc-item strong { color:#111827; }
-  .sig-grid { display:grid; grid-template-columns:1fr 1fr; gap:48px; margin-top:32px; padding-top:0; }
+  .sig-grid { display:grid; grid-template-columns:1fr 1fr; gap:48px; margin-top:32px; }
   .sig-col { display:flex; flex-direction:column; }
   .sig-label { font-size:9.5px; font-weight:700; color:#6B7280; text-transform:uppercase; letter-spacing:1.2px; margin-bottom:12px; }
   .sig-image-box { height:72px; display:flex; align-items:flex-end; margin-bottom:0; }
@@ -680,51 +685,45 @@ export default function BorrowerPortalPage() {
 </head>
 <body>
 
-<!-- ═══ PAGE 1 ═══ -->
+<!-- PAGE 1 -->
 <div class="page">
-
-  <!-- HEADER -->
   <div class="header">
     <div>
       <div class="logo">Moneyfest<span>Lending</span></div>
       <div style="font-size:10.5px;color:#6B7280;margin-top:3px;">Private Lending Program — Loan Agreement</div>
     </div>
     <div class="doc-meta">
-      <div><strong>Ref:</strong> LM-\${borrower.id?.slice(-6).toUpperCase()}</div>
-      <div><strong>Date Signed:</strong> \${signedDateStr}</div>
-      <div><strong>Maturity Date:</strong> <span style="color:#D97706;font-weight:700;">\${maturityDate}</span></div>
+      <div><strong>Ref:</strong> ${refId}</div>
+      <div><strong>Date Signed:</strong> ${signedDateStr}</div>
+      <div><strong>Maturity Date:</strong> <span style="color:#D97706;font-weight:700;">${maturityDate}</span></div>
     </div>
   </div>
 
-  <!-- PARTIES -->
   <div class="two-col">
     <div class="section">
       <div class="section-title">Parties to this Agreement</div>
-      <div class="row"><span class="lbl">Borrower</span><span class="val">\${borrower.full_name}</span></div>
-      <div class="row"><span class="lbl">Department</span><span class="val">\${borrower.department || 'N/A'}</span></div>
-      <div class="row"><span class="lbl">Access Code</span><span class="val">\${borrower.access_code}</span></div>
+      <div class="row"><span class="lbl">Borrower</span><span class="val">${borrowerName}</span></div>
+      <div class="row"><span class="lbl">Department</span><span class="val">${borrowerDept}</span></div>
+      <div class="row"><span class="lbl">Access Code</span><span class="val">${borrowerCode}</span></div>
       <div class="row"><span class="lbl">Lender</span><span class="val">MoneyfestLending</span></div>
-      <div class="row"><span class="lbl">Release Date</span><span class="val">\${releaseDateStr}</span></div>
-      <div class="row"><span class="lbl">Maturity Date</span><span class="val" style="color:#D97706;font-weight:700;">\${maturityDate}</span></div>
+      <div class="row"><span class="lbl">Release Date</span><span class="val">${releaseDateStr}</span></div>
+      <div class="row"><span class="lbl">Maturity Date</span><span class="val" style="color:#D97706;font-weight:700;">${maturityDate}</span></div>
     </div>
-
-    <!-- RA 3765 -->
     <div class="section">
       <div class="section-title">RA 3765 — Truth in Lending Act Disclosure</div>
-      <div class="row"><span class="lbl">Approved Loan Amount</span><span class="val">₱\${principal.toLocaleString('en-PH',{minimumFractionDigits:2})}</span></div>
-      <div class="row"><span class="lbl">Security Hold (\${holdRate}%)</span><span class="val">₱\${holdAmt.toLocaleString('en-PH',{minimumFractionDigits:2})}</span></div>
-      <div class="row"><span class="lbl">Funds Released to Borrower</span><span class="val">₱\${released.toLocaleString('en-PH',{minimumFractionDigits:2})}</span></div>
-      <div class="row"><span class="lbl">Finance Charge (Interest)</span><span class="val">₱\${(total-principal).toLocaleString('en-PH',{minimumFractionDigits:2})}</span></div>
-      <div class="row"><span class="lbl">Flat Interest Rate</span><span class="val">\${rate}% of principal (one-time)</span></div>
-      <div class="row"><span class="lbl">Effective Annual Rate</span><span class="val">\${((total-principal)/principal/2*12*100).toFixed(2)}% per annum</span></div>
-      <div class="row"><span class="lbl">Total Amount Payable</span><span class="val" style="color:#1e1b4b;font-size:13px;">₱\${total.toLocaleString('en-PH',{minimumFractionDigits:2})}</span></div>
-      <div class="row"><span class="lbl">Per Installment Amount</span><span class="val">₱\${perInst.toLocaleString('en-PH',{minimumFractionDigits:2})}</span></div>
+      <div class="row"><span class="lbl">Approved Loan Amount</span><span class="val">&#8369;${principal.toLocaleString('en-PH',{minimumFractionDigits:2})}</span></div>
+      <div class="row"><span class="lbl">Security Hold (${holdRate}%)</span><span class="val">&#8369;${holdAmt.toLocaleString('en-PH',{minimumFractionDigits:2})}</span></div>
+      <div class="row"><span class="lbl">Funds Released to Borrower</span><span class="val">&#8369;${released.toLocaleString('en-PH',{minimumFractionDigits:2})}</span></div>
+      <div class="row"><span class="lbl">Finance Charge (Interest)</span><span class="val">&#8369;${(total-principal).toLocaleString('en-PH',{minimumFractionDigits:2})}</span></div>
+      <div class="row"><span class="lbl">Flat Interest Rate</span><span class="val">${rate}% of principal (one-time)</span></div>
+      <div class="row"><span class="lbl">Effective Annual Rate</span><span class="val">${((total-principal)/principal/2*12*100).toFixed(2)}% per annum</span></div>
+      <div class="row"><span class="lbl">Total Amount Payable</span><span class="val" style="color:#1e1b4b;font-size:13px;">&#8369;${total.toLocaleString('en-PH',{minimumFractionDigits:2})}</span></div>
+      <div class="row"><span class="lbl">Per Installment Amount</span><span class="val">&#8369;${perInst.toLocaleString('en-PH',{minimumFractionDigits:2})}</span></div>
     </div>
   </div>
 
-  <!-- PAYMENT SCHEDULE -->
   <div class="section">
-    <div class="section-title">Payment Schedule & Maturity Date</div>
+    <div class="section-title">Payment Schedule &amp; Maturity Date</div>
     <table class="schedule-table">
       <thead>
         <tr>
@@ -734,68 +733,53 @@ export default function BorrowerPortalPage() {
           <th style="width:22%;text-align:center">Status</th>
         </tr>
       </thead>
-      <tbody>
-        \${scheduleRows}
-      </tbody>
+      <tbody>${scheduleRows}</tbody>
       <tfoot>
         <tr style="background:#1e1b4b;">
-          <td colspan="2" style="padding:7px 10px;border:1px solid #374151;color:#fff;font-weight:700;font-size:11.5px;">📌 Loan Maturity — Final Payment Due</td>
-          <td style="padding:7px 10px;border:1px solid #374151;color:#FCD34D;font-weight:700;text-align:right;">₱\${perInst.toLocaleString('en-PH',{minimumFractionDigits:2})}</td>
-          <td style="padding:7px 10px;border:1px solid #374151;color:#FCD34D;text-align:center;font-weight:700;">\${maturityDate}</td>
+          <td colspan="2" style="padding:7px 10px;border:1px solid #374151;color:#fff;font-weight:700;font-size:11.5px;">Loan Maturity — Final Payment Due</td>
+          <td style="padding:7px 10px;border:1px solid #374151;color:#FCD34D;font-weight:700;text-align:right;">&#8369;${perInst.toLocaleString('en-PH',{minimumFractionDigits:2})}</td>
+          <td style="padding:7px 10px;border:1px solid #374151;color:#FCD34D;text-align:center;font-weight:700;">${maturityDate}</td>
         </tr>
       </tfoot>
     </table>
   </div>
-
 </div>
 
-<!-- ═══ PAGE 2 ═══ -->
+<!-- PAGE 2 -->
 <div class="page-break"></div>
 <div class="page2">
-
-  <!-- Page 2 mini header -->
   <div class="page2-header">
     <div><strong style="color:#1e1b4b;">MoneyfestLending</strong> — Loan Agreement (continued)</div>
-    <div>Ref: LM-\${borrower.id?.slice(-6).toUpperCase()} · \${borrower.full_name}</div>
+    <div>Ref: ${refId} &middot; ${borrowerName}</div>
   </div>
 
-  <!-- TERMS & CONDITIONS — full width -->
   <div class="section">
-    <div class="section-title">Terms & Conditions</div>
-    <p class="tc-item">1. <strong>Interest</strong> — A flat interest rate of \${rate}% is charged on the full approved loan amount. This charge applies regardless of early settlement or prepayment of any installment.</p>
-    <p class="tc-item">2. <strong>Security Hold</strong> — \${holdRate}% of the approved loan amount is withheld upon fund release as a Security Hold. Late payment penalties are automatically deducted from the Security Hold balance. The remaining Security Hold balance is returned to the Borrower's Rebate Credits upon full payment of the 4th installment.</p>
-    <p class="tc-item">3. <strong>Late Payment Penalties</strong> — A penalty of ₱20.00 per calendar day is charged for each day an installment remains unpaid past its due date (5th or 20th of the month). The total penalty per installment is capped at 10% of the installment amount. Each late payment also results in a deduction of 10 points from the Borrower's credit score.</p>
+    <div class="section-title">Terms &amp; Conditions</div>
+    <p class="tc-item">1. <strong>Interest</strong> — A flat interest rate of ${rate}% is charged on the full approved loan amount. This charge applies regardless of early settlement or prepayment of any installment.</p>
+    <p class="tc-item">2. <strong>Security Hold</strong> — ${holdRate}% of the approved loan amount is withheld upon fund release as a Security Hold. Late payment penalties are automatically deducted from the Security Hold balance. The remaining Security Hold balance is returned to the Borrower's Rebate Credits upon full payment of the 4th installment.</p>
+    <p class="tc-item">3. <strong>Late Payment Penalties</strong> — A penalty of &#8369;20.00 per calendar day is charged for each day an installment remains unpaid past its due date (5th or 20th of the month). The total penalty per installment is capped at 10% of the installment amount. Each late payment also results in a deduction of 10 points from the Borrower's credit score.</p>
     <p class="tc-item">4. <strong>Default</strong> — Failure to pay two (2) or more consecutive installments constitutes a loan default. Upon default, the remaining balance becomes immediately due and payable. A credit score deduction of 150 points is applied and the Borrower's account will be flagged as High Risk.</p>
-    <p class="tc-item">5. <strong>Rebate Credits & Early Payment Incentive</strong> — If the Borrower pays the 4th (final) installment at least 1 day before its due date, a fixed rebate of 1% of the original loan amount is credited to their Rebate Credits balance. The rebate rate is fixed at 1% regardless of how many days early payment is made. Rebates are credited automatically by the system.</p>
+    <p class="tc-item">5. <strong>Rebate Credits &amp; Early Payment Incentive</strong> — If the Borrower pays the 4th (final) installment at least 1 day before its due date, a fixed rebate of 1% of the original loan amount is credited to their Rebate Credits balance. The rebate rate is fixed at 1% regardless of how many days early payment is made. Rebates are credited automatically by the system.</p>
     <p class="tc-item">6. <strong>Data Privacy</strong> — The Borrower's personal information is collected and processed solely for the administration of this loan in compliance with Republic Act No. 10173 (Data Privacy Act of 2012). Data will not be shared with third parties without consent except as required by law.</p>
     <p class="tc-item">7. <strong>Governing Law</strong> — This agreement shall be governed by the laws of the Republic of the Philippines. Any dispute arising from this agreement shall be resolved amicably between the parties before any formal legal action is taken.</p>
   </div>
 
-  <!-- SIGNATURES -->
   <div class="section" style="margin-top:32px;">
     <div class="section-title">Electronic Signatures — RA 8792 (E-Commerce Act)</div>
     <p style="font-size:11px;color:#6B7280;margin-bottom:24px;line-height:1.6;">By affixing their electronic signature below, both parties confirm they have read, understood, and agreed to all terms and conditions set forth in this Loan Agreement.</p>
-
     <div class="sig-grid">
-      <!-- Borrower -->
       <div class="sig-col">
         <div class="sig-label">Borrower E-Signature</div>
-        <div class="sig-image-box">
-          \${img ? '<img src="' + img + '" style="height:68px;max-width:240px;display:block;" />' : '<div style="height:68px;"></div>'}
-        </div>
+        <div class="sig-image-box">${imgTag}</div>
         <div class="sig-line"></div>
-        <div class="sig-name">\${name}</div>
-        <div class="sig-sub">\${name}</div>
-        <div class="sig-sub">Signed electronically on \${signedDateStr}</div>
+        <div class="sig-name">${name}</div>
+        <div class="sig-sub">${borrowerName}</div>
+        <div class="sig-sub">Signed electronically on ${signedDateStr}</div>
         <div class="sig-sub" style="margin-top:3px;">Pursuant to RA 8792 — E-Commerce Act of the Philippines</div>
       </div>
-
-      <!-- Admin -->
       <div class="sig-col">
         <div class="sig-label">Admin / Authorized Representative</div>
-        <div class="sig-image-box">
-          <div style="height:68px;"></div>
-        </div>
+        <div class="sig-image-box"><div style="height:68px;"></div></div>
         <div class="sig-line"></div>
         <div style="height:28px;margin-bottom:4px;"></div>
         <div class="sig-sub">MoneyfestLending Administration</div>
@@ -808,18 +792,20 @@ export default function BorrowerPortalPage() {
   <div class="disclaimer">
     This Loan Agreement is executed in compliance with Republic Act No. 3765 (Truth in Lending Act), Republic Act No. 10173 (Data Privacy Act of 2012), and Republic Act No. 8792 (Electronic Commerce Act of 2000). The electronic signature affixed herein constitutes a valid and binding signature under RA 8792 and has the same legal effect as a handwritten signature. This document is private and confidential. MoneyfestLending is a private colleague lending program and is not a bank, quasi-bank, or BSP-supervised financial institution. This document is for the exclusive use of the named parties only.
   </div>
-
 </div>
 </body>
 </html>`
 
-        const win = window.open('', '_blank')
-    if (win) {
-      win.document.write(html)
-      win.document.close()
-      win.focus()
-      setTimeout(() => { win.print(); }, 800)
-    }
+    // Download as HTML file (opens in browser and can be printed/saved as PDF via Ctrl+P)
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '')
+    const safeName = (borrowerName || 'Borrower').replace(/\s+/g, '_')
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `LoanAgreement_${safeName}_${dateStr}.html`
+    a.click()
+    URL.revokeObjectURL(url)
   }
 
   const markAllRead = async () => {
