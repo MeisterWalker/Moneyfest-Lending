@@ -1338,28 +1338,36 @@ export default function BorrowerPortalPage() {
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column' }}>
-              {creditTxns.map((txn, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 18px', borderBottom: i < creditTxns.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <div style={{ width: 36, height: 36, borderRadius: '50%', background: txn.type === 'rebate' ? 'rgba(34,197,94,0.15)' : txn.status === 'pending' ? 'rgba(245,158,11,0.15)' : txn.status === 'rejected' ? 'rgba(239,68,68,0.15)' : 'rgba(59,130,246,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>
-                      {txn.type === 'rebate' ? <img src='/giftbox.png' alt='rebate' style={{ width: 18, height: 18, objectFit: 'contain' }} /> : txn.status === 'pending' ? '⏳' : txn.status === 'rejected' ? '❌' : '💸'}
+              {creditTxns.map((txn, i) => {
+                const isHoldReturn = txn.type === 'rebate' && txn.description && txn.description.toLowerCase().includes('security hold')
+                const isRebate = txn.type === 'rebate' && !isHoldReturn
+                const label = isHoldReturn ? 'Security Hold Returned' : isRebate ? 'Early Payoff Rebate' : 'Withdrawal'
+                const icon = isHoldReturn ? '/padlock.png' : isRebate ? '/giftbox.png' : null
+                const iconBg = isHoldReturn ? 'rgba(245,158,11,0.15)' : isRebate ? 'rgba(34,197,94,0.15)' : txn.status === 'pending' ? 'rgba(245,158,11,0.15)' : txn.status === 'rejected' ? 'rgba(239,68,68,0.15)' : 'rgba(59,130,246,0.15)'
+                const amountColor = isHoldReturn ? '#F59E0B' : isRebate ? '#22C55E' : '#F0F4FF'
+                return (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 18px', borderBottom: i < creditTxns.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <div style={{ width: 36, height: 36, borderRadius: '50%', background: iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>
+                        {icon ? <img src={icon} alt={label} style={{ width: 18, height: 18, objectFit: 'contain' }} /> : txn.status === 'pending' ? '⏳' : txn.status === 'rejected' ? '❌' : '💸'}
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: '#F0F4FF' }}>{label}</div>
+                        <div style={{ fontSize: 11, color: '#4B5580', marginTop: 2 }}>
+                          {new Date(txn.created_at).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}
+                          {txn.status === 'pending' && <span style={{ color: '#F59E0B', marginLeft: 6 }}>· Pending</span>}
+                          {txn.status === 'rejected' && <span style={{ color: '#EF4444', marginLeft: 6 }}>· Rejected</span>}
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: '#F0F4FF' }}>{txn.type === 'rebate' ? 'Early Payoff Rebate' : 'Withdrawal'}</div>
-                      <div style={{ fontSize: 11, color: '#4B5580', marginTop: 2 }}>
-                        {new Date(txn.created_at).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}
-                        {txn.status === 'pending' && <span style={{ color: '#F59E0B', marginLeft: 6 }}>· Pending</span>}
-                        {txn.status === 'rejected' && <span style={{ color: '#EF4444', marginLeft: 6 }}>· Rejected</span>}
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 15, color: amountColor }}>
+                        {txn.type === 'rebate' ? '+' : '-'}₱{Number(txn.amount).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
                       </div>
                     </div>
                   </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 15, color: txn.type === 'rebate' ? '#22C55E' : '#F0F4FF' }}>
-                      {txn.type === 'rebate' ? '+' : '-'}₱{Number(txn.amount).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
-                    </div>
-                  </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           )}
         </div>
