@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { calcSecurityHold, CREDIT_CONFIG } from '../lib/creditSystem'
 import { supabase } from '../lib/supabase'
 import { sendPendingEmail } from '../lib/emailService'
+import { usePageVisit } from '../hooks/usePageVisit'
 
 const DEPARTMENTS = ['Minto Money', 'Greyhound']
 const LOAN_AMOUNTS = [5000, 7000, 9000, 10000]
@@ -21,6 +22,7 @@ function validateEmail(email) {
 }
 
 export default function PublicApplyPage() {
+  usePageVisit('apply')
   const [step, setStep] = useState(1)
   const [submitted, setSubmitted] = useState(false)
   const [accessCode, setAccessCode] = useState('')

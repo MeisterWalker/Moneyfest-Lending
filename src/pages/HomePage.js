@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
+import { usePageVisit } from '../hooks/usePageVisit'
 
 export default function HomePage() {
+  usePageVisit('home')
   const [interestRate, setInterestRate] = useState(0.07)
   const [visible, setVisible] = useState({})
   const sectionRefs = useRef({})
@@ -40,7 +42,7 @@ export default function HomePage() {
     { value: `${(interestRate * 100).toFixed(0)}%`, label: 'Flat interest rate', sub: 'No compounding' },
     { value: '₱10K', label: 'Maximum loan', sub: 'For trusted borrowers' },
     { value: '4', label: 'Easy installments', sub: 'Over 2 months' },
-    { value: '12hrs', label: 'Avg. approval time', sub: 'Fast turnaround' },
+    { value: '48hr', label: 'Avg. approval time', sub: 'Fast turnaround' },
   ]
 
   return (
@@ -391,7 +393,7 @@ export default function HomePage() {
               </p>
               <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
                 {[
-                  { label: 'Pay final installment at least 1 week early', value: '1% back', color: '#22C55E' },
+                  { label: 'Pay final installment at least 1 day early', value: '1% back', color: '#22C55E' },
                 ].map((r, i) => (
                   <div key={i} style={{ padding: '10px 18px', borderRadius: 10, background: 'rgba(255,255,255,0.04)', border: `1px solid ${r.color}33` }}>
                     <div style={{ fontFamily: 'Syne', fontWeight: 900, fontSize: 18, color: r.color }}>{r.value}</div>

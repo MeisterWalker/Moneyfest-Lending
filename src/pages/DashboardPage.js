@@ -14,7 +14,7 @@ import {
   TrendingUp, DollarSign, AlertTriangle, Clock,
   Users, CreditCard, Activity, Percent, CheckCircle,
   ArrowUpRight, ArrowDownRight, Calendar, Banknote,
-  Trophy, ShieldAlert, ChevronRight
+  Trophy, ShieldAlert, ChevronRight, Eye
 } from 'lucide-react'
 
 // ─── Stat Card ────────────────────────────────────────────────
@@ -298,21 +298,32 @@ export default function DashboardPage() {
   const [auditLogs, setAuditLogs] = useState([])
   const [loading, setLoading] = useState(true)
   const [bannerDismissed, setBannerDismissed] = useState(false)
+  const [visitStats, setVisitStats] = useState({ total: 0, today: 0, pages: {} })
   const navigate = useNavigate()
 
   const fetchData = useCallback(async () => {
-    const [{ data: l }, { data: b }, { data: s }, { data: a }, { data: apps }] = await Promise.all([
+    const [{ data: l }, { data: b }, { data: s }, { data: a }, { data: apps }, { data: visits }] = await Promise.all([
       supabase.from('loans').select('*').order('created_at', { ascending: false }),
       supabase.from('borrowers').select('*'),
       supabase.from('settings').select('*').eq('id', 1).single(),
       supabase.from('audit_logs').select('*').order('created_at', { ascending: false }).limit(10),
-      supabase.from('applications').select('id').eq('status', 'Pending')
+      supabase.from('applications').select('id').eq('status', 'Pending'),
+      supabase.from('page_visits').select('page, visited_at')
     ])
     setLoans(l || [])
     setBorrowers(b || [])
     setPendingApps((apps || []).length)
     setSettings(s)
     setAuditLogs(a || [])
+
+    // Compute visitor stats
+    const allVisits = visits || []
+    const todayStr = new Date().toISOString().slice(0, 10)
+    const todayVisits = allVisits.filter(v => v.visited_at?.slice(0, 10) === todayStr)
+    const pages = {}
+    allVisits.forEach(v => { pages[v.page] = (pages[v.page] || 0) + 1 })
+    setVisitStats({ total: allVisits.length, today: todayVisits.length, pages })
+
     setLoading(false)
   }, [])
 
@@ -539,6 +550,61 @@ export default function DashboardPage() {
 
         {/* Top Borrowers Widget */}
         <TopBorrowersWidget borrowers={borrowers} navigate={navigate} />
+      </div>
+
+      {/* Visitor Counter Widget */}
+      <div className="card" style={{ padding: '20px 22px', marginBottom: 24 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
+          <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Eye size={16} color="var(--blue)" /> Public Page Visitors
+          </div>
+          <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>All-time unique sessions</span>
+        </div>
+
+        {/* Summary row */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 12, marginBottom: 20 }}>
+          {[
+            { label: 'Total Visits', value: visitStats.total, color: 'var(--blue)' },
+            { label: 'Today', value: visitStats.today, color: 'var(--green)' },
+            { label: 'Home', value: visitStats.pages['home'] || 0, color: 'var(--purple)' },
+            { label: 'Apply', value: visitStats.pages['apply'] || 0, color: 'var(--teal)' },
+            { label: 'Portal', value: visitStats.pages['portal'] || 0, color: 'var(--gold)' },
+            { label: 'FAQ', value: visitStats.pages['faq'] || 0, color: 'var(--blue)' },
+          ].map(item => (
+            <div key={item.label} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--card-border)', borderRadius: 10, padding: '12px 14px', textAlign: 'center' }}>
+              <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 22, color: item.color, lineHeight: 1 }}>{item.value}</div>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{item.label}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Per-page bar chart */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {[
+            { page: 'home',   label: 'Home Page',       color: 'var(--purple)', icon: '🏠' },
+            { page: 'apply',  label: 'Apply Page',      color: 'var(--teal)',   icon: '📝' },
+            { page: 'portal', label: 'Borrower Portal', color: 'var(--gold)',   icon: '🏦' },
+            { page: 'faq',    label: 'FAQ Page',        color: 'var(--blue)',   icon: '❓' },
+          ].map(({ page, label, color, icon }) => {
+            const count = visitStats.pages[page] || 0
+            const max = Math.max(...Object.values(visitStats.pages), 1)
+            const pct = (count / max) * 100
+            return (
+              <div key={page} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <span style={{ fontSize: 14, flexShrink: 0 }}>{icon}</span>
+                <div style={{ fontSize: 13, color: 'var(--text-label)', minWidth: 110, flexShrink: 0 }}>{label}</div>
+                <div style={{ flex: 1, height: 8, background: 'rgba(255,255,255,0.05)', borderRadius: 4, overflow: 'hidden' }}>
+                  <div style={{ height: '100%', width: `${pct}%`, background: color, borderRadius: 4, transition: 'width 0.5s ease' }} />
+                </div>
+                <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 13, color, minWidth: 32, textAlign: 'right' }}>{count}</div>
+              </div>
+            )
+          })}
+        </div>
+
+        <div style={{ marginTop: 14, fontSize: 12, color: 'var(--text-muted)', borderTop: '1px solid var(--card-border)', paddingTop: 12 }}>
+          📌 Each visit is counted once per browser session per page — refreshing does not inflate the count.
+        </div>
       </div>
 
       {/* Audit History Widget */}

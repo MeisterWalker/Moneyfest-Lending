@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { usePageVisit } from '../hooks/usePageVisit'
 
 function FAQItem({ question, answer, children }) {
   const [open, setOpen] = useState(false)
@@ -30,6 +31,7 @@ const CATEGORIES = [
 ]
 
 export default function FAQPage() {
+  usePageVisit('faq')
   const [activeCategory, setActiveCategory] = useState('eligibility')
   const [interestRate, setInterestRate] = useState(0.07)
 

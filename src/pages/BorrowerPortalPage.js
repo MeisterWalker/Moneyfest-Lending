@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { CREDIT_CONFIG, BADGE_TIERS, SECURITY_HOLD_TIERS, getBadgeConfig, getBadgeFromScore, getSecurityHoldRate } from '../lib/creditSystem'
 import { supabase } from '../lib/supabase'
+import { usePageVisit } from '../hooks/usePageVisit'
 import {
   Lock, CheckCircle, Clock, AlertCircle, Upload,
   FileText, Calendar, CreditCard, ChevronDown, ChevronUp, X
@@ -436,6 +437,7 @@ function SignatureModal({ borrower, loan, onSave, onClose }) {
 
 
 export default function BorrowerPortalPage() {
+  usePageVisit('portal')
   const [code, setCode] = useState('')
   const [inputCode, setInputCode] = useState('')
   const [borrower, setBorrower] = useState(null)
