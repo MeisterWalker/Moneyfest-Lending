@@ -421,7 +421,7 @@ function SignatureModal({ borrower, loan, onSave, onClose }) {
               onClick={handleSave}
               disabled={!nameMatches || signing}
               style={{ width: '100%', padding: '13px', borderRadius: 12, border: 'none', background: nameMatches ? 'linear-gradient(135deg,#3B82F6,#8B5CF6)' : 'rgba(255,255,255,0.06)', color: nameMatches ? '#fff' : '#4B5580', fontSize: 14, fontWeight: 700, cursor: nameMatches ? 'pointer' : 'not-allowed', fontFamily: 'Space Grotesk', transition: 'all 0.2s' }}>
-              {signing ? 'Saving signature...' : '✍️ Sign Loan Agreement'}
+              {signing ? 'Saving signature...' : <><img src='/digital-signature.png' alt='sign' style={{ width: 16, height: 16, objectFit: 'contain' }} /> Sign Loan Agreement</>}
             </button>
 
             <div style={{ fontSize: 11, color: '#4B5580', textAlign: 'center', marginTop: 10, lineHeight: 1.6 }}>
@@ -1620,7 +1620,9 @@ export default function BorrowerPortalPage() {
                   borderRadius: 14, padding: '18px 20px', marginBottom: 16,
                   display: 'flex', alignItems: 'flex-start', gap: 14
                 }}>
-                  <div style={{ width: 40, height: 40, borderRadius: 10, background: 'rgba(99,102,241,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0 }}>✍️</div>
+                  <div style={{ width: 40, height: 40, borderRadius: 10, background: 'rgba(99,102,241,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <img src='/digital-signature.png' alt='sign' style={{ width: 26, height: 26, objectFit: 'contain' }} />
+                  </div>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 15, color: '#F0F4FF', marginBottom: 6 }}>
                       Action Required — Sign Your Loan Agreement
@@ -1637,7 +1639,7 @@ export default function BorrowerPortalPage() {
                         color: '#fff', fontSize: 13, fontWeight: 700,
                         cursor: 'pointer', fontFamily: 'Space Grotesk'
                       }}>
-                      ✍️ Sign Loan Agreement Now
+                      <img src='/digital-signature.png' alt='sign' style={{ width: 16, height: 16, objectFit: 'contain' }} /> Sign Loan Agreement Now
                     </button>
                   </div>
                 </div>
@@ -1825,7 +1827,7 @@ export default function BorrowerPortalPage() {
                     {!loan.e_signature_name ? (
                       <button onClick={() => setShowSignModal(true)}
                         style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '11px', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#6366F1,#8B5CF6)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
-                        ✍️ Sign Loan Agreement
+                        <img src='/digital-signature.png' alt='sign' style={{ width: 16, height: 16, objectFit: 'contain' }} /> Sign Loan Agreement
                       </button>
                     ) : (
                       <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 10 }}>
