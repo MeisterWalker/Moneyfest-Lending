@@ -220,7 +220,11 @@ export default function BorrowersPage() {
       if (editingBorrower.phone !== form.phone) editChanges.push('phone')
       if (editingBorrower.email !== form.email) editChanges.push('email')
       if (editingBorrower.admin_notes !== form.admin_notes) editChanges.push('admin notes')
-      if (String(editingBorrower.loan_limit) !== String(form.loan_limit)) editChanges.push(`loan limit → ₱${parseFloat(form.loan_limit)?.toLocaleString()}`)
+      if (editingBorrower.address !== form.address) editChanges.push('address')
+      if (editingBorrower.tenure_years !== form.tenure_years) editChanges.push('tenure')
+      if (form.loan_limit && !isNaN(parseFloat(form.loan_limit)) &&
+          String(editingBorrower.loan_limit) !== String(form.loan_limit))
+        editChanges.push(`loan limit → ₱${parseFloat(form.loan_limit).toLocaleString()}`)
       const changeDesc = editChanges.length > 0 ? ` (changed: ${editChanges.join(', ')})` : ''
       await logAudit({ action_type: 'BORROWER_EDITED', module: 'Borrower', description: `Borrower profile updated: ${form.full_name}${changeDesc}`, changed_by: user?.email })
       toast(`${form.full_name} updated successfully`, 'success')
