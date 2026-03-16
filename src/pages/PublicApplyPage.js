@@ -28,6 +28,7 @@ export default function PublicApplyPage() {
   const [error, setError] = useState('')
   const [showDisclaimer, setShowDisclaimer] = useState(false)
   const [showTnC, setShowTnC] = useState(false)
+  const [tncScrolled, setTncScrolled] = useState(false)
   const [disclaimerCountdown, setDisclaimerCountdown] = useState(4)
   const [pendingAmount, setPendingAmount] = useState(null)
   const [interestRate, setInterestRate] = useState(0.07)
@@ -323,61 +324,42 @@ export default function PublicApplyPage() {
               </div>
               <button onClick={() => setShowTnC(false)} style={{ width: 30, height: 30, borderRadius: '50%', border: 'none', background: 'rgba(255,255,255,0.07)', color: '#7A8AAA', fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
             </div>
+
+            {/* Scroll hint */}
+            {!tncScrolled && (
+              <div style={{ padding: '8px 28px', background: 'rgba(99,102,241,0.08)', borderBottom: '1px solid rgba(99,102,241,0.15)', fontSize: 12, color: '#7A8AAA', display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                <span style={{ fontSize: 14 }}>👇</span> Please scroll to the bottom to enable the agree button
+              </div>
+            )}
+            {tncScrolled && (
+              <div style={{ padding: '8px 28px', background: 'rgba(34,197,94,0.06)', borderBottom: '1px solid rgba(34,197,94,0.15)', fontSize: 12, color: '#22C55E', display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                <span>✅</span> You've read the terms — you can now agree below
+              </div>
+            )}
+
             {/* Scrollable content */}
-            <div style={{ padding: '24px 28px', overflowY: 'auto', flex: 1, lineHeight: 1.85, fontSize: 13, color: '#8892B0' }}>
+            <div
+              style={{ padding: '24px 28px', overflowY: 'auto', flex: 1, lineHeight: 1.85, fontSize: 13, color: '#8892B0' }}
+              onScroll={e => {
+                const el = e.target
+                const nearBottom = el.scrollHeight - el.scrollTop <= el.clientHeight + 40
+                if (nearBottom) setTncScrolled(true)
+              }}
+            >
               {[
-                {
-                  title: '1. Eligibility',
-                  body: 'This lending program is exclusively available to active team members in good standing within our office. By submitting an application, you confirm that you are currently employed and eligible to participate. Applications from ineligible individuals will not be processed.'
-                },
-                {
-                  title: '2. Loan Terms & Interest',
-                  body: `Approved loans are subject to a flat interest rate of ${(interestRate * 100).toFixed(0)}% applied once to the principal amount. This is not a compounding rate. The total repayable amount is fixed at the time of approval and will not change provided payments are made on schedule.`
-                },
-                {
-                  title: '3. Repayment Schedule',
-                  body: 'Loans are repaid in 4 equal installments, collected every 5th and 20th of the month. Your repayment schedule begins on the cutoff date following your loan release. It is your responsibility to ensure payments are submitted on time.'
-                },
-                {
-                  title: '4. Late Payments & Default',
-                  body: 'A late payment penalty of ₱20 per day will be charged for each installment not paid by its due date (the 5th or 20th of the month). The penalty is capped at 20% of the installment amount — for example, a ₱1,337.50 installment has a maximum penalty of ₱267.50 regardless of how many days late. In addition, late payments result in a -10 point deduction to your credit score per missed installment, compared to the +15 points earned for on-time payment. Consistent non-payment may result in your loan being marked as defaulted, which will affect your eligibility for future loans. The program administrators reserve the right to pursue collection through legal means in the event of loan default.'
-                },
-                {
-                  title: '5. Early Payoff Rebate',
-                  body: 'If your final (4th) installment is paid 7 to 13 days before its due date, you will receive a 1% rebate on your loan principal, credited to your Rebate Credits balance. If paid 14 or more days early, the rebate is 1.5%. Rebates apply to the final installment only and are credited automatically. Rebate Credits are withdrawable once your balance reaches ₱500, subject to admin approval.'
-                },
-                {
-                  title: '6. Accuracy of Information',
-                  body: 'By submitting an application, you confirm that all information provided — including personal details, employment information, and government-issued ID — is accurate, complete, and truthful. Providing false or misleading information is grounds for immediate rejection or cancellation of your loan.'
-                },
-                {
-                  title: '7. Authorization',
-                  body: 'You authorize MoneyfestLending administrators to verify your submitted information, and process your personal data in accordance with our Privacy Notice and the Data Privacy Act of 2012 (RA 10173).'
-                },
-                {
-                  title: '8. ID Verification',
-                  body: "A valid government-issued ID is required for all applications. Accepted IDs include SSS, GSIS, PhilHealth, Pag-IBIG, Passport, Driver's License, Postal ID, Voter's ID, PRC ID, and Senior Citizen ID. Your ID images are stored securely and handled in accordance with our Privacy Notice."
-                },
-                {
-                  title: '9. Security Hold',
-                  body: 'To protect the program and ensure commitment from borrowers, a Security Hold is withheld from your approved loan amount upon release. The rate depends on your credit score: VIP (1000) pays 5%, Reliable (920+) pays 6%, Trusted (835+) pays 8%, Standard (750+) pays 10%, Caution (500+) pays 15%, and High Risk (below 500) pays 20%. For example, a standard borrower on a ₱5,000 loan receives ₱4,500 and ₱500 is held. Interest is charged on the full approved amount. The Security Hold is automatically returned to your Rebate Credits balance after your 4th and final installment is paid. It is not a deposit, not savings, and not collateral — it is a contractual security condition of the loan.'
-                },
-                {
-                  title: '13. Loan Limit & Level System',
-                  body: 'All first-time borrowers are approved at a maximum of ₱5,000 regardless of the amount requested. Subsequent loan limits increase based on your repayment history through our Level Attainment System. The program administrators reserve the right to adjust loan limits at their discretion.'
-                },
-                {
-                  title: '13. Program Rules',
-                  body: 'Only one active loan is permitted per borrower at a time. New applications will not be processed while an existing loan is outstanding. The program administrators reserve the right to reject any application without disclosure of specific reasons.'
-                },
-                {
-                  title: '13. Amendments',
-                  body: 'MoneyfestLending reserves the right to amend these Terms & Conditions at any time. Continued use of the program constitutes acceptance of any updated terms. Borrowers will be notified of significant changes where possible.'
-                },
-                {
-                  title: '13. Governing Law',
-                  body: 'These Terms & Conditions are governed by the laws of the Republic of the Philippines, including but not limited to Republic Act 3765 (Truth in Lending Act), Republic Act 10173 (Data Privacy Act of 2012), and Republic Act 9474 (Lending Company Regulation Act of 2007).'
-                },
+                { title: '1. Eligibility', body: 'This lending program is exclusively available to active team members in good standing within our office. By submitting an application, you confirm that you are currently employed and eligible to participate. Applications from ineligible individuals will not be processed.' },
+                { title: '2. Loan Terms & Interest', body: `Approved loans are subject to a flat interest rate of ${(interestRate * 100).toFixed(0)}% applied once to the principal amount. This is not a compounding rate. The total repayable amount is fixed at the time of approval and will not change provided payments are made on schedule.` },
+                { title: '3. Repayment Schedule', body: 'Loans are repaid in 4 equal installments, collected every 5th and 20th of the month. Your repayment schedule begins on the cutoff date following your loan release. It is your responsibility to ensure payments are submitted on time.' },
+                { title: '4. Late Payments & Default', body: 'A late payment penalty of ₱20 per day will be charged for each installment not paid by its due date. The penalty is capped at 20% of the installment amount. Late payments result in a -10 point deduction to your credit score per missed installment. Consistent non-payment may result in your loan being marked as defaulted, which will affect your eligibility for future loans.' },
+                { title: '5. Early Payoff Rebate', body: 'If your final (4th) installment is paid at least 1 day before its due date, you will receive a fixed 1% rebate on your loan principal, credited to your Rebate Credits balance. Rebates apply to the final installment only and are credited automatically. Rebate Credits are withdrawable once your balance reaches ₱500, subject to admin approval.' },
+                { title: '6. Accuracy of Information', body: 'By submitting an application, you confirm that all information provided — including personal details, employment information, and government-issued ID — is accurate, complete, and truthful. Providing false or misleading information is grounds for immediate rejection or cancellation of your loan.' },
+                { title: '7. Authorization', body: 'You authorize MoneyfestLending administrators to verify your submitted information, and process your personal data in accordance with our Privacy Notice and the Data Privacy Act of 2012 (RA 10173).' },
+                { title: '8. ID Verification', body: "A valid government-issued ID is required for all applications. Accepted IDs include SSS, GSIS, PhilHealth, Pag-IBIG, Passport, Driver's License, Postal ID, Voter's ID, PRC ID, and Senior Citizen ID. Your ID images are stored securely and handled in accordance with our Privacy Notice." },
+                { title: '9. Security Hold', body: 'A Security Hold is withheld from your approved loan amount upon release. The rate depends on your credit score: VIP (1000) pays 5%, Reliable (920+) pays 6%, Trusted (835+) pays 8%, Standard (750+) pays 10%, Caution (500+) pays 15%, and High Risk (below 500) pays 20%. The Security Hold is automatically returned to your Rebate Credits balance after your 4th and final installment is paid.' },
+                { title: '10. Loan Limit & Level System', body: 'All first-time borrowers are approved at a maximum of ₱5,000 regardless of the amount requested. Subsequent loan limits increase based on your repayment history through our Level Attainment System. The program administrators reserve the right to adjust loan limits at their discretion.' },
+                { title: '11. Program Rules', body: 'Only one active loan is permitted per borrower at a time. New applications will not be processed while an existing loan is outstanding. The program administrators reserve the right to reject any application without disclosure of specific reasons.' },
+                { title: '12. Amendments', body: 'MoneyfestLending reserves the right to amend these Terms & Conditions at any time. Continued use of the program constitutes acceptance of any updated terms. Borrowers will be notified of significant changes where possible.' },
+                { title: '13. Governing Law', body: 'These Terms & Conditions are governed by the laws of the Republic of the Philippines, including but not limited to Republic Act 3765 (Truth in Lending Act), Republic Act 10173 (Data Privacy Act of 2012), and Republic Act 9474 (Lending Company Regulation Act of 2007).' },
               ].map((sec, i) => (
                 <div key={i} style={{ marginBottom: 20 }}>
                   <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 13, color: '#CBD5F0', marginBottom: 6 }}>{sec.title}</div>
@@ -388,11 +370,22 @@ export default function PublicApplyPage() {
                 These Terms & Conditions are issued in compliance with Philippine law. For data privacy concerns, refer to our <a href="/privacy" target="_blank" rel="noreferrer" style={{ color: '#60A5FA', textDecoration: 'none' }}>Privacy Notice</a>.
               </div>
             </div>
+
             {/* Footer */}
             <div style={{ padding: '16px 28px', borderTop: '1px solid rgba(255,255,255,0.07)', display: 'flex', gap: 10, flexShrink: 0 }}>
-              <button onClick={() => { set('agreed', true); setShowTnC(false) }}
-                style={{ flex: 1, padding: '12px', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#6366F1,#8B5CF6)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Space Grotesk' }}>
-                ✓ I Agree & Close
+              <button
+                disabled={!tncScrolled}
+                onClick={() => { set('agreed', true); setShowTnC(false) }}
+                style={{
+                  flex: 1, padding: '12px', borderRadius: 10, border: 'none',
+                  background: tncScrolled ? 'linear-gradient(135deg,#6366F1,#8B5CF6)' : 'rgba(255,255,255,0.05)',
+                  color: tncScrolled ? '#fff' : '#4B5580',
+                  fontSize: 13, fontWeight: 700,
+                  cursor: tncScrolled ? 'pointer' : 'not-allowed',
+                  fontFamily: 'Space Grotesk',
+                  transition: 'all 0.2s ease'
+                }}>
+                {tncScrolled ? '✓ I Agree & Close' : '🔒 Scroll to bottom to agree'}
               </button>
               <button onClick={() => setShowTnC(false)}
                 style={{ padding: '12px 20px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#7A8AAA', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
@@ -759,9 +752,23 @@ export default function PublicApplyPage() {
               {/* Terms + Submit */}
               <div style={{ background: '#141B2D', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 18, padding: 24 }}>
 
-                <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer', marginBottom: 14 }}>
-                  <input type="checkbox" checked={form.agreed} onChange={e => set('agreed', e.target.checked)} style={{ marginTop: 2, width: 16, height: 16, accentColor: '#3B82F6', flexShrink: 0 }} />
-                  <span style={{ fontSize: 13, color: '#7A8AAA', lineHeight: 1.6 }}>I have read and agree to the <button onClick={() => setShowTnC(true)} style={{ background: 'none', border: 'none', padding: 0, color: '#F0F4FF', fontWeight: 700, textDecoration: 'underline', cursor: 'pointer', fontSize: 13 }}>Terms & Conditions</button> and the <a href='/privacy' target='_blank' rel='noreferrer' style={{ color: '#60A5FA', textDecoration: 'none', fontWeight: 600 }}>Privacy Notice</a>.</span>
+                <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer', marginBottom: 14 }}
+                  onClick={e => { e.preventDefault(); if (!form.agreed) { setTncScrolled(false); setShowTnC(true) } else { set('agreed', false) } }}>
+                  <div style={{
+                    marginTop: 2, width: 16, height: 16, borderRadius: 4, flexShrink: 0,
+                    border: `2px solid ${form.agreed ? '#3B82F6' : 'rgba(255,255,255,0.2)'}`,
+                    background: form.agreed ? '#3B82F6' : 'transparent',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    transition: 'all 0.15s ease'
+                  }}>
+                    {form.agreed && <span style={{ color: '#fff', fontSize: 10, fontWeight: 800, lineHeight: 1 }}>✓</span>}
+                  </div>
+                  <span style={{ fontSize: 13, color: '#7A8AAA', lineHeight: 1.6 }}>
+                    I have read and agree to the{' '}
+                    <span style={{ color: '#F0F4FF', fontWeight: 700, textDecoration: 'underline', cursor: 'pointer' }}>Terms & Conditions</span>
+                    {' '}and the{' '}
+                    <a href='/privacy' target='_blank' rel='noreferrer' style={{ color: '#60A5FA', textDecoration: 'none', fontWeight: 600 }} onClick={e => e.stopPropagation()}>Privacy Notice</a>.
+                  </span>
                 </label>
                 {error && (
                   <div style={{ padding: '10px 14px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, fontSize: 13, color: '#EF4444', marginBottom: 14 }}><span style={{ display: "flex", alignItems: "center", gap: 4 }}><img src="/warning.png" alt="warning" style={{ width: 13, height: 13, objectFit: "contain" }} />{error}</span></div>
