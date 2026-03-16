@@ -592,12 +592,20 @@ export default function BorrowerPortalPage() {
   }
 
   const handleSaveSignature = async ({ typedName, signatureImage, signedAt }) => {
-    // Store signature in borrowers table
+    // Store signature on the LOAN record (not borrower) so each loan has its own fresh signature
+    await supabase.from('loans').update({
+      e_signature_name: typedName,
+      e_signature_image: signatureImage,
+      e_signature_date: signedAt,
+      agreement_confirmed: true
+    }).eq('id', loan.id)
+    // Also keep on borrower for PDF generation reference
     await supabase.from('borrowers').update({
       e_signature_name: typedName,
       e_signature_image: signatureImage,
       e_signature_date: signedAt
     }).eq('id', borrower.id)
+    setLoan(prev => ({ ...prev, e_signature_name: typedName, e_signature_image: signatureImage, e_signature_date: signedAt, agreement_confirmed: true }))
     setBorrower(prev => ({ ...prev, e_signature_name: typedName, e_signature_image: signatureImage, e_signature_date: signedAt }))
     setSignatureSaved(true)
     setShowSignModal(false)
@@ -1761,7 +1769,7 @@ export default function BorrowerPortalPage() {
                   </div>
                   {/* Sign & Download buttons */}
                   <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
-                    {!borrower.e_signature_name ? (
+                    {!loan.e_signature_name ? (
                       <button onClick={() => setShowSignModal(true)}
                         style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '11px', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#6366F1,#8B5CF6)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
                         ✍️ Sign Loan Agreement
@@ -1770,8 +1778,8 @@ export default function BorrowerPortalPage() {
                       <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 10 }}>
                         <span style={{ fontSize: 14 }}>✅</span>
                         <div>
-                          <div style={{ fontSize: 12, fontWeight: 700, color: '#22C55E' }}>Signed by {borrower.e_signature_name}</div>
-                          <div style={{ fontSize: 10, color: '#4B5580' }}>{borrower.e_signature_date ? new Date(borrower.e_signature_date).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' }) : ''}</div>
+                          <div style={{ fontSize: 12, fontWeight: 700, color: '#22C55E' }}>Signed by {loan.e_signature_name}</div>
+                          <div style={{ fontSize: 10, color: '#4B5580' }}>{loan.e_signature_date ? new Date(loan.e_signature_date).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' }) : ''}</div>
                         </div>
                       </div>
                     )}
