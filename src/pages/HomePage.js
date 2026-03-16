@@ -356,7 +356,7 @@ export default function HomePage() {
             <div style={{ position: 'absolute', top: 36, left: '12.5%', right: '12.5%', height: 1, background: 'linear-gradient(90deg,transparent,rgba(99,102,241,0.3),rgba(139,92,246,0.3),transparent)', pointerEvents: 'none' }} />
             {[
               { step: '01', icon: '/list.png', title: 'Fill the form', desc: 'Enter your details, upload a valid ID, and choose your loan amount.' },
-              { step: '02', icon: '/summary-check.png', title: 'Admin reviews', desc: 'Our team checks your application — usually within 48 hours.' },
+              { step: '02', icon: '/summary-check.png', title: 'Admin reviews', desc: 'Our team checks your application — usually within 12 hours.' },
               { step: '03', icon: '/payment-method.png', title: 'Funds released', desc: 'Once approved, funds are released on the next cutoff date.' },
               { step: '04', icon: '/calendar.png', title: 'Pay in 4 cuts', desc: 'Pay every 5th and 20th. Pay early on your last and earn Rebate Credits!' },
             ].map((s, i) => (
