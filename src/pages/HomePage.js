@@ -391,7 +391,7 @@ export default function HomePage() {
               </p>
               <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
                 {[
-                  { label: 'Pay final installment at least 1 day early', value: '1% back', color: '#22C55E' },
+                  { label: 'Pay final installment at least 1 week early', value: '1% back', color: '#22C55E' },
                 ].map((r, i) => (
                   <div key={i} style={{ padding: '10px 18px', borderRadius: 10, background: 'rgba(255,255,255,0.04)', border: `1px solid ${r.color}33` }}>
                     <div style={{ fontFamily: 'Syne', fontWeight: 900, fontSize: 18, color: r.color }}>{r.value}</div>
