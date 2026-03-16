@@ -99,7 +99,7 @@ export default function FAQPage() {
           </div>
         </div>
       )},
-      { q: 'What happens if I miss a payment?', a: 'A late penalty of ₱20 per day is charged starting the day after the due date (5th or 20th of the month). The penalty is capped at 10% of your installment amount. Late penalties are automatically deducted from your Security Hold balance. Late payments also deduct 10 points from your credit score. The Security Hold returned at the end of your loan will reflect any penalty deductions. Consistent non-payment may result in your loan being flagged as defaulted.' },
+      { q: 'What happens if I miss a payment?', a: 'A late penalty of ₱20 per day is charged starting the day after the due date (5th or 20th of the month). The penalty accrues daily with no cap until the installment is fully settled. Late penalties are automatically deducted from your Security Hold balance. Late payments also deduct 10 points from your credit score. The Security Hold returned at the end of your loan will reflect any penalty deductions. Consistent non-payment may result in your loan being flagged as defaulted.' },
       { q: 'Can I earn rewards for paying early?', a: 'Yes! Pay your final (4th) installment even 1 day early and earn a fixed 1% rebate on your original loan amount. For example on a ₱5,000 loan that is ₱50 credited to your Rebate Credits. The 1% rate is fixed regardless of how many days early you pay. The rebate only applies to the last installment and is automatically credited when the admin records your payment.' },
     ],
     release: [

@@ -217,12 +217,11 @@ function LoanCard({ loan, borrowers, onEdit, onDelete, onRecordPayment, onDefaul
           const dueDateP = new Date(nextDue); dueDateP.setHours(0,0,0,0)
           const daysLateP = Math.max(0, Math.ceil((todayP - dueDateP) / (1000 * 60 * 60 * 24)))
           if (daysLateP <= 0) return null
-          const cap = loan.installment_amount * 0.20
-          const penalty = Math.min(daysLateP * 20, cap)
+          const penalty = daysLateP * 20
           return (
             <div style={{ marginTop: 10, padding: '10px 14px', background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, fontSize: 12, color: 'var(--red)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
               <span><AlertTriangle size={12} style={{ display: 'inline', marginRight: 6 }} />Installment {loan.payments_made + 1} is <strong>{daysLateP} day{daysLateP > 1 ? 's' : ''} overdue</strong></span>
-              <span style={{ fontFamily: 'Space Grotesk', fontWeight: 700 }}>Accrued penalty: ₱{penalty.toLocaleString('en-PH', { minimumFractionDigits: 2 })}{penalty === cap ? ' (capped)' : ''}</span>
+              <span style={{ fontFamily: 'Space Grotesk', fontWeight: 700 }}>Accrued penalty: ₱{penalty.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
             </div>
           )
         })()}
@@ -476,22 +475,18 @@ export default function LoansPage() {
     // ── Penalty calculation ─────────────────────────────────────
     const borrower = borrowers.find(b => b.id === loan.borrower_id)
     const PENALTY_PER_DAY = 20
-    const PENALTY_CAP_RATE = 0.20
     let penaltyAmount = 0
     let daysLate = 0
 
-    // Use shared installment date helper — loan.payments_made is the index of the installment just paid
     if (loan.release_date) {
       const allDates = getInstallmentDates(loan.release_date)
-      const dueDate = allDates[loan.payments_made] // payments_made is pre-increment index
+      const dueDate = allDates[loan.payments_made]
       if (dueDate) {
         const today2 = new Date(); today2.setHours(0,0,0,0)
         dueDate.setHours(0,0,0,0)
         daysLate = Math.max(0, Math.ceil((today2 - dueDate) / (1000 * 60 * 60 * 24)))
         if (daysLate > 0) {
-          const cap = loan.installment_amount * PENALTY_CAP_RATE
-          penaltyAmount = Math.min(daysLate * PENALTY_PER_DAY, cap)
-          penaltyAmount = parseFloat(penaltyAmount.toFixed(2))
+          penaltyAmount = parseFloat((daysLate * PENALTY_PER_DAY).toFixed(2))
         }
       }
     }
@@ -505,7 +500,7 @@ export default function LoansPage() {
         days_late: daysLate,
         penalty_per_day: PENALTY_PER_DAY,
         penalty_amount: penaltyAmount,
-        cap_applied: penaltyAmount < (daysLate * PENALTY_PER_DAY),
+        cap_applied: false,
         created_at: new Date().toISOString()
       })
 
