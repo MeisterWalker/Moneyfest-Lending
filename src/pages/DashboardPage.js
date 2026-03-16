@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
-import { CREDIT_CONFIG } from '../lib/creditSystem'
+import { CREDIT_CONFIG, getBadgeFromScore } from '../lib/creditSystem'
 import { logAudit, formatCurrency, formatDate } from '../lib/helpers'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { useToast } from '../components/Toast'
 import { ClipboardList } from 'lucide-react'
 import {
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
@@ -289,6 +290,7 @@ function CustomTooltip({ active, payload, label, prefix = "₱" }) {
 // ─── Main Dashboard ───────────────────────────────────────────
 export default function DashboardPage() {
   const { user } = useAuth()
+  const { toast } = useToast()
   const [loans, setLoans] = useState([])
   const [pendingApps, setPendingApps] = useState(0)
   const [borrowers, setBorrowers] = useState([])
@@ -316,23 +318,12 @@ export default function DashboardPage() {
 
   useEffect(() => { fetchData() }, [fetchData])
 
-  const handleMarkPaid = async (loan) => {
-    const newPaid = loan.payments_made + 1
-    const newBalance = Math.max(0, loan.remaining_balance - loan.installment_amount)
-    const newStatus = newPaid >= 4 ? 'Paid' : 'Partially Paid'
-    await supabase.from('loans').update({ payments_made: newPaid, remaining_balance: newBalance, status: newStatus }).eq('id', loan.id)
-    const b = borrowers.find(x => x.id === loan.borrower_id)
-    if (b) {
-      const newScore = Math.min(CREDIT_CONFIG.MAX_SCORE, b.credit_score + CREDIT_CONFIG.ON_TIME_PAYMENT)
-      await supabase.from('borrowers').update({ credit_score: newScore, risk_score: CREDIT_CONFIG.riskFromScore(newScore) }).eq('id', b.id)
-    }
-    await logAudit({
-      action_type: 'INSTALLMENT_PAID',
-      module: 'Loan',
-      description: `Installment ${newPaid} of 4 recorded via Dashboard for ${b?.full_name || 'Unknown'} — ₱${loan.installment_amount?.toLocaleString('en-PH', { minimumFractionDigits: 2 })}`,
-      changed_by: user?.email
-    })
-    fetchData()
+  // Redirect to Loans page to record payment — avoids duplicating the full
+  // payment logic (penalty check, credit score, loan limit upgrade, security hold,
+  // rebate credits) that already lives in LoansPage.handleRecordPayment.
+  const handleMarkPaid = (loan) => {
+    toast('Recording payment — redirecting to Loans page for full processing.', 'info')
+    navigate('/admin/loans')
   }
 
   // ── Computed stats ──────────────────────────────────────────

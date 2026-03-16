@@ -1,5 +1,9 @@
 const APP_NAME = 'MoneyfestLending'
 
+// Portal URL — pulled from env so it works on Vercel and on custom domain
+// Set REACT_APP_PORTAL_URL in .env.local or Vercel environment variables
+const PORTAL_URL = process.env.REACT_APP_PORTAL_URL || 'https://loanmoneyfest.vercel.app/portal'
+
 function generateReminderHTML({ borrowerName, installmentNum, amount, dueDate, loanAmount, remainingBalance, daysUntilDue, customMessages, customFooter }) {
   const urgencyColor = daysUntilDue === 0 ? '#EF4444' : daysUntilDue === 1 ? '#F59E0B' : '#3B82F6'
   const urgencyLabel = daysUntilDue === 0 ? 'DUE TODAY' : daysUntilDue === 1 ? 'DUE TOMORROW' : `DUE IN ${daysUntilDue} DAYS`
@@ -351,7 +355,7 @@ function generateApprovalHTML({ borrowerName, accessCode, loanAmount, releaseDat
 
 export async function sendApprovalEmail({ to, borrowerName, accessCode, loanAmount, releaseDate, installmentAmount, totalRepayment }) {
   if (!to || !to.includes('@')) return { success: false, error: 'Invalid email' }
-  const portalUrl = 'https://moneyfestlending.online/portal'
+  const portalUrl = PORTAL_URL
   try {
     const SUPABASE_URL = 'https://swwedyfgbqhtavxmbmhv.supabase.co'
     const SUPABASE_ANON_KEY = process.env.REACT_APP_SUPABASE_ANON_KEY
@@ -375,7 +379,7 @@ export async function sendApprovalEmail({ to, borrowerName, accessCode, loanAmou
 
 export async function sendPendingEmail({ to, borrowerName, accessCode, loanAmount }) {
   if (!to || !to.includes('@')) return { success: false, error: 'Invalid email' }
-  const portalUrl = 'https://moneyfestlending.online/portal'
+  const portalUrl = PORTAL_URL
   const html = `
 <!DOCTYPE html>
 <html lang="en">

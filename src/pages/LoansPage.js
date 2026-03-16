@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { CREDIT_CONFIG, getBadgeFromScore, getBadgeFromCleanLoans, calcSecurityHold, getSecurityHoldRate } from '../lib/creditSystem'
-import { logAudit, formatCurrency, formatDate } from '../lib/helpers'
+import { logAudit, formatCurrency, formatDate, getInstallmentDates } from '../lib/helpers'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../components/Toast'
 import LoanModal from '../components/LoanModal'
@@ -142,23 +142,14 @@ function StatusBadge({ status }) {
   )
 }
 
-function LoanCard({ loan, borrowers, onEdit, onDelete, onRecordPayment, onDefault, onRenew, onStatusUpdate }) {
+function LoanCard({ loan, borrowers, onEdit, onDelete, onRecordPayment, onDefault, onRenew }) {
   const [expanded, setExpanded] = useState(false)
   const [confirming, setConfirming] = useState(false)
   const borrower = borrowers.find(b => b.id === loan.borrower_id)
   const today = new Date()
   today.setHours(0, 0, 0, 0)
 
-  // Check and update status based on release date
-  useEffect(() => {
-    if (loan.status === 'Pending') {
-      const releaseDate = new Date(loan.release_date)
-      releaseDate.setHours(0, 0, 0, 0)
-      if (today >= releaseDate) {
-        onStatusUpdate(loan.id, 'Active')
-      }
-    }
-  }, [loan.id, loan.status, loan.release_date])
+
 
   const nextInstallment = loan.payments_made + 1
   const canPay = loan.status === 'Active' || loan.status === 'Partially Paid'
@@ -167,19 +158,9 @@ function LoanCard({ loan, borrowers, onEdit, onDelete, onRecordPayment, onDefaul
     ? Math.ceil((new Date(loan.release_date) - today) / (1000 * 60 * 60 * 24))
     : null
 
-  // Get next installment due date
-  const getNextInstallmentDue = () => {
-    if (!loan.release_date) return null
-    const release = new Date(loan.release_date)
-    const installmentNum = loan.payments_made
-    let date = new Date(release)
-    for (let i = 0; i <= installmentNum; i++) {
-      if (date.getDate() === 5) date = new Date(date.getFullYear(), date.getMonth(), 20)
-      else date = new Date(date.getFullYear(), date.getMonth() + 1, 5)
-    }
-    return date
-  }
-  const nextDue = getNextInstallmentDue()
+  // Get next installment due date using shared helper
+  const allDates = getInstallmentDates(loan.release_date)
+  const nextDue = allDates[loan.payments_made] || null
 
   return (
     <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
@@ -371,6 +352,21 @@ export default function LoansPage() {
       supabase.from('borrowers').select('*'),
       supabase.from('settings').select('*').eq('id', 1).single()
     ])
+    // Auto-activate Pending loans whose release date has passed — run once on load,
+    // not on every card render
+    const today = new Date(); today.setHours(0, 0, 0, 0)
+    const toActivate = (l || []).filter(loan => {
+      if (loan.status !== 'Pending' || !loan.release_date) return false
+      const release = new Date(loan.release_date); release.setHours(0, 0, 0, 0)
+      return today >= release
+    })
+    if (toActivate.length > 0) {
+      await Promise.all(toActivate.map(loan =>
+        supabase.from('loans').update({ status: 'Active' }).eq('id', loan.id)
+      ))
+      // Reflect in local state immediately
+      toActivate.forEach(loan => { loan.status = 'Active' })
+    }
     setLoans(l || [])
     setBorrowers(b || [])
     setSettings(s)
@@ -453,22 +449,19 @@ export default function LoansPage() {
     let penaltyAmount = 0
     let daysLate = 0
 
-    // Recalculate next due date here (can't use LoanCard's nextDue — different scope)
+    // Use shared installment date helper — loan.payments_made is the index of the installment just paid
     if (loan.release_date) {
-      const release = new Date(loan.release_date)
-      const installmentNum = loan.payments_made // current installment being paid
-      let dueDate = new Date(release)
-      for (let i = 0; i <= installmentNum; i++) {
-        if (dueDate.getDate() === 5) dueDate = new Date(dueDate.getFullYear(), dueDate.getMonth(), 20)
-        else dueDate = new Date(dueDate.getFullYear(), dueDate.getMonth() + 1, 5)
-      }
-      const today2 = new Date(); today2.setHours(0,0,0,0)
-      dueDate.setHours(0,0,0,0)
-      daysLate = Math.max(0, Math.ceil((today2 - dueDate) / (1000 * 60 * 60 * 24)))
-      if (daysLate > 0) {
-        const cap = loan.installment_amount * PENALTY_CAP_RATE
-        penaltyAmount = Math.min(daysLate * PENALTY_PER_DAY, cap)
-        penaltyAmount = parseFloat(penaltyAmount.toFixed(2))
+      const allDates = getInstallmentDates(loan.release_date)
+      const dueDate = allDates[loan.payments_made] // payments_made is pre-increment index
+      if (dueDate) {
+        const today2 = new Date(); today2.setHours(0,0,0,0)
+        dueDate.setHours(0,0,0,0)
+        daysLate = Math.max(0, Math.ceil((today2 - dueDate) / (1000 * 60 * 60 * 24)))
+        if (daysLate > 0) {
+          const cap = loan.installment_amount * PENALTY_CAP_RATE
+          penaltyAmount = Math.min(daysLate * PENALTY_PER_DAY, cap)
+          penaltyAmount = parseFloat(penaltyAmount.toFixed(2))
+        }
       }
     }
 
@@ -534,17 +527,19 @@ export default function LoansPage() {
     if (newStatus === 'Paid') {
       // Update borrower loan limit progression
       if (borrower) {
-        const newLevel = Math.min(4, (borrower.loan_limit_level || 1) + 1)
-        const limitMap = { 1: 5000, 2: 7000, 3: 9000, 4: 10000 }
-        const newLimit = limitMap[newLevel]
-        const cleanLoans = loans.filter(l =>
-          l.borrower_id === borrower.id && l.status === 'Paid' && l.id !== loan.id
-        ).length + 1
         // Use already-updated score from payment recording above
         const { data: freshBorrower } = await supabase.from('borrowers').select('credit_score').eq('id', borrower.id).single()
         const currentScore = freshBorrower?.credit_score || borrower.credit_score
-        const bonusScore = Math.min(CREDIT_CONFIG.MAX_SCORE, currentScore + (cleanLoans % 2 === 0 ? CREDIT_CONFIG.FULL_LOAN_COMPLETE : 0))
+        // +25 bonus fires on every clean loan completion
+        const bonusScore = Math.min(CREDIT_CONFIG.MAX_SCORE, currentScore + CREDIT_CONFIG.FULL_LOAN_COMPLETE)
         const newBadge = getBadgeFromScore(bonusScore)
+        // Only upgrade loan limit if borrower maintained at least starting score (750)
+        const qualifiesForLimitUpgrade = currentScore >= CREDIT_CONFIG.STARTING_SCORE
+        const newLevel = qualifiesForLimitUpgrade
+          ? Math.min(4, (borrower.loan_limit_level || 1) + 1)
+          : (borrower.loan_limit_level || 1)
+        const limitMap = { 1: 5000, 2: 7000, 3: 9000, 4: 10000 }
+        const newLimit = limitMap[newLevel]
         await supabase.from('borrowers').update({
           loan_limit_level: newLevel, loan_limit: newLimit,
           loyalty_badge: newBadge, credit_score: bonusScore,
@@ -802,7 +797,6 @@ export default function LoansPage() {
               onDefault={setDefaultTarget}
               onRecordPayment={handleRecordPayment}
               onRenew={handleRenew}
-              onStatusUpdate={handleStatusUpdate}
             />
           ))}
         </div>

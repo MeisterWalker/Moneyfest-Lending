@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { X, DollarSign, Calendar, FileText, CheckSquare } from 'lucide-react'
-import { getNextCutoffDate, formatCurrency } from '../lib/helpers'
+import { getNextCutoffDate, formatCurrency, getInstallmentDates, formatDateValue } from '../lib/helpers'
 
 function getNextTwoCutoffs() {
   const today = new Date()
@@ -20,29 +20,6 @@ function getNextTwoCutoffs() {
     cutoffs.push(new Date(year, month + 1, 20))
   }
   return cutoffs
-}
-
-function getDueDate(releaseDate) {
-  // 4 installments from release date, each on 5th or 20th
-  // Release on 5th  -> cutoffs: 20th, +1 5th, +1 20th, +2 5th  (final = +2 months, 5th)
-  // Release on 20th -> cutoffs: +1 5th, +1 20th, +2 5th, +2 20th (final = +2 months, 20th)
-  // Parse date parts directly to avoid UTC timezone shift (PH is UTC+8)
-  const parts = typeof releaseDate === 'string' ? releaseDate.split('-').map(Number) : null
-  const d = parts ? new Date(parts[0], parts[1] - 1, parts[2]) : new Date(releaseDate)
-  const day = d.getDate()
-  if (day <= 5) {
-    return new Date(d.getFullYear(), d.getMonth() + 2, 5)
-  } else {
-    return new Date(d.getFullYear(), d.getMonth() + 2, 20)
-  }
-}
-
-function formatDateValue(date) {
-  // Use local date parts to avoid UTC timezone shift
-  const y = date.getFullYear()
-  const m = String(date.getMonth() + 1).padStart(2, '0')
-  const d = String(date.getDate()).padStart(2, '0')
-  return `${y}-${m}-${d}`
 }
 
 export default function LoanModal({ isOpen, onClose, onSave, loan, borrower, borrowers, settings, prefill }) {
@@ -101,8 +78,8 @@ export default function LoanModal({ isOpen, onClose, onSave, loan, borrower, bor
   const totalRepayment = amount * (1 + rate)
   const installmentAmount = totalRepayment / 4
   const dueDate = form.release_date ? (() => {
-    const [y, m, d] = form.release_date.split('-').map(Number)
-    return getDueDate(new Date(y, m - 1, d))
+    const dates = getInstallmentDates(form.release_date)
+    return dates.length === 4 ? dates[3] : null
   })() : null
   const cutoffs = getNextTwoCutoffs()
 

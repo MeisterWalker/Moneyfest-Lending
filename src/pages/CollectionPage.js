@@ -1,35 +1,12 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
-import { formatCurrency, formatDate } from '../lib/helpers'
+import { formatCurrency, formatDate, getInstallmentDates, formatDateValue } from '../lib/helpers'
 import { Calendar, List, ChevronLeft, ChevronRight, CheckCircle, Clock, AlertTriangle, Mail, Send, X } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { sendBulkReminders } from '../lib/emailService'
 
-function snapToCutoff(year, month, day) {
-  if (day <= 5) return { year, month, day: 5 }
-  if (day <= 20) return { year, month, day: 20 }
-  const next = new Date(year, month + 1, 5)
-  return { year: next.getFullYear(), month: next.getMonth(), day: 5 }
-}
-
-function getInstallmentDates(loan) {
-  if (!loan.release_date) return []
-  const dates = []
-  const [ry, rm, rd] = loan.release_date.slice(0, 10).split('-').map(Number)
-  let { year, month, day } = snapToCutoff(ry, rm - 1, rd)
-  for (let i = 0; i < 4; i++) {
-    if (day === 5) { day = 20 }
-    else { day = 5; month += 1; if (month > 11) { month = 0; year += 1 } }
-    dates.push(new Date(year, month, day))
-  }
-  return dates
-}
-
 function toLocalDateKey(date) {
-  const y = date.getFullYear()
-  const m = String(date.getMonth() + 1).padStart(2, '0')
-  const d = String(date.getDate()).padStart(2, '0')
-  return `${y}-${m}-${d}`
+  return formatDateValue(date)
 }
 
 function buildSchedule(loans, borrowers) {
@@ -37,7 +14,7 @@ function buildSchedule(loans, borrowers) {
   for (const loan of loans) {
     if (!['Pending', 'Active', 'Partially Paid', 'Overdue'].includes(loan.status)) continue
     const borrower = borrowers.find(b => b.id === loan.borrower_id)
-    const dates = getInstallmentDates(loan)
+    const dates = getInstallmentDates(loan.release_date)
     dates.forEach((date, i) => {
       const installmentNum = i + 1
       const isPaid = installmentNum <= loan.payments_made

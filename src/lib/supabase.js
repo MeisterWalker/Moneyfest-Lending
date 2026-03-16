@@ -106,4 +106,130 @@ CREATE TABLE IF NOT EXISTS capital_logs (
   note TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Applications table (public loan applications)
+CREATE TABLE IF NOT EXISTS applications (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  full_name TEXT NOT NULL,
+  department TEXT,
+  tenure_years NUMERIC(4,1) DEFAULT 0,
+  phone TEXT,
+  email TEXT,
+  address TEXT,
+  trustee_name TEXT,
+  trustee_phone TEXT,
+  trustee_relationship TEXT,
+  loan_amount NUMERIC(10,2),
+  loan_purpose TEXT,
+  release_method TEXT,
+  gcash_number TEXT,
+  gcash_name TEXT,
+  bank_name TEXT,
+  bank_account_number TEXT,
+  valid_id_path TEXT,
+  valid_id_back_path TEXT,
+  access_code TEXT,
+  status TEXT DEFAULT 'Pending',
+  rejection_reason TEXT,
+  reviewed_by TEXT,
+  reviewed_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Payment proofs table (borrower-uploaded screenshots)
+CREATE TABLE IF NOT EXISTS payment_proofs (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  borrower_id UUID REFERENCES borrowers(id) ON DELETE CASCADE,
+  loan_id UUID REFERENCES loans(id) ON DELETE CASCADE,
+  installment_number INTEGER NOT NULL,
+  file_path TEXT NOT NULL,
+  file_name TEXT,
+  notes TEXT,
+  status TEXT DEFAULT 'Pending',
+  reviewed_by TEXT,
+  reviewed_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Penalty charges table
+CREATE TABLE IF NOT EXISTS penalty_charges (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  borrower_id UUID REFERENCES borrowers(id) ON DELETE CASCADE,
+  loan_id UUID REFERENCES loans(id) ON DELETE CASCADE,
+  installment_number INTEGER NOT NULL,
+  days_late INTEGER NOT NULL DEFAULT 0,
+  penalty_per_day NUMERIC(10,2) DEFAULT 20,
+  penalty_amount NUMERIC(10,2) NOT NULL,
+  cap_applied BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Wallets table (rebate credits / security hold balance)
+CREATE TABLE IF NOT EXISTS wallets (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  borrower_id UUID UNIQUE REFERENCES borrowers(id) ON DELETE CASCADE,
+  balance NUMERIC(10,2) DEFAULT 0,
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Wallet transactions table
+CREATE TABLE IF NOT EXISTS wallet_transactions (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  borrower_id UUID REFERENCES borrowers(id) ON DELETE CASCADE,
+  loan_id UUID REFERENCES loans(id) ON DELETE SET NULL,
+  type TEXT NOT NULL,
+  amount NUMERIC(10,2) NOT NULL,
+  description TEXT,
+  status TEXT DEFAULT 'completed',
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Portal notifications table (borrower-facing alerts)
+CREATE TABLE IF NOT EXISTS portal_notifications (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  borrower_id UUID REFERENCES borrowers(id) ON DELETE CASCADE,
+  type TEXT NOT NULL,
+  title TEXT NOT NULL,
+  message TEXT,
+  is_read BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Login logs table (admin security tracking)
+CREATE TABLE IF NOT EXISTS login_logs (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  email TEXT,
+  ip_address TEXT,
+  user_agent TEXT,
+  status TEXT DEFAULT 'success',
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Notifications table (admin/system notifications)
+CREATE TABLE IF NOT EXISTS notifications (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  type TEXT NOT NULL,
+  title TEXT NOT NULL,
+  message TEXT,
+  is_read BOOLEAN DEFAULT FALSE,
+  target_user TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Push subscriptions table (web push notifications)
+CREATE TABLE IF NOT EXISTS push_subscriptions (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_email TEXT,
+  subscription JSONB NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Add missing columns to loans table
+ALTER TABLE loans ADD COLUMN IF NOT EXISTS security_hold NUMERIC(10,2) DEFAULT 0;
+ALTER TABLE loans ADD COLUMN IF NOT EXISTS security_hold_returned BOOLEAN DEFAULT FALSE;
+
+-- Add missing column to borrowers table
+ALTER TABLE borrowers ADD COLUMN IF NOT EXISTS department TEXT;
+ALTER TABLE borrowers ADD COLUMN IF NOT EXISTS access_code TEXT;
+ALTER TABLE borrowers ADD COLUMN IF NOT EXISTS photo_url TEXT;
 `

@@ -134,7 +134,7 @@ function BorrowerCard({ borrower, departments, onEdit, onDelete }) {
                     Copy
                   </button>
                   <a
-                    href={'https://moneyfestlending.online/portal'}
+                    href={process.env.REACT_APP_PORTAL_URL || 'https://loanmoneyfest.vercel.app/portal'}
                     target="_blank"
                     rel="noreferrer"
                     style={{ background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: 7, padding: '6px 12px', color: '#3B82F6', fontSize: 12, fontWeight: 600, textDecoration: 'none' }}
@@ -215,12 +215,12 @@ export default function BorrowersPage() {
 
       if (error) { toast('Failed to update borrower', 'error'); return }
       const editChanges = []
-      if (editing.full_name !== form.full_name) editChanges.push('name')
-      if (editing.department !== form.department) editChanges.push('department')
-      if (editing.phone !== form.phone) editChanges.push('phone')
-      if (editing.email !== form.email) editChanges.push('email')
-      if (editing.admin_notes !== form.admin_notes) editChanges.push('admin notes')
-      if (String(editing.loan_limit) !== String(form.loan_limit)) editChanges.push(`loan limit → ₱${parseFloat(form.loan_limit)?.toLocaleString()}`)
+      if (editingBorrower.full_name !== form.full_name) editChanges.push('name')
+      if (editingBorrower.department !== form.department) editChanges.push('department')
+      if (editingBorrower.phone !== form.phone) editChanges.push('phone')
+      if (editingBorrower.email !== form.email) editChanges.push('email')
+      if (editingBorrower.admin_notes !== form.admin_notes) editChanges.push('admin notes')
+      if (String(editingBorrower.loan_limit) !== String(form.loan_limit)) editChanges.push(`loan limit → ₱${parseFloat(form.loan_limit)?.toLocaleString()}`)
       const changeDesc = editChanges.length > 0 ? ` (changed: ${editChanges.join(', ')})` : ''
       await logAudit({ action_type: 'BORROWER_EDITED', module: 'Borrower', description: `Borrower profile updated: ${form.full_name}${changeDesc}`, changed_by: user?.email })
       toast(`${form.full_name} updated successfully`, 'success')
