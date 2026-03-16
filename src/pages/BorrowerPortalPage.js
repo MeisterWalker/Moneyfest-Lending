@@ -1317,21 +1317,14 @@ export default function BorrowerPortalPage() {
         {/* How rebates work */}
         <div style={{ background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 14, padding: '16px 18px', marginBottom: 20 }}>
           <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 13, color: '#22C55E', marginBottom: 10 }}><span style={{ display: 'flex', alignItems: 'center', gap: 7 }}><img src='/giftbox.png' alt='rebate' style={{ width: 18, height: 18, objectFit: 'contain' }} />How to earn rebates</span></div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {[
-              { days: '7–13 days early', rate: '1%', example: '₱50 on ₱5,000 loan' },
-              { days: '14+ days early', rate: '1.5%', example: '₱75 on ₱5,000 loan' },
-            ].map((item, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', background: 'rgba(34,197,94,0.05)', borderRadius: 9, border: '1px solid rgba(34,197,94,0.12)' }}>
-                <div>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: '#F0F4FF' }}>{item.days}</div>
-                  <div style={{ fontSize: 11, color: '#4B5580', marginTop: 1 }}>{item.example}</div>
-                </div>
-                <div style={{ fontFamily: 'Space Grotesk', fontWeight: 900, fontSize: 18, color: '#22C55E' }}>{item.rate}</div>
-              </div>
-            ))}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: 'rgba(34,197,94,0.05)', borderRadius: 9, border: '1px solid rgba(34,197,94,0.12)' }}>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: '#F0F4FF' }}>Pay final installment at least 1 day early</div>
+              <div style={{ fontSize: 11, color: '#4B5580', marginTop: 2 }}>₱50 rebate on a ₱5,000 loan</div>
+            </div>
+            <div style={{ fontFamily: 'Space Grotesk', fontWeight: 900, fontSize: 22, color: '#22C55E' }}>1%</div>
           </div>
-          <div style={{ fontSize: 11, color: '#4B5580', marginTop: 10 }}>Rebate is applied on your final (4th) installment only when paid early.</div>
+          <div style={{ fontSize: 11, color: '#4B5580', marginTop: 10 }}>Fixed 1% of your original loan amount — credited automatically when admin records your payment.</div>
         </div>
 
         {/* Transaction history */}

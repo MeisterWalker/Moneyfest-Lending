@@ -397,6 +397,9 @@ export default function LoansPage() {
       )
       if (activeLoan) { toast('This borrower already has an active loan', 'error'); return }
 
+      const borrower = borrowers.find(b => b.id === form.borrower_id)
+      const { hold, released } = calcSecurityHold(form.loan_amount, borrower?.credit_score)
+
       const { error } = await supabase.from('loans').insert({
         borrower_id: form.borrower_id,
         loan_amount: form.loan_amount,
@@ -409,15 +412,17 @@ export default function LoansPage() {
         payments_made: 0,
         status: 'Pending',
         agreement_confirmed: form.agreement_confirmed,
-        notes: form.notes
+        notes: form.notes,
+        security_hold: hold,
+        funds_released: released,
+        security_hold_returned: false
       })
       if (error) { toast('Failed to create loan', 'error'); return }
 
-      const borrower = borrowers.find(b => b.id === form.borrower_id)
       await logAudit({
         action_type: prefillLoan ? 'LOAN_RENEWED' : 'LOAN_CREATED',
         module: 'Loan',
-        description: `${prefillLoan ? 'Loan renewed' : 'New loan created'} for ${borrower?.full_name} — ₱${form.loan_amount.toLocaleString()}`,
+        description: `${prefillLoan ? 'Loan renewed' : 'New loan created'} for ${borrower?.full_name} — ₱${form.loan_amount.toLocaleString()} (Security Hold: ₱${hold})`,
         changed_by: user?.email
       })
       toast(`Loan created for ${borrower?.full_name}`, 'success')
