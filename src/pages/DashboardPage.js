@@ -439,11 +439,6 @@ export default function DashboardPage() {
               <div style={{ fontSize: 13, color: 'var(--text-label)' }}>
                 Loan of {formatCurrency(loan.loan_amount)} · {loan.payments_made} of 4 paid · Balance {formatCurrency(loan.remaining_balance)}
               </div>
-              {b?.trustee_name && (
-                <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>
-                  Trustee: {b.trustee_name} · {b.trustee_phone} ({b.trustee_relationship})
-                </div>
-              )}
             </div>
           </div>
         )

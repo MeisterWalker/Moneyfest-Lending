@@ -15,7 +15,6 @@ export default function PrivacyPage() {
         { label: 'Personal identification', detail: 'Full name, home address, phone number, and email address.' },
         { label: 'Employment information', detail: 'Department and years of tenure — used solely to assess eligibility.' },
         { label: 'Government-issued ID', detail: 'Front and back images of a valid government ID (e.g., SSS, PhilHealth, Passport, Driver\'s License). Collected for identity verification purposes only.' },
-        { label: 'Trustee / Guarantor information', detail: 'Name, phone number, and your relationship to the trustee. Used only if follow-up is necessary.' },
         { label: 'Loan and financial information', detail: 'Loan amount requested, purpose, preferred release method, and payment account details (e.g., GCash number or bank account).' },
         { label: 'Payment proof uploads', detail: 'Screenshots or receipts you submit as proof of installment payments.' },
         { label: 'Usage data', detail: 'Your access code, login timestamps, and portal activity — used for security and audit purposes only.' },

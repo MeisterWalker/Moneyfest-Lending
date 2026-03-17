@@ -131,22 +131,6 @@ function ApplicationCard({ app, onApprove, onReject }) {
                 ))}
               </div>
             </div>
-            {/* Trustee */}
-            <div>
-              <div style={{ fontSize: 11, fontWeight: 700, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}><span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><img src="/handshake.png" alt="trustee" style={{ width: 13, height: 13, objectFit: 'contain', marginRight: 5, verticalAlign: 'middle' }} />Trustee / Guarantor</span></div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {[
-                  { icon: <User size={13} />, label: app.trustee_name },
-                  { icon: <Phone size={13} />, label: app.trustee_phone },
-                  { icon: <Users size={13} />, label: app.trustee_relationship },
-                ].map((item, i) => (
-                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#CBD5F0' }}>
-                    <span style={{ color: '#4B5580' }}>{item.icon}</span>
-                    {item.label}
-                  </div>
-                ))}
-              </div>
-            </div>
           </div>
 
           {/* Loan details */}

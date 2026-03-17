@@ -1,15 +1,13 @@
 import { useState, useEffect } from 'react'
-import { X, Phone, Users } from 'lucide-react'
+import { X, Phone } from 'lucide-react'
 import { BorrowerAvatarUpload } from './BorrowerAvatar'
 
-const RELATIONSHIPS = ['Spouse', 'Parent', 'Sibling', 'Child', 'Friend', 'Colleague', 'Other']
 
 export default function BorrowerModal({ isOpen, onClose, onSave, borrower, departments }) {
   const isEdit = !!borrower
   const [form, setForm] = useState({
     full_name: '', department: '', tenure_years: '',
     address: '', phone: '', email: '',
-    trustee_name: '', trustee_phone: '', trustee_relationship: '',
     admin_notes: '', photo_url: ''
   })
   const [saving, setSaving] = useState(false)
@@ -24,9 +22,6 @@ export default function BorrowerModal({ isOpen, onClose, onSave, borrower, depar
         address: borrower.address || '',
         phone: borrower.phone || '',
         email: borrower.email || '',
-        trustee_name: borrower.trustee_name || '',
-        trustee_phone: borrower.trustee_phone || '',
-        trustee_relationship: borrower.trustee_relationship || '',
         admin_notes: borrower.admin_notes || '',
         photo_url: borrower.photo_url || ''
       })
@@ -34,8 +29,7 @@ export default function BorrowerModal({ isOpen, onClose, onSave, borrower, depar
       setForm({
         full_name: '', department_id: departments[0]?.id || '',
         tenure_years: '', address: '', phone: '', email: '',
-        trustee_name: '', trustee_phone: '', trustee_relationship: '',
-        admin_notes: '', photo_url: ''
+            admin_notes: '', photo_url: ''
       })
     }
   }, [borrower, departments, isOpen])
@@ -127,29 +121,6 @@ export default function BorrowerModal({ isOpen, onClose, onSave, borrower, depar
           </div>
 
           {/* Trustee */}
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-              <Users size={15} color="var(--teal)" />
-              <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-label)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Trustee / Emergency Contact</span>
-            </div>
-            <div className="form-grid">
-              <div className="form-group">
-                <label className="form-label">Trustee Full Name</label>
-                <input placeholder="e.g. James Santos" value={form.trustee_name} onChange={e => set('trustee_name', e.target.value)} />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Trustee Phone</label>
-                <input placeholder="e.g. 09189876543" value={form.trustee_phone} onChange={e => set('trustee_phone', e.target.value)} />
-              </div>
-              <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-                <label className="form-label">Relationship</label>
-                <select value={form.trustee_relationship} onChange={e => set('trustee_relationship', e.target.value)}>
-                  <option value="">Select relationship</option>
-                  {RELATIONSHIPS.map(r => <option key={r} value={r}>{r}</option>)}
-                </select>
-              </div>
-            </div>
-          </div>
 
           {/* Admin Notes */}
           <div className="form-group">

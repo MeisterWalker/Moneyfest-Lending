@@ -99,13 +99,6 @@ function BorrowerCard({ borrower, departments, onEdit, onDelete }) {
               <div style={{ fontSize: 13, color: 'var(--text-label)' }}>{borrower.address || "—"}</div>
             </div>
             <div>
-              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Trustee</div>
-              <div style={{ fontSize: 13, color: 'var(--text-label)' }}>
-                {borrower.trustee_name || "—"}{borrower.trustee_relationship ? ` (${borrower.trustee_relationship})` : ''}
-                {borrower.trustee_phone && <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{borrower.trustee_phone}</div>}
-              </div>
-            </div>
-            <div>
               <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Member Since</div>
               <div style={{ fontSize: 13, color: 'var(--text-label)' }}>{formatDate(borrower.created_at)}</div>
             </div>
@@ -204,9 +197,6 @@ export default function BorrowersPage() {
         address: form.address,
         phone: form.phone,
         email: form.email,
-        trustee_name: form.trustee_name,
-        trustee_phone: form.trustee_phone,
-        trustee_relationship: form.trustee_relationship,
         admin_notes: form.admin_notes,
         photo_url: form.photo_url || null,
         updated_at: new Date().toISOString()
@@ -237,9 +227,6 @@ export default function BorrowersPage() {
         address: form.address,
         phone: form.phone,
         email: form.email,
-        trustee_name: form.trustee_name,
-        trustee_phone: form.trustee_phone,
-        trustee_relationship: form.trustee_relationship,
         admin_notes: form.admin_notes,
         photo_url: form.photo_url || null,
         credit_score: 750,

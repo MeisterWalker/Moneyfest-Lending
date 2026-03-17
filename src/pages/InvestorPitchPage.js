@@ -49,7 +49,7 @@ const COMPARISONS = [
 
 const FAQS = [
   { q: 'Is my investment guaranteed?', a: 'Returns are projected based on our active lending performance. This is not a bank deposit and is not PDIC-insured. Only invest what you are comfortable holding for 3 months.' },
-  { q: 'What happens if a borrower defaults?', a: 'We have multiple safeguards — Security Hold, penalty system, credit scoring, and trustee/guarantor requirements. In the unlikely event of default, your principal remains intact; only that cycle\'s return may be affected.' },
+  { q: 'What happens if a borrower defaults?', a: 'We have multiple safeguards — Security Hold, penalty system, and credit scoring. In the unlikely event of default, your principal remains intact; only that cycle\'s return may be affected.' },
   { q: 'How do I get paid?', a: 'Payouts are processed every 3 months. You receive your original investment plus the agreed interest rate, coordinated directly with the admin via Teams Chat.' },
   { q: 'Can I withdraw early?', a: 'Investments are locked for the full 3-month term to align with our lending cycle. Early withdrawal is not available once a cycle has started.' },
   { q: 'How is MoneyfestLending different from 5-6?', a: 'We charge borrowers 7% per month (14% total over the 2-month loan) — far below the 20% per month that 5-6 schemes charge. We\'re a fair, digital, colleague-first program. No collectors, no harassment, no predatory rates.' },
