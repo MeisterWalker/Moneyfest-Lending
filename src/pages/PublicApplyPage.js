@@ -256,26 +256,39 @@ export default function PublicApplyPage() {
     let validIdPath = null, validIdBackPath = null
     if (idFile) {
       const ext = idFile.name.split('.').pop()
-      const { error: uploadErr } = await supabase.storage.from('valid-ids').upload(`${code}/${Date.now()}-id-front.${ext}`, idFile, { contentType: idFile.type, upsert: false })
+      const ts = Date.now()
+      const filePath = `${code}/${ts}-id-front.${ext}`
+      const { error: uploadErr } = await supabase.storage.from('valid-ids').upload(filePath, idFile, { contentType: idFile.type, upsert: false })
       if (uploadErr) { setError('Failed to upload ID front. Please try again.'); setLoading(false); return }
-      validIdPath = `${code}/${Date.now()}-id-front.${ext}`
+      validIdPath = filePath
     }
     if (idFileBack) {
       const ext = idFileBack.name.split('.').pop()
-      const { error: uploadErr } = await supabase.storage.from('valid-ids').upload(`${code}/${Date.now()}-id-back.${ext}`, idFileBack, { contentType: idFileBack.type, upsert: false })
+      const ts = Date.now()
+      const filePath = `${code}/${ts}-id-back.${ext}`
+      const { error: uploadErr } = await supabase.storage.from('valid-ids').upload(filePath, idFileBack, { contentType: idFileBack.type, upsert: false })
       if (uploadErr) { setError('Failed to upload ID back. Please try again.'); setLoading(false); return }
-      validIdBackPath = `${code}/${Date.now()}-id-back.${ext}`
+      validIdBackPath = filePath
     }
     const { error: dbErr } = await supabase.from('applications').insert({
-      full_name: form.full_name.trim(), department: form.department,
+      full_name: form.full_name.trim(),
+      department: form.department,
       tenure_years: parseFloat(form.tenure_years) || 0,
-      phone: form.phone.trim(), email: form.email.trim(), address: form.address.trim(),
-      loan_amount: parseFloat(form.loan_amount), loan_purpose: form.loan_purpose.trim(),
+      phone: form.phone.trim(),
+      email: form.email.trim(),
+      address: form.address.trim(),
+      loan_amount: parseFloat(form.loan_amount),
+      loan_purpose: form.loan_purpose.trim(),
       release_method: form.release_method,
-      gcash_number: form.gcash_number.trim() || null, gcash_name: form.gcash_name.trim() || null,
-      bank_account_number: form.bank_account_number.trim() || null, bank_name: form.bank_name.trim() || null, bank_account_holder: form.bank_account_holder.trim() || null,
-      valid_id_path: validIdPath, valid_id_back_path: validIdBackPath,
-      status: 'Pending', access_code: code, created_at: new Date().toISOString()
+      gcash_number: form.gcash_number.trim() || null,
+      gcash_name: form.gcash_name.trim() || null,
+      bank_account_number: form.bank_account_number.trim() || null,
+      bank_name: form.bank_name.trim() || null,
+      bank_account_holder: form.bank_account_holder.trim() || null,
+      valid_id_path: validIdPath,
+      valid_id_back_path: validIdBackPath,
+      access_code: code,
+      status: 'Pending',
     })
     setLoading(false)
     if (dbErr) { setError('Submission failed. Please try again.'); return }
