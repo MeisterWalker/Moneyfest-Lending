@@ -21,6 +21,216 @@ function validateEmail(email) {
   return null
 }
 
+function SuccessScreen({ accessCode, fullName, loanAmount }) {
+  const [copied, setCopied] = useState(false)
+  const [codeSaved, setCodeSaved] = useState(false)
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(accessCode).then(() => {
+      setCopied(true)
+      setCodeSaved(true)
+      setTimeout(() => setCopied(false), 2000)
+    }).catch(() => {
+      // fallback for browsers without clipboard API
+      const el = document.createElement('textarea')
+      el.value = accessCode
+      document.body.appendChild(el)
+      el.select()
+      document.execCommand('copy')
+      document.body.removeChild(el)
+      setCopied(true)
+      setCodeSaved(true)
+      setTimeout(() => setCopied(false), 2000)
+    })
+  }
+
+  return (
+    <div style={{ minHeight: '100vh', background: '#0B0F1A', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, position: 'relative', overflow: 'hidden' }}>
+
+      <style>{`
+        @keyframes confettiFall {
+          0%   { transform: translateY(-20px) rotate(0deg);   opacity: 1; }
+          100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+        }
+        @keyframes confettiSway {
+          0%, 100% { margin-left: 0px; }
+          25%       { margin-left: 30px; }
+          75%       { margin-left: -30px; }
+        }
+        @keyframes codePulse {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(139,92,246,0.4); }
+          50%       { box-shadow: 0 0 0 8px rgba(139,92,246,0); }
+        }
+        @keyframes warningPulse {
+          0%, 100% { border-color: rgba(245,158,11,0.4); }
+          50%       { border-color: rgba(245,158,11,0.9); }
+        }
+        .confetti-piece {
+          position: fixed; top: -20px;
+          animation: confettiFall linear forwards, confettiSway ease-in-out infinite;
+          z-index: 0; border-radius: 2px; pointer-events: none;
+        }
+        .code-pulse { animation: codePulse 2s ease-in-out infinite; }
+        .warning-pulse { animation: warningPulse 1.5s ease-in-out infinite; }
+      `}</style>
+
+      {Array.from({ length: 80 }, (_, i) => {
+        const colors = ['#3B82F6','#8B5CF6','#22C55E','#F59E0B','#EF4444','#14B8A6','#EC4899','#F97316','#A78BFA','#34D399']
+        const color = colors[i % colors.length]
+        const left = (i * 1.27) % 100
+        const delay = (i * 0.07) % 3
+        const duration = 2.5 + (i % 4) * 0.5
+        const width = 6 + (i % 3) * 4
+        const height = 8 + (i % 4) * 4
+        const isCircle = i % 5 === 0
+        return (
+          <div key={i} className="confetti-piece" style={{
+            left: left + 'vw', width: isCircle ? width : width,
+            height: isCircle ? width : height,
+            borderRadius: isCircle ? '50%' : '2px', background: color,
+            animationDuration: duration + 's, ' + (duration * 0.8) + 's',
+            animationDelay: delay + 's, ' + delay + 's', opacity: 0.9,
+          }} />
+        )
+      })}
+
+      <div style={{ maxWidth: 500, width: '100%', position: 'relative', zIndex: 1 }}>
+
+        {/* Header */}
+        <div style={{ textAlign: 'center', marginBottom: 24 }}>
+          <img src="/verified.png" alt="verified" style={{ width: 72, height: 72, objectFit: 'contain', marginBottom: 14 }} />
+          <h2 style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 26, color: '#F0F4FF', margin: '0 0 8px', letterSpacing: -0.5 }}>Application Submitted!</h2>
+          <p style={{ color: '#7A8AAA', fontSize: 14, lineHeight: 1.7, margin: 0 }}>
+            Thank you <strong style={{ color: '#F0F4FF' }}>{fullName}</strong>! Your application is now under review.
+          </p>
+        </div>
+
+        {/* ── SAVE YOUR CODE BANNER — shown until they copy ── */}
+        {!codeSaved && (
+          <div className="warning-pulse" style={{
+            background: 'rgba(245,158,11,0.1)', border: '2px solid rgba(245,158,11,0.4)',
+            borderRadius: 12, padding: '12px 16px', marginBottom: 16,
+            display: 'flex', alignItems: 'center', gap: 10
+          }}>
+            <span style={{ fontSize: 22, flexShrink: 0 }}>⚠️</span>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: '#F59E0B', marginBottom: 2 }}>Save your access code before leaving!</div>
+              <div style={{ fontSize: 12, color: '#7A8AAA', lineHeight: 1.5 }}>
+                This is the only way to access your loan status. Copy it now — you won't see this again.
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── ACCESS CODE — the most prominent element ── */}
+        <div className="code-pulse" style={{
+          background: 'linear-gradient(135deg,#0f1729,#1a1040)',
+          border: '2px solid rgba(139,92,246,0.5)',
+          borderRadius: 18, padding: '28px 28px 24px', marginBottom: 16, textAlign: 'center'
+        }}>
+          <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#4B5580', marginBottom: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+            <img src="/padlock.png" alt="access" style={{ width: 13, height: 13, objectFit: 'contain' }} />
+            Your Portal Access Code
+          </div>
+
+          {/* Big code display */}
+          <div style={{
+            fontSize: 40, fontWeight: 900, letterSpacing: 10, color: '#F0F4FF',
+            fontFamily: 'monospace', marginBottom: 6,
+            textShadow: '0 0 20px rgba(139,92,246,0.4)'
+          }}>
+            {accessCode}
+          </div>
+
+          <div style={{ fontSize: 12, color: '#4B5580', marginBottom: 20 }}>
+            Use this code to log in to the Borrower Portal
+          </div>
+
+          {/* Copy button — big and obvious */}
+          <button
+            onClick={handleCopy}
+            style={{
+              width: '100%', padding: '13px', borderRadius: 10, border: 'none',
+              background: copied ? 'rgba(34,197,94,0.15)' : 'linear-gradient(135deg,#8B5CF6,#6366F1)',
+              color: copied ? '#22C55E' : '#fff',
+              fontSize: 14, fontWeight: 700, cursor: 'pointer',
+              fontFamily: 'Space Grotesk', marginBottom: 12,
+              border: copied ? '1px solid rgba(34,197,94,0.3)' : 'none',
+              transition: 'all 0.2s ease',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8
+            }}>
+            {copied
+              ? <><span style={{ fontSize: 16 }}>✅</span> Copied to clipboard!</>
+              : <><span style={{ fontSize: 16 }}>📋</span> Copy Access Code</>
+            }
+          </button>
+
+          {codeSaved && (
+            <div style={{ fontSize: 12, color: '#22C55E', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, marginBottom: 12 }}>
+              ✓ Code saved — you can now access the portal
+            </div>
+          )}
+
+          <a href="/portal" style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+            background: 'rgba(59,130,246,0.12)', border: '1px solid rgba(59,130,246,0.3)',
+            color: '#60A5FA', textDecoration: 'none', padding: '11px 28px',
+            borderRadius: 10, fontSize: 13, fontWeight: 700, fontFamily: 'Space Grotesk'
+          }}>
+            <img src="/startup.png" alt="portal" style={{ width: 14, height: 14, objectFit: 'contain' }} />
+            Go to Borrower Portal →
+          </a>
+        </div>
+
+        {/* Screenshot reminder */}
+        <div style={{
+          background: 'rgba(99,102,241,0.06)', border: '1px solid rgba(99,102,241,0.2)',
+          borderRadius: 12, padding: '12px 16px', marginBottom: 16,
+          display: 'flex', alignItems: 'flex-start', gap: 10
+        }}>
+          <span style={{ fontSize: 18, flexShrink: 0, marginTop: 1 }}>📸</span>
+          <div style={{ fontSize: 12, color: '#7A8AAA', lineHeight: 1.6 }}>
+            <strong style={{ color: '#CBD5F0', display: 'block', marginBottom: 2 }}>Tip: Take a screenshot of this page</strong>
+            Your access code is <strong style={{ color: '#F0F4FF' }}>{accessCode}</strong>. Without it, you won't be able to check your application status. No email confirmation is sent at this time.
+          </div>
+        </div>
+
+        {/* Summary cards */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
+          <div style={{ background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 12, padding: '14px 16px' }}>
+            <div style={{ fontSize: 11, color: '#4B5580', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Loan Amount</div>
+            <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 20, color: '#22C55E' }}>₱{parseFloat(loanAmount).toLocaleString()}</div>
+          </div>
+          <div style={{ background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 12, padding: '14px 16px' }}>
+            <div style={{ fontSize: 11, color: '#4B5580', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Status</div>
+            <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 20, color: '#F59E0B' }}>Pending</div>
+          </div>
+        </div>
+
+        {/* Follow up */}
+        <div style={{ background: 'rgba(59,130,246,0.06)', border: '1px solid rgba(59,130,246,0.15)', borderRadius: 12, padding: '16px 20px' }}>
+          <div style={{ fontSize: 13, color: '#60A5FA', fontWeight: 700, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 7 }}>
+            <img src='/mail.png' alt='mail' style={{ width: 16, height: 16, objectFit: 'contain' }} />
+            Need to follow up?
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {[{ i: 'JP', n: 'John Paul Lacaron', g: 'linear-gradient(135deg,#3B82F6,#8B5CF6)' }, { i: 'CJ', n: 'Charlou June Ramil', g: 'linear-gradient(135deg,#14B8A6,#3B82F6)' }].map(a => (
+              <div key={a.n} style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.03)', borderRadius: 8, padding: '10px 12px' }}>
+                <div style={{ width: 32, height: 32, borderRadius: '50%', background: a.g, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 800, color: '#fff', flexShrink: 0 }}>{a.i}</div>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: '#F0F4FF' }}>{a.n}</div>
+                  <div style={{ fontSize: 11, color: '#4B5580' }}>Admin · Microsoft Teams Chat</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+      </div>
+    </div>
+  )
+}
+
 export default function PublicApplyPage() {
   usePageVisit('apply')
   const [step, setStep] = useState(1)
@@ -183,90 +393,7 @@ export default function PublicApplyPage() {
 
   // ── Success screen ──────────────────────────────────────────
   if (submitted) return (
-    <div style={{ minHeight: '100vh', background: '#0B0F1A', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, position: 'relative', overflow: 'hidden' }}>
-
-      {/* Confetti canvas */}
-      <style>{`
-        @keyframes confettiFall {
-          0%   { transform: translateY(-20px) rotate(0deg);   opacity: 1; }
-          100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
-        }
-        @keyframes confettiSway {
-          0%, 100% { margin-left: 0px; }
-          25%       { margin-left: 30px; }
-          75%       { margin-left: -30px; }
-        }
-        .confetti-piece {
-          position: fixed;
-          top: -20px;
-          animation: confettiFall linear forwards, confettiSway ease-in-out infinite;
-          z-index: 0;
-          border-radius: 2px;
-          pointer-events: none;
-        }
-      `}</style>
-
-      {/* Generate confetti pieces */}
-      {Array.from({ length: 80 }, (_, i) => {
-        const colors = ['#3B82F6','#8B5CF6','#22C55E','#F59E0B','#EF4444','#14B8A6','#EC4899','#F97316','#A78BFA','#34D399']
-        const color = colors[i % colors.length]
-        const left = (i * 1.27) % 100
-        const delay = (i * 0.07) % 3
-        const duration = 2.5 + (i % 4) * 0.5
-        const width = 6 + (i % 3) * 4
-        const height = 8 + (i % 4) * 4
-        const isCircle = i % 5 === 0
-        return (
-          <div key={i} className="confetti-piece" style={{
-            left: left + 'vw',
-            width: isCircle ? width : width,
-            height: isCircle ? width : height,
-            borderRadius: isCircle ? '50%' : '2px',
-            background: color,
-            animationDuration: duration + 's, ' + (duration * 0.8) + 's',
-            animationDelay: delay + 's, ' + delay + 's',
-            opacity: 0.9,
-          }} />
-        )
-      })}
-
-      <div style={{ textAlign: 'center', maxWidth: 480, width: '100%', position: 'relative', zIndex: 1 }}>
-        <img src="/verified.png" alt="verified" style={{ width: 80, height: 80, objectFit: "contain", marginBottom: 16 }} />
-        <h2 style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 28, color: '#F0F4FF', margin: '0 0 12px', letterSpacing: -0.5 }}>Application Submitted!</h2>
-        <p style={{ color: '#7A8AAA', fontSize: 15, lineHeight: 1.7, marginBottom: 20 }}>
-          Thank you <strong style={{ color: '#F0F4FF' }}>{form.full_name}</strong>! Your application is now under review. Our admin will get back to you shortly.
-        </p>
-        <div style={{ background: 'linear-gradient(135deg,#0f1729,#1a1040)', border: '2px solid rgba(139,92,246,0.4)', borderRadius: 16, padding: '22px 28px', marginBottom: 16 }}>
-          <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#4B5580', marginBottom: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}><img src="/padlock.png" alt="access" style={{ width: 14, height: 14, objectFit: 'contain' }} />Your Portal Access Code</div>
-          <div style={{ fontSize: 34, fontWeight: 900, letterSpacing: 8, color: '#F0F4FF', fontFamily: 'monospace', marginBottom: 10 }}>{accessCode}</div>
-          <div style={{ fontSize: 12, color: '#4B5580', marginBottom: 16 }}>Use this to track your application in the Borrower Portal</div>
-          <a href="/portal" style={{ display: 'inline-block', background: 'linear-gradient(135deg,#3B82F6,#8B5CF6)', color: '#fff', textDecoration: 'none', padding: '11px 28px', borderRadius: 10, fontSize: 13, fontWeight: 700, fontFamily: 'Space Grotesk' }}>
-            Check Status in Portal →
-          </a>
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
-          <div style={{ background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 12, padding: '14px 16px', textAlign: 'left' }}>
-            <div style={{ fontSize: 11, color: '#4B5580', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Amount</div>
-            <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 18, color: '#22C55E' }}>₱{parseFloat(form.loan_amount).toLocaleString()}</div>
-          </div>
-          <div style={{ background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 12, padding: '14px 16px', textAlign: 'left' }}>
-            <div style={{ fontSize: 11, color: '#4B5580', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Status</div>
-            <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 18, color: '#F59E0B' }}>Pending</div>
-          </div>
-        </div>
-        <div style={{ background: 'rgba(59,130,246,0.06)', border: '1px solid rgba(59,130,246,0.15)', borderRadius: 12, padding: '16px 20px', textAlign: 'left' }}>
-          <div style={{ fontSize: 13, color: '#60A5FA', fontWeight: 700, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 7 }}><img src='/mail.png' alt='mail' style={{ width: 18, height: 18, objectFit: 'contain' }} />Need to follow up?</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {[{ i: 'JP', n: 'John Paul Lacaron', g: 'linear-gradient(135deg,#3B82F6,#8B5CF6)' }, { i: 'CJ', n: 'Charlou June Ramil', g: 'linear-gradient(135deg,#14B8A6,#3B82F6)' }].map(a => (
-              <div key={a.n} style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.03)', borderRadius: 8, padding: '10px 12px' }}>
-                <div style={{ width: 32, height: 32, borderRadius: '50%', background: a.g, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 800, color: '#fff', flexShrink: 0 }}>{a.i}</div>
-                <div><div style={{ fontSize: 13, fontWeight: 600, color: '#F0F4FF' }}>{a.n}</div><div style={{ fontSize: 11, color: '#4B5580' }}>Admin · Teams Chat</div></div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
+    <SuccessScreen accessCode={accessCode} fullName={form.full_name} loanAmount={form.loan_amount} />
   )
 
   // ── Calculator helper ────────────────────────────────────────
@@ -416,7 +543,7 @@ export default function PublicApplyPage() {
       {/* Header */}
       <div style={{ background: 'linear-gradient(135deg,#0d1226,#141B2D)', borderBottom: '1px solid rgba(139,92,246,0.2)', padding: '18px 28px' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <a href="/" style={{ display: 'flex', alignItems: 'center', gap: 12, textDecoration: 'none' }}>
             <img src="/favicon-96x96.png" alt="MoneyfestLending" style={{ width: 44, height: 44, objectFit: 'contain' }} />
             <div>
               <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 20, color: '#F0F4FF' }}>
@@ -424,7 +551,7 @@ export default function PublicApplyPage() {
               </div>
               <div style={{ fontSize: 11, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Loan Application</div>
             </div>
-          </div>
+          </a>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             <a href="/faq" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 9, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: '#7A8AAA', fontSize: 13, fontWeight: 600, textDecoration: 'none', whiteSpace: 'nowrap' }}>
               <img src="/faq.png" alt="faq" style={{ width: 14, height: 14, objectFit: 'contain', marginRight: 5, verticalAlign: 'middle' }} />FAQ
