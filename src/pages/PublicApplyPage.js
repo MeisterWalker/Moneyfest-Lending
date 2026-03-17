@@ -44,7 +44,7 @@ export default function PublicApplyPage() {
     full_name: '', department: '', tenure_years: '', phone: '', email: '', address: '',
 
     loan_amount: '', loan_purpose: '', release_method: '',
-    gcash_number: '', gcash_name: '', bank_account_number: '', bank_name: '',
+    gcash_number: '', gcash_name: '', bank_account_number: '', bank_account_confirm: '', bank_account_holder: '', bank_name: '',
     agreed: false
   })
   const [idFile, setIdFile] = useState(null)
@@ -93,9 +93,13 @@ export default function PublicApplyPage() {
       if (!form.gcash_name.trim()) return 'Please enter your GCash full name'
     }
     if (form.release_method === 'RCBC' && !form.bank_account_number.trim()) return 'Please enter your RCBC account number'
+    if (form.release_method === 'RCBC' && !form.bank_account_holder.trim()) return 'Please enter the account holder name for your RCBC account'
+    if (form.release_method === 'RCBC' && form.bank_account_number.trim() !== form.bank_account_confirm.trim()) return 'RCBC account numbers do not match — please re-enter'
     if (form.release_method === 'Other Bank Transfer') {
       if (!form.bank_name.trim()) return 'Please enter your bank name'
       if (!form.bank_account_number.trim()) return 'Please enter your account number'
+      if (!form.bank_account_holder.trim()) return 'Please enter the account holder name'
+      if (form.bank_account_number.trim() !== form.bank_account_confirm.trim()) return 'Account numbers do not match — please re-enter'
     }
     if (!form.agreed) return 'Please agree to the terms and conditions'
     return null
@@ -156,7 +160,7 @@ export default function PublicApplyPage() {
       loan_amount: parseFloat(form.loan_amount), loan_purpose: form.loan_purpose.trim(),
       release_method: form.release_method,
       gcash_number: form.gcash_number.trim() || null, gcash_name: form.gcash_name.trim() || null,
-      bank_account_number: form.bank_account_number.trim() || null, bank_name: form.bank_name.trim() || null,
+      bank_account_number: form.bank_account_number.trim() || null, bank_name: form.bank_name.trim() || null, bank_account_holder: form.bank_account_holder.trim() || null,
       valid_id_path: validIdPath,
       valid_id_back_path: validIdBackPath,
       status: 'Pending', access_code: code, created_at: new Date().toISOString()
@@ -673,16 +677,30 @@ export default function PublicApplyPage() {
                   </div>
                 )}
                 {form.release_method === 'RCBC' && (
-                  <div style={{ marginTop: 14, padding: 16, background: 'rgba(220,38,38,0.05)', border: '1px solid rgba(220,38,38,0.2)', borderRadius: 12 }}>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: '#F87171', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}><img src="/payment-method.png" alt="payment" style={{ width: 14, height: 14, objectFit: 'contain' }} /> RCBC Account Details</div>
+                  <div style={{ marginTop: 14, padding: 16, background: 'rgba(220,38,38,0.05)', border: '1px solid rgba(220,38,38,0.2)', borderRadius: 12, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: '#F87171', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 6 }}><img src="/payment-method.png" alt="payment" style={{ width: 14, height: 14, objectFit: 'contain' }} /> RCBC Account Details</div>
+                    <div><label style={lbl}>Account Holder Name *</label><input value={form.bank_account_holder} onChange={e => set('bank_account_holder', e.target.value)} placeholder="Full name on the bank account" style={inp} /></div>
                     <div><label style={lbl}>Account Number *</label><input value={form.bank_account_number} onChange={e => set('bank_account_number', e.target.value)} placeholder="Enter RCBC account number" style={inp} /></div>
+                    <div>
+                      <label style={lbl}>Confirm Account Number *</label>
+                      <input value={form.bank_account_confirm} onChange={e => set('bank_account_confirm', e.target.value)} placeholder="Re-enter account number to confirm" style={{ ...inp, borderColor: form.bank_account_confirm ? (form.bank_account_confirm === form.bank_account_number ? '#22C55E' : '#EF4444') : undefined }} />
+                      {form.bank_account_confirm && form.bank_account_confirm !== form.bank_account_number && <div style={{ fontSize: 11, color: '#EF4444', marginTop: 4 }}>⚠️ Account numbers do not match</div>}
+                      {form.bank_account_confirm && form.bank_account_confirm === form.bank_account_number && <div style={{ fontSize: 11, color: '#22C55E', marginTop: 4 }}>✅ Account numbers match</div>}
+                    </div>
                   </div>
                 )}
                 {form.release_method === 'Other Bank Transfer' && (
                   <div style={{ marginTop: 14, padding: 16, background: 'rgba(139,92,246,0.05)', border: '1px solid rgba(139,92,246,0.2)', borderRadius: 12, display: 'flex', flexDirection: 'column', gap: 12 }}>
                     <div style={{ fontSize: 12, fontWeight: 700, color: '#A78BFA', marginBottom: 0, display: 'flex', alignItems: 'center', gap: 6 }}><img src="/payment-method.png" alt="payment" style={{ width: 14, height: 14, objectFit: 'contain' }} /> Bank Account Details</div>
                     <div><label style={lbl}>Bank Name *</label><input value={form.bank_name} onChange={e => set('bank_name', e.target.value)} placeholder="e.g. BDO, BPI, Metrobank" style={inp} /></div>
+                    <div><label style={lbl}>Account Holder Name *</label><input value={form.bank_account_holder} onChange={e => set('bank_account_holder', e.target.value)} placeholder="Full name on the bank account" style={inp} /></div>
                     <div><label style={lbl}>Account Number *</label><input value={form.bank_account_number} onChange={e => set('bank_account_number', e.target.value)} placeholder="Enter your account number" style={inp} /></div>
+                    <div>
+                      <label style={lbl}>Confirm Account Number *</label>
+                      <input value={form.bank_account_confirm} onChange={e => set('bank_account_confirm', e.target.value)} placeholder="Re-enter account number to confirm" style={{ ...inp, borderColor: form.bank_account_confirm ? (form.bank_account_confirm === form.bank_account_number ? '#22C55E' : '#EF4444') : undefined }} />
+                      {form.bank_account_confirm && form.bank_account_confirm !== form.bank_account_number && <div style={{ fontSize: 11, color: '#EF4444', marginTop: 4 }}>⚠️ Account numbers do not match</div>}
+                      {form.bank_account_confirm && form.bank_account_confirm === form.bank_account_number && <div style={{ fontSize: 11, color: '#22C55E', marginTop: 4 }}>✅ Account numbers match</div>}
+                    </div>
                   </div>
                 )}
               </div>
