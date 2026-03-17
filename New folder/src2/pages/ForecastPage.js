@@ -63,10 +63,8 @@ export default function ForecastPage() {
   useEffect(() => { fetchData() }, [fetchData])
 
   // ── Core calculation ───────────────────────────────────────
-  // 6 loan cycles/year (each cycle = 2 months, paid every 5th & 20th)
-  // Monthly rate stored in DB (e.g. 0.07 = 7%/month)
-  // Each 2-month cycle earns: capital × rate × 2
-  // Per month equivalent: capital × rate
+  // 26 pay periods/year → 13 loan cycles/year (each loan = 2 cutoffs release + 4 cutoffs repay = ~2 months)
+  // Each cycle: capital * rate * (1 - defaultRate)
   const rateDecimal = rate / 100
   const defaultDecimal = defaultRate / 100
   const effectiveRate = rateDecimal * (1 - defaultDecimal)
@@ -76,14 +74,15 @@ export default function ForecastPage() {
     const data = []
     let currentCapital = capital
     let totalProfit = 0
-    // rate is monthly; profit per month = capital × effectiveRate
+    // ~2 months per loan cycle (released on cutoff, 4 installments = 2 months)
+    // So per month we get roughly 0.5 cycle worth of returns
     const profitPerMonth = reinvest
       ? null // will recalculate each month
-      : capital * effectiveRate
+      : capital * effectiveRate / 2
 
     for (let m = 1; m <= months; m++) {
       const monthProfit = reinvest
-        ? currentCapital * effectiveRate
+        ? currentCapital * effectiveRate / 2
         : profitPerMonth
       totalProfit += monthProfit
       if (reinvest) currentCapital += monthProfit
@@ -98,10 +97,8 @@ export default function ForecastPage() {
   }
 
   const proj12 = buildProjection(12)
-  const proj2   = proj12[1]
-  const proj4   = proj12[3]
-  const proj6   = proj12[5]
-  const proj8   = proj12[7]
+  const proj3 = proj12[2]
+  const proj6 = proj12[5]
   const proj12end = proj12[11]
 
   // Break-even: how many months to double capital
@@ -162,7 +159,7 @@ export default function ForecastPage() {
           <div className="form-group">
             <label className="form-label">Interest Rate (%)</label>
             <input type="number" min="1" max="50" step="1" value={rate} onChange={e => setRate(parseFloat(e.target.value) || 0)} />
-            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>Monthly rate per borrower</div>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>Flat rate per loan</div>
           </div>
           <div className="form-group">
             <label className="form-label">Default Rate (%)</label>
@@ -203,13 +200,11 @@ export default function ForecastPage() {
 
       {/* Summary cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 14, marginBottom: 24 }}>
-        <StatBox label="2-Month Profit"  value={formatCurrency(proj2?.profit)}    sub={`Capital: ${formatCurrency(proj2?.capital)}`}    color="var(--blue)"   />
-        <StatBox label="4-Month Profit"  value={formatCurrency(proj4?.profit)}    sub={`Capital: ${formatCurrency(proj4?.capital)}`}    color="var(--teal)"   />
-        <StatBox label="6-Month Profit"  value={formatCurrency(proj6?.profit)}    sub={`Capital: ${formatCurrency(proj6?.capital)}`}    color="var(--purple)" />
-        <StatBox label="8-Month Profit"  value={formatCurrency(proj8?.profit)}    sub={`Capital: ${formatCurrency(proj8?.capital)}`}    color="var(--gold)"   />
-        <StatBox label="12-Month Profit" value={formatCurrency(proj12end?.profit)} sub={`Capital: ${formatCurrency(proj12end?.capital)}`} color="var(--green)"  highlight />
+        <StatBox label="3-Month Profit" value={formatCurrency(proj3?.profit)} sub={`Capital: ${formatCurrency(proj3?.capital)}`} color="var(--blue)" />
+        <StatBox label="6-Month Profit" value={formatCurrency(proj6?.profit)} sub={`Capital: ${formatCurrency(proj6?.capital)}`} color="var(--purple)" />
+        <StatBox label="12-Month Profit" value={formatCurrency(proj12end?.profit)} sub={`Capital: ${formatCurrency(proj12end?.capital)}`} color="var(--green)" highlight />
         <StatBox label="Monthly Average" value={formatCurrency(proj12end?.profit / 12)} sub="Avg profit/month" color="var(--teal)" />
-        <StatBox label="Actual Profit"   value={formatCurrency(realProfit)}       sub="From real paid loans"                           color="var(--gold)"   />
+        <StatBox label="Actual Profit" value={formatCurrency(realProfit)} sub="From real paid loans" color="var(--gold)" />
       </div>
 
       {/* Break-even */}
@@ -281,9 +276,9 @@ export default function ForecastPage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
           {[
             { label: 'Months to break even', value: breakEvenMonth ? `${breakEvenMonth} months` : '>12 months', color: 'var(--blue)' },
-            { label: 'Profit per loan cycle (2mo)', value: formatCurrency(capital * effectiveRate * 2), color: 'var(--green)' },
+            { label: 'Profit per loan cycle', value: formatCurrency(capital * effectiveRate), color: 'var(--green)' },
             { label: 'Cycles per year', value: '~6', sub: '2 months each', color: 'var(--purple)' },
-            { label: 'Effective annual yield', value: `${(effectiveRate * 12 * 100).toFixed(1)}%`, color: 'var(--teal)' },
+            { label: 'Effective annual yield', value: `${(effectiveRate * 6 * 100).toFixed(1)}%`, color: 'var(--teal)' },
           ].map(item => (
             <div key={item.label} style={{ padding: '14px 16px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--card-border)', borderRadius: 10 }}>
               <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{item.label}</div>

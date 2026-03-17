@@ -354,8 +354,8 @@ export default function DashboardPage() {
     .filter(l => new Date(l.updated_at).getMonth() === now.getMonth() && new Date(l.updated_at).getFullYear() === now.getFullYear())
     .reduce((sum, l) => sum + ((l.total_repayment || 0) - (l.loan_amount || 0)), 0)
 
-  // Projected yearly profit: monthlyRate × 2 months per cycle × 6 cycles per year
-  const projectedYearly = availableLiquidity * (settings?.interest_rate || 0.07) * 2 * 6
+  // Projected yearly profit (simple: current monthly * 12, accounting for 26 pay periods)
+  const projectedYearly = availableLiquidity * (settings?.interest_rate || 0.07) * 6
 
   // Collection efficiency - only count loans created after last reset
   const resetDate = settings?.last_reset_date ? new Date(settings.last_reset_date) : null

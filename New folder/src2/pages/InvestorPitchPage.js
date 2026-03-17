@@ -52,7 +52,7 @@ const FAQS = [
   { q: 'What happens if a borrower defaults?', a: 'We have multiple safeguards — Security Hold, penalty system, credit scoring, and trustee/guarantor requirements. In the unlikely event of default, your principal remains intact; only that cycle\'s return may be affected.' },
   { q: 'How do I get paid?', a: 'Payouts are processed every 3 months. You receive your original investment plus the agreed interest rate, coordinated directly with the admin via Teams Chat.' },
   { q: 'Can I withdraw early?', a: 'Investments are locked for the full 3-month term to align with our lending cycle. Early withdrawal is not available once a cycle has started.' },
-  { q: 'How is MoneyfestLending different from 5-6?', a: 'We charge borrowers 7% per month (14% total over the 2-month loan) — far below the 20% per month that 5-6 schemes charge. We\'re a fair, digital, colleague-first program. No collectors, no harassment, no predatory rates.' },
+  { q: 'How is MoneyfestLending different from 5-6?', a: 'We charge borrowers 7% flat — far below the 20% per month that 5-6 schemes charge. We\'re a fair, digital, colleague-first program. No collectors, no harassment, no predatory rates.' },
 ]
 
 function Counter({ target, duration = 1500, prefix = '', suffix = '' }) {
@@ -243,7 +243,7 @@ export default function InvestorPitchPage() {
               Where does the <span className="gold-text">money flow?</span>
             </h2>
             <p style={{ fontSize: 15, color: '#7A8AAA', maxWidth: 520, margin: '0 auto', lineHeight: 1.7 }}>
-              Borrowers pay 7% per month (14% total over the 2-month loan). Here is exactly where every peso goes — no hidden fees, no surprises.
+              Borrowers pay 7% flat interest. Here is exactly where every peso goes — no hidden fees, no surprises.
             </p>
           </div>
 
@@ -268,7 +268,7 @@ export default function InvestorPitchPage() {
               <div style={{ position: 'absolute', top: -40, right: -40, width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle, rgba(245,158,11,0.06) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
               <div style={{ fontSize: 12, fontWeight: 700, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 24, textAlign: 'center' }}>
-                14% total interest split (7%/mo × 2 months)
+                7% interest split
               </div>
 
               {/* Three rows */}
@@ -284,8 +284,8 @@ export default function InvestorPitchPage() {
                     <div style={{ fontSize: 12, color: '#4B5580', marginTop: 2 }}>Total interest on ₱10,000 loan</div>
                   </div>
                   <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 700, fontSize: 32, color: '#F0F4FF' }}>14%</div>
-                    <div style={{ fontSize: 12, color: '#4B5580' }}>= ₱1,400 total (7%/mo × 2)</div>
+                    <div style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 700, fontSize: 32, color: '#F0F4FF' }}>7%</div>
+                    <div style={{ fontSize: 12, color: '#4B5580' }}>= ₱700 total</div>
                   </div>
                 </div>
 
@@ -303,8 +303,8 @@ export default function InvestorPitchPage() {
                     <div style={{ fontSize: 12, color: '#7A8AAA', marginTop: 2 }}>Your return for providing the capital</div>
                   </div>
                   <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 700, fontSize: 32, color: '#F59E0B' }}>10%</div>
-                    <div style={{ fontSize: 12, color: '#7A8AAA' }}>= ₱1,000 per cycle</div>
+                    <div style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 700, fontSize: 32, color: '#F59E0B' }}>5%</div>
+                    <div style={{ fontSize: 12, color: '#7A8AAA' }}>= ₱500 per cycle</div>
                   </div>
                 </div>
 
@@ -319,8 +319,8 @@ export default function InvestorPitchPage() {
                     <div style={{ fontSize: 12, color: '#7A8AAA', marginTop: 2 }}>Covers operations, risk management & technology</div>
                   </div>
                   <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 700, fontSize: 32, color: '#818CF8' }}>4%</div>
-                    <div style={{ fontSize: 12, color: '#4B5580' }}>= ₱400 per cycle</div>
+                    <div style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 700, fontSize: 32, color: '#818CF8' }}>2%</div>
+                    <div style={{ fontSize: 12, color: '#4B5580' }}>= ₱200 per cycle</div>
                   </div>
                 </div>
 
@@ -411,7 +411,7 @@ export default function InvestorPitchPage() {
           <div ref={ref('cycle-note')} className={`reveal ${visible['cycle-note'] ? 'on' : ''}`} style={{ marginTop: 20, padding: '16px 22px', background: 'rgba(99,102,241,0.06)', border: '1px solid rgba(99,102,241,0.18)', borderRadius: 12, display: 'flex', alignItems: 'center', gap: 14 }}>
             <img src="/calendar.png" alt="cycle" style={{ width: 28, height: 28, objectFit: 'contain', flexShrink: 0 }} />
             <div style={{ fontSize: 13, color: '#7A8AAA', lineHeight: 1.7 }}>
-              <strong style={{ color: '#F0F4FF' }}>How the 3-month cycle works:</strong> We run 1.5 lending cycles in 3 months (each loan is 2 months, charged at 7%/month). Your investment is deployed immediately, earns 14% total interest per cycle (2 months × 7%), then you receive your principal + returns at the end of month 3. Payouts are coordinated directly with the admin.
+              <strong style={{ color: '#F0F4FF' }}>How the 3-month cycle works:</strong> We run 1.5 lending cycles in 3 months (loans are 2 months each). Your investment is deployed immediately, earns interest across both cycles, then you receive your principal + returns at the end of month 3. Payouts are coordinated directly with the admin.
             </div>
           </div>
         </div>
@@ -432,7 +432,7 @@ export default function InvestorPitchPage() {
             {[
               { step: '01', icon: '/philippine-peso.png', title: 'Commit capital', desc: 'Tell the admin how much you want to invest and at which tier. Sign a simple written agreement.' },
               { step: '02', icon: '/startup.png', title: 'We deploy it', desc: 'Your funds are deployed as loans to verified colleagues through the MoneyfestLending platform.' },
-              { step: '03', icon: '/calendar.png', title: 'Wait 3 months', desc: 'Borrowers repay every 5th and 20th. Each 2-month cycle earns 14% interest (7%/mo × 2). Your returns accumulate over 1.5 lending cycles.' },
+              { step: '03', icon: '/calendar.png', title: 'Wait 3 months', desc: 'Borrowers repay every 5th and 20th. Your returns accumulate over 1.5 lending cycles.' },
               { step: '04', icon: '/giftbox.png', title: 'Collect returns', desc: 'Receive your original investment plus the agreed interest. Reinvest or cash out — your choice.' },
             ].map((s, i) => (
               <div key={i} ref={ref(`step-${i}`)} className={`reveal d${i+1} ${visible[`step-${i}`] ? 'on' : ''}`}

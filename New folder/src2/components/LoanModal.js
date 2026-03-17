@@ -75,8 +75,7 @@ export default function LoanModal({ isOpen, onClose, onSave, loan, borrower, bor
   const minLoan = 5000
   const amount = parseFloat(form.loan_amount) || 0
   const rate = parseFloat(form.interest_rate) || 0.07
-  // rate is monthly; loan term = 2 months → total interest = rate × 2
-  const totalRepayment = amount * (1 + rate * 2)
+  const totalRepayment = amount * (1 + rate)
   const installmentAmount = totalRepayment / 4
   const dueDate = form.release_date ? (() => {
     const dates = getInstallmentDates(form.release_date)
@@ -172,7 +171,7 @@ export default function LoanModal({ isOpen, onClose, onSave, loan, borrower, bor
                   onChange={e => set('interest_rate', e.target.value)}
                 />
                 <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
-                  {(rate * 100).toFixed(0)}% per month (×2 months)
+                  {(rate * 100).toFixed(0)}% flat rate
                 </div>
               </div>
             </div>

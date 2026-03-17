@@ -293,7 +293,7 @@ function generateApprovalHTML({ borrowerName, accessCode, loanAmount, releaseDat
                     <td align="right" style="font-size:13px;font-weight:700;color:#22C55E;padding:10px 20px;border-bottom:1px solid #1E2640;">₱${Number(loanAmount).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</td>
                   </tr>
                   <tr>
-                    <td style="font-size:13px;color:#4B5580;padding:10px 20px;border-bottom:1px solid #1E2640;">Total Repayment (7%/mo × 2 months)</td>
+                    <td style="font-size:13px;color:#4B5580;padding:10px 20px;border-bottom:1px solid #1E2640;">Total Repayment (7% interest)</td>
                     <td align="right" style="font-size:13px;font-weight:700;color:#F0F4FF;padding:10px 20px;border-bottom:1px solid #1E2640;">₱${Number(totalRepayment).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</td>
                   </tr>
                   <tr>

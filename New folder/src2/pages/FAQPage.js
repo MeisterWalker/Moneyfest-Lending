@@ -73,7 +73,7 @@ export default function FAQPage() {
           </div>
         </div>
       )},
-      { q: `How is the interest calculated?`, a: `We charge ${(interestRate * 100).toFixed(0)}% interest per month. Since the loan runs for 2 months, the total interest is ${(interestRate * 2 * 100).toFixed(0)}% of the principal — applied once and fixed at approval. For example, a ₱5,000 loan has a total repayment of ₱${(5000 * (1 + interestRate * 2)).toLocaleString('en-PH', { minimumFractionDigits: 2 })}, split into 4 installments of ₱${(5000 * (1 + interestRate * 2) / 4).toLocaleString('en-PH', { minimumFractionDigits: 2 })} each. The interest does not compound — it is fixed at the time of approval and will not change.` },
+      { q: `How is the interest calculated?`, a: `We use a flat ${(interestRate * 100).toFixed(0)}% interest rate on the principal. For example, a ₱5,000 loan has a total repayment of ₱${(5000 * (1 + interestRate)).toLocaleString('en-PH', { minimumFractionDigits: 2 })}, split into 4 installments of ₱${(5000 * (1 + interestRate) / 4).toLocaleString('en-PH', { minimumFractionDigits: 2 })} each. The interest does not compound — it is applied once to the principal.` },
     ],
     payments: [
       { q: 'When are payments due?', a: 'Payments are collected every 5th and 20th of the month — that\'s 2 payments per month for 2 months. Your loan will be fully paid after 4 installments.' },

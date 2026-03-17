@@ -361,7 +361,7 @@ function SignatureModal({ borrower, loan, onSave, onClose }) {
           <>
             {/* Loan summary */}
             <div style={{ background: 'rgba(99,102,241,0.06)', border: '1px solid rgba(99,102,241,0.18)', borderRadius: 12, padding: '12px 16px', marginBottom: 20, fontSize: 12, color: '#7A8AAA', lineHeight: 1.7 }}>
-              By signing, you confirm you have read and agree to the loan terms: <strong style={{ color: '#F0F4FF' }}>₱{Number(loan.loan_amount).toLocaleString('en-PH')} loan</strong> at <strong style={{ color: '#F0F4FF' }}>{((loan.interest_rate || 0.07) * 100).toFixed(0)}%/mo × 2 months interest</strong>, repayable in <strong style={{ color: '#F0F4FF' }}>4 installments</strong> of <strong style={{ color: '#60A5FA' }}>₱{Number(loan.installment_amount).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</strong> each.
+              By signing, you confirm you have read and agree to the loan terms: <strong style={{ color: '#F0F4FF' }}>₱{Number(loan.loan_amount).toLocaleString('en-PH')} loan</strong> at <strong style={{ color: '#F0F4FF' }}>{((loan.interest_rate || 0.07) * 100).toFixed(0)}% flat interest</strong>, repayable in <strong style={{ color: '#F0F4FF' }}>4 installments</strong> of <strong style={{ color: '#60A5FA' }}>₱{Number(loan.installment_amount).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</strong> each.
             </div>
 
             {/* Step 1 — Type name */}
@@ -717,8 +717,8 @@ export default function BorrowerPortalPage() {
       <div class="row"><span class="lbl">Security Hold (${holdRate}%)</span><span class="val">&#8369;${holdAmt.toLocaleString('en-PH',{minimumFractionDigits:2})}</span></div>
       <div class="row"><span class="lbl">Funds Released to Borrower</span><span class="val">&#8369;${released.toLocaleString('en-PH',{minimumFractionDigits:2})}</span></div>
       <div class="row"><span class="lbl">Finance Charge (Interest)</span><span class="val">&#8369;${(total-principal).toLocaleString('en-PH',{minimumFractionDigits:2})}</span></div>
-      <div class="row"><span class="lbl">Monthly Interest Rate</span><span class="val">${rate}% per month × 2 months</span></div>
-      <div class="row"><span class="lbl">Effective Annual Rate</span><span class="val">${(Number(loan.interest_rate||0.07)*12*100).toFixed(2)}% per annum</span></div>
+      <div class="row"><span class="lbl">Flat Interest Rate</span><span class="val">${rate}% of principal (one-time)</span></div>
+      <div class="row"><span class="lbl">Effective Annual Rate</span><span class="val">${((total-principal)/principal/2*12*100).toFixed(2)}% per annum</span></div>
       <div class="row"><span class="lbl">Total Amount Payable</span><span class="val" style="color:#1e1b4b;font-size:13px;">&#8369;${total.toLocaleString('en-PH',{minimumFractionDigits:2})}</span></div>
       <div class="row"><span class="lbl">Per Installment Amount</span><span class="val">&#8369;${perInst.toLocaleString('en-PH',{minimumFractionDigits:2})}</span></div>
     </div>
@@ -757,7 +757,7 @@ export default function BorrowerPortalPage() {
 
   <div class="section">
     <div class="section-title">Terms &amp; Conditions</div>
-    <p class="tc-item">1. <strong>Interest</strong> — A monthly interest rate of ${rate}% is applied for each of the 2 months of the loan term, resulting in a total finance charge of ${(rate*2).toFixed(0)}% of the principal. This charge is fixed and applies regardless of early settlement or prepayment of any installment.</p>
+    <p class="tc-item">1. <strong>Interest</strong> — A flat interest rate of ${rate}% is charged on the full approved loan amount. This charge applies regardless of early settlement or prepayment of any installment.</p>
     <p class="tc-item">2. <strong>Security Hold</strong> — ${holdRate}% of the approved loan amount is withheld upon fund release as a Security Hold. Late payment penalties are automatically deducted from the Security Hold balance. The remaining Security Hold balance is returned to the Borrower's Rebate Credits upon full payment of the 4th installment.</p>
     <p class="tc-item">3. <strong>Late Payment Penalties</strong> — A penalty of &#8369;20.00 per calendar day is charged for each day an installment remains unpaid past its due date (5th or 20th of the month). The penalty accrues daily with no cap until the installment is settled. Each late payment also results in a deduction of 10 points from the Borrower's credit score.</p>
     <p class="tc-item">4. <strong>Default</strong> — Failure to pay two (2) or more consecutive installments constitutes a loan default. Upon default, the remaining balance becomes immediately due and payable in full. A credit score deduction of 150 points is applied and the Borrower's account will be flagged as High Risk. MoneyfestLending reserves the right to pursue all available legal remedies under Philippine law, including the filing of a civil complaint for collection of sum of money, referral to barangay conciliation under Republic Act No. 7160 (Katarungang Pambarangay Law) prior to court action, and other remedies available under Republic Act No. 9474 (Lending Company Regulation Act of 2007). The Borrower shall be liable for all costs of collection, including reasonable attorney's fees, should legal action become necessary. The Borrower expressly acknowledges this right by signing this agreement.</p>
@@ -1776,8 +1776,8 @@ export default function BorrowerPortalPage() {
               const totalRepayment = Number(loan.total_repayment)
               const financeCharge = totalRepayment - principal
               const flatRate = Number(loan.interest_rate || 0.07) * 100
-              // Monthly rate × 12 months = effective annual rate
-              const effectiveAnnual = (flatRate * 12).toFixed(2)
+              // Effective annual rate: loan is 2 months, so annualize
+              const effectiveAnnual = ((financeCharge / principal) / 2 * 12 * 100).toFixed(2)
               return (
                 <div style={{ background: '#141B2D', border: '1px solid rgba(99,102,241,0.2)', borderRadius: 16, padding: 20, marginBottom: 16 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, paddingBottom: 12, borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
@@ -1790,7 +1790,7 @@ export default function BorrowerPortalPage() {
                       { label: 'Security Hold (' + (loan.security_hold && principal ? ((Number(loan.security_hold)/principal*100).toFixed(0)) : '10') + '%)', value: '₱' + (loan.security_hold ? Number(loan.security_hold).toLocaleString('en-PH', { minimumFractionDigits: 2 }) : (principal * 0.10).toLocaleString('en-PH', { minimumFractionDigits: 2 })), color: '#F59E0B' },
                       { label: 'Funds Released to You', value: '₱' + (loan.funds_released ? Number(loan.funds_released).toLocaleString('en-PH', { minimumFractionDigits: 2 }) : (principal * 0.80).toLocaleString('en-PH', { minimumFractionDigits: 2 })), color: '#22C55E' },
                       { label: 'Finance Charge', value: '₱' + financeCharge.toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#F59E0B' },
-                      { label: 'Monthly Interest Rate', value: flatRate.toFixed(0) + '% per month × 2 months', color: '#60A5FA' },
+                      { label: 'Flat Interest Rate', value: flatRate.toFixed(0) + '% of principal', color: '#60A5FA' },
                       { label: 'Effective Interest Rate (per annum)', value: effectiveAnnual + '% p.a.', color: '#a78bfa' },
                       { label: 'Total Amount Payable', value: '₱' + totalRepayment.toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#22C55E' },
                       { label: 'Number of Installments', value: '4 payments every 5th and 20th of the month', color: '#F0F4FF' },
@@ -1808,7 +1808,7 @@ export default function BorrowerPortalPage() {
                         ✅ Security Hold of ₱{Number(loan.security_hold).toLocaleString('en-PH', { minimumFractionDigits: 2 })} has been returned to your Rebate Credits
                       </div>
                     )}
-                    <strong style={{ color: '#818CF8' }}>RA 3765 — Truth in Lending Act Disclosure.</strong> This statement discloses all finance charges and terms applicable to your loan in compliance with Republic Act No. 3765 of the Philippines. The monthly interest rate is applied for each of the 2 months of the loan term. The effective annual rate is the monthly rate multiplied by 12 months.
+                    <strong style={{ color: '#818CF8' }}>RA 3765 — Truth in Lending Act Disclosure.</strong> This statement discloses all finance charges and terms applicable to your loan in compliance with Republic Act No. 3765 of the Philippines. The effective interest rate is computed based on the loan term of 2 months annualized over 12 months.
                   </div>
                   {/* Sign & Download buttons */}
                   <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>

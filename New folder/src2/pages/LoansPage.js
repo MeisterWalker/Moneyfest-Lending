@@ -196,7 +196,7 @@ function LoanCard({ loan, borrowers, onEdit, onDelete, onRecordPayment, onDefaul
               {formatCurrency(loan.total_repayment)}
             </div>
             <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-              {(loan.interest_rate * 100).toFixed(0)}%/mo interest
+              {(loan.interest_rate * 100).toFixed(0)}% interest
             </div>
           </div>
         </div>

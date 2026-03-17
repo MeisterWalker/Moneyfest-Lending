@@ -527,12 +527,8 @@ export default function ApplicationsPage() {
 
         // 5. Create loan — use only confirmed existing columns
         const loanAmount = Number(app.loan_amount) || 5000
-        // Interest rate stored as monthly rate (e.g. 0.07 = 7% per month).
-        // Loan term is 2 months → total interest = rate × 2
-        const { data: rateSettings } = await supabase.from('settings').select('interest_rate').eq('id', 1).single()
-        const monthlyRate = Number(rateSettings?.interest_rate) || 0.07
-        const rate = monthlyRate
-        const total = loanAmount * (1 + monthlyRate * 2)
+        const rate = 0.07
+        const total = loanAmount * (1 + rate)
         const installment = total / 4
         const holdAmt = parseFloat((loanAmount * 0.10).toFixed(2))
         const released = loanAmount - holdAmt

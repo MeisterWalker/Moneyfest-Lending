@@ -11,8 +11,7 @@ export default function TermsPage() {
   }, [])
 
   const flatRate = (interestRate * 100).toFixed(0)
-  const totalRate = (interestRate * 2 * 100).toFixed(0)
-  const effectiveAnnual = (interestRate * 12 * 100).toFixed(0)
+  const effectiveAnnual = (interestRate / 2 * 12 * 100).toFixed(0)
 
   const handlePrint = () => window.print()
 
@@ -205,10 +204,10 @@ ${content.innerHTML}
             title: 'Interest Rate and Finance Charges',
             content: null,
             items: [
-              { term: 'Monthly Interest Rate', def: `${flatRate}% per month. Since the loan term is 2 months, the total interest charge is ${totalRate}% of the principal amount. Interest does not compound.` },
-              { term: 'Effective Annual Rate', def: `Approximately ${effectiveAnnual}% per annum (monthly rate × 12), in compliance with Republic Act No. 3765 (Truth in Lending Act).` },
-              { term: 'Finance Charge Example', def: `A ₱5,000 loan incurs a finance charge of ₱700.00 (${flatRate}% × 2 months), for a total repayment of ₱5,700.00 in 4 installments of ₱1,425.00 each.` },
-              { term: 'No Hidden Fees', def: 'There are no application fees, processing fees, or any other charges beyond the stated monthly interest rate and applicable late payment penalties.' },
+              { term: 'Interest Rate', def: `${flatRate}% flat rate applied once on the principal amount. Interest does not compound.` },
+              { term: 'Effective Annual Rate', def: `Approximately ${effectiveAnnual}% per annum, based on the 2-month loan term, in compliance with Republic Act No. 3765 (Truth in Lending Act).` },
+              { term: 'Finance Charge Example', def: `A ₱5,000 loan incurs a finance charge of ₱350.00, for a total repayment of ₱5,350.00 in 4 installments of ₱1,337.50 each.` },
+              { term: 'No Hidden Fees', def: 'There are no application fees, processing fees, or any other charges beyond the stated flat interest rate and applicable late payment penalties.' },
             ]
           },
           {
@@ -290,7 +289,7 @@ ${content.innerHTML}
               { term: 'Loan Approval Discretion', def: 'The Lender reserves the right to approve, reject, or adjust any loan application at its sole discretion, without obligation to disclose specific reasons for rejection.' },
               { term: 'Disclosure Compliance', def: 'The Lender will disclose all finance charges and terms clearly before loan release, in compliance with RA 3765 (Truth in Lending Act).' },
               { term: 'Data Protection', def: 'The Lender will protect all personal information in accordance with RA 10173 (Data Privacy Act of 2012) as stated in the Privacy Notice.' },
-              { term: 'No Extra Charges', def: 'The Lender will not charge fees beyond the stated monthly interest rate and applicable late payment penalties.' },
+              { term: 'No Extra Charges', def: 'The Lender will not charge fees beyond the stated flat interest rate and applicable late payment penalties.' },
               { term: 'Notification', def: 'The Lender will notify the Borrower of approval or rejection of the loan application via email or the Borrower Portal.' },
               { term: 'Demand for Full Payment', def: 'In the event of default or consecutive missed payments, the Lender reserves the right to declare the entire outstanding loan balance immediately due and payable, pursuant to the terms of this agreement and applicable Philippine law.' },
               { term: 'Legal Remedies', def: 'In cases of default, persistent non-payment, or willful evasion of loan obligations, the Lender reserves the right to pursue all available legal remedies under Philippine law, including but not limited to the filing of a civil complaint for collection of sum of money under the Rules of Court, referral to the appropriate barangay for conciliation under the Katarungang Pambarangay Law (RA 7160) prior to court action, and other remedies available under RA 9474 (Lending Company Regulation Act of 2007). The Borrower shall be liable for all costs of collection, including reasonable attorney\'s fees, if legal action becomes necessary.' },
@@ -306,7 +305,7 @@ ${content.innerHTML}
           {
             num: '13',
             title: 'Truth in Lending Disclosure (RA 3765)',
-            content: `In compliance with Republic Act No. 3765 (Truth in Lending Act), MoneyfestLending discloses the following for all loans: the principal amount, the finance charge in peso terms, the monthly interest rate of ${flatRate}% (totalling ${totalRate}% over the 2-month loan term), the effective annual interest rate of approximately ${effectiveAnnual}%, the total amount payable, and the full installment schedule. This disclosure is accessible at any time through the Borrower Portal.`,
+            content: `In compliance with Republic Act No. 3765 (Truth in Lending Act), MoneyfestLending discloses the following for all loans: the principal amount, the finance charge in peso terms, the flat interest rate of ${flatRate}%, the effective annual interest rate of approximately ${effectiveAnnual}%, the total amount payable, and the full installment schedule. This disclosure is accessible at any time through the Borrower Portal.`,
             items: null
           },
           {

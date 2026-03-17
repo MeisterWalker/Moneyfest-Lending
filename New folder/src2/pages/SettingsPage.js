@@ -72,7 +72,7 @@ function LoanConfigSection({ settings, onSave }) {
         <div className="form-group">
           <label className="form-label">Interest Rate (%)</label>
           <input type="number" min="1" max="100" step="1" value={form.interest_rate} onChange={e => set('interest_rate', e.target.value)} />
-          <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>Monthly rate per borrower</div>
+          <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>Flat rate per loan</div>
         </div>
         <div className="form-group">
           <label className="form-label">Max Loan Amount (₱)</label>

@@ -361,7 +361,7 @@ export default function PublicApplyPage() {
             >
               {[
                 { title: '1. Eligibility', body: 'This lending program is exclusively available to active team members in good standing within our office. By submitting an application, you confirm that you are currently employed and eligible to participate. Applications from ineligible individuals will not be processed.' },
-                { title: '2. Loan Terms & Interest', body: `Approved loans are subject to a monthly interest rate of ${(interestRate * 100).toFixed(0)}% applied over the 2-month loan term, for a total interest charge of ${(interestRate * 2 * 100).toFixed(0)}% of the principal. This is not a compounding rate. The total repayable amount is fixed at the time of approval and will not change provided payments are made on schedule.` },
+                { title: '2. Loan Terms & Interest', body: `Approved loans are subject to a flat interest rate of ${(interestRate * 100).toFixed(0)}% applied once to the principal amount. This is not a compounding rate. The total repayable amount is fixed at the time of approval and will not change provided payments are made on schedule.` },
                 { title: '3. Repayment Schedule', body: 'Loans are repaid in 4 equal installments, collected every 5th and 20th of the month. Your repayment schedule begins on the cutoff date following your loan release. It is your responsibility to ensure payments are submitted on time.' },
                 { title: '4. Late Payments & Default', body: 'A late payment penalty of ₱20 per day will be charged for each installment not paid by its due date. The penalty accrues daily with no cap until the installment is settled. Late payments result in a -10 point deduction to your credit score per missed installment. A loan is considered in default if two (2) consecutive installments are missed. Upon default, the entire remaining loan balance becomes immediately due and payable. Consistent non-payment or willful evasion of loan obligations may result in MoneyfestLending pursuing all available legal remedies under Philippine law, including the filing of a civil complaint for collection of sum of money, referral to barangay conciliation under RA 7160 (Katarungang Pambarangay Law), and other remedies under RA 9474 (Lending Company Regulation Act of 2007). The Borrower shall be liable for all costs of collection, including reasonable attorney\'s fees, if legal action becomes necessary.' },
                 { title: '5. Early Payoff Rebate', body: 'If your final (4th) installment is paid at least 1 day before its due date, you will receive a fixed 1% rebate on your loan principal, credited to your Rebate Credits balance. Rebates apply to the final installment only and are credited automatically. Rebate Credits are withdrawable once your balance reaches ₱500, subject to admin approval.' },
@@ -627,7 +627,7 @@ export default function PublicApplyPage() {
                     <button key={amt} onClick={() => form.loan_amount === amt ? null : startDisclaimer(amt)}
                       style={{ padding: '16px 12px', borderRadius: 12, border: `2px solid ${form.loan_amount === amt ? '#3B82F6' : 'rgba(255,255,255,0.07)'}`, background: form.loan_amount === amt ? 'rgba(59,130,246,0.12)' : 'rgba(255,255,255,0.02)', cursor: 'pointer', textAlign: 'center', transition: 'all 0.15s' }}>
                       <div style={{ fontFamily: 'Space Grotesk', fontWeight: 900, fontSize: 22, color: form.loan_amount === amt ? '#22C55E' : '#7A8AAA' }}>₱{amt.toLocaleString()}</div>
-                      <div style={{ fontSize: 11, color: '#4B5580', marginTop: 3 }}>₱{(amt * (1 + interestRate * 2) / 4).toFixed(2)}/cutoff</div>
+                      <div style={{ fontSize: 11, color: '#4B5580', marginTop: 3 }}>₱{(amt * (1 + interestRate) / 4).toFixed(2)}/cutoff</div>
                     </button>
                   ))}
                 </div>
@@ -694,7 +694,7 @@ export default function PublicApplyPage() {
               {/* Loan Calculator */}
               {form.loan_amount ? (() => {
                 const principal = parseFloat(form.loan_amount)
-                const interest = principal * interestRate * 2
+                const interest = principal * interestRate
                 const total = principal + interest
                 const perInst = total / 4
                 const securityHold = parseFloat((principal * 0.10).toFixed(2)) // standard rate; actual rate set by credit score

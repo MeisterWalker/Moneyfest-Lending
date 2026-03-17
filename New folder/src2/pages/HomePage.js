@@ -30,7 +30,7 @@ export default function HomePage() {
   }
 
   const features = [
-    { icon: '/philippine-peso.png', title: `Only ${(interestRate * 100).toFixed(0)}% monthly interest`, desc: 'One of the lowest rates in Cebu — no hidden fees, no compounding, no surprise deductions ever.' },
+    { icon: '/philippine-peso.png', title: `Only ${(interestRate * 100).toFixed(0)}% flat interest`, desc: 'One of the lowest rates in Cebu — no hidden fees, no compounding, no surprise deductions ever.' },
     { icon: '/startup.png', title: 'Pre-qualify in minutes', desc: 'Fill out a simple form, get approved fast, and have funds released straight to you.' },
     { icon: '/giftbox.png', title: 'Earn Rebate Credits', desc: 'Pay your final installment early and get automatically rewarded with Rebate Credits.' },
     { icon: '/padlock.png', title: 'Private & exclusive', desc: 'An internal program just for our team — not open to the public, no outsiders.' },
@@ -39,7 +39,7 @@ export default function HomePage() {
   ]
 
   const stats = [
-    { value: `${(interestRate * 100).toFixed(0)}%`, label: 'Monthly interest rate', sub: 'No compounding' },
+    { value: `${(interestRate * 100).toFixed(0)}%`, label: 'Flat interest rate', sub: 'No compounding' },
     { value: '₱10K', label: 'Maximum loan', sub: 'For trusted borrowers' },
     { value: '4', label: 'Easy installments', sub: 'Over 2 months' },
     { value: '12hr', label: 'Avg. approval time', sub: 'Fast turnaround' },
