@@ -3,10 +3,10 @@ import { useState, useEffect, useRef } from 'react'
 const TIERS = [
   {
     amount: '₱5,000',
-    rate: '4%',
-    earn: '₱200',
-    annual: '₱800',
-    annualRate: '16%',
+    rate: '8%',
+    earn: '₱600',
+    annual: '₱2,400',
+    annualRate: '48%',
     label: 'Starter',
     color: '#94A3B8',
     bg: 'rgba(148,163,184,0.06)',
@@ -15,10 +15,10 @@ const TIERS = [
   },
   {
     amount: '₱10,000',
-    rate: '5%',
-    earn: '₱500',
-    annual: '₱2,000',
-    annualRate: '20%',
+    rate: '10%',
+    earn: '₱1,500',
+    annual: '₱6,000',
+    annualRate: '60%',
     label: 'Standard',
     color: '#F59E0B',
     bg: 'rgba(245,158,11,0.08)',
@@ -28,10 +28,10 @@ const TIERS = [
   },
   {
     amount: '₱20,000+',
-    rate: '6%',
-    earn: '₱1,200',
-    annual: '₱4,800',
-    annualRate: '24%',
+    rate: '12%',
+    earn: '₱3,600',
+    annual: '₱14,400',
+    annualRate: '72%',
     label: 'Premium',
     color: '#22C55E',
     bg: 'rgba(34,197,94,0.08)',
@@ -44,7 +44,7 @@ const COMPARISONS = [
   { label: 'BDO / BPI Savings', rate: '0.0625% p.a.', annual: '~₱6', color: '#EF4444', bar: 1, note: 'Actual current rate as of 2026' },
   { label: 'BDO / BPI Time Deposit', rate: '0.75–1.07% p.a.', annual: '~₱75–107', color: '#F97316', bar: 5, note: '90–360 day term' },
   { label: 'UITF / Mutual Fund', rate: '8–12% avg', annual: '~₱800–1,200', color: '#F59E0B', bar: 35, note: 'Variable — not guaranteed' },
-  { label: 'MoneyfestLending', rate: '4–6% per 3 months', annual: '₱800–4,800', color: '#22C55E', bar: 100, highlight: true },
+  { label: 'MoneyfestLending', rate: '8–12% per 3 months', annual: '₱2,400–14,400', color: '#22C55E', bar: 100, highlight: true },
 ]
 
 const FAQS = [
@@ -166,13 +166,13 @@ export default function InvestorPitchPage() {
           </h1>
 
           <p className="hero-3" style={{ fontSize: 'clamp(16px,2vw,20px)', color: '#7A8AAA', lineHeight: 1.8, maxWidth: 580, margin: '24px auto 48px', fontWeight: 400 }}>
-            Partner with MoneyfestLending and earn up to <strong style={{ color: '#F59E0B' }}>6% every 3 months</strong> — that's <strong style={{ color: '#22C55E' }}>24% per year</strong> — on capital deployed through our verified colleague lending program.
+            Partner with MoneyfestLending and earn up to <strong style={{ color: '#F59E0B' }}>12% every 3 months</strong> — that's <strong style={{ color: '#22C55E' }}>72% per year</strong> — on capital deployed through our verified colleague lending program.
           </p>
 
           {/* Hero stats */}
           <div className="hero-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16, maxWidth: 720, margin: '0 auto' }}>
             {[
-              { value: 24, suffix: '%', label: 'Max annual return', color: '#22C55E' },
+              { value: 72, suffix: '%', label: 'Max annual return', color: '#22C55E' },
               { value: 3, suffix: ' months', label: 'Lock-in period', color: '#F59E0B' },
               { value: 5000, prefix: '₱', label: 'Minimum investment', color: '#60A5FA' },
               { value: 0, suffix: '%', label: 'Platform fees', color: '#a78bfa' },
@@ -225,7 +225,7 @@ export default function InvestorPitchPage() {
           </div>
 
           <div ref={ref('vs-note')} className={`reveal ${visible['vs-note'] ? 'on' : ''}`} style={{ marginTop: 20, padding: '16px 22px', background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 12, fontSize: 13, color: '#7A8AAA', lineHeight: 1.7 }}>
-            💡 <strong style={{ color: '#F59E0B' }}>Put simply:</strong> BDO and BPI savings accounts currently earn just 0.0625% per year — that's ₱6.25 on ₱10,000. Their time deposits aren't much better at 0.75–1.07%. They take your money, lend it out at 6–15%, and keep the difference. MoneyfestLending gives you up to ₱2,000 on the same ₱10,000. Same concept — we just share the profit with you.
+            💡 <strong style={{ color: '#F59E0B' }}>Put simply:</strong> BDO and BPI savings accounts currently earn just 0.0625% per year — that's ₱6.25 on ₱10,000. Their time deposits aren't much better at 0.75–1.07%. They take your money, lend it out at 6–15%, and keep the difference. MoneyfestLending gives you up to ₱6,000 on the same ₱10,000 — every single year. Same concept — we just share the profit with you.
           </div>
         </div>
       </section>
@@ -304,7 +304,7 @@ export default function InvestorPitchPage() {
                   </div>
                   <div style={{ textAlign: 'right' }}>
                     <div style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 700, fontSize: 32, color: '#F59E0B' }}>10%</div>
-                    <div style={{ fontSize: 12, color: '#7A8AAA' }}>= ₱1,000 per cycle</div>
+                    <div style={{ fontSize: 12, color: '#7A8AAA' }}>= ₱1,000 per cycle (₱1,500 per 3 months)</div>
                   </div>
                 </div>
 
@@ -392,7 +392,7 @@ export default function InvestorPitchPage() {
 
                 {/* Stats */}
                 {[
-                  { label: 'You earn per cycle', value: t.earn, color: t.color },
+                  { label: 'You earn (3 months)', value: t.earn, color: t.color },
                   { label: 'Annual return', value: t.annual, color: '#F0F4FF' },
                   { label: 'Annual rate', value: t.annualRate, color: '#22C55E' },
                   { label: 'Lock-in period', value: '3 months', color: '#7A8AAA' },
@@ -456,16 +456,16 @@ export default function InvestorPitchPage() {
         <div style={{ maxWidth: 900, margin: '0 auto' }}>
           <div ref={ref('calc-h')} className={`reveal ${visible['calc-h'] ? 'on' : ''}`} style={{ textAlign: 'center', marginBottom: 48 }}>
             <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 700, fontSize: 'clamp(32px,4vw,48px)', color: '#F0F4FF', letterSpacing: -1, margin: 0 }}>
-              What <span className="gold-text">₱10,000</span> looks like over time.
+              What <span className="gold-text">₱10,000</span> becomes with reinvestment.
             </h2>
           </div>
 
           <div ref={ref('calc')} className={`reveal ${visible['calc'] ? 'on' : ''}`} style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12 }}>
             {[
-              { period: '3 months', capital: 10000, earn: 500, total: 10500, rate: '5%' },
-              { period: '6 months', capital: 10500, earn: 1025, total: 11025, rate: '5% × 2' },
-              { period: '9 months', capital: 11025, earn: 1576, total: 11601, rate: 'compounding' },
-              { period: '12 months', capital: 11601, earn: 2155, total: 12155, rate: '≈21.5% actual' },
+              { period: '3 months',  capital: 10000, earn: 1500, total: 11500, rate: '10% × 1.5 cycles' },
+              { period: '6 months',  capital: 11500, earn: 3225, total: 13225, rate: 'compounding' },
+              { period: '9 months',  capital: 13225, earn: 5209, total: 15209, rate: 'compounding' },
+              { period: '12 months', capital: 15209, earn: 7490, total: 17490, rate: '≈74.9% actual' },
             ].map((r, i) => (
               <div key={i} style={{ background: i === 3 ? 'rgba(34,197,94,0.08)' : 'rgba(255,255,255,0.02)', border: `1px solid ${i === 3 ? 'rgba(34,197,94,0.3)' : 'rgba(255,255,255,0.06)'}`, borderRadius: 16, padding: '22px 18px', textAlign: 'center' }}>
                 <div style={{ fontSize: 11, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>{r.period}</div>
@@ -476,7 +476,7 @@ export default function InvestorPitchPage() {
             ))}
           </div>
           <div style={{ marginTop: 12, fontSize: 11, color: '#4B5580', textAlign: 'center' }}>
-            Based on 5% rate (₱10,000 tier) with full reinvestment each cycle. Actual results may vary.
+            Based on 10% rate (₱10,000 Standard tier) with full reinvestment each cycle. Actual results may vary.
           </div>
         </div>
       </section>
