@@ -913,6 +913,7 @@ export default function BorrowerPortalPage() {
   if (page === 'wallet') {
     const canWithdraw = rebateCredits?.balance >= 500
     return (
+      <>
       <div style={{ minHeight: '100vh', background: '#080B14', fontFamily: 'DM Sans, sans-serif' }}>
         <PortalHeader borrower={borrower} notifications={notifications} showNotifs={showNotifs} setShowNotifs={setShowNotifs} markAllRead={markAllRead} onBack={() => setPage('home')} subtitle="Rebate Credits" />
         <div style={{ maxWidth: 520, margin: '0 auto', padding: '32px 20px 40px' }}>
@@ -1079,6 +1080,7 @@ export default function BorrowerPortalPage() {
 
       </div>
     </div>
+      </>
     )
   }
 
