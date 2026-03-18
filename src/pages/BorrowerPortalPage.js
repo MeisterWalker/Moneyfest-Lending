@@ -630,10 +630,10 @@ export default function BorrowerPortalPage() {
             ))}
           </div>
           <div style={{ fontSize: 12, color: '#4B5580', marginBottom: 16, lineHeight: 1.7 }}>Contact your admin directly via <strong style={{ color: '#7A8AAA' }}>Microsoft Teams</strong> for updates on your application.</div>
-          {[{ initials: 'JP', name: 'John Paul Lacaron', gradient: 'linear-gradient(135deg,#3B82F6,#8B5CF6)' }, { initials: 'CJ', name: 'Charlou June Ramil', gradient: 'linear-gradient(135deg,#14B8A6,#3B82F6)' }].map(a => (
+          {[{ initials: 'JP', name: 'John Paul Lacaron', gradient: 'linear-gradient(135deg,#3B82F6,#8B5CF6)', role: 'Admin & Developer · Teams Chat' }, { initials: 'CJ', name: 'Charlou June Ramil', gradient: 'linear-gradient(135deg,#14B8A6,#3B82F6)', role: 'Admin · Teams Chat' }].map(a => (
             <div key={a.name} style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.03)', borderRadius: 10, padding: '10px 14px', marginBottom: 8, textAlign: 'left' }}>
               <div style={{ width: 32, height: 32, borderRadius: '50%', background: a.gradient, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, color: '#fff', flexShrink: 0 }}>{a.initials}</div>
-              <div><div style={{ fontSize: 13, fontWeight: 600, color: '#F0F4FF' }}>{a.name}</div><div style={{ fontSize: 11, color: '#4B5580' }}>Admin · Teams Chat</div></div>
+              <div><div style={{ fontSize: 13, fontWeight: 600, color: '#F0F4FF' }}>{a.name}</div><div style={{ fontSize: 11, color: '#4B5580' }}>{a.role}</div></div>
             </div>
           ))}
           <button onClick={() => { setPendingApp(null); setInputCode(''); setCode('') }} style={{ width: '100%', marginTop: 16, padding: '11px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.08)', background: 'transparent', color: '#7A8AAA', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>← Back</button>
@@ -1340,14 +1340,14 @@ export default function BorrowerPortalPage() {
                 <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 12, color: '#F0F4FF', marginBottom: 10 }}>❓ Need Help?</div>
                 <div style={{ fontSize: 11, color: '#7A8AAA', marginBottom: 10, lineHeight: 1.6 }}>Contact your admin via <strong style={{ color: '#F0F4FF' }}>Microsoft Teams</strong>:</div>
                 {[
-                  { initials: 'JP', name: 'John Paul Lacaron', gradient: 'linear-gradient(135deg,#3B82F6,#8B5CF6)' },
-                  { initials: 'CJ', name: 'Charlou June Ramil', gradient: 'linear-gradient(135deg,#14B8A6,#3B82F6)' },
+                  { initials: 'JP', name: 'John Paul Lacaron', gradient: 'linear-gradient(135deg,#3B82F6,#8B5CF6)', role: 'Admin & Developer · Teams Chat' },
+                  { initials: 'CJ', name: 'Charlou June Ramil', gradient: 'linear-gradient(135deg,#14B8A6,#3B82F6)', role: 'Admin · Teams Chat' },
                 ].map(a => (
                   <div key={a.name} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.02)', borderRadius: 8, padding: '7px 10px', marginBottom: 6 }}>
                     <div style={{ width: 26, height: 26, borderRadius: '50%', background: a.gradient, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 800, color: '#fff', flexShrink: 0 }}>{a.initials}</div>
                     <div>
                       <div style={{ fontSize: 11, fontWeight: 600, color: '#F0F4FF' }}>{a.name}</div>
-                      <div style={{ fontSize: 10, color: '#4B5580' }}>Admin · Teams Chat</div>
+                      <div style={{ fontSize: 10, color: '#4B5580' }}>{a.role}</div>
                     </div>
                   </div>
                 ))}
