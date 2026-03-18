@@ -392,6 +392,9 @@ export default function BorrowerPortalPage() {
   const [rebateCredits, setRebateCredits] = useState(null)
   const [creditTxns, setCreditTxns] = useState([])
   const [withdrawing, setWithdrawing] = useState(false)
+  const [showWithdrawModal, setShowWithdrawModal] = useState(false)
+  const [withdrawMethod, setWithdrawMethod] = useState('')
+  const [withdrawDetails, setWithdrawDetails] = useState('')
   const [pendingApp, setPendingApp] = useState(null)
   const [allLoans, setAllLoans] = useState([])
   const [notifications, setNotifications] = useState([])
@@ -923,18 +926,107 @@ export default function BorrowerPortalPage() {
             <div style={{ fontSize: 12, color: '#4B5580', marginBottom: 16 }}>₱{(500 - (rebateCredits?.balance || 0)).toLocaleString('en-PH', { minimumFractionDigits: 2 })} more needed to withdraw</div>
           )}
           {rebateCredits?.balance >= 500 ? (
-            <button onClick={async () => {
-              setWithdrawing(true)
-              const { error } = await supabase.from('wallet_transactions').insert({ borrower_id: borrower.id, type: 'withdrawal', amount: rebateCredits.balance, description: 'Withdrawal request', status: 'pending' })
-              if (!error) { await supabase.from('portal_notifications').insert({ borrower_id: borrower.id, type: 'withdrawal_requested', title: '💸 Withdrawal Requested', message: `Your withdrawal request of ₱${rebateCredits.balance.toLocaleString('en-PH', { minimumFractionDigits: 2 })} is pending admin review.` }); fetchPortalData(code) }
-              setWithdrawing(false)
-            }} disabled={withdrawing}
+            <button onClick={() => { setWithdrawMethod(''); setWithdrawDetails(''); setShowWithdrawModal(true) }}
               style={{ padding: '12px 28px', borderRadius: 12, border: 'none', background: 'linear-gradient(135deg,#F59E0B,#D97706)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'Syne, sans-serif' }}>
-              {withdrawing ? 'Requesting...' : '💸 Request Withdrawal'}
+              💸 Request Withdrawal
             </button>
           ) : (
             <div style={{ display: 'inline-block', padding: '10px 20px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.03)', fontSize: 12, color: '#4B5580' }}>🔒 Min. ₱500 required to withdraw</div>
           )}
+        </div>
+
+        {/* Withdrawal Modal */}
+        {showWithdrawModal && (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20 }}>
+            <div style={{ width: '100%', maxWidth: 440, background: '#0E1320', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 20, overflow: 'hidden', boxShadow: '0 40px 80px rgba(0,0,0,0.6)' }}>
+              <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div>
+                  <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 16, color: '#F0F4FF' }}>Request Withdrawal</div>
+                  <div style={{ fontSize: 12, color: '#4B5580', marginTop: 2 }}>Amount: <strong style={{ color: '#F59E0B' }}>₱{(rebateCredits?.balance || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</strong></div>
+                </div>
+                <button onClick={() => setShowWithdrawModal(false)} style={{ width: 32, height: 32, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: '#7A8AAA', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+              </div>
+              <div style={{ padding: 24 }}>
+                <div style={{ fontSize: 11, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.07em', fontWeight: 700, marginBottom: 10 }}>Select Release Method</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 18 }}>
+                  {[
+                    { value: 'Physical Cash', logo: '/cash-logo.png', label: 'Physical Cash', hint: 'Coordinate with admin in person', free: true },
+                    { value: 'GCash', logo: '/gcash-logo.png', label: 'GCash', hint: 'Sent to your GCash number', free: false },
+                    { value: 'RCBC', logo: '/rcbc-logo.png', label: 'RCBC Bank Transfer', hint: 'Transferred to your RCBC account', free: true },
+                    { value: 'Other Bank', logo: '/bank-logo.png', label: 'Other Bank (Instapay/PESONet)', hint: 'Transfer fee applies', free: false },
+                  ].map(m => (
+                    <button key={m.value} onClick={() => { setWithdrawMethod(m.value); setWithdrawDetails('') }}
+                      style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 12, border: `1.5px solid ${withdrawMethod === m.value ? 'rgba(245,158,11,0.5)' : 'rgba(255,255,255,0.07)'}`, background: withdrawMethod === m.value ? 'rgba(245,158,11,0.07)' : 'rgba(255,255,255,0.02)', cursor: 'pointer', textAlign: 'left', transition: 'all 0.15s' }}>
+                      <img src={m.logo} alt={m.label} style={{ width: 32, height: 32, objectFit: 'contain', flexShrink: 0 }} />
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: withdrawMethod === m.value ? '#F59E0B' : '#F0F4FF' }}>{m.label}</div>
+                        <div style={{ fontSize: 11, color: '#4B5580', marginTop: 1 }}>{m.hint}</div>
+                      </div>
+                      {m.free && <span style={{ fontSize: 10, fontWeight: 700, color: '#22C55E', background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 20, padding: '2px 8px' }}>Free</span>}
+                      {withdrawMethod === m.value && <span style={{ fontSize: 14, color: '#F59E0B' }}>✓</span>}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Dynamic detail field */}
+                {withdrawMethod && withdrawMethod !== 'Physical Cash' && (
+                  <div style={{ marginBottom: 18 }}>
+                    <div style={{ fontSize: 11, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.07em', fontWeight: 700, marginBottom: 8 }}>
+                      {withdrawMethod === 'GCash' ? 'GCash Number & Name' : 'Account Number & Bank Name'}
+                    </div>
+                    <textarea
+                      value={withdrawDetails}
+                      onChange={e => setWithdrawDetails(e.target.value)}
+                      placeholder={withdrawMethod === 'GCash' ? 'e.g. 09XX-XXX-XXXX · Juan Dela Cruz' : 'e.g. 1234-5678-9012 · BDO / BPI / UnionBank'}
+                      rows={2}
+                      style={{ width: '100%', boxSizing: 'border-box', padding: '10px 14px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, color: '#F0F4FF', fontSize: 13, resize: 'none', outline: 'none', fontFamily: 'DM Sans, sans-serif' }}
+                    />
+                  </div>
+                )}
+
+                {withdrawMethod === 'Physical Cash' && (
+                  <div style={{ padding: '10px 14px', background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.15)', borderRadius: 10, fontSize: 12, color: '#22C55E', marginBottom: 18 }}>
+                    ✓ Admin will coordinate with you in person once the request is approved.
+                  </div>
+                )}
+
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <button onClick={() => setShowWithdrawModal(false)} style={{ flex: 1, padding: '12px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.08)', background: 'transparent', color: '#7A8AAA', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+                  <button
+                    disabled={!withdrawMethod || (withdrawMethod !== 'Physical Cash' && !withdrawDetails.trim()) || withdrawing}
+                    onClick={async () => {
+                      setWithdrawing(true)
+                      const methodDesc = withdrawMethod === 'Physical Cash'
+                        ? 'Physical Cash'
+                        : `${withdrawMethod} — ${withdrawDetails.trim()}`
+                      const description = `Withdrawal request via ${methodDesc}`
+                      const { error } = await supabase.from('wallet_transactions').insert({
+                        borrower_id: borrower.id,
+                        type: 'withdrawal',
+                        amount: rebateCredits.balance,
+                        description,
+                        status: 'pending'
+                      })
+                      if (!error) {
+                        await supabase.from('portal_notifications').insert({
+                          borrower_id: borrower.id,
+                          type: 'withdrawal_requested',
+                          title: '💸 Withdrawal Requested',
+                          message: `Your withdrawal request of ₱${rebateCredits.balance.toLocaleString('en-PH', { minimumFractionDigits: 2 })} via ${withdrawMethod} is pending admin review.`
+                        })
+                        fetchPortalData(code)
+                        setShowWithdrawModal(false)
+                      }
+                      setWithdrawing(false)
+                    }}
+                    style={{ flex: 2, padding: '12px', borderRadius: 10, border: 'none', background: (!withdrawMethod || (withdrawMethod !== 'Physical Cash' && !withdrawDetails.trim())) ? 'rgba(255,255,255,0.05)' : 'linear-gradient(135deg,#F59E0B,#D97706)', color: (!withdrawMethod || (withdrawMethod !== 'Physical Cash' && !withdrawDetails.trim())) ? '#4B5580' : '#fff', fontSize: 13, fontWeight: 700, cursor: (!withdrawMethod || (withdrawMethod !== 'Physical Cash' && !withdrawDetails.trim())) ? 'not-allowed' : 'pointer', fontFamily: 'Syne, sans-serif', transition: 'all 0.2s' }}>
+                    {withdrawing ? 'Submitting...' : '💸 Submit Request'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
         </div>
 
         {/* How to earn */}
