@@ -910,32 +910,85 @@ export default function BorrowerPortalPage() {
   )
 
   // ── WALLET / REBATE CREDITS PAGE ──────────────────────────────
-  if (page === 'wallet') return (
-    <div style={{ minHeight: '100vh', background: '#080B14', fontFamily: 'DM Sans, sans-serif' }}>
-      
-      <PortalHeader borrower={borrower} notifications={notifications} showNotifs={showNotifs} setShowNotifs={setShowNotifs} markAllRead={markAllRead} onBack={() => setPage('home')} subtitle="Rebate Credits" />
-      <div style={{ maxWidth: 520, margin: '0 auto', padding: '32px 20px 40px' }}>
-        {/* Balance card */}
-        <div style={{ background: 'linear-gradient(135deg,#0E1320,#1a1040)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 20, padding: 28, marginBottom: 16, textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 50% 120%, rgba(245,158,11,0.06), transparent)', pointerEvents: 'none' }} />
-          <div style={{ fontSize: 11, color: '#7A8AAA', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8, fontWeight: 700 }}>Rebate Credits Balance</div>
-          <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 900, fontSize: 48, color: '#F59E0B', marginBottom: 4, lineHeight: 1 }}>
-            ₱{(rebateCredits?.balance || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
+  if (page === 'wallet') {
+    const canWithdraw = rebateCredits?.balance >= 500
+    return (
+      <div style={{ minHeight: '100vh', background: '#080B14', fontFamily: 'DM Sans, sans-serif' }}>
+        <PortalHeader borrower={borrower} notifications={notifications} showNotifs={showNotifs} setShowNotifs={setShowNotifs} markAllRead={markAllRead} onBack={() => setPage('home')} subtitle="Rebate Credits" />
+        <div style={{ maxWidth: 520, margin: '0 auto', padding: '32px 20px 40px' }}>
+
+          {/* Balance card */}
+          <div style={{ background: 'linear-gradient(135deg,#0E1320,#1a1040)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 20, padding: 28, marginBottom: 16, textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
+            <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 50% 120%, rgba(245,158,11,0.06), transparent)', pointerEvents: 'none' }} />
+            <div style={{ fontSize: 11, color: '#7A8AAA', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8, fontWeight: 700 }}>Rebate Credits Balance</div>
+            <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 900, fontSize: 48, color: '#F59E0B', marginBottom: 4, lineHeight: 1 }}>
+              ₱{(rebateCredits?.balance || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
+            </div>
+            {!canWithdraw && (
+              <div style={{ fontSize: 12, color: '#4B5580', marginBottom: 16 }}>₱{(500 - (rebateCredits?.balance || 0)).toLocaleString('en-PH', { minimumFractionDigits: 2 })} more needed to withdraw</div>
+            )}
+            {canWithdraw ? (
+              <button onClick={() => { setWithdrawMethod(''); setWithdrawDetails(''); setShowWithdrawModal(true) }}
+                style={{ padding: '12px 28px', borderRadius: 12, border: 'none', background: 'linear-gradient(135deg,#F59E0B,#D97706)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'Syne, sans-serif' }}>
+                💸 Request Withdrawal
+              </button>
+            ) : (
+              <div style={{ display: 'inline-block', padding: '10px 20px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.03)', fontSize: 12, color: '#4B5580' }}>🔒 Min. ₱500 required to withdraw</div>
+            )}
           </div>
-          {rebateCredits?.balance < 500 && (
-            <div style={{ fontSize: 12, color: '#4B5580', marginBottom: 16 }}>₱{(500 - (rebateCredits?.balance || 0)).toLocaleString('en-PH', { minimumFractionDigits: 2 })} more needed to withdraw</div>
-          )}
-          {rebateCredits?.balance >= 500 ? (
-            <button onClick={() => { setWithdrawMethod(''); setWithdrawDetails(''); setShowWithdrawModal(true) }}
-              style={{ padding: '12px 28px', borderRadius: 12, border: 'none', background: 'linear-gradient(135deg,#F59E0B,#D97706)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'Syne, sans-serif' }}>
-              💸 Request Withdrawal
-            </button>
-          ) : (
-            <div style={{ display: 'inline-block', padding: '10px 20px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.03)', fontSize: 12, color: '#4B5580' }}>🔒 Min. ₱500 required to withdraw</div>
-          )}
+
+          {/* How to earn */}
+          <div style={{ background: '#0E1320', border: '1px solid rgba(34,197,94,0.15)', borderRadius: 16, padding: 20, marginBottom: 16 }}>
+            <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 13, color: '#22C55E', marginBottom: 14 }}>🎁 How to earn rebates</div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 14px', background: 'rgba(34,197,94,0.05)', border: '1px solid rgba(34,197,94,0.1)', borderRadius: 10, marginBottom: 8 }}>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#F0F4FF' }}>Pay final installment at least 1–2 weeks early</div>
+                <div style={{ fontSize: 11, color: '#4B5580', marginTop: 2 }}>₱50 rebate on a ₱5,000 loan</div>
+              </div>
+              <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 900, fontSize: 22, color: '#22C55E' }}>1%</div>
+            </div>
+            <div style={{ fontSize: 11, color: '#4B5580', lineHeight: 1.7 }}>Fixed 1% of your original loan amount — credited automatically when admin records your payment. Security Hold is also returned here after your final installment.</div>
+          </div>
+
+          {/* Transaction history */}
+          <div style={{ background: '#0E1320', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 16, overflow: 'hidden' }}>
+            <div style={{ padding: '14px 18px', borderBottom: '1px solid rgba(255,255,255,0.05)', fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 14, color: '#F0F4FF' }}>Transaction History</div>
+            {creditTxns.length === 0 ? (
+              <div style={{ padding: '40px 20px', textAlign: 'center', fontSize: 13, color: '#4B5580' }}>No transactions yet. Pay off a loan early to earn rebates!</div>
+            ) : (
+              <div>
+                {creditTxns.map((txn, i) => {
+                  const isHoldReturn = txn.type === 'rebate' && txn.description?.toLowerCase().includes('security hold')
+                  const isRebate = txn.type === 'rebate' && !isHoldReturn
+                  const label = isHoldReturn ? 'Security Hold Returned' : isRebate ? 'Early Payoff Rebate' : 'Withdrawal'
+                  const icon = isHoldReturn ? '🔐' : isRebate ? '🎁' : '💸'
+                  const amountColor = isHoldReturn ? '#F59E0B' : isRebate ? '#22C55E' : '#F0F4FF'
+                  return (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 18px', borderBottom: i < creditTxns.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <div style={{ width: 36, height: 36, borderRadius: 10, background: isHoldReturn ? 'rgba(245,158,11,0.1)' : isRebate ? 'rgba(34,197,94,0.1)' : txn.status === 'pending' ? 'rgba(245,158,11,0.1)' : 'rgba(59,130,246,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>{icon}</div>
+                        <div>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: '#F0F4FF' }}>{label}</div>
+                          <div style={{ fontSize: 11, color: '#4B5580', marginTop: 2 }}>
+                            {new Date(txn.created_at).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}
+                            {txn.status === 'pending' && <span style={{ color: '#F59E0B', marginLeft: 6 }}>· Pending</span>}
+                            {txn.status === 'rejected' && <span style={{ color: '#EF4444', marginLeft: 6 }}>· Rejected</span>}
+                          </div>
+                        </div>
+                      </div>
+                      <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 15, color: amountColor }}>
+                        {txn.type === 'rebate' ? '+' : '-'}₱{Number(txn.amount).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+
         </div>
 
-        {/* Withdrawal Modal */}
+        {/* Withdrawal Modal — position:fixed so it's a full-screen overlay */}
         {showWithdrawModal && (
           <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20 }}>
             <div style={{ width: '100%', maxWidth: 440, background: '#0E1320', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 20, overflow: 'hidden', boxShadow: '0 40px 80px rgba(0,0,0,0.6)' }}>
@@ -968,7 +1021,6 @@ export default function BorrowerPortalPage() {
                   ))}
                 </div>
 
-                {/* Dynamic detail field */}
                 {withdrawMethod && withdrawMethod !== 'Physical Cash' && (
                   <div style={{ marginBottom: 18 }}>
                     <div style={{ fontSize: 11, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.07em', fontWeight: 700, marginBottom: 8 }}>
@@ -996,15 +1048,12 @@ export default function BorrowerPortalPage() {
                     disabled={!withdrawMethod || (withdrawMethod !== 'Physical Cash' && !withdrawDetails.trim()) || withdrawing}
                     onClick={async () => {
                       setWithdrawing(true)
-                      const methodDesc = withdrawMethod === 'Physical Cash'
-                        ? 'Physical Cash'
-                        : `${withdrawMethod} — ${withdrawDetails.trim()}`
-                      const description = `Withdrawal request via ${methodDesc}`
+                      const methodDesc = withdrawMethod === 'Physical Cash' ? 'Physical Cash' : `${withdrawMethod} — ${withdrawDetails.trim()}`
                       const { error } = await supabase.from('wallet_transactions').insert({
                         borrower_id: borrower.id,
                         type: 'withdrawal',
                         amount: rebateCredits.balance,
-                        description,
+                        description: `Withdrawal request via ${methodDesc}`,
                         status: 'pending'
                       })
                       if (!error) {
@@ -1019,7 +1068,7 @@ export default function BorrowerPortalPage() {
                       }
                       setWithdrawing(false)
                     }}
-                    style={{ flex: 2, padding: '12px', borderRadius: 10, border: 'none', background: (!withdrawMethod || (withdrawMethod !== 'Physical Cash' && !withdrawDetails.trim())) ? 'rgba(255,255,255,0.05)' : 'linear-gradient(135deg,#F59E0B,#D97706)', color: (!withdrawMethod || (withdrawMethod !== 'Physical Cash' && !withdrawDetails.trim())) ? '#4B5580' : '#fff', fontSize: 13, fontWeight: 700, cursor: (!withdrawMethod || (withdrawMethod !== 'Physical Cash' && !withdrawDetails.trim())) ? 'not-allowed' : 'pointer', fontFamily: 'Syne, sans-serif', transition: 'all 0.2s' }}>
+                    style={{ flex: 2, padding: '12px', borderRadius: 10, border: 'none', background: (!withdrawMethod || (withdrawMethod !== 'Physical Cash' && !withdrawDetails.trim())) ? 'rgba(255,255,255,0.05)' : 'linear-gradient(135deg,#F59E0B,#D97706)', color: (!withdrawMethod || (withdrawMethod !== 'Physical Cash' && !withdrawDetails.trim())) ? '#4B5580' : '#fff', fontSize: 13, fontWeight: 700, cursor: (!withdrawMethod || (withdrawMethod !== 'Physical Cash' && !withdrawDetails.trim())) ? 'not-allowed' : 'pointer', fontFamily: 'Syne, sans-serif' }}>
                     {withdrawing ? 'Submitting...' : '💸 Submit Request'}
                   </button>
                 </div>
@@ -1027,60 +1076,11 @@ export default function BorrowerPortalPage() {
             </div>
           </div>
         )}
-        </div>
-
-        {/* How to earn */}
-        <div style={{ background: '#0E1320', border: '1px solid rgba(34,197,94,0.15)', borderRadius: 16, padding: 20, marginBottom: 16 }}>
-          <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 13, color: '#22C55E', marginBottom: 14 }}>🎁 How to earn rebates</div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 14px', background: 'rgba(34,197,94,0.05)', border: '1px solid rgba(34,197,94,0.1)', borderRadius: 10, marginBottom: 8 }}>
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: '#F0F4FF' }}>Pay final installment at least 1–2 weeks early</div>
-              <div style={{ fontSize: 11, color: '#4B5580', marginTop: 2 }}>₱50 rebate on a ₱5,000 loan</div>
-            </div>
-            <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 900, fontSize: 22, color: '#22C55E' }}>1%</div>
-          </div>
-          <div style={{ fontSize: 11, color: '#4B5580', lineHeight: 1.7 }}>Fixed 1% of your original loan amount — credited automatically when admin records your payment. Security Hold is also returned here after your final installment.</div>
-        </div>
-
-        {/* Transaction history */}
-        <div style={{ background: '#0E1320', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 16, overflow: 'hidden' }}>
-          <div style={{ padding: '14px 18px', borderBottom: '1px solid rgba(255,255,255,0.05)', fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 14, color: '#F0F4FF' }}>Transaction History</div>
-          {creditTxns.length === 0 ? (
-            <div style={{ padding: '40px 20px', textAlign: 'center', fontSize: 13, color: '#4B5580' }}>No transactions yet. Pay off a loan early to earn rebates!</div>
-          ) : (
-            <div>
-              {creditTxns.map((txn, i) => {
-                const isHoldReturn = txn.type === 'rebate' && txn.description?.toLowerCase().includes('security hold')
-                const isRebate = txn.type === 'rebate' && !isHoldReturn
-                const label = isHoldReturn ? 'Security Hold Returned' : isRebate ? 'Early Payoff Rebate' : 'Withdrawal'
-                const icon = isHoldReturn ? '🔐' : isRebate ? '🎁' : '💸'
-                const amountColor = isHoldReturn ? '#F59E0B' : isRebate ? '#22C55E' : '#F0F4FF'
-                return (
-                  <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 18px', borderBottom: i < creditTxns.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <div style={{ width: 36, height: 36, borderRadius: 10, background: isHoldReturn ? 'rgba(245,158,11,0.1)' : isRebate ? 'rgba(34,197,94,0.1)' : txn.status === 'pending' ? 'rgba(245,158,11,0.1)' : 'rgba(59,130,246,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>{icon}</div>
-                      <div>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: '#F0F4FF' }}>{label}</div>
-                        <div style={{ fontSize: 11, color: '#4B5580', marginTop: 2 }}>
-                          {new Date(txn.created_at).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}
-                          {txn.status === 'pending' && <span style={{ color: '#F59E0B', marginLeft: 6 }}>· Pending</span>}
-                          {txn.status === 'rejected' && <span style={{ color: '#EF4444', marginLeft: 6 }}>· Rejected</span>}
-                        </div>
-                      </div>
-                    </div>
-                    <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 15, color: amountColor }}>
-                      {txn.type === 'rebate' ? '+' : '-'}₱{Number(txn.amount).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          )}
-        </div>
 
       </div>
     </div>
-  )
+    )
+  }
 
   // ── PAYMENT METHODS PAGE ──────────────────────────────────────
   if (page === 'payment-methods') return (
