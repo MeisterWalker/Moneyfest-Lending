@@ -1083,12 +1083,10 @@ export default function BorrowerPortalPage() {
               <div className="pc" style={{ background: 'linear-gradient(135deg,#0d1425,#160e30)', border: '1px solid rgba(99,102,241,0.2)', borderRadius: 20, padding: 24, marginBottom: 16, position: 'relative', overflow: 'hidden' }}>
                 <div style={{ position: 'absolute', top: -60, right: -60, width: 240, height: 240, borderRadius: '50%', background: 'radial-gradient(circle,rgba(99,102,241,0.06),transparent)', pointerEvents: 'none' }} />
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
-                  <div>
-                    <div style={{ fontSize: 11, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4, fontWeight: 700 }}>Remaining Balance</div>
-                    <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 900, fontSize: 40, color: loan.status === 'Paid' ? '#22C55E' : '#F0F4FF', lineHeight: 1, letterSpacing: -1 }}>
-                      ₱{Number(loan.remaining_balance).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
-                    </div>
+                <div style={{ marginBottom: 20 }}>
+                  <div style={{ fontSize: 11, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 6, fontWeight: 700 }}>Remaining Balance</div>
+                  <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 44, color: loan.status === 'Paid' ? '#22C55E' : '#F0F4FF', lineHeight: 1, letterSpacing: -2, marginBottom: 10 }}>
+                    ₱{Number(loan.remaining_balance).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
                   </div>
                   <StatusBadge status={loan.status} />
                 </div>
@@ -1108,9 +1106,16 @@ export default function BorrowerPortalPage() {
                         <div style={{ height: '100%', width: pct + '%', background: pct === 100 ? '#22C55E' : 'linear-gradient(90deg,#6366F1,#8B5CF6,#22C55E)', borderRadius: 3, transition: 'width 1s ease' }} />
                       </div>
                       {/* Dot indicators */}
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 10 }}>
                         {Array.from({ length: total }, (_, i) => i + 1).map(i => (
-                          <div key={i} style={{ width: Math.min(22, Math.floor(240 / total)), height: Math.min(22, Math.floor(240 / total)), borderRadius: '50%', background: i <= paid ? (i === total ? '#22C55E' : '#8B5CF6') : 'rgba(255,255,255,0.06)', border: `1.5px solid ${i <= paid ? (i === total ? '#22C55E' : '#8B5CF6') : 'rgba(255,255,255,0.08)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700, color: i <= paid ? '#fff' : '#4B5580' }}>
+                          <div key={i} style={{
+                            width: 26, height: 26, borderRadius: '50%',
+                            background: i <= paid ? (i === total ? '#22C55E' : '#8B5CF6') : 'rgba(255,255,255,0.05)',
+                            border: `1.5px solid ${i <= paid ? (i === total ? '#22C55E' : '#8B5CF6') : 'rgba(255,255,255,0.1)'}`,
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontSize: 10, fontWeight: 700, color: i <= paid ? '#fff' : '#4B5580',
+                            flexShrink: 0
+                          }}>
                             {i <= paid ? '✓' : i}
                           </div>
                         ))}
@@ -1120,16 +1125,16 @@ export default function BorrowerPortalPage() {
                 })()}
 
                 {/* Meta grid */}
-                <div className="loan-meta-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10 }}>
+                <div className="loan-meta-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 10 }}>
                   {[
-                    { label: 'Approved Amount', value: '₱' + Number(loan.loan_amount).toLocaleString('en-PH'), highlight: false },
-                    { label: 'You Received', value: '₱' + Number(loan.funds_released || loan.loan_amount * 0.9).toLocaleString('en-PH'), highlight: true, color: '#22C55E' },
-                    { label: 'Security Hold', value: loan.security_hold > 0 ? `🔒 ₱${Number(loan.security_hold).toLocaleString('en-PH')}` : '—', highlight: false, color: '#F59E0B' },
-                    { label: 'Per Installment', value: '₱' + Math.ceil(Number(loan.installment_amount)).toLocaleString('en-PH', { minimumFractionDigits: 2 }), highlight: true, color: '#a78bfa' },
+                    { label: 'Approved Amount', value: '₱' + Number(loan.loan_amount).toLocaleString('en-PH'), color: '#F0F4FF' },
+                    { label: 'You Received', value: '₱' + Number(loan.funds_released || loan.loan_amount * 0.9).toLocaleString('en-PH'), color: '#22C55E' },
+                    { label: 'Security Hold', value: loan.security_hold > 0 ? `🔒 ₱${Number(loan.security_hold).toLocaleString('en-PH')}` : '—', color: '#F59E0B' },
+                    { label: 'Per Installment', value: '₱' + Math.ceil(Number(loan.installment_amount)).toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#a78bfa' },
                   ].map((m, i) => (
-                    <div key={i} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: '12px 10px' }}>
-                      <div style={{ fontSize: 9, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 6, fontWeight: 700 }}>{m.label}</div>
-                      <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 13, color: m.color || '#F0F4FF' }}>{m.value}</div>
+                    <div key={i} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: '14px 16px' }}>
+                      <div style={{ fontSize: 10, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 6, fontWeight: 700 }}>{m.label}</div>
+                      <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 15, color: m.color }}>{m.value}</div>
                     </div>
                   ))}
                 </div>
