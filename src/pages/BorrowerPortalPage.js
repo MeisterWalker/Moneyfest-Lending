@@ -324,7 +324,7 @@ function generateReceiptHTML({ loan, borrower, installmentNum, amount, date }) {
   const remaining = Math.max(0, loan.total_repayment - totalPaid)
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>Receipt</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:wght@400;500;600&display=swap');
+    
     *{margin:0;padding:0;box-sizing:border-box;}body{font-family:'DM Sans',sans-serif;background:#fff;color:#1a1a2e;padding:40px;max-width:580px;margin:0 auto;}
     .logo{font-family:'Syne',sans-serif;font-weight:800;font-size:20px;}.logo span{color:#6366F1;}
     .badge{display:inline-block;padding:4px 12px;border-radius:20px;background:#e8f5e9;color:#16a34a;font-size:12px;font-weight:700;margin-bottom:8px;}
@@ -613,7 +613,7 @@ export default function BorrowerPortalPage() {
             {pendingApp.status === 'Rejected' ? 'Application Not Approved' : 'Application Under Review'}
           </div>
           <div style={{ fontSize: 14, color: '#7A8AAA', marginBottom: 24, lineHeight: 1.7 }}>
-            {pendingApp.status === 'Rejected' ? 'Your application was not approved. Please contact an admin for more information.' : 'Your application is being reviewed. You\'ll receive an email once it\'s approved.'}
+            {pendingApp.status === 'Rejected' ? 'Your application was not approved. Please contact an admin for more information.' : 'Your application is currently being reviewed by the admin. Please check back later or contact an admin directly via Microsoft Teams for updates.'}
           </div>
           <div style={{ background: '#0E1320', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: '16px 20px', marginBottom: 20, textAlign: 'left' }}>
             <div style={{ fontSize: 11, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 12, fontWeight: 700 }}>Application Details</div>
@@ -629,7 +629,7 @@ export default function BorrowerPortalPage() {
               </div>
             ))}
           </div>
-          <div style={{ fontSize: 12, color: '#4B5580', marginBottom: 16, lineHeight: 1.7 }}>📧 Check your email for updates · Contact admin via <strong style={{ color: '#7A8AAA' }}>Microsoft Teams</strong></div>
+          <div style={{ fontSize: 12, color: '#4B5580', marginBottom: 16, lineHeight: 1.7 }}>Contact your admin directly via <strong style={{ color: '#7A8AAA' }}>Microsoft Teams</strong> for updates on your application.</div>
           {[{ initials: 'JP', name: 'John Paul Lacaron', gradient: 'linear-gradient(135deg,#3B82F6,#8B5CF6)' }, { initials: 'CJ', name: 'Charlou June Ramil', gradient: 'linear-gradient(135deg,#14B8A6,#3B82F6)' }].map(a => (
             <div key={a.name} style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.03)', borderRadius: 10, padding: '10px 14px', marginBottom: 8, textAlign: 'left' }}>
               <div style={{ width: 32, height: 32, borderRadius: '50%', background: a.gradient, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, color: '#fff', flexShrink: 0 }}>{a.initials}</div>
@@ -646,7 +646,7 @@ export default function BorrowerPortalPage() {
   if (!borrower) return (
     <div style={{ minHeight: '100vh', background: '#080B14', fontFamily: 'DM Sans, sans-serif', display: 'flex', flexDirection: 'column' }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800;900&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap');
+        
         .portal-login-input:focus { border-color: rgba(99,102,241,0.5) !important; box-shadow: 0 0 0 3px rgba(99,102,241,0.1) !important; }
         .portal-login-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(99,102,241,0.3) !important; }
         @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
@@ -710,7 +710,7 @@ export default function BorrowerPortalPage() {
   // ── PROFILE PAGE ─────────────────────────────────────────────
   if (page === 'profile') return (
     <div style={{ minHeight: '100vh', background: '#080B14', fontFamily: 'DM Sans, sans-serif' }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800;900&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap');`}</style>
+      
       <PortalHeader borrower={borrower} notifications={notifications} showNotifs={showNotifs} setShowNotifs={setShowNotifs} markAllRead={markAllRead} onBack={() => setPage('home')} subtitle="My Profile" />
       <div style={{ maxWidth: 640, margin: '0 auto', padding: '32px 20px 40px' }}>
 
@@ -831,7 +831,7 @@ export default function BorrowerPortalPage() {
   // ── PAYMENT HISTORY PAGE ──────────────────────────────────────
   if (page === 'payment-history') return (
     <div style={{ minHeight: '100vh', background: '#080B14', fontFamily: 'DM Sans, sans-serif' }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800;900&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap');`}</style>
+      
       <PortalHeader borrower={borrower} notifications={notifications} showNotifs={showNotifs} setShowNotifs={setShowNotifs} markAllRead={markAllRead} onBack={() => setPage('home')} subtitle="Payment History" />
       <div style={{ maxWidth: 680, margin: '0 auto', padding: '32px 20px 40px' }}>
         {allLoans.length === 0 ? (
@@ -909,7 +909,7 @@ export default function BorrowerPortalPage() {
   // ── WALLET / REBATE CREDITS PAGE ──────────────────────────────
   if (page === 'wallet') return (
     <div style={{ minHeight: '100vh', background: '#080B14', fontFamily: 'DM Sans, sans-serif' }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800;900&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap');`}</style>
+      
       <PortalHeader borrower={borrower} notifications={notifications} showNotifs={showNotifs} setShowNotifs={setShowNotifs} markAllRead={markAllRead} onBack={() => setPage('home')} subtitle="Rebate Credits" />
       <div style={{ maxWidth: 520, margin: '0 auto', padding: '32px 20px 40px' }}>
         {/* Balance card */}
@@ -993,7 +993,7 @@ export default function BorrowerPortalPage() {
   // ── PAYMENT METHODS PAGE ──────────────────────────────────────
   if (page === 'payment-methods') return (
     <div style={{ minHeight: '100vh', background: '#080B14', fontFamily: 'DM Sans, sans-serif' }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800;900&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap');`}</style>
+      
       <PortalHeader borrower={borrower} notifications={notifications} showNotifs={showNotifs} setShowNotifs={setShowNotifs} markAllRead={markAllRead} onBack={() => setPage('home')} subtitle="Payment Methods" />
       <div style={{ maxWidth: 620, margin: '0 auto', padding: '32px 20px 40px' }}>
         <div style={{ fontSize: 13, color: '#7A8AAA', marginBottom: 24, lineHeight: 1.7 }}>
@@ -1040,7 +1040,7 @@ export default function BorrowerPortalPage() {
   return (
     <div style={{ minHeight: '100vh', background: '#080B14', fontFamily: 'DM Sans, sans-serif' }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800;900&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap');
+        
         @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
         @keyframes scaleIn { from{opacity:0;transform:scale(0.97)} to{opacity:1;transform:scale(1)} }
         .pc { animation: fadeUp 0.45s ease forwards; opacity: 0; }
