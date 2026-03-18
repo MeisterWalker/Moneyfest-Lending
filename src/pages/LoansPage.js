@@ -144,9 +144,17 @@ function StatusBadge({ status }) {
   )
 }
 
-function LoanCard({ loan, borrowers, onEdit, onDelete, onRecordPayment, onDefault, onRenew }) {
+function LoanCard({ loan: rawLoan, borrowers, onEdit, onDelete, onRecordPayment, onDefault, onRenew }) {
   const [expanded, setExpanded] = useState(false)
   const [confirming, setConfirming] = useState(false)
+  // Normalize installment to whole peso — handles loans created before rounding was added
+  const loan = {
+    ...rawLoan,
+    installment_amount: Math.ceil(rawLoan.installment_amount || 0),
+    remaining_balance: rawLoan.remaining_balance != null
+      ? Math.ceil(rawLoan.remaining_balance)
+      : rawLoan.remaining_balance
+  }
   const borrower = borrowers.find(b => b.id === loan.borrower_id)
   const today = new Date()
   today.setHours(0, 0, 0, 0)
@@ -463,7 +471,8 @@ export default function LoansPage() {
   const handleRecordPayment = async (loan) => {
     const newPaymentsMade = loan.payments_made + 1
     const numInstallments = loan.num_installments || 4
-    const newBalance = loan.remaining_balance - loan.installment_amount
+    const installAmt = Math.ceil(loan.installment_amount)
+    const newBalance = loan.remaining_balance - installAmt
     const newStatus = newPaymentsMade >= numInstallments ? 'Paid' : 'Partially Paid'
 
     const { error } = await supabase.from('loans').update({
@@ -549,7 +558,7 @@ export default function LoansPage() {
     await logAudit({
       action_type: 'INSTALLMENT_PAID',
       module: 'Loan',
-      description: `Installment ${newPaymentsMade} of ${numInstallments} paid for ${borrower?.full_name} — ₱${loan.installment_amount?.toLocaleString('en-PH', { minimumFractionDigits: 2 })}${penaltyAmount > 0 ? ` + ₱${penaltyAmount} penalty (${daysLate} days late)` : ' (on time)'}`,
+      description: `Installment ${newPaymentsMade} of ${numInstallments} paid for ${borrower?.full_name} — ₱${installAmt?.toLocaleString('en-PH', { minimumFractionDigits: 2 })}${penaltyAmount > 0 ? ` + ₱${penaltyAmount} penalty (${daysLate} days late)` : ' (on time)'}`,
       changed_by: user?.email
     })
 
@@ -670,7 +679,7 @@ export default function LoansPage() {
     }
 
     // Download receipt
-    downloadReceiptPDF({ loan, borrower, installmentNum: newPaymentsMade, amount: loan.installment_amount })
+    downloadReceiptPDF({ loan, borrower, installmentNum: newPaymentsMade, amount: installAmt })
     fetchData()
   }
 
