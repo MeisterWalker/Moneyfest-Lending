@@ -207,7 +207,7 @@ ${content.innerHTML}
             items: [
               { term: 'Monthly Interest Rate', def: `${flatRate}% per month. For a 2-month term the total interest charge is ${totalRate}% of the principal; for a 3-month term it is ${(interestRate * 3 * 100).toFixed(0)}%. Interest does not compound.` },
               { term: 'Effective Annual Rate', def: `Approximately ${effectiveAnnual}% per annum (monthly rate × 12), in compliance with Republic Act No. 3765 (Truth in Lending Act).` },
-              { term: 'Finance Charge Example', def: `A ₱5,000 loan on a 2-month term incurs a finance charge of ₱700.00 (${flatRate}% × 2 months), for a total repayment of ₱5,700.00 in 4 installments of ₱1,425.00 each. On a 3-month term: finance charge ₱1,050.00 (${flatRate}% × 3 months), total ₱6,050.00 in 6 installments of ₱1,008.33 each.` },
+              { term: 'Finance Charge Example', def: `A ₱5,000 loan on a 2-month term incurs a finance charge of ₱700.00 (${flatRate}% × 2 months), for a total repayment of ₱5,700.00 in 4 installments of ₱1,425.00 each. On a 3-month term: finance charge ₱1,050.00 (${flatRate}% × 3 months), total ₱6,050.00 in 6 installments of ₱1,009.00 each (rounded up to the nearest whole peso per the Installment Rounding policy).` },
               { term: 'No Hidden Fees', def: 'There are no application fees, processing fees, or any other charges beyond the stated monthly interest rate and applicable late payment penalties.' },
             ]
           },
