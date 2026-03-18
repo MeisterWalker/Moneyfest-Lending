@@ -141,8 +141,8 @@ function ApplicationCard({ app, onApprove, onReject }) {
                 <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 24, color: '#22C55E' }}>₱{app.loan_amount?.toLocaleString()}</div>
               </div>
               <div style={{ textAlign: 'right' }}>
-                <div style={{ fontSize: 11, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Est. Installment</div>
-                <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 18, color: '#F0F4FF' }}>₱{(app.loan_amount * (1 + 0.07 * (app.loan_term || 2)) / ((app.loan_term || 2) * 2)).toFixed(2)}/cutoff</div>
+                <div style={{ fontSize: 11, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Est. Installment · {app.loan_term || 2}-month term</div>
+                <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 18, color: '#F0F4FF' }}>₱{Math.ceil(app.loan_amount * (1 + 0.07 * (app.loan_term || 2)) / ((app.loan_term || 2) * 2)).toLocaleString('en-PH')}/cutoff</div>
               </div>
             </div>
             {app.loan_purpose && (
