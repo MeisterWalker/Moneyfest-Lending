@@ -84,6 +84,7 @@ export default function LoanModal({ isOpen, onClose, onSave, loan, borrower, bor
   // rate is monthly; total interest = rate × loan_term months
   const totalRepayment = amount * (1 + rate * loanTerm)
   const installmentAmount = Math.ceil(totalRepayment / numInstallments)
+  const adjustedTotal = installmentAmount * numInstallments
   const dueDate = form.release_date ? (() => {
     const dates = getInstallmentDates(form.release_date, numInstallments)
     return dates.length === numInstallments ? dates[numInstallments - 1] : null
@@ -104,10 +105,10 @@ export default function LoanModal({ isOpen, onClose, onSave, loan, borrower, bor
       interest_rate: rate,
       loan_term: loanTerm,
       num_installments: numInstallments,
-      total_repayment: totalRepayment,
+      total_repayment: adjustedTotal,
       installment_amount: installmentAmount,
       due_date: dueDate ? formatDateValue(dueDate) : formatDateValue(new Date()),
-      remaining_balance: totalRepayment,
+      remaining_balance: adjustedTotal,
       status: 'Pending'
     }, isEdit)
     setSaving(false)
@@ -205,9 +206,9 @@ export default function LoanModal({ isOpen, onClose, onSave, loan, borrower, bor
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                 {[
                   { label: 'Principal', value: formatCurrency(amount) },
-                  { label: 'Total Repayment', value: formatCurrency(totalRepayment) },
+                  { label: 'Total Repayment', value: formatCurrency(adjustedTotal) },
                   { label: 'Per Installment', value: formatCurrency(installmentAmount), highlight: true },
-                  { label: 'Interest', value: formatCurrency(totalRepayment - amount) },
+                  { label: 'Interest', value: formatCurrency(adjustedTotal - amount) },
                 ].map(item => (
                   <div key={item.label}>
                     <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{item.label}</div>

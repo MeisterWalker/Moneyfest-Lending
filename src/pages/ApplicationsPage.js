@@ -520,6 +520,7 @@ export default function ApplicationsPage() {
         const rate = monthlyRate
         const total = loanAmount * (1 + monthlyRate * loanTerm)
         const installment = Math.ceil(total / numInstallments)
+        const adjustedTotal = installment * numInstallments
         const holdAmt = parseFloat((loanAmount * 0.10).toFixed(2))
         const released = loanAmount - holdAmt
 
@@ -529,9 +530,9 @@ export default function ApplicationsPage() {
           interest_rate: rate,
           loan_term: loanTerm,
           num_installments: numInstallments,
-          total_repayment: total,
+          total_repayment: adjustedTotal,
           installment_amount: installment,
-          remaining_balance: total,
+          remaining_balance: adjustedTotal,
           payments_made: 0,
           release_date: releaseDateStr,
           status: 'Pending'
