@@ -516,7 +516,7 @@ export default function PublicApplyPage() {
                 </div>
                 {error && <div style={{ margin: '0 22px 12px', padding: '10px 14px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, fontSize: 13, color: '#EF4444' }}>{error}</div>}
                 <div style={cardFooter}>
-                  <div style={{ display: 'flex', gap: 8 }}><a href="/faq" style={{ fontSize: 11, color: '#4B5580', textDecoration: 'none' }}>FAQ</a><span style={{ fontSize: 11, color: '#4B5580' }}>·</span><a href="/privacy" target="_blank" rel="noreferrer" style={{ fontSize: 11, color: '#4B5580', textDecoration: 'none' }}>Privacy</a></div>
+                  <div style={{ display: 'flex', gap: 8 }}><a href="/faq" style={{ fontSize: 11, color: '#6366F1', textDecoration: 'none', fontWeight: 600 }}>FAQ</a><span style={{ fontSize: 11, color: '#4B5580' }}>·</span><a href="/privacy" target="_blank" rel="noreferrer" style={{ fontSize: 11, color: '#6366F1', textDecoration: 'none', fontWeight: 600 }}>Privacy</a></div>
                   <button onClick={handleNext} style={{ padding: '11px 26px', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#3B82F6,#8B5CF6)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Space Grotesk' }}>Continue to ID Upload →</button>
                 </div>
               </div>
@@ -730,7 +730,7 @@ export default function PublicApplyPage() {
             )}
 
             <p style={{ textAlign: 'center', fontSize: 11, color: '#4B5580', marginTop: 20, lineHeight: 1.7 }}>
-              Private & secure — internal program only. · <a href="/faq" style={{ color: '#4B5580', textDecoration: 'none' }}>FAQ</a> · <a href="/privacy" style={{ color: '#4B5580', textDecoration: 'none' }}>Privacy</a> · <a href="/terms" style={{ color: '#4B5580', textDecoration: 'none' }}>Terms</a>
+              Private & secure — internal program only. · <a href="/faq" style={{ color: '#6366F1', textDecoration: 'none', fontWeight: 600 }}>FAQ</a> · <a href="/privacy" style={{ color: '#6366F1', textDecoration: 'none', fontWeight: 600 }}>Privacy</a> · <a href="/terms" style={{ color: '#6366F1', textDecoration: 'none', fontWeight: 600 }}>Terms</a>
             </p>
           </div>
 
