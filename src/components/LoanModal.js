@@ -83,7 +83,7 @@ export default function LoanModal({ isOpen, onClose, onSave, loan, borrower, bor
   const numInstallments = getNumInstallments(loanTerm)
   // rate is monthly; total interest = rate × loan_term months
   const totalRepayment = amount * (1 + rate * loanTerm)
-  const installmentAmount = totalRepayment / numInstallments
+  const installmentAmount = Math.ceil(totalRepayment / numInstallments)
   const dueDate = form.release_date ? (() => {
     const dates = getInstallmentDates(form.release_date, numInstallments)
     return dates.length === numInstallments ? dates[numInstallments - 1] : null

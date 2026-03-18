@@ -14,7 +14,8 @@ import {
 
 function generateReceiptHTML({ loan, borrower, installmentNum, amount, date }) {
   const numInstallments = loan.num_installments || 4
-  const totalPaid = installmentNum * amount
+  const roundedAmount = Math.ceil(amount)
+  const totalPaid = installmentNum * roundedAmount
   const remaining = loan.total_repayment - totalPaid
   return `
     <!DOCTYPE html>
@@ -77,7 +78,7 @@ function generateReceiptHTML({ loan, borrower, installmentNum, amount, date }) {
 
       <div class="amount-box">
         <div class="amount-label">Amount Paid This Installment</div>
-        <div class="amount-value">₱${amount?.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</div>
+        <div class="amount-value">₱${roundedAmount?.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</div>
       </div>
 
       <div class="progress">
@@ -618,7 +619,7 @@ export default function LoansPage() {
         const daysEarly = Math.ceil((finalDue - today) / (1000 * 60 * 60 * 24))
 
         // Fixed 1% rebate regardless of how early
-        const rebateRate = daysEarly >= 1 ? 0.01 : 0
+        const rebateRate = daysEarly >= 7 ? 0.01 : 0
 
         if (rebateRate > 0) {
           const rebateAmount = parseFloat((loan.loan_amount * rebateRate).toFixed(2))

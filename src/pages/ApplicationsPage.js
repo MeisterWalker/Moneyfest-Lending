@@ -519,7 +519,7 @@ export default function ApplicationsPage() {
         const monthlyRate = Number(rateSettings?.interest_rate) || 0.07
         const rate = monthlyRate
         const total = loanAmount * (1 + monthlyRate * loanTerm)
-        const installment = total / numInstallments
+        const installment = Math.ceil(total / numInstallments)
         const holdAmt = parseFloat((loanAmount * 0.10).toFixed(2))
         const released = loanAmount - holdAmt
 
