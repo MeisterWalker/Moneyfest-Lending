@@ -491,7 +491,7 @@ export default function LoansPage() {
     let daysLate = 0
 
     if (loan.release_date) {
-      const allDates = getInstallmentDates(loan.release_date)
+      const allDates = getInstallmentDates(loan.release_date, loan.num_installments || 4)
       const dueDate = allDates[loan.payments_made]
       if (dueDate) {
         const today2 = new Date(); today2.setHours(0,0,0,0)
@@ -586,34 +586,36 @@ export default function LoansPage() {
       }
 
       // ── Return Security Hold to borrower portal ─────────────
-      if (loan.security_hold && loan.security_hold > 0 && !loan.security_hold_returned) {
-        // Credit security hold back to borrower's rebate credits / security hold balance
+      // Fetch fresh loan data in case security_hold was NULL on old loans
+      const { data: freshLoan } = await supabase.from('loans').select('security_hold, security_hold_returned').eq('id', loan.id).single()
+      const holdToReturn = parseFloat(freshLoan?.security_hold || loan.security_hold || 0)
+      const alreadyReturned = freshLoan?.security_hold_returned || loan.security_hold_returned
+
+      if (holdToReturn > 0 && !alreadyReturned) {
         await supabase.from('loans').update({ security_hold_returned: true }).eq('id', loan.id)
 
-        // Log as a special wallet transaction so borrower can see it
         const { data: existingCredits } = await supabase
           .from('wallets').select('id, balance').eq('borrower_id', borrower.id).single()
-        const holdAmount = parseFloat(loan.security_hold)
         if (existingCredits) {
           await supabase.from('wallets').update({
-            balance: parseFloat((existingCredits.balance + holdAmount).toFixed(2)),
+            balance: parseFloat((existingCredits.balance + holdToReturn).toFixed(2)),
             updated_at: new Date().toISOString()
           }).eq('id', existingCredits.id)
         } else {
-          await supabase.from('wallets').insert({ borrower_id: borrower.id, balance: holdAmount })
+          await supabase.from('wallets').insert({ borrower_id: borrower.id, balance: holdToReturn })
         }
         await supabase.from('wallet_transactions').insert({
           borrower_id: borrower.id,
           loan_id: loan.id,
           type: 'rebate',
-          amount: holdAmount,
-          description: `Security Hold of ₱${holdAmount.toLocaleString('en-PH', { minimumFractionDigits: 2 })} returned — loan fully paid`,
+          amount: holdToReturn,
+          description: `Security Hold of ₱${holdToReturn.toLocaleString('en-PH', { minimumFractionDigits: 2 })} returned — loan fully paid`,
           status: 'completed'
         })
         await logAudit({
           action_type: 'SECURITY_HOLD_RETURNED',
           module: 'Loan',
-          description: `Security Hold of ₱${holdAmount} returned to ${borrower.full_name}'s Rebate Credits`,
+          description: `Security Hold of ₱${holdToReturn} returned to ${borrower.full_name}'s Rebate Credits`,
           changed_by: user?.email
         })
       }
