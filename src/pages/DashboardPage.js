@@ -452,7 +452,7 @@ export default function DashboardPage() {
         <StatCard label="Profit This Month" value={formatCurrency(profitThisMonth)} icon={Activity} color="var(--teal)" />
         <StatCard label="Projected Yearly" value={formatCurrency(projectedYearly)} sub="Based on available capital" icon={ArrowUpRight} color="var(--blue)" />
         <StatCard label="Default Rate" value={`${defaultRate.toFixed(1)}%`} sub={`${defaultedLoans.length} defaulted`} icon={AlertTriangle} color={defaultRate > 10 ? 'var(--red)' : 'var(--gold)'} />
-        <StatCard label="Available Liquidity" value={formatCurrency(availableLiquidity)} sub="Ready to lend" icon={DollarSign} color="var(--green)" />
+        <StatCard label="Available Liquidity" value={formatCurrency(availableLiquidity)} sub="Ready to lend" icon={Banknote} color="var(--green)" />
         <StatCard label="ROI" value={`${roi.toFixed(1)}%`} sub="Return on investment" icon={Percent} color="var(--purple)" />
         <StatCard label="Active Loans" value={activeLoans.length} sub={`${loans.length} total`} icon={Users} color="var(--blue)" />
       </div>

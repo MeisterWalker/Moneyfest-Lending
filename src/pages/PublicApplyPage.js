@@ -136,7 +136,7 @@ function SidebarCalc({ interestRate, selectedAmount, loanTerm = 2 }) {
   const numInstallments = loanTerm * 2
   const interest = principal * interestRate * loanTerm
   const total = principal + interest
-  const perInst = total / numInstallments
+  const perInst = Math.ceil(total / numInstallments)
   const hold = principal * 0.10
   const received = principal - hold
   return (
@@ -156,7 +156,7 @@ function SidebarCalc({ interestRate, selectedAmount, loanTerm = 2 }) {
       ))}
       <div style={{ marginTop: 12, padding: '10px 12px', background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 9, textAlign: 'center' }}>
         <div style={{ fontSize: 10, color: '#4B5580', marginBottom: 3, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Per installment ({numInstallments} total)</div>
-        <div style={{ fontSize: 20, fontWeight: 900, color: '#22C55E', fontFamily: 'Space Grotesk' }}>₱{perInst.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</div>
+        <div style={{ fontSize: 20, fontWeight: 900, color: '#22C55E', fontFamily: 'Space Grotesk' }}>₱{perInst.toLocaleString('en-PH')}</div>
         <div style={{ fontSize: 10, color: '#4B5580', marginTop: 2 }}>every 5th & 20th of month</div>
       </div>
     </div>
@@ -576,7 +576,7 @@ export default function PublicApplyPage() {
                         <button key={amt} className="amt-btn" onClick={() => form.loan_amount === amt ? null : startDisclaimer(amt)}
                           style={{ border: `2px solid ${form.loan_amount === amt ? '#3B82F6' : 'rgba(255,255,255,0.07)'}`, background: form.loan_amount === amt ? 'rgba(59,130,246,0.12)' : 'rgba(255,255,255,0.02)' }}>
                           <div style={{ fontFamily: 'Space Grotesk', fontWeight: 900, fontSize: 18, color: form.loan_amount === amt ? '#22C55E' : '#7A8AAA' }}>₱{amt.toLocaleString()}</div>
-                          <div style={{ fontSize: 10, color: '#4B5580', marginTop: 2 }}>₱{(amt * (1 + interestRate * form.loan_term) / (form.loan_term * 2)).toFixed(0)}/cutoff</div>
+                          <div style={{ fontSize: 10, color: '#4B5580', marginTop: 2 }}>₱{Math.ceil(amt * (1 + interestRate * form.loan_term) / (form.loan_term * 2)).toLocaleString('en-PH')}/cutoff</div>
                         </button>
                       ))}
                     </div>
@@ -676,13 +676,13 @@ export default function PublicApplyPage() {
                   const numInstallments = loanTerm * 2
                   const interest = principal * interestRate * loanTerm
                   const total = principal + interest
-                  const perInst = total / numInstallments
+                  const perInst = Math.ceil(total / numInstallments)
                   const dueDates = calcDueDates()
                   return (
                     <div style={cardStyle}>
                       <div style={cardHeader}>
                         <div style={{ width: 36, height: 36, borderRadius: 9, background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><img src="/calendar.png" alt="schedule" style={{ width: 20, height: 20, objectFit: 'contain' }} /></div>
-                        <div><div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 15, color: '#F0F4FF' }}>Payment Schedule</div><div style={{ fontSize: 11, color: '#4B5580', marginTop: 1 }}>₱{perInst.toLocaleString('en-PH', { minimumFractionDigits: 2 })} per installment</div></div>
+                        <div><div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 15, color: '#F0F4FF' }}>Payment Schedule</div><div style={{ fontSize: 11, color: '#4B5580', marginTop: 1 }}>₱{perInst.toLocaleString('en-PH')} per installment</div></div>
                       </div>
                       <div style={cardBody}>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>

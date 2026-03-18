@@ -216,8 +216,9 @@ ${content.innerHTML}
             title: 'Repayment Schedule',
             content: null,
             items: [
-              { term: 'Number of Payments', def: 'Four (4) equal installments.' },
-              { term: 'Payment Dates', def: 'Every 5th and 20th of the month for two (2) consecutive months following the release date.' },
+              { term: 'Number of Payments', def: 'Equal installments every 5th and 20th of the month — 4 installments for a 2-month term, 6 installments for a 3-month term.' },
+              { term: 'Installment Rounding', def: 'Where the total repayment amount does not divide evenly into equal installments, each installment is rounded up to the nearest whole peso (₱1.00). This rounding is applied uniformly across all installments and is disclosed in the Borrower\'s loan agreement at the time of approval.' },
+              { term: 'Payment Dates', def: 'Every 5th and 20th of the month for the duration of the chosen loan term (2 or 3 months) following the release date.' },
               { term: 'Payment Methods', def: 'Physical cash (in person), GCash transfer, RCBC bank transfer, or other bank transfer as arranged with the Lender.' },
               { term: 'Proof of Payment', def: 'The Borrower must upload a screenshot or receipt as proof of payment through the Borrower Portal within the same cutoff day.' },
             ]
@@ -227,7 +228,7 @@ ${content.innerHTML}
             title: 'Early Payoff Rebate Credits',
             content: 'MoneyfestLending rewards Borrowers who settle their final installment ahead of schedule:',
             items: [
-              { term: 'Fixed 1% Rebate', def: 'A fixed rebate of 1% of the original loan amount is credited to the Borrower\'s Rebate Credits balance when the final installment is paid at least 1 day before its due date. The rate is fixed at 1% regardless of how many days early the payment is made.' },
+              { term: 'Fixed 1% Rebate', def: 'A fixed rebate of 1% of the original loan amount is credited to the Borrower\'s Rebate Credits balance when the final installment is paid at least 1 to 2 weeks (7–14 days) before its due date. The rate is fixed at 1% regardless of how many days early the payment is made, provided the minimum early payment threshold is met.' },
               { term: 'Rebate Credits Withdrawal', def: 'Rebate Credits can be withdrawn once the balance reaches a minimum of ₱500. Withdrawal requests are subject to admin approval.' },
               { term: 'Scope', def: 'The rebate applies exclusively to the final installment of the loan. All prior installments do not qualify for any rebate regardless of timing.' },
             ]
@@ -242,7 +243,6 @@ ${content.innerHTML}
               { term: 'Security Hold — Penalty Deduction', def: 'Late payment penalties will be automatically deducted from the Borrower\'s Security Hold balance. The Security Hold amount returned upon full loan completion will reflect any penalty deductions applied during the loan term.' },
               { term: 'Loan Limit Freeze', def: 'Consistent late payments may result in the Borrower\'s loan limit being frozen at the current level.' },
               { term: 'Default', def: 'A loan is considered in default if two (2) consecutive installments are missed without prior arrangement with the Lender.' },
-              { term: 'Emergency Contact', def: 'In cases of default or consistent non-payment, the Lender reserves the right to contact any emergency contact on file for follow-up.' },
               { term: 'Future Eligibility', def: 'A defaulted loan may permanently affect the Borrower\'s eligibility for future loans under MoneyfestLending.' },
             ]
           },
