@@ -521,7 +521,17 @@ export default function ApplicationsPage() {
         const total = loanAmount * (1 + monthlyRate * loanTerm)
         const installment = Math.ceil(total / numInstallments)
         const adjustedTotal = installment * numInstallments
-        const holdAmt = parseFloat((loanAmount * 0.10).toFixed(2))
+
+        // Security hold rate based on borrower's credit score
+        const { data: borrowerData } = await supabase.from('borrowers').select('credit_score').eq('id', borrowerId).single()
+        const creditScore = borrowerData?.credit_score || 750
+        const holdRate = creditScore >= 1000 ? 0.05
+          : creditScore >= 920 ? 0.06
+          : creditScore >= 835 ? 0.08
+          : creditScore >= 750 ? 0.10
+          : creditScore >= 500 ? 0.15
+          : 0.20
+        const holdAmt = parseFloat((loanAmount * holdRate).toFixed(2))
         const released = loanAmount - holdAmt
 
         const { error: lErr } = await supabase.from('loans').insert({
@@ -535,7 +545,10 @@ export default function ApplicationsPage() {
           remaining_balance: adjustedTotal,
           payments_made: 0,
           release_date: releaseDateStr,
-          status: 'Pending'
+          status: 'Pending',
+          security_hold: holdAmt,
+          funds_released: released,
+          security_hold_returned: false
         })
 
         if (lErr) {
