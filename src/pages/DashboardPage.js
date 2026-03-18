@@ -329,33 +329,56 @@ export default function DashboardPage() {
 
   useEffect(() => { fetchData() }, [fetchData])
 
-  // Redirect to Loans page to record payment — avoids duplicating the full
-  // payment logic (penalty check, credit score, loan limit upgrade, security hold,
-  // rebate credits) that already lives in LoansPage.handleRecordPayment.
-  const handleMarkPaid = (loan) => {
-    toast('Recording payment — redirecting to Loans page for full processing.', 'info')
-    navigate('/admin/loans')
-  }
+  // Real-time refresh when loans change
+  useEffect(() => {
+    const sub = supabase
+      .channel('loans-dashboard')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'loans' }, () => fetchData())
+      .subscribe()
+    return () => supabase.removeChannel(sub)
+  }, [fetchData])
 
   // ── Computed stats ──────────────────────────────────────────
   const capital = settings?.starting_capital || 30000
   const activeLoans = loans.filter(l => ['Active', 'Partially Paid'].includes(l.status))
   const amountLentOut = activeLoans.reduce((sum, l) => sum + (l.loan_amount || 0), 0)
   const paidLoans = loans.filter(l => l.status === 'Paid')
-  const totalProfit = paidLoans.reduce((sum, l) => sum + ((l.total_repayment || 0) - (l.loan_amount || 0)), 0)
+
+  // Total profit = fully paid loans interest + interest earned so far on active loans
+  const paidProfit = paidLoans.reduce((sum, l) => sum + ((l.total_repayment || 0) - (l.loan_amount || 0)), 0)
+  const activeProfit = activeLoans.reduce((sum, l) => {
+    const installment = Math.ceil(l.installment_amount || 0)
+    const paidSoFar = installment * (l.payments_made || 0)
+    const interestRate = (l.interest_rate || 0.07) * (l.loan_term || 2)
+    const totalInterest = (l.loan_amount || 0) * interestRate
+    const interestEarned = totalInterest > 0 ? (paidSoFar / (l.total_repayment || 1)) * totalInterest : 0
+    return sum + interestEarned
+  }, 0)
+  const totalProfit = paidProfit + activeProfit
+
   const defaultedLoans = loans.filter(l => l.status === 'Defaulted')
   const defaultRate = loans.length > 0 ? (defaultedLoans.length / loans.length) * 100 : 0
   const availableLiquidity = capital - amountLentOut
   const roi = capital > 0 ? (totalProfit / capital) * 100 : 0
 
-  // Profit this month
+  // Profit this month — paid loans + active interest earned this month
   const now = new Date()
   const profitThisMonth = paidLoans
     .filter(l => new Date(l.updated_at).getMonth() === now.getMonth() && new Date(l.updated_at).getFullYear() === now.getFullYear())
     .reduce((sum, l) => sum + ((l.total_repayment || 0) - (l.loan_amount || 0)), 0)
 
-  // Projected yearly profit: monthlyRate × avg loan term × avg cycles per year
-  const projectedYearly = availableLiquidity * (settings?.interest_rate || 0.07) * 2 * 6
+  // Projected yearly — use avg loan term from portfolio
+  const avgTerm = loans.length > 0
+    ? loans.reduce((sum, l) => sum + (l.loan_term || 2), 0) / loans.length
+    : 2
+  const cyclesPerYear = 12 / avgTerm
+  const projectedYearly = availableLiquidity * (settings?.interest_rate || 0.07) * avgTerm * cyclesPerYear
+
+  // Redirect to Loans page to record payment
+  const handleMarkPaid = (loan) => {
+    toast('Recording payment — redirecting to Loans page for full processing.', 'info')
+    navigate('/admin/loans')
+  }
 
   // Collection efficiency - only count loans created after last reset
   const resetDate = settings?.last_reset_date ? new Date(settings.last_reset_date) : null
