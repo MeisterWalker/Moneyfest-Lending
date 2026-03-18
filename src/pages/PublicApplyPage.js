@@ -601,6 +601,10 @@ export default function PublicApplyPage() {
                         ))}
                       </div>
                     </div>
+                  </div>
+                </div>
+
+                {/* Release Method card */}
                 <div style={cardStyle}>
                   <div style={cardHeader}>
                     <div style={{ width: 36, height: 36, borderRadius: 9, background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><img src="/payment-method.png" alt="payment" style={{ width: 20, height: 20, objectFit: 'contain' }} /></div>

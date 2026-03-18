@@ -77,7 +77,6 @@ export default function ForecastPage() {
   const avgTermMonths = loans.length > 0
     ? loans.reduce((sum, l) => sum + (l.loan_term || 2), 0) / loans.length
     : 2
-  const rateDecimal = rate / 100
   const defaultDecimal = defaultRate / 100
   const effectiveRate = rateDecimal * (1 - defaultDecimal)
 
