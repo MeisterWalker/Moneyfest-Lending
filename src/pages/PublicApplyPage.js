@@ -125,7 +125,7 @@ function SidebarTiers() {
   )
 }
 
-function SidebarCalc({ interestRate, selectedAmount }) {
+function SidebarCalc({ interestRate, selectedAmount, loanTerm = 2 }) {
   if (!selectedAmount) return (
     <div style={{ background: '#0f1420', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '18px 20px' }}>
       <div style={{ fontSize: 11, fontWeight: 700, color: '#7A8AAA', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>💰 Quick estimate</div>
@@ -133,9 +133,10 @@ function SidebarCalc({ interestRate, selectedAmount }) {
     </div>
   )
   const principal = parseFloat(selectedAmount)
-  const interest = principal * interestRate * 2
+  const numInstallments = loanTerm * 2
+  const interest = principal * interestRate * loanTerm
   const total = principal + interest
-  const perInst = total / 4
+  const perInst = total / numInstallments
   const hold = principal * 0.10
   const received = principal - hold
   return (
@@ -143,7 +144,7 @@ function SidebarCalc({ interestRate, selectedAmount }) {
       <div style={{ fontSize: 11, fontWeight: 700, color: '#22C55E', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>💰 Loan breakdown</div>
       {[
         { lbl: 'Loan principal', val: '₱' + principal.toLocaleString('en-PH'), color: '#F0F4FF' },
-        { lbl: 'Interest (7%/mo × 2)', val: '₱' + interest.toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#a78bfa' },
+        { lbl: `Interest (7%/mo × ${loanTerm})`, val: '₱' + interest.toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#a78bfa' },
         { lbl: 'Security hold (10%)', val: '₱' + hold.toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#F59E0B' },
         { lbl: 'You receive', val: '₱' + received.toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#22C55E' },
         { lbl: 'Total repayment', val: '₱' + total.toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#F0F4FF' },
@@ -154,7 +155,7 @@ function SidebarCalc({ interestRate, selectedAmount }) {
         </div>
       ))}
       <div style={{ marginTop: 12, padding: '10px 12px', background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 9, textAlign: 'center' }}>
-        <div style={{ fontSize: 10, color: '#4B5580', marginBottom: 3, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Per installment</div>
+        <div style={{ fontSize: 10, color: '#4B5580', marginBottom: 3, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Per installment ({numInstallments} total)</div>
         <div style={{ fontSize: 20, fontWeight: 900, color: '#22C55E', fontFamily: 'Space Grotesk' }}>₱{perInst.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</div>
         <div style={{ fontSize: 10, color: '#4B5580', marginTop: 2 }}>every 5th & 20th of month</div>
       </div>
@@ -183,7 +184,7 @@ export default function PublicApplyPage() {
 
   const [form, setForm] = useState({
     full_name: '', department: '', tenure_years: '', phone: '', email: '', address: '',
-    loan_amount: '', loan_purpose: '', release_method: '',
+    loan_amount: '', loan_purpose: '', release_method: '', loan_term: 2,
     gcash_number: '', gcash_name: '', bank_account_number: '', bank_account_confirm: '', bank_account_holder: '', bank_name: '',
     agreed: false
   })
@@ -279,6 +280,7 @@ export default function PublicApplyPage() {
       address: form.address.trim(),
       loan_amount: parseFloat(form.loan_amount),
       loan_purpose: form.loan_purpose.trim(),
+      loan_term: form.loan_term || 2,
       release_method: form.release_method,
       gcash_number: form.gcash_number.trim() || null,
       gcash_name: form.gcash_name.trim() || null,
@@ -300,14 +302,20 @@ export default function PublicApplyPage() {
   const lbl = { display: 'block', fontSize: 10, color: '#7A8AAA', marginBottom: 5, textTransform: 'uppercase', letterSpacing: '0.07em', fontWeight: 700 }
 
   const calcDueDates = () => {
+    const numInst = (form.loan_term || 2) * 2
     const today = new Date(); const d = today.getDate(), m = today.getMonth(), y = today.getFullYear()
-    let release = d <= 5 ? new Date(y, m, 5) : d <= 20 ? new Date(y, m, 20) : new Date(y, m + 1, 5)
-    return Array.from({ length: 4 }, (_, i) => {
-      const dt = new Date(release)
-      if (release.getDate() <= 5) { dt.setMonth(dt.getMonth() + Math.floor(i / 2)); dt.setDate(i % 2 === 0 ? 20 : 5) }
-      else { dt.setMonth(dt.getMonth() + Math.ceil((i + 1) / 2)); dt.setDate(i % 2 === 0 ? 5 : 20) }
-      return dt
-    })
+    let firstDay = d <= 5 ? 20 : 5
+    let firstMonth = d <= 5 ? m : m + 1
+    let firstYear = y
+    if (firstMonth > 11) { firstMonth = 0; firstYear += 1 }
+    const dates = []
+    let curDay = firstDay, curMonth = firstMonth, curYear = firstYear
+    for (let i = 0; i < numInst; i++) {
+      dates.push(new Date(curYear, curMonth, curDay))
+      if (curDay === 5) { curDay = 20 }
+      else { curDay = 5; curMonth += 1; if (curMonth > 11) { curMonth = 0; curYear += 1 } }
+    }
+    return dates
   }
 
   if (submitted) return <SuccessScreen accessCode={accessCode} fullName={form.full_name} loanAmount={form.loan_amount} />
@@ -390,14 +398,14 @@ export default function PublicApplyPage() {
                 onScroll={e => { const el = e.target; if (el.scrollHeight - el.scrollTop <= el.clientHeight + 40) setTncScrolled(true) }}>
                 {[
                   { title: '1. Eligibility', body: 'This lending program is exclusively available to active team members in good standing within our office. By submitting an application, you confirm that you are currently employed and eligible to participate.' },
-                  { title: '2. Loan Terms & Interest', body: `Approved loans are subject to a monthly interest rate of ${(interestRate * 100).toFixed(0)}% applied over the 2-month loan term, for a total interest charge of ${(interestRate * 2 * 100).toFixed(0)}% of the principal. This is not a compounding rate. The total repayable amount is fixed at the time of approval.` },
-                  { title: '3. Repayment Schedule', body: 'Loans are repaid in 4 equal installments, collected every 5th and 20th of the month.' },
+                  { title: '2. Loan Terms & Interest', body: `Approved loans are subject to a monthly interest rate of ${(interestRate * 100).toFixed(0)}% applied over your chosen loan term (2 or 3 months), for a total interest charge of ${(interestRate * 100).toFixed(0)}% × term months. This is not a compounding rate. The total repayable amount is fixed at the time of approval.` },
+                  { title: '3. Repayment Schedule', body: `Loans are repaid in equal installments (4 for a 2-month term, 6 for a 3-month term), collected every 5th and 20th of the month.` },
                   { title: '4. Late Payments & Default', body: 'A late payment penalty of ₱20 per day will be charged for each installment not paid by its due date. The penalty accrues daily with no cap until the installment is settled. Late payments result in a -10 point deduction to your credit score per missed installment. A loan is considered in default if two (2) consecutive installments are missed.' },
-                  { title: '5. Early Payoff Rebate', body: 'If your final (4th) installment is paid at least 1 day before its due date, you will receive a fixed 1% rebate on your loan principal, credited to your Rebate Credits balance.' },
+                  { title: '5. Early Payoff Rebate', body: 'If your final installment is paid at least 1 day before its due date, you will receive a fixed 1% rebate on your loan principal, credited to your Rebate Credits balance.' },
                   { title: '6. Accuracy of Information', body: 'By submitting an application, you confirm that all information provided is accurate, complete, and truthful. Providing false or misleading information is grounds for immediate rejection or cancellation of your loan.' },
                   { title: '7. Authorization', body: 'You authorize MoneyfestLending administrators to verify your submitted information and process your personal data in accordance with our Privacy Notice and the Data Privacy Act of 2012 (RA 10173).' },
                   { title: '8. ID Verification', body: "A valid government-issued ID is required for all applications. Accepted IDs include SSS, GSIS, PhilHealth, Pag-IBIG, Passport, Driver's License, Postal ID, Voter's ID, PRC ID, and Senior Citizen ID." },
-                  { title: '9. Security Hold', body: 'A Security Hold is withheld from your approved loan amount upon release. The rate depends on your credit score: VIP pays 5%, Reliable 6%, Trusted 8%, Standard 10%, Caution 15%, High Risk 20%. The Security Hold is automatically returned after your 4th installment is paid.' },
+                  { title: '9. Security Hold', body: 'A Security Hold is withheld from your approved loan amount upon release. The rate depends on your credit score: VIP pays 5%, Reliable 6%, Trusted 8%, Standard 10%, Caution 15%, High Risk 20%. The Security Hold is automatically returned after your final installment is paid.' },
                   { title: '10. Loan Limit & Level System', body: 'All first-time borrowers are approved at a maximum of ₱5,000 regardless of the amount requested. Subsequent loan limits increase based on your repayment history.' },
                   { title: '11. Program Rules', body: 'Only one active loan is permitted per borrower at a time.' },
                   { title: '12. Amendments', body: 'MoneyfestLending reserves the right to amend these Terms & Conditions at any time.' },
@@ -568,15 +576,31 @@ export default function PublicApplyPage() {
                         <button key={amt} className="amt-btn" onClick={() => form.loan_amount === amt ? null : startDisclaimer(amt)}
                           style={{ border: `2px solid ${form.loan_amount === amt ? '#3B82F6' : 'rgba(255,255,255,0.07)'}`, background: form.loan_amount === amt ? 'rgba(59,130,246,0.12)' : 'rgba(255,255,255,0.02)' }}>
                           <div style={{ fontFamily: 'Space Grotesk', fontWeight: 900, fontSize: 18, color: form.loan_amount === amt ? '#22C55E' : '#7A8AAA' }}>₱{amt.toLocaleString()}</div>
-                          <div style={{ fontSize: 10, color: '#4B5580', marginTop: 2 }}>₱{(amt * (1 + interestRate * 2) / 4).toFixed(0)}/cutoff</div>
+                          <div style={{ fontSize: 10, color: '#4B5580', marginTop: 2 }}>₱{(amt * (1 + interestRate * form.loan_term) / (form.loan_term * 2)).toFixed(0)}/cutoff</div>
                         </button>
                       ))}
                     </div>
                     <div><label style={lbl}>Loan Purpose *</label><textarea className="apply-inp" value={form.loan_purpose} onChange={e => set('loan_purpose', e.target.value)} placeholder="e.g. Bills payment, Emergency, Allowance, Tuition, Medical, Rent..." rows={2} style={{ ...inp, resize: 'none' }} /></div>
-                  </div>
-                </div>
 
-                {/* Release Method card */}
+                    {/* Loan term selector */}
+                    <div style={{ marginTop: 14 }}>
+                      <label style={lbl}>Loan Term *</label>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                        {[
+                          { term: 2, label: '2 Months', sub: '4 installments · 14% total interest' },
+                          { term: 3, label: '3 Months', sub: '6 installments · 21% total interest' },
+                        ].map(({ term, label, sub }) => (
+                          <button key={term} onClick={() => set('loan_term', term)} style={{
+                            border: `2px solid ${form.loan_term === term ? '#8B5CF6' : 'rgba(255,255,255,0.07)'}`,
+                            background: form.loan_term === term ? 'rgba(139,92,246,0.12)' : 'rgba(255,255,255,0.02)',
+                            borderRadius: 10, padding: '12px 14px', cursor: 'pointer', textAlign: 'left', transition: 'all 0.15s'
+                          }}>
+                            <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 15, color: form.loan_term === term ? '#a78bfa' : '#7A8AAA' }}>{label}</div>
+                            <div style={{ fontSize: 10, color: form.loan_term === term ? '#8B5CF6' : '#4B5580', marginTop: 3 }}>{sub}</div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                 <div style={cardStyle}>
                   <div style={cardHeader}>
                     <div style={{ width: 36, height: 36, borderRadius: 9, background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><img src="/payment-method.png" alt="payment" style={{ width: 20, height: 20, objectFit: 'contain' }} /></div>
@@ -643,7 +667,13 @@ export default function PublicApplyPage() {
 
                 {/* Payment schedule */}
                 {form.loan_amount && (() => {
-                  const principal = parseFloat(form.loan_amount); const interest = principal * interestRate * 2; const total = principal + interest; const perInst = total / 4; const dueDates = calcDueDates()
+                  const principal = parseFloat(form.loan_amount)
+                  const loanTerm = form.loan_term || 2
+                  const numInstallments = loanTerm * 2
+                  const interest = principal * interestRate * loanTerm
+                  const total = principal + interest
+                  const perInst = total / numInstallments
+                  const dueDates = calcDueDates()
                   return (
                     <div style={cardStyle}>
                       <div style={cardHeader}>
@@ -702,7 +732,7 @@ export default function PublicApplyPage() {
           <div className="apply-sidebar" style={{ position: 'sticky', top: 72 }}>
             <SidebarInfo step={step} />
             <SidebarTiers />
-            <SidebarCalc interestRate={interestRate} selectedAmount={form.loan_amount} />
+            <SidebarCalc interestRate={interestRate} selectedAmount={form.loan_amount} loanTerm={form.loan_term} />
           </div>
 
         </div>

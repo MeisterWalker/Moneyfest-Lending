@@ -108,7 +108,7 @@ function CutoffBanner({ loans, borrowers, onMarkPaid, onDismiss }) {
                   <div>
                     <span style={{ fontSize: 14, fontWeight: 500 }}>{borrower?.full_name}</span>
                     <span style={{ fontSize: 12, color: 'var(--text-muted)', marginLeft: 8 }}>
-                      Installment {loan.payments_made + 1} of 4
+                      Installment {loan.payments_made + 1} of {loan.num_installments || 4}
                     </span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -354,7 +354,7 @@ export default function DashboardPage() {
     .filter(l => new Date(l.updated_at).getMonth() === now.getMonth() && new Date(l.updated_at).getFullYear() === now.getFullYear())
     .reduce((sum, l) => sum + ((l.total_repayment || 0) - (l.loan_amount || 0)), 0)
 
-  // Projected yearly profit: monthlyRate × 2 months per cycle × 6 cycles per year
+  // Projected yearly profit: monthlyRate × avg loan term × avg cycles per year
   const projectedYearly = availableLiquidity * (settings?.interest_rate || 0.07) * 2 * 6
 
   // Collection efficiency - only count loans created after last reset
@@ -363,7 +363,7 @@ export default function DashboardPage() {
     ? activeLoans.filter(l => new Date(l.created_at) >= resetDate)
     : activeLoans
   const totalInstallmentsDue = loansAfterReset.reduce((sum, l) => sum + l.payments_made, 0)
-  const totalExpectedInstallments = loansAfterReset.length * 4
+  const totalExpectedInstallments = loansAfterReset.reduce((sum, l) => sum + (l.num_installments || 4), 0)
   const efficiencyRate = totalExpectedInstallments > 0 ? (totalInstallmentsDue / totalExpectedInstallments) * 100 : 100
 
   // Monthly profit chart data (last 6 months, filtered by reset date)
@@ -437,7 +437,7 @@ export default function DashboardPage() {
             <div style={{ flex: 1 }}>
               <div style={{ fontWeight: 600, marginBottom: 4 }}><span style={{ display: "flex", alignItems: "center", gap: 6 }}><img src="/warning.png" alt="warning" style={{ width: 16, height: 16, objectFit: "contain" }} />Overdue — {b?.full_name}</span></div>
               <div style={{ fontSize: 13, color: 'var(--text-label)' }}>
-                Loan of {formatCurrency(loan.loan_amount)} · {loan.payments_made} of 4 paid · Balance {formatCurrency(loan.remaining_balance)}
+                Loan of {formatCurrency(loan.loan_amount)} · {loan.payments_made} of {loan.num_installments || 4} paid · Balance {formatCurrency(loan.remaining_balance)}
               </div>
             </div>
           </div>

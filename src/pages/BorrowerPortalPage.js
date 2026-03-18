@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { CREDIT_CONFIG, BADGE_TIERS, SECURITY_HOLD_TIERS, getBadgeConfig, getBadgeFromScore, getSecurityHoldRate } from '../lib/creditSystem'
 import { supabase } from '../lib/supabase'
 import { usePageVisit } from '../hooks/usePageVisit'
+import { getInstallmentDates, formatDateValue } from '../lib/helpers'
 import {
   Lock, CheckCircle, Clock, AlertCircle, Upload,
   FileText, Calendar, CreditCard, ChevronDown, ChevronUp, X
@@ -13,29 +14,20 @@ function formatDate(str) {
   return new Date(Number(y), Number(m) - 1, Number(d)).toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' })
 }
 
-function getDueDates(releaseDate, paymentsMade) {
+// Wraps getInstallmentDates to return the same shape the portal uses
+function getDueDates(releaseDate, paymentsMade, numInstallments = 4) {
   if (!releaseDate) return []
-  const [y, m, d] = releaseDate.split('-').map(Number)
-  const release = new Date(y, m - 1, d)
-  const dates = []
-  for (let i = 1; i <= 4; i++) {
-    const cutoff = new Date(release)
-    if (release.getDate() <= 5) {
-      cutoff.setMonth(cutoff.getMonth() + Math.floor((i - 1) / 2))
-      cutoff.setDate(i % 2 === 1 ? 20 : 5)
-    } else {
-      cutoff.setMonth(cutoff.getMonth() + Math.ceil(i / 2))
-      cutoff.setDate(i % 2 === 1 ? 5 : 20)
-    }
-    dates.push({
+  const dates = getInstallmentDates(releaseDate, numInstallments)
+  return dates.map((cutoff, idx) => {
+    const i = idx + 1
+    return {
       num: i,
       date: cutoff,
       dateStr: cutoff.getFullYear() + '-' + String(cutoff.getMonth() + 1).padStart(2, '0') + '-' + String(cutoff.getDate()).padStart(2, '0'),
       paid: i <= paymentsMade,
       current: i === paymentsMade + 1
-    })
-  }
-  return dates
+    }
+  })
 }
 
 function StatusBadge({ status }) {
@@ -129,7 +121,7 @@ function UploadModal({ installmentNum, loan, borrower, onClose, onUploaded }) {
         </div>
 
         <div style={{ background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.2)', borderRadius: 10, padding: '10px 14px', marginBottom: 18, fontSize: 13, color: '#8B5CF6', fontWeight: 600 }}>
-          Installment {installmentNum} of 4 — ₱{Number(loan.installment_amount).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
+          Installment {installmentNum} of {loan.num_installments || 4} — ₱{Number(loan.installment_amount).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
         </div>
 
         <div style={{ marginBottom: 16 }}>
@@ -361,7 +353,7 @@ function SignatureModal({ borrower, loan, onSave, onClose }) {
           <>
             {/* Loan summary */}
             <div style={{ background: 'rgba(99,102,241,0.06)', border: '1px solid rgba(99,102,241,0.18)', borderRadius: 12, padding: '12px 16px', marginBottom: 20, fontSize: 12, color: '#7A8AAA', lineHeight: 1.7 }}>
-              By signing, you confirm you have read and agree to the loan terms: <strong style={{ color: '#F0F4FF' }}>₱{Number(loan.loan_amount).toLocaleString('en-PH')} loan</strong> at <strong style={{ color: '#F0F4FF' }}>{((loan.interest_rate || 0.07) * 100).toFixed(0)}%/mo × 2 months interest</strong>, repayable in <strong style={{ color: '#F0F4FF' }}>4 installments</strong> of <strong style={{ color: '#60A5FA' }}>₱{Number(loan.installment_amount).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</strong> each.
+              By signing, you confirm you have read and agree to the loan terms: <strong style={{ color: '#F0F4FF' }}>₱{Number(loan.loan_amount).toLocaleString('en-PH')} loan</strong> at <strong style={{ color: '#F0F4FF' }}>{((loan.interest_rate || 0.07) * 100).toFixed(0)}%/mo × {loan.loan_term || 2} months interest</strong>, repayable in <strong style={{ color: '#F0F4FF' }}>{loan.num_installments || 4} installments</strong> of <strong style={{ color: '#60A5FA' }}>₱{Number(loan.installment_amount).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</strong> each.
             </div>
 
             {/* Step 1 — Type name */}
@@ -504,27 +496,22 @@ export default function BorrowerPortalPage() {
         const releaseDate = new Date(yr, mo - 1, dy)
         const today = new Date(); today.setHours(0,0,0,0)
         const paid = activeLoan.payments_made || 0
-        // Generate next due date
-        for (let i = paid; i < 4; i++) {
-          const due = new Date(releaseDate)
-          if (releaseDate.getDate() <= 5) {
-            due.setMonth(due.getMonth() + Math.floor(i / 2))
-            due.setDate(i % 2 === 0 ? 20 : 5)
-          } else {
-            due.setMonth(due.getMonth() + Math.ceil((i + 1) / 2))
-            due.setDate(i % 2 === 0 ? 5 : 20)
-          }
+        const numInst = activeLoan.num_installments || 4
+        // Generate next due date using canonical helper
+        const allDueDates = getDueDates(activeLoan.release_date, paid, numInst)
+        for (const dueEntry of allDueDates) {
+          if (dueEntry.paid) continue
+          const due = dueEntry.date
           const diffDays = Math.ceil((due - today) / (1000 * 60 * 60 * 24))
           if (diffDays >= 0 && diffDays <= 2) {
-            // Check if we already sent this notif recently (within last 3 days)
             const alreadyNotified = (notifs || []).some(n =>
               n.type === 'due_soon' &&
               new Date(n.created_at) > new Date(Date.now() - 3 * 24 * 60 * 60 * 1000)
             )
             if (!alreadyNotified) {
               const msg = diffDays === 0
-                ? `Installment ${i + 1} of ₱${Number(activeLoan.installment_amount).toLocaleString('en-PH', { minimumFractionDigits: 2 })} is due TODAY. Please submit your payment proof.`
-                : `Installment ${i + 1} of ₱${Number(activeLoan.installment_amount).toLocaleString('en-PH', { minimumFractionDigits: 2 })} is due in ${diffDays} day${diffDays > 1 ? 's' : ''} (${due.toLocaleDateString('en-PH', { month: 'short', day: 'numeric' })}). Don't forget to pay!`
+                ? `Installment ${dueEntry.num} of ₱${Number(activeLoan.installment_amount).toLocaleString('en-PH', { minimumFractionDigits: 2 })} is due TODAY. Please submit your payment proof.`
+                : `Installment ${dueEntry.num} of ₱${Number(activeLoan.installment_amount).toLocaleString('en-PH', { minimumFractionDigits: 2 })} is due in ${diffDays} day${diffDays > 1 ? 's' : ''} (${due.toLocaleDateString('en-PH', { month: 'short', day: 'numeric' })}). Don't forget to pay!`
               const { data: newNotif } = await supabase.from('portal_notifications').insert({
                 borrower_id: b.id, type: 'due_soon',
                 title: diffDays === 0 ? '⏰ Payment Due Today!' : '⏰ Payment Due Soon',
@@ -629,9 +616,11 @@ export default function BorrowerPortalPage() {
     const signedDateStr = new Date(date).toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' })
     const releaseDateStr = loan.release_date ? (() => { const [y,m,d] = loan.release_date.split('-').map(Number); return new Date(y,m-1,d).toLocaleDateString('en-PH',{year:'numeric',month:'long',day:'numeric'}) })() : 'TBD'
 
-    const dueDatesForPDF = getDueDates(loan.release_date, loan.payments_made || 0)
-    const maturityDate = dueDatesForPDF.length >= 4
-      ? dueDatesForPDF[3].date.toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' })
+    const numInstallments = loan.num_installments || 4
+    const loanTerm = loan.loan_term || 2
+    const dueDatesForPDF = getDueDates(loan.release_date, loan.payments_made || 0, numInstallments)
+    const maturityDate = dueDatesForPDF.length >= numInstallments
+      ? dueDatesForPDF[numInstallments - 1].date.toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' })
       : 'TBD'
     const scheduleRows = dueDatesForPDF.map((due, i) => {
       return `<tr style="background:${due.paid ? '#f0fdf4' : i % 2 === 0 ? '#fafafa' : '#fff'}">
@@ -717,7 +706,7 @@ export default function BorrowerPortalPage() {
       <div class="row"><span class="lbl">Security Hold (${holdRate}%)</span><span class="val">&#8369;${holdAmt.toLocaleString('en-PH',{minimumFractionDigits:2})}</span></div>
       <div class="row"><span class="lbl">Funds Released to Borrower</span><span class="val">&#8369;${released.toLocaleString('en-PH',{minimumFractionDigits:2})}</span></div>
       <div class="row"><span class="lbl">Finance Charge (Interest)</span><span class="val">&#8369;${(total-principal).toLocaleString('en-PH',{minimumFractionDigits:2})}</span></div>
-      <div class="row"><span class="lbl">Monthly Interest Rate</span><span class="val">${rate}% per month × 2 months</span></div>
+      <div class="row"><span class="lbl">Monthly Interest Rate</span><span class="val">${rate}% per month × ${loanTerm} months</span></div>
       <div class="row"><span class="lbl">Effective Annual Rate</span><span class="val">${(Number(loan.interest_rate||0.07)*12*100).toFixed(2)}% per annum</span></div>
       <div class="row"><span class="lbl">Total Amount Payable</span><span class="val" style="color:#1e1b4b;font-size:13px;">&#8369;${total.toLocaleString('en-PH',{minimumFractionDigits:2})}</span></div>
       <div class="row"><span class="lbl">Per Installment Amount</span><span class="val">&#8369;${perInst.toLocaleString('en-PH',{minimumFractionDigits:2})}</span></div>
@@ -757,11 +746,11 @@ export default function BorrowerPortalPage() {
 
   <div class="section">
     <div class="section-title">Terms &amp; Conditions</div>
-    <p class="tc-item">1. <strong>Interest</strong> — A monthly interest rate of ${rate}% is applied for each of the 2 months of the loan term, resulting in a total finance charge of ${(rate*2).toFixed(0)}% of the principal. This charge is fixed and applies regardless of early settlement or prepayment of any installment.</p>
-    <p class="tc-item">2. <strong>Security Hold</strong> — ${holdRate}% of the approved loan amount is withheld upon fund release as a Security Hold. Late payment penalties are automatically deducted from the Security Hold balance. The remaining Security Hold balance is returned to the Borrower's Rebate Credits upon full payment of the 4th installment.</p>
+    <p class="tc-item">1. <strong>Interest</strong> — A monthly interest rate of ${rate}% is applied for each of the ${loanTerm} months of the loan term, resulting in a total finance charge of ${(rate*loanTerm).toFixed(0)}% of the principal. This charge is fixed and applies regardless of early settlement or prepayment of any installment.</p>
+    <p class="tc-item">2. <strong>Security Hold</strong> — ${holdRate}% of the approved loan amount is withheld upon fund release as a Security Hold. Late payment penalties are automatically deducted from the Security Hold balance. The remaining Security Hold balance is returned to the Borrower's Rebate Credits upon full payment of the final (${numInstallments}th) installment.</p>
     <p class="tc-item">3. <strong>Late Payment Penalties</strong> — A penalty of &#8369;20.00 per calendar day is charged for each day an installment remains unpaid past its due date (5th or 20th of the month). The penalty accrues daily with no cap until the installment is settled. Each late payment also results in a deduction of 10 points from the Borrower's credit score.</p>
     <p class="tc-item">4. <strong>Default</strong> — Failure to pay two (2) or more consecutive installments constitutes a loan default. Upon default, the remaining balance becomes immediately due and payable in full. A credit score deduction of 150 points is applied and the Borrower's account will be flagged as High Risk. MoneyfestLending reserves the right to pursue all available legal remedies under Philippine law, including the filing of a civil complaint for collection of sum of money, referral to barangay conciliation under Republic Act No. 7160 (Katarungang Pambarangay Law) prior to court action, and other remedies available under Republic Act No. 9474 (Lending Company Regulation Act of 2007). The Borrower shall be liable for all costs of collection, including reasonable attorney's fees, should legal action become necessary. The Borrower expressly acknowledges this right by signing this agreement.</p>
-    <p class="tc-item">5. <strong>Rebate Credits &amp; Early Payment Incentive</strong> — If the Borrower pays the 4th (final) installment at least 1 day before its due date, a fixed rebate of 1% of the original loan amount is credited to their Rebate Credits balance. The rebate rate is fixed at 1% regardless of how many days early payment is made. Rebates are credited automatically by the system.</p>
+    <p class="tc-item">5. <strong>Rebate Credits &amp; Early Payment Incentive</strong> — If the Borrower pays the final (${numInstallments}th) installment at least 1 day before its due date, a fixed rebate of 1% of the original loan amount is credited to their Rebate Credits balance. The rebate rate is fixed at 1% regardless of how many days early payment is made. Rebates are credited automatically by the system.</p>
     <p class="tc-item">6. <strong>Data Privacy</strong> — The Borrower's personal information is collected and processed solely for the administration of this loan in compliance with Republic Act No. 10173 (Data Privacy Act of 2012). Data will not be shared with third parties without consent except as required by law.</p>
     <p class="tc-item">7. <strong>Governing Law</strong> — This agreement shall be governed by the laws of the Republic of the Philippines. Any dispute arising from this agreement shall first be referred to barangay conciliation under Republic Act No. 7160 (Katarungang Pambarangay Law). If unresolved, disputes shall be brought before the appropriate Philippine courts having jurisdiction over the matter. By signing this Loan Agreement, the Borrower expressly acknowledges and agrees to MoneyfestLending's right to pursue legal remedies in cases of default or non-payment.</p>
   </div>
@@ -817,8 +806,9 @@ export default function BorrowerPortalPage() {
     setNotifications(prev => prev.map(n => ({ ...n, is_read: true })))
   }
 
-  const dueDates = loan ? getDueDates(loan.release_date, loan.payments_made || 0) : []
-  const progressPct = loan ? ((loan.payments_made || 0) / 4) * 100 : 0
+  const numInstallments = loan ? (loan.num_installments || 4) : 4
+  const dueDates = loan ? getDueDates(loan.release_date, loan.payments_made || 0, numInstallments) : []
+  const progressPct = loan ? ((loan.payments_made || 0) / numInstallments) * 100 : 0
 
   // Pending / Rejected application screen
   if (pendingApp && !borrower) return (
@@ -1196,7 +1186,7 @@ export default function BorrowerPortalPage() {
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 1, background: 'rgba(255,255,255,0.03)' }}>
                     {[
                       { label: 'Total Repayment', value: 'P' + Number(l.total_repayment).toLocaleString('en-PH', { minimumFractionDigits: 2 }) },
-                      { label: 'Payments Made', value: `${l.payments_made || 0} of 4` },
+                      { label: 'Payments Made', value: `${l.payments_made || 0} of ${l.num_installments || 4}` },
                       { label: 'Remaining', value: 'P' + Number(l.remaining_balance || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 }) },
                     ].map((s, i) => (
                       <div key={i} style={{ padding: '12px 14px', background: '#141B2D' }}>
@@ -1657,7 +1647,7 @@ export default function BorrowerPortalPage() {
               {/* Progress bar */}
               <div style={{ marginBottom: 16 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#4B5580', marginBottom: 8 }}>
-                  <span>{loan.payments_made || 0} of 4 installments paid</span>
+                  <span>{loan.payments_made || 0} of {numInstallments} installments paid</span>
                   <span>{Math.round(progressPct)}% complete</span>
                 </div>
                 <div style={{ height: 8, background: '#1E2640', borderRadius: 4, overflow: 'hidden' }}>
@@ -1673,7 +1663,7 @@ export default function BorrowerPortalPage() {
                   { label: 'Security Hold', value: (loan.security_hold_returned ? '✅ ' : '🔒 ') + '₱' + (loan.security_hold ? Number(loan.security_hold).toLocaleString('en-PH') : (loan.security_hold ? Number(loan.security_hold) : Number(loan.loan_amount) * 0.10).toLocaleString('en-PH')), color: loan.security_hold_returned ? '#22C55E' : '#F59E0B' },
                   { label: 'Per Installment', value: '₱' + Number(loan.installment_amount).toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#8B5CF6' },
                   { label: 'Release Date', value: formatDate(loan.release_date), color: '#F59E0B' },
-                  { label: 'Maturity Date', value: (() => { const d = getDueDates(loan.release_date, 0); return d.length >= 4 ? new Date(d[3].dateStr).toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'}) : 'TBD' })(), color: '#F97316' },
+                  { label: 'Maturity Date', value: (() => { const d = getDueDates(loan.release_date, 0, numInstallments); return d.length >= numInstallments ? new Date(d[numInstallments-1].dateStr).toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'}) : 'TBD' })(), color: '#F97316' },
                 ].map(s => (
                   <div key={s.label} style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 10, padding: '10px 12px' }}>
                     <div style={{ fontSize: 10, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>{s.label}</div>
@@ -1790,10 +1780,10 @@ export default function BorrowerPortalPage() {
                       { label: 'Security Hold (' + (loan.security_hold && principal ? ((Number(loan.security_hold)/principal*100).toFixed(0)) : '10') + '%)', value: '₱' + (loan.security_hold ? Number(loan.security_hold).toLocaleString('en-PH', { minimumFractionDigits: 2 }) : (principal * 0.10).toLocaleString('en-PH', { minimumFractionDigits: 2 })), color: '#F59E0B' },
                       { label: 'Funds Released to You', value: '₱' + (loan.funds_released ? Number(loan.funds_released).toLocaleString('en-PH', { minimumFractionDigits: 2 }) : (principal * 0.80).toLocaleString('en-PH', { minimumFractionDigits: 2 })), color: '#22C55E' },
                       { label: 'Finance Charge', value: '₱' + financeCharge.toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#F59E0B' },
-                      { label: 'Monthly Interest Rate', value: flatRate.toFixed(0) + '% per month × 2 months', color: '#60A5FA' },
+                      { label: 'Monthly Interest Rate', value: flatRate.toFixed(0) + '% per month × ' + (loan.loan_term || 2) + ' months', color: '#60A5FA' },
                       { label: 'Effective Interest Rate (per annum)', value: effectiveAnnual + '% p.a.', color: '#a78bfa' },
                       { label: 'Total Amount Payable', value: '₱' + totalRepayment.toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#22C55E' },
-                      { label: 'Number of Installments', value: '4 payments every 5th and 20th of the month', color: '#F0F4FF' },
+                      { label: 'Number of Installments', value: `${numInstallments} payments every 5th and 20th of the month`, color: '#F0F4FF' },
                       { label: 'Per Installment Amount', value: '₱' + Number(loan.installment_amount).toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#F0F4FF' },
                     ].map((row, i) => (
                       <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: 'rgba(255,255,255,0.02)', borderRadius: 8, gap: 12 }}>
@@ -1808,7 +1798,7 @@ export default function BorrowerPortalPage() {
                         ✅ Security Hold of ₱{Number(loan.security_hold).toLocaleString('en-PH', { minimumFractionDigits: 2 })} has been returned to your Rebate Credits
                       </div>
                     )}
-                    <strong style={{ color: '#818CF8' }}>RA 3765 — Truth in Lending Act Disclosure.</strong> This statement discloses all finance charges and terms applicable to your loan in compliance with Republic Act No. 3765 of the Philippines. The monthly interest rate is applied for each of the 2 months of the loan term. The effective annual rate is the monthly rate multiplied by 12 months.
+                    <strong style={{ color: '#818CF8' }}>RA 3765 — Truth in Lending Act Disclosure.</strong> This statement discloses all finance charges and terms applicable to your loan in compliance with Republic Act No. 3765 of the Philippines. The monthly interest rate is applied for each of the {loan.loan_term || 2} months of the loan term. The effective annual rate is the monthly rate multiplied by 12 months.
                   </div>
                   {/* Sign & Download buttons */}
                   <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>

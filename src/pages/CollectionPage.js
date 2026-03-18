@@ -14,7 +14,7 @@ function buildSchedule(loans, borrowers) {
   for (const loan of loans) {
     if (!['Pending', 'Active', 'Partially Paid', 'Overdue'].includes(loan.status)) continue
     const borrower = borrowers.find(b => b.id === loan.borrower_id)
-    const dates = getInstallmentDates(loan.release_date)
+    const dates = getInstallmentDates(loan.release_date, loan.num_installments || 4)
     dates.forEach((date, i) => {
       const installmentNum = i + 1
       const isPaid = installmentNum <= loan.payments_made
@@ -302,7 +302,7 @@ function AgendaView({ events }) {
                         <Clock size={13} color="var(--text-muted)" />
                         <div>
                           <div style={{ fontSize: 13, fontWeight: 500 }}>{ev.borrower?.full_name}</div>
-                          <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{ev.borrower?.department} · Installment {ev.installmentNum} of 4</div>
+                          <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{ev.borrower?.department} · Installment {ev.installmentNum} of {ev.loan?.num_installments || 4}</div>
                         </div>
                       </div>
                       <div style={{ textAlign: 'right' }}>

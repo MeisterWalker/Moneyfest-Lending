@@ -268,7 +268,7 @@ export default function InvestorPitchPage() {
               <div style={{ position: 'absolute', top: -40, right: -40, width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle, rgba(245,158,11,0.06) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
               <div style={{ fontSize: 12, fontWeight: 700, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 24, textAlign: 'center' }}>
-                14% total interest split (7%/mo × 2 months)
+                14% total interest (2-month term) · 21% total interest (3-month term)
               </div>
 
               {/* Three rows */}

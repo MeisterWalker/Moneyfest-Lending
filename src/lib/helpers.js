@@ -69,8 +69,9 @@ export function formatDate(dateStr) {
 //   - Release on 21st–31st   → 1st payment on 5th next month
 //   - Each subsequent payment alternates 5th ↔ 20th, rolling the month forward
 //
-// Returns an array of 4 Date objects (local time, no UTC shift).
-export function getInstallmentDates(releaseDateStr) {
+// numInstallments: 4 for 2-month term, 6 for 3-month term (default 4)
+// Returns an array of Date objects (local time, no UTC shift).
+export function getInstallmentDates(releaseDateStr, numInstallments = 4) {
   if (!releaseDateStr) return []
   const [ry, rm, rd] = String(releaseDateStr).slice(0, 10).split('-').map(Number)
   const release = new Date(ry, rm - 1, rd)
@@ -86,7 +87,7 @@ export function getInstallmentDates(releaseDateStr) {
     month += 1
     if (month > 11) { month = 0; year += 1 }
   }
-  for (let i = 0; i < 4; i++) {
+  for (let i = 0; i < numInstallments; i++) {
     dates.push(new Date(year, month, day))
     // Advance to next cutoff
     if (day === 5) {
@@ -98,6 +99,12 @@ export function getInstallmentDates(releaseDateStr) {
     }
   }
   return dates
+}
+
+// Helper: derive num_installments from loan_term months
+// 2-month term → 4 installments, 3-month term → 6 installments
+export function getNumInstallments(loanTerm) {
+  return (Number(loanTerm) || 2) * 2
 }
 
 // Format a Date to a YYYY-MM-DD string (local time, no UTC shift)

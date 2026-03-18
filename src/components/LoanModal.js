@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { X, DollarSign, Calendar, FileText, CheckSquare } from 'lucide-react'
-import { getNextCutoffDate, formatCurrency, getInstallmentDates, formatDateValue } from '../lib/helpers'
+import { getNextCutoffDate, formatCurrency, getInstallmentDates, formatDateValue, getNumInstallments } from '../lib/helpers'
 
 function getNextTwoCutoffs() {
   const today = new Date()
@@ -30,6 +30,7 @@ export default function LoanModal({ isOpen, onClose, onSave, loan, borrower, bor
     borrower_id: '',
     loan_amount: '',
     interest_rate: settings?.interest_rate || 0.07,
+    loan_term: 2,
     release_date: formatDateValue(nextCutoff),
     agreement_confirmed: false,
     notes: ''
@@ -43,6 +44,7 @@ export default function LoanModal({ isOpen, onClose, onSave, loan, borrower, bor
         borrower_id: loan.borrower_id || '',
         loan_amount: loan.loan_amount || '',
         interest_rate: loan.interest_rate || 0.07,
+        loan_term: loan.loan_term || 2,
         release_date: loan.release_date || formatDateValue(nextCutoff),
         agreement_confirmed: loan.agreement_confirmed || false,
         notes: loan.notes || ''
@@ -52,6 +54,7 @@ export default function LoanModal({ isOpen, onClose, onSave, loan, borrower, bor
         borrower_id: prefill.borrower_id || '',
         loan_amount: prefill.loan_amount || '',
         interest_rate: prefill.interest_rate || settings?.interest_rate || 0.07,
+        loan_term: prefill.loan_term || 2,
         release_date: formatDateValue(nextCutoff),
         agreement_confirmed: false,
         notes: ''
@@ -61,6 +64,7 @@ export default function LoanModal({ isOpen, onClose, onSave, loan, borrower, bor
         borrower_id: borrower?.id || '',
         loan_amount: '',
         interest_rate: settings?.interest_rate || 0.07,
+        loan_term: 2,
         release_date: formatDateValue(nextCutoff),
         agreement_confirmed: false,
         notes: ''
@@ -75,12 +79,14 @@ export default function LoanModal({ isOpen, onClose, onSave, loan, borrower, bor
   const minLoan = 5000
   const amount = parseFloat(form.loan_amount) || 0
   const rate = parseFloat(form.interest_rate) || 0.07
-  // rate is monthly; loan term = 2 months → total interest = rate × 2
-  const totalRepayment = amount * (1 + rate * 2)
-  const installmentAmount = totalRepayment / 4
+  const loanTerm = parseInt(form.loan_term) || 2
+  const numInstallments = getNumInstallments(loanTerm)
+  // rate is monthly; total interest = rate × loan_term months
+  const totalRepayment = amount * (1 + rate * loanTerm)
+  const installmentAmount = totalRepayment / numInstallments
   const dueDate = form.release_date ? (() => {
-    const dates = getInstallmentDates(form.release_date)
-    return dates.length === 4 ? dates[3] : null
+    const dates = getInstallmentDates(form.release_date, numInstallments)
+    return dates.length === numInstallments ? dates[numInstallments - 1] : null
   })() : null
   const cutoffs = getNextTwoCutoffs()
 
@@ -96,6 +102,8 @@ export default function LoanModal({ isOpen, onClose, onSave, loan, borrower, bor
       borrower_id: borrower?.id || form.borrower_id,
       loan_amount: amount,
       interest_rate: rate,
+      loan_term: loanTerm,
+      num_installments: numInstallments,
       total_repayment: totalRepayment,
       installment_amount: installmentAmount,
       due_date: dueDate ? formatDateValue(dueDate) : formatDateValue(new Date()),
@@ -172,7 +180,17 @@ export default function LoanModal({ isOpen, onClose, onSave, loan, borrower, bor
                   onChange={e => set('interest_rate', e.target.value)}
                 />
                 <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
-                  {(rate * 100).toFixed(0)}% per month (×2 months)
+                  {(rate * 100).toFixed(0)}% per month (×{loanTerm} months)
+                </div>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Loan Term</label>
+                <select value={form.loan_term} onChange={e => set('loan_term', parseInt(e.target.value))}>
+                  <option value={2}>2 months — 4 installments</option>
+                  <option value={3}>3 months — 6 installments</option>
+                </select>
+                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
+                  {loanTerm === 2 ? '14% total interest' : '21% total interest'}
                 </div>
               </div>
             </div>
@@ -200,7 +218,7 @@ export default function LoanModal({ isOpen, onClose, onSave, loan, borrower, bor
                 ))}
               </div>
               <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid rgba(34,197,94,0.15)', fontSize: 12, color: 'var(--text-label)' }}>
-                4 installments of {formatCurrency(installmentAmount)} each cutoff
+                {numInstallments} installments of {formatCurrency(installmentAmount)} each cutoff ({loanTerm}-month term)
               </div>
             </div>
           )}
@@ -266,7 +284,7 @@ export default function LoanModal({ isOpen, onClose, onSave, loan, borrower, bor
                 Loan Agreement Confirmed
               </div>
               <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                Borrower has agreed to repay {amount >= minLoan ? formatCurrency(totalRepayment) : 'the full amount'} in 4 equal installments of {amount >= minLoan ? formatCurrency(installmentAmount) : "—"} each cutoff date.
+                Borrower has agreed to repay {amount >= minLoan ? formatCurrency(totalRepayment) : 'the full amount'} in {numInstallments} equal installments of {amount >= minLoan ? formatCurrency(installmentAmount) : "—"} each cutoff date ({loanTerm}-month term).
               </div>
             </div>
           </div>

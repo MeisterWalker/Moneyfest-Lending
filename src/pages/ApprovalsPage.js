@@ -100,7 +100,7 @@ function PaymentProofsPanel({ user }) {
                 {/* Info */}
                 <div style={{ flex: 1, minWidth: 200 }}>
                   <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 3 }}>{proof.borrowers?.full_name}</div>
-                  <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Installment {proof.installment_number} of 4 · ₱{Number(proof.loans?.installment_amount).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</div>
+                  <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Installment {proof.installment_number} of {proof.loans?.num_installments || 4} · ₱{Number(proof.loans?.installment_amount).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</div>
                   {proof.notes && <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4, fontStyle: 'italic' }}>"{proof.notes}"</div>}
                   <div style={{ fontSize: 11, color: '#4B5580', marginTop: 4 }}>{new Date(proof.created_at).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
                 </div>

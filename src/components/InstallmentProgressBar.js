@@ -1,9 +1,17 @@
 export default function InstallmentProgressBar({ paid, total = 4, remainingBalance, nextDueDate }) {
   const pct = Math.round((paid / total) * 100)
 
+  // Color ramps through purple → teal → green as progress increases
+  const getDotColor = (i, t) => {
+    const third = Math.ceil(t / 3)
+    if (i <= third) return 'var(--purple)'
+    if (i <= third * 2) return 'var(--teal)'
+    return 'var(--green)'
+  }
+
   const barColor = paid === 0 ? '#374151'
-    : paid < 3 ? 'var(--purple)'
-    : paid === 3 ? 'var(--teal)'
+    : paid < Math.ceil(total / 3) ? 'var(--purple)'
+    : paid < Math.ceil(total * 2 / 3) ? 'var(--teal)'
     : 'var(--green)'
 
   const label = paid === 0 ? 'Not started'
@@ -19,7 +27,7 @@ export default function InstallmentProgressBar({ paid, total = 4, remainingBalan
           width: `${pct}%`,
           background: paid === total
             ? 'linear-gradient(90deg, var(--teal), var(--green))'
-            : paid === 3
+            : paid >= Math.ceil(total * 2 / 3)
             ? 'linear-gradient(90deg, var(--purple), var(--teal))'
             : barColor,
           borderRadius: 4,
@@ -28,17 +36,13 @@ export default function InstallmentProgressBar({ paid, total = 4, remainingBalan
         }} />
       </div>
 
-      {/* Segment dots */}
+      {/* Segment dots — dynamic count */}
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-        {[1, 2, 3, 4].map(i => (
+        {Array.from({ length: total }, (_, idx) => idx + 1).map(i => (
           <div key={i} style={{
             width: 20, height: 20, borderRadius: '50%',
-            background: i <= paid
-              ? (i === 4 ? 'var(--green)' : i === 3 ? 'var(--teal)' : 'var(--purple)')
-              : 'rgba(255,255,255,0.06)',
-            border: `2px solid ${i <= paid
-              ? (i === 4 ? 'var(--green)' : i === 3 ? 'var(--teal)' : 'var(--purple)')
-              : 'rgba(255,255,255,0.1)'}`,
+            background: i <= paid ? getDotColor(i, total) : 'rgba(255,255,255,0.06)',
+            border: `2px solid ${i <= paid ? getDotColor(i, total) : 'rgba(255,255,255,0.1)'}`,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: 10, fontWeight: 700,
             color: i <= paid ? '#fff' : 'var(--text-muted)',

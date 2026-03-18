@@ -4,13 +4,13 @@ const APP_NAME = 'MoneyfestLending'
 // Set REACT_APP_PORTAL_URL in .env.local or Vercel environment variables
 const PORTAL_URL = process.env.REACT_APP_PORTAL_URL || 'https://loanmoneyfest.vercel.app/portal'
 
-function generateReminderHTML({ borrowerName, installmentNum, amount, dueDate, loanAmount, remainingBalance, daysUntilDue, customMessages, customFooter }) {
+function generateReminderHTML({ borrowerName, installmentNum, numInstallments = 4, amount, dueDate, loanAmount, remainingBalance, daysUntilDue, customMessages, customFooter }) {
   const urgencyColor = daysUntilDue === 0 ? '#EF4444' : daysUntilDue === 1 ? '#F59E0B' : '#3B82F6'
   const urgencyLabel = daysUntilDue === 0 ? 'DUE TODAY' : daysUntilDue === 1 ? 'DUE TOMORROW' : `DUE IN ${daysUntilDue} DAYS`
   const urgencyEmoji = daysUntilDue === 0 ? '🔴' : daysUntilDue === 1 ? '🟡' : '🔵'
 
   const paidInstallments = installmentNum - 1
-  const progressPercent = (paidInstallments / 4) * 100
+  const progressPercent = (paidInstallments / numInstallments) * 100
 
   const STORAGE_KEY = 'lm_email_settings'
   let savedSettings = {}
@@ -89,7 +89,7 @@ function generateReminderHTML({ borrowerName, installmentNum, amount, dueDate, l
                   ₱${amount?.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </div>
                 <div style="font-size:13px;color:#4B5580;">
-                  Installment <strong style="color:#8B5CF6;">${installmentNum}</strong> of <strong style="color:#8B5CF6;">4</strong>
+                  Installment <strong style="color:#8B5CF6;">${installmentNum}</strong> of <strong style="color:#8B5CF6;">${numInstallments}</strong>
                   &nbsp;·&nbsp;
                   Due <strong style="color:#F0F4FF;">${dueDate}</strong>
                 </div>
@@ -109,7 +109,7 @@ function generateReminderHTML({ borrowerName, installmentNum, amount, dueDate, l
                     </tr>
                     <tr>
                       <td style="font-size:13px;color:#4B5580;padding:8px 0;border-bottom:1px solid #1E2640;">Installment No.</td>
-                      <td align="right" style="font-size:13px;font-weight:700;color:#F0F4FF;padding:8px 0;border-bottom:1px solid #1E2640;">${installmentNum} of 4</td>
+                      <td align="right" style="font-size:13px;font-weight:700;color:#F0F4FF;padding:8px 0;border-bottom:1px solid #1E2640;">${installmentNum} of ${numInstallments}</td>
                     </tr>
                     <tr>
                       <td style="font-size:13px;color:#4B5580;padding:8px 0;">Remaining Balance</td>
@@ -132,8 +132,8 @@ function generateReminderHTML({ borrowerName, installmentNum, amount, dueDate, l
               <!-- Step circles -->
               <table width="100%" cellpadding="0" cellspacing="0">
                 <tr>
-                  ${[1,2,3,4].map(i => `
-                  <td align="center" style="width:25%;">
+                  ${Array.from({length: numInstallments}, (_,idx) => idx+1).map(i => `
+                  <td align="center" style="width:${Math.floor(100/numInstallments)}%;">
                     <table cellpadding="0" cellspacing="0" style="margin:0 auto;">
                       <tr>
                         <td align="center" valign="middle" style="width:28px;height:28px;border-radius:50%;background:${i < installmentNum ? '#22C55E' : i === installmentNum ? '#3B82F6' : '#1E2640'};font-size:12px;font-weight:800;color:${i <= installmentNum ? '#ffffff' : '#4B5580'};text-align:center;line-height:28px;font-family:Arial,sans-serif;">
@@ -183,7 +183,7 @@ function generateReminderHTML({ borrowerName, installmentNum, amount, dueDate, l
   `
 }
 
-export async function sendReminderEmail({ to, borrowerName, installmentNum, amount, dueDate, loanAmount, remainingBalance, daysUntilDue, customMessages, customFooter }) {
+export async function sendReminderEmail({ to, borrowerName, installmentNum, numInstallments = 4, amount, dueDate, loanAmount, remainingBalance, daysUntilDue, customMessages, customFooter }) {
   if (!to || !to.includes('@')) return { success: false, error: 'Invalid email address' }
 
   const urgencyPrefix = daysUntilDue === 0 ? '🔴 Due Today' : daysUntilDue === 1 ? '🟡 Due Tomorrow' : `📅 Due in ${daysUntilDue} days`
@@ -201,7 +201,7 @@ export async function sendReminderEmail({ to, borrowerName, installmentNum, amou
       body: JSON.stringify({
         to,
         subject: `${urgencyPrefix} — ₱${amount?.toLocaleString('en-PH')} installment due ${dueDate}`,
-        html: generateReminderHTML({ borrowerName, installmentNum, amount, dueDate, loanAmount, remainingBalance, daysUntilDue, customMessages, customFooter })
+        html: generateReminderHTML({ borrowerName, installmentNum, numInstallments, amount, dueDate, loanAmount, remainingBalance, daysUntilDue, customMessages, customFooter })
       })
     })
     const data = await response.json()
@@ -231,6 +231,7 @@ export async function sendBulkReminders({ events, daysAhead = 2 }) {
       to: ev.borrower.email,
       borrowerName: ev.borrower.full_name,
       installmentNum: ev.installmentNum,
+      numInstallments: ev.loan.num_installments || 4,
       amount: ev.amount,
       dueDate,
       loanAmount: ev.loan.loan_amount,
@@ -245,7 +246,7 @@ export async function sendBulkReminders({ events, daysAhead = 2 }) {
   return results
 }
 
-function generateApprovalHTML({ borrowerName, accessCode, loanAmount, releaseDate, installmentAmount, totalRepayment, portalUrl }) {
+function generateApprovalHTML({ borrowerName, accessCode, loanAmount, releaseDate, installmentAmount, totalRepayment, loanTerm = 2, numInstallments = 4, portalUrl }) {
   return `
 <!DOCTYPE html>
 <html lang="en">
@@ -293,11 +294,11 @@ function generateApprovalHTML({ borrowerName, accessCode, loanAmount, releaseDat
                     <td align="right" style="font-size:13px;font-weight:700;color:#22C55E;padding:10px 20px;border-bottom:1px solid #1E2640;">₱${Number(loanAmount).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</td>
                   </tr>
                   <tr>
-                    <td style="font-size:13px;color:#4B5580;padding:10px 20px;border-bottom:1px solid #1E2640;">Total Repayment (7%/mo × 2 months)</td>
+                    <td style="font-size:13px;color:#4B5580;padding:10px 20px;border-bottom:1px solid #1E2640;">Total Repayment (7%/mo × ${loanTerm} months)</td>
                     <td align="right" style="font-size:13px;font-weight:700;color:#F0F4FF;padding:10px 20px;border-bottom:1px solid #1E2640;">₱${Number(totalRepayment).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</td>
                   </tr>
                   <tr>
-                    <td style="font-size:13px;color:#4B5580;padding:10px 20px;border-bottom:1px solid #1E2640;">Per Installment (4 payments)</td>
+                    <td style="font-size:13px;color:#4B5580;padding:10px 20px;border-bottom:1px solid #1E2640;">Per Installment (${numInstallments} payments)</td>
                     <td align="right" style="font-size:13px;font-weight:700;color:#8B5CF6;padding:10px 20px;border-bottom:1px solid #1E2640;">₱${Number(installmentAmount).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</td>
                   </tr>
                   <tr>
@@ -353,7 +354,7 @@ function generateApprovalHTML({ borrowerName, accessCode, loanAmount, releaseDat
   `
 }
 
-export async function sendApprovalEmail({ to, borrowerName, accessCode, loanAmount, releaseDate, installmentAmount, totalRepayment }) {
+export async function sendApprovalEmail({ to, borrowerName, accessCode, loanAmount, releaseDate, installmentAmount, totalRepayment, loanTerm = 2, numInstallments = 4 }) {
   if (!to || !to.includes('@')) return { success: false, error: 'Invalid email' }
   const portalUrl = PORTAL_URL
   try {
@@ -365,7 +366,7 @@ export async function sendApprovalEmail({ to, borrowerName, accessCode, loanAmou
       body: JSON.stringify({
         to,
         subject: `🎉 Your Loan is Approved — Access Code: ${accessCode}`,
-        html: generateApprovalHTML({ borrowerName, accessCode, loanAmount, releaseDate, installmentAmount, totalRepayment, portalUrl })
+        html: generateApprovalHTML({ borrowerName, accessCode, loanAmount, releaseDate, installmentAmount, totalRepayment, loanTerm, numInstallments, portalUrl })
       })
     })
     const data = await response.json()

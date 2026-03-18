@@ -171,7 +171,7 @@ ${content.innerHTML}
               { term: '"Borrower"', def: 'refers to the active team member who submits a loan application and is approved.' },
               { term: '"Loan Amount" or "Principal"', def: 'refers to the actual amount of money borrowed, exclusive of interest.' },
               { term: '"Finance Charge"', def: 'refers to the total peso amount of interest charged on the principal.' },
-              { term: '"Installment"', def: 'refers to each of the four (4) equal payments due every 5th and 20th of the month.' },
+              { term: '"Installment"', def: 'refers to each equal payment due every 5th and 20th of the month. A 2-month loan has 4 installments; a 3-month loan has 6 installments.' },
               { term: '"Cutoff Date"', def: 'refers to the 5th and 20th of each month, which are the scheduled payment collection dates.' },
               { term: '"Rebate Credits"', def: 'refers to the in-app reward balance credited to a Borrower who pays the final installment early or whose Security Hold is returned.' },
               { term: '"Security Hold"', def: 'refers to the percentage of the approved loan amount withheld upon release, returned to the Borrower\'s Rebate Credits upon full repayment.' },
@@ -205,9 +205,9 @@ ${content.innerHTML}
             title: 'Interest Rate and Finance Charges',
             content: null,
             items: [
-              { term: 'Monthly Interest Rate', def: `${flatRate}% per month. Since the loan term is 2 months, the total interest charge is ${totalRate}% of the principal amount. Interest does not compound.` },
+              { term: 'Monthly Interest Rate', def: `${flatRate}% per month. For a 2-month term the total interest charge is ${totalRate}% of the principal; for a 3-month term it is ${(interestRate * 3 * 100).toFixed(0)}%. Interest does not compound.` },
               { term: 'Effective Annual Rate', def: `Approximately ${effectiveAnnual}% per annum (monthly rate × 12), in compliance with Republic Act No. 3765 (Truth in Lending Act).` },
-              { term: 'Finance Charge Example', def: `A ₱5,000 loan incurs a finance charge of ₱700.00 (${flatRate}% × 2 months), for a total repayment of ₱5,700.00 in 4 installments of ₱1,425.00 each.` },
+              { term: 'Finance Charge Example', def: `A ₱5,000 loan on a 2-month term incurs a finance charge of ₱700.00 (${flatRate}% × 2 months), for a total repayment of ₱5,700.00 in 4 installments of ₱1,425.00 each. On a 3-month term: finance charge ₱1,050.00 (${flatRate}% × 3 months), total ₱6,050.00 in 6 installments of ₱1,008.33 each.` },
               { term: 'No Hidden Fees', def: 'There are no application fees, processing fees, or any other charges beyond the stated monthly interest rate and applicable late payment penalties.' },
             ]
           },
@@ -227,9 +227,9 @@ ${content.innerHTML}
             title: 'Early Payoff Rebate Credits',
             content: 'MoneyfestLending rewards Borrowers who settle their final installment ahead of schedule:',
             items: [
-              { term: 'Fixed 1% Rebate', def: 'A fixed rebate of 1% of the original loan amount is credited to the Borrower\'s Rebate Credits balance when the final (4th) installment is paid at least 1 day before its due date. The rate is fixed at 1% regardless of how many days early the payment is made.' },
+              { term: 'Fixed 1% Rebate', def: 'A fixed rebate of 1% of the original loan amount is credited to the Borrower\'s Rebate Credits balance when the final installment is paid at least 1 day before its due date. The rate is fixed at 1% regardless of how many days early the payment is made.' },
               { term: 'Rebate Credits Withdrawal', def: 'Rebate Credits can be withdrawn once the balance reaches a minimum of ₱500. Withdrawal requests are subject to admin approval.' },
-              { term: 'Scope', def: 'The rebate applies exclusively to the 4th and final installment. Installments 1, 2, and 3 do not qualify for any rebate regardless of timing.' },
+              { term: 'Scope', def: 'The rebate applies exclusively to the final installment of the loan. All prior installments do not qualify for any rebate regardless of timing.' },
             ]
           },
           {
@@ -267,7 +267,7 @@ ${content.innerHTML}
             items: [
               { term: 'Rate', def: 'The Security Hold rate is determined by the Borrower\'s credit score: VIP (1000) — 5%, Reliable (920+) — 6%, Trusted (835+) — 8%, Standard (750+) — 10%, Caution (500+) — 15%, High Risk (below 500) — 20%.' },
               { term: 'Deductions', def: 'Late payment penalties are automatically deducted from the Security Hold balance before return.' },
-              { term: 'Return', def: 'The remaining Security Hold balance is automatically credited to the Borrower\'s Rebate Credits upon confirmed payment of the 4th and final installment.' },
+              { term: 'Return', def: 'The remaining Security Hold balance is automatically credited to the Borrower\'s Rebate Credits upon confirmed payment of the final installment.' },
             ]
           },
           {
@@ -306,7 +306,7 @@ ${content.innerHTML}
           {
             num: '13',
             title: 'Truth in Lending Disclosure (RA 3765)',
-            content: `In compliance with Republic Act No. 3765 (Truth in Lending Act), MoneyfestLending discloses the following for all loans: the principal amount, the finance charge in peso terms, the monthly interest rate of ${flatRate}% (totalling ${totalRate}% over the 2-month loan term), the effective annual interest rate of approximately ${effectiveAnnual}%, the total amount payable, and the full installment schedule. This disclosure is accessible at any time through the Borrower Portal.`,
+            content: `In compliance with Republic Act No. 3765 (Truth in Lending Act), MoneyfestLending discloses the following for all loans: the principal amount, the finance charge in peso terms, the monthly interest rate of ${flatRate}% (applied over the chosen loan term of 2 or 3 months), the effective annual interest rate of approximately ${effectiveAnnual}%, the total amount payable, and the full installment schedule. This disclosure is accessible at any time through the Borrower Portal.`,
             items: null
           },
           {

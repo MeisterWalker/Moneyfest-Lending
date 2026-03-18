@@ -142,7 +142,7 @@ function ApplicationCard({ app, onApprove, onReject }) {
               </div>
               <div style={{ textAlign: 'right' }}>
                 <div style={{ fontSize: 11, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Est. Installment</div>
-                <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 18, color: '#F0F4FF' }}>₱{(app.loan_amount * 1.07 / 4).toFixed(2)}/cutoff</div>
+                <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 18, color: '#F0F4FF' }}>₱{(app.loan_amount * (1 + 0.07 * (app.loan_term || 2)) / ((app.loan_term || 2) * 2)).toFixed(2)}/cutoff</div>
               </div>
             </div>
             {app.loan_purpose && (
@@ -327,7 +327,7 @@ function ProofReviewSection({ supabase, user, logAudit }) {
             <div key={proof.id} style={{ background: '#0B0F1A', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
               <div style={{ flex: 1, minWidth: 200 }}>
                 <div style={{ fontSize: 13, fontWeight: 700, color: '#F0F4FF' }}>{proof.borrowers?.full_name}</div>
-                <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>Installment {proof.installment_number} of 4 · ₱{Number(proof.loans?.installment_amount).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</div>
+                <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>Installment {proof.installment_number} of {proof.loans?.num_installments || 4} · ₱{Number(proof.loans?.installment_amount).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</div>
                 {proof.notes && <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4, fontStyle: 'italic' }}>"{proof.notes}"</div>}
                 <div style={{ fontSize: 11, color: '#4B5580', marginTop: 4 }}>{new Date(proof.created_at).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
               </div>
@@ -511,13 +511,15 @@ export default function ApplicationsPage() {
 
         // 5. Create loan — use only confirmed existing columns
         const loanAmount = Number(app.loan_amount) || 5000
+        const loanTerm = Number(app.loan_term) || 2
+        const numInstallments = loanTerm * 2
         // Interest rate stored as monthly rate (e.g. 0.07 = 7% per month).
-        // Loan term is 2 months → total interest = rate × 2
+        // Total interest = rate × loan_term months
         const { data: rateSettings } = await supabase.from('settings').select('interest_rate').eq('id', 1).single()
         const monthlyRate = Number(rateSettings?.interest_rate) || 0.07
         const rate = monthlyRate
-        const total = loanAmount * (1 + monthlyRate * 2)
-        const installment = total / 4
+        const total = loanAmount * (1 + monthlyRate * loanTerm)
+        const installment = total / numInstallments
         const holdAmt = parseFloat((loanAmount * 0.10).toFixed(2))
         const released = loanAmount - holdAmt
 
@@ -525,6 +527,8 @@ export default function ApplicationsPage() {
           borrower_id: borrowerId,
           loan_amount: loanAmount,
           interest_rate: rate,
+          loan_term: loanTerm,
+          num_installments: numInstallments,
           total_repayment: total,
           installment_amount: installment,
           remaining_balance: total,

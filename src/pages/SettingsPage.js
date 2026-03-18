@@ -549,7 +549,7 @@ function EmailSection({ adminEmail }) {
       <div style="background:linear-gradient(135deg,#0f1729,#1a1040);border:1px solid rgba(139,92,246,0.3);border-radius:12px;padding:20px;text-align:center;margin-bottom:12px;">
         <div style="font-size:11px;color:#4B5580;text-transform:uppercase;margin-bottom:6px;">Amount Due</div>
         <div style="font-size:32px;font-weight:900;color:#22C55E;">₱1,350.00</div>
-        <div style="font-size:12px;color:#4B5580;">Installment 2 of 4 · Due March 20, 2026</div>
+        <div style="font-size:12px;color:#4B5580;">Installment 2 of 4/6 · Due March 20, 2026</div>
       </div>
       <div style="background:#0d1226;border-top:1px solid #1E2640;border-radius:12px;padding:16px;text-align:center;margin-top:12px;">
         <div style="font-size:13px;color:#CBD5F0;font-weight:600;">${footer}</div>
@@ -731,9 +731,11 @@ export default function SettingsPage() {
     const pendingLoans = loans.filter(l => l.status === 'Pending' || l.status === 'Active')
     let cascadeCount = 0
     for (const loan of pendingLoans) {
-      const newTotal = loan.loan_amount * (1 + newRate)
-      const newInstallment = newTotal / 4
-      const newRemaining = newInstallment * (4 - (loan.payments_made || 0))
+      const numInst = loan.num_installments || 4
+      const loanTerm = loan.loan_term || 2
+      const newTotal = loan.loan_amount * (1 + newRate * loanTerm)
+      const newInstallment = newTotal / numInst
+      const newRemaining = newInstallment * (numInst - (loan.payments_made || 0))
       await supabase.from('loans').update({
         interest_rate: newRate,
         total_repayment: newTotal,
@@ -748,7 +750,9 @@ export default function SettingsPage() {
       const pendingLoanIds = pendingLoans.map(l => l.id)
       for (const loanId of pendingLoanIds) {
         const loan = pendingLoans.find(l => l.id === loanId)
-        const newInstallment = (loan.loan_amount * (1 + newRate)) / 4
+        const numInst = loan.num_installments || 4
+        const loanTerm = loan.loan_term || 2
+        const newInstallment = (loan.loan_amount * (1 + newRate * loanTerm)) / numInst
         await supabase.from('installments')
           .update({ amount_due: newInstallment })
           .eq('loan_id', loanId)

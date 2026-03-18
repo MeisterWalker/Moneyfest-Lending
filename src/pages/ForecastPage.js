@@ -63,10 +63,20 @@ export default function ForecastPage() {
   useEffect(() => { fetchData() }, [fetchData])
 
   // ── Core calculation ───────────────────────────────────────
-  // 6 loan cycles/year (each cycle = 2 months, paid every 5th & 20th)
+  // Portfolio may contain 2-month (4 installments) and 3-month (6 installments) loans
   // Monthly rate stored in DB (e.g. 0.07 = 7%/month)
-  // Each 2-month cycle earns: capital × rate × 2
-  // Per month equivalent: capital × rate
+  // 2-month cycle earns: capital × rate × 2 (6 cycles/year)
+  // 3-month cycle earns: capital × rate × 3 (4 cycles/year)
+  // Per month equivalent: capital × rate (same regardless of term)
+  const rateDecimal = rate / 100
+
+  // Derive avg cycles/year from actual loan portfolio (default assumes 2-month)
+  const avgCyclesPerYear = loans.length > 0
+    ? loans.reduce((sum, l) => sum + (12 / (l.loan_term || 2)), 0) / loans.length
+    : 6
+  const avgTermMonths = loans.length > 0
+    ? loans.reduce((sum, l) => sum + (l.loan_term || 2), 0) / loans.length
+    : 2
   const rateDecimal = rate / 100
   const defaultDecimal = defaultRate / 100
   const effectiveRate = rateDecimal * (1 - defaultDecimal)
@@ -281,8 +291,8 @@ export default function ForecastPage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
           {[
             { label: 'Months to break even', value: breakEvenMonth ? `${breakEvenMonth} months` : '>12 months', color: 'var(--blue)' },
-            { label: 'Profit per loan cycle (2mo)', value: formatCurrency(capital * effectiveRate * 2), color: 'var(--green)' },
-            { label: 'Cycles per year', value: '~6', sub: '2 months each', color: 'var(--purple)' },
+            { label: 'Profit per avg loan cycle', value: formatCurrency(capital * effectiveRate * avgTermMonths), color: 'var(--green)' },
+            { label: 'Avg cycles per year', value: `~${Math.round(avgCyclesPerYear)}`, sub: `${avgTermMonths.toFixed(1)}-mo avg term`, color: 'var(--purple)' },
             { label: 'Effective annual yield', value: `${(effectiveRate * 12 * 100).toFixed(1)}%`, color: 'var(--teal)' },
           ].map(item => (
             <div key={item.label} style={{ padding: '14px 16px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--card-border)', borderRadius: 10 }}>
