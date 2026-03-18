@@ -203,7 +203,7 @@ export default function PublicApplyPage() {
 
   const validateStep1 = () => {
     if (!form.full_name.trim()) return 'Please enter your full name'
-    if (!form.department) return 'Please select your department'
+    if (!form.department) return 'Please enter your department'
     if (!form.tenure_years) return 'Please enter your tenure'
     if (!form.phone.trim()) return 'Please enter your phone number'
     if (!form.email.trim()) return 'Please enter your email'
@@ -499,7 +499,7 @@ export default function PublicApplyPage() {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                     <div><label style={lbl}>Full Name *</label><input className="apply-inp" value={form.full_name} onChange={e => set('full_name', e.target.value)} placeholder="Enter your full legal name" style={inp} /></div>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                      <div><label style={lbl}>Department *</label><select className="apply-inp" value={form.department} onChange={e => set('department', e.target.value)} style={{ ...inp, cursor: 'pointer' }}><option value="">Select...</option>{DEPARTMENTS.map(d => <option key={d} value={d}>{d}</option>)}</select></div>
+                      <div><label style={lbl}>Department *</label><input className="apply-inp" value={form.department} onChange={e => set('department', e.target.value)} placeholder="e.g. Minto Money, Greyhound..." style={{ ...inp }} /></div>
                       <div><label style={lbl}>Years of Tenure *</label><input className="apply-inp" value={form.tenure_years} onChange={e => set('tenure_years', e.target.value)} placeholder="e.g. 2.5" type="number" min="0" step="0.5" style={inp} /></div>
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
