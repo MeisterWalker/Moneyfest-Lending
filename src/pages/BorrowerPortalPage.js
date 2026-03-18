@@ -989,8 +989,10 @@ export default function BorrowerPortalPage() {
 
         </div>
 
-        {/* Withdrawal Modal — position:fixed so it's a full-screen overlay */}
-        {showWithdrawModal && (
+      </div>
+
+      {/* Withdrawal Modal */}
+      {showWithdrawModal && (
           <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20 }}>
             <div style={{ width: '100%', maxWidth: 440, background: '#0E1320', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 20, overflow: 'hidden', boxShadow: '0 40px 80px rgba(0,0,0,0.6)' }}>
               <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -1021,28 +1023,21 @@ export default function BorrowerPortalPage() {
                     </button>
                   ))}
                 </div>
-
                 {withdrawMethod && withdrawMethod !== 'Physical Cash' && (
                   <div style={{ marginBottom: 18 }}>
                     <div style={{ fontSize: 11, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.07em', fontWeight: 700, marginBottom: 8 }}>
                       {withdrawMethod === 'GCash' ? 'GCash Number & Name' : 'Account Number & Bank Name'}
                     </div>
-                    <textarea
-                      value={withdrawDetails}
-                      onChange={e => setWithdrawDetails(e.target.value)}
+                    <textarea value={withdrawDetails} onChange={e => setWithdrawDetails(e.target.value)}
                       placeholder={withdrawMethod === 'GCash' ? 'e.g. 09XX-XXX-XXXX · Juan Dela Cruz' : 'e.g. 1234-5678-9012 · BDO / BPI / UnionBank'}
-                      rows={2}
-                      style={{ width: '100%', boxSizing: 'border-box', padding: '10px 14px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, color: '#F0F4FF', fontSize: 13, resize: 'none', outline: 'none', fontFamily: 'DM Sans, sans-serif' }}
-                    />
+                      rows={2} style={{ width: '100%', boxSizing: 'border-box', padding: '10px 14px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, color: '#F0F4FF', fontSize: 13, resize: 'none', outline: 'none', fontFamily: 'DM Sans, sans-serif' }} />
                   </div>
                 )}
-
                 {withdrawMethod === 'Physical Cash' && (
                   <div style={{ padding: '10px 14px', background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.15)', borderRadius: 10, fontSize: 12, color: '#22C55E', marginBottom: 18 }}>
                     ✓ Admin will coordinate with you in person once the request is approved.
                   </div>
                 )}
-
                 <div style={{ display: 'flex', gap: 10 }}>
                   <button onClick={() => setShowWithdrawModal(false)} style={{ flex: 1, padding: '12px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.08)', background: 'transparent', color: '#7A8AAA', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
                   <button
@@ -1050,20 +1045,9 @@ export default function BorrowerPortalPage() {
                     onClick={async () => {
                       setWithdrawing(true)
                       const methodDesc = withdrawMethod === 'Physical Cash' ? 'Physical Cash' : `${withdrawMethod} — ${withdrawDetails.trim()}`
-                      const { error } = await supabase.from('wallet_transactions').insert({
-                        borrower_id: borrower.id,
-                        type: 'withdrawal',
-                        amount: rebateCredits.balance,
-                        description: `Withdrawal request via ${methodDesc}`,
-                        status: 'pending'
-                      })
+                      const { error } = await supabase.from('wallet_transactions').insert({ borrower_id: borrower.id, type: 'withdrawal', amount: rebateCredits.balance, description: `Withdrawal request via ${methodDesc}`, status: 'pending' })
                       if (!error) {
-                        await supabase.from('portal_notifications').insert({
-                          borrower_id: borrower.id,
-                          type: 'withdrawal_requested',
-                          title: '💸 Withdrawal Requested',
-                          message: `Your withdrawal request of ₱${rebateCredits.balance.toLocaleString('en-PH', { minimumFractionDigits: 2 })} via ${withdrawMethod} is pending admin review.`
-                        })
+                        await supabase.from('portal_notifications').insert({ borrower_id: borrower.id, type: 'withdrawal_requested', title: '💸 Withdrawal Requested', message: `Your withdrawal request of ₱${rebateCredits.balance.toLocaleString('en-PH', { minimumFractionDigits: 2 })} via ${withdrawMethod} is pending admin review.` })
                         fetchPortalData(code)
                         setShowWithdrawModal(false)
                       }
@@ -1077,9 +1061,6 @@ export default function BorrowerPortalPage() {
             </div>
           </div>
         )}
-
-      </div>
-    </div>
       </>
     )
   }
