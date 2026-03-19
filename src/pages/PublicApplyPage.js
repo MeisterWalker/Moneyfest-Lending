@@ -836,6 +836,5 @@ export default function PublicApplyPage() {
         </div>
       </div>
     </div>
-    </div>
   )
 }
