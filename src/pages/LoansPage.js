@@ -144,7 +144,7 @@ function StatusBadge({ status }) {
   )
 }
 
-function LoanCard({ loan: rawLoan, borrowers, onEdit, onDelete, onRecordPayment, onDefault, onRenew, onQuickLoanPayoff, onQuickLoanDay15Missed }) {
+function LoanCard({ loan: rawLoan, borrowers, onEdit, onDelete, onRecordPayment, onDefault, onRenew, onQuickLoanPayoff, onQuickLoanDay15Missed, onConfirmRelease }) {
   const [expanded, setExpanded] = useState(false)
   const [confirming, setConfirming] = useState(false)
   // Normalize installment to whole peso — handles loans created before rounding was added
@@ -251,9 +251,7 @@ function LoanCard({ loan: rawLoan, borrowers, onEdit, onDelete, onRecordPayment,
           <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
             <div style={{ padding: '10px 14px', background: 'rgba(59,130,246,0.06)', border: '1px solid rgba(59,130,246,0.15)', borderRadius: 8, fontSize: 12, color: 'var(--blue)' }}>
               <Clock size={12} style={{ display: 'inline', marginRight: 6 }} />
-              Loan releases on {formatDate(loan.release_date)}
-              {daysUntilDue > 0 && ` (in ${daysUntilDue} day${daysUntilDue !== 1 ? 's' : ''})`}
-              {daysUntilDue <= 0 && " — activating today"}
+              Scheduled release date: {formatDate(loan.release_date)} — awaiting admin confirmation
             </div>
             {/* LA Signature status */}
             {loan.e_signature_name ? (
@@ -358,6 +356,17 @@ function LoanCard({ loan: rawLoan, borrowers, onEdit, onDelete, onRecordPayment,
                 style={{ fontSize: 12, padding: '6px 14px', background: 'linear-gradient(135deg,#F59E0B,#D97706)', border: 'none' }}
               >
                 ⚡ Record Full Payoff
+              </button>
+            )}
+
+            {/* Confirm Release button for Pending loans */}
+            {loan.status === 'Pending' && (
+              <button
+                onClick={() => onConfirmRelease(loan)}
+                className="btn-primary"
+                style={{ fontSize: 12, padding: '6px 14px', background: 'linear-gradient(135deg,#22C55E,#16A34A)', border: 'none' }}
+              >
+                <CheckCircle size={13} /> Confirm Funds Released
               </button>
             )}
 
@@ -468,21 +477,6 @@ export default function LoansPage() {
       supabase.from('borrowers').select('*'),
       supabase.from('settings').select('*').eq('id', 1).single()
     ])
-    // Auto-activate Pending loans whose release date has passed — run once on load,
-    // not on every card render
-    const today = new Date(); today.setHours(0, 0, 0, 0)
-    const toActivate = (l || []).filter(loan => {
-      if (loan.status !== 'Pending' || !loan.release_date) return false
-      const release = new Date(loan.release_date); release.setHours(0, 0, 0, 0)
-      return today >= release
-    })
-    if (toActivate.length > 0) {
-      await Promise.all(toActivate.map(loan =>
-        supabase.from('loans').update({ status: 'Active' }).eq('id', loan.id)
-      ))
-      // Reflect in local state immediately
-      toActivate.forEach(loan => { loan.status = 'Active' })
-    }
     setLoans(l || [])
     setBorrowers(b || [])
     setSettings(s)
@@ -822,6 +816,30 @@ export default function LoansPage() {
 
   // ── QuickLoan full payoff ─────────────────────────────────────
   // Collects everything owed today: principal + accrued interest + extension fee + any penalty
+  const handleConfirmRelease = async (loan) => {
+    const borrower = borrowers.find(b => b.id === loan.borrower_id)
+    const today = new Date()
+    const todayStr = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0')
+
+    const { error } = await supabase.from('loans').update({
+      status: 'Active',
+      release_date: todayStr,
+      updated_at: new Date().toISOString()
+    }).eq('id', loan.id)
+
+    if (error) { toast('Failed to confirm release', 'error'); return }
+
+    await logAudit({
+      action_type: 'LOAN_FUNDS_RELEASED',
+      module: 'Loan',
+      description: `Funds confirmed released for ${borrower?.full_name} — ${formatCurrency(loan.loan_amount)} on ${todayStr}. Loan is now Active.`,
+      changed_by: user?.email
+    })
+
+    toast(`✅ Funds released — ${borrower?.full_name}'s loan is now Active`, 'success')
+    fetchData()
+  }
+
   const handleQuickLoanPayoff = async (loan) => {
     const balance = calcQuickLoanBalance(loan)
     const borrower = borrowers.find(b => b.id === loan.borrower_id)
@@ -1027,6 +1045,7 @@ export default function LoansPage() {
               onDefault={setDefaultTarget}
               onRecordPayment={handleRecordPayment}
               onRenew={handleRenew}
+              onConfirmRelease={handleConfirmRelease}
               onQuickLoanPayoff={handleQuickLoanPayoff}
               onQuickLoanDay15Missed={handleQuickLoanDay15Missed}
             />
