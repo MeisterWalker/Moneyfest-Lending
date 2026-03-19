@@ -75,7 +75,12 @@ function CutoffBanner({ loans, borrowers, onMarkPaid, onDismiss }) {
   const isCutoffDay = day === 5 || day === 20
   if (!isCutoffDay) return null
 
-  const due = loans.filter(l => ['Active', 'Partially Paid'].includes(l.status))
+  const todayStr = today.toISOString().slice(0, 10)
+  const due = loans.filter(l =>
+    ['Active', 'Partially Paid'].includes(l.status) &&
+    l.loan_type !== 'quickloan' &&
+    l.release_date !== todayStr
+  )
   const total = due.reduce((sum, l) => sum + (l.installment_amount || 0), 0)
 
   return (
