@@ -166,13 +166,8 @@ export default function TermsPage() {
             </div>
             <h1 style={{ fontFamily: 'Space Grotesk', fontWeight: 900, fontSize: 32, color: '#F59E0B', margin: '0 0 8px', letterSpacing: -1 }}>QuickLoan Terms and Conditions</h1>
             <div style={{ fontSize: 13, color: '#7A8AAA', marginBottom: 20 }}>Effective: {effectiveDate} - Private and Exclusive Program</div>
-            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-              {[{ label: 'Max Loan', value: 'P3,000' }, { label: 'Daily Interest', value: '0.3333%/day' }, { label: 'Monthly Rate', value: '10%/month' }, { label: 'Target Due', value: 'Day 15' }, { label: 'Hard Deadline', value: 'Day 30' }, { label: 'Extension Fee', value: 'P100 once' }, { label: 'Penalty After Day 30', value: 'P25/day' }].map(s => (
-                <div key={s.label} style={{ padding: '8px 14px', background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 8 }}>
-                  <div style={{ fontSize: 10, color: '#7A8AAA', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2 }}>{s.label}</div>
-                  <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 14, color: '#F59E0B' }}>{s.value}</div>
-                </div>
-              ))}
+            <div style={{ marginTop: 20, padding: '12px 16px', background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 10, fontSize: 13, color: '#FDE68A', lineHeight: 1.7 }} className="print-badge">
+              <strong>Important:</strong> By submitting a QuickLoan application through MoneyfestLending, you confirm that you have read, understood, and agreed to all terms and conditions stated in this document. This is a legally binding agreement between you (the Borrower) and MoneyfestLending (the Lender).
             </div>
           </div>
           {qlSections.map((sec, idx) => (
