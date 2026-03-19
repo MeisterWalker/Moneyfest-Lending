@@ -571,7 +571,15 @@ export default function ApplicationsPage() {
       // 6. Update application status — always runs
       await supabase.from('applications').update({ status: 'Approved' }).eq('id', app.id)
 
-      // 7. Update UI immediately
+      // 7. Log audit
+      await logAudit({
+        action_type: 'APPLICATION_APPROVED',
+        module: 'Applications',
+        description: `Application approved for ${app.full_name} — ₱${Number(app.loan_amount).toLocaleString('en-PH')} ${app.loan_type === 'quickloan' ? 'QuickLoan' : 'Installment Loan'}. Access code: ${finalCode}.`,
+        changed_by: user?.email
+      })
+
+      // 8. Update UI immediately
       setApplications(prev => prev.map(a => a.id === app.id ? { ...a, status: 'Approved' } : a))
       toast(`✅ ${app.full_name} approved! Code: ${finalCode}`, 'success')
 
