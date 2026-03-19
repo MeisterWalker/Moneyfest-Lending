@@ -462,7 +462,7 @@ export default function BorrowerPortalPage() {
     setLoan(prev => ({ ...prev, e_signature_name: typedName, e_signature_image: signatureImage, e_signature_date: signedAt, agreement_confirmed: true }))
     setBorrower(prev => ({ ...prev, e_signature_name: typedName, e_signature_image: signatureImage, e_signature_date: signedAt }))
     setSignatureSaved(true); setShowSignModal(false)
-    setTimeout(() => generateLoanAgreementPDF(typedName, signatureImage, signedAt), 500)
+    setTimeout(() => loan.loan_type === 'quickloan' ? generateQuickLoanAgreementPDF() : generateLoanAgreementPDF(typedName, signatureImage, signedAt), 500)
   }
 
   const markAllRead = async () => {
@@ -600,6 +600,113 @@ export default function BorrowerPortalPage() {
     const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '')
     const safeName = (borrowerName || 'Borrower').replace(/\s+/g, '_')
     const a = document.createElement('a'); a.href = url; a.download = `LoanAgreement_${safeName}_${dateStr}.html`
+    a.click(); URL.revokeObjectURL(url)
+  }
+
+  const generateQuickLoanAgreementPDF = () => {
+    const principal = Number(loan.loan_amount)
+    const dailyInterest = parseFloat((principal * 0.1 / 30).toFixed(2))
+    const day15Interest = parseFloat((dailyInterest * 15).toFixed(2))
+    const day15Total = parseFloat((principal + day15Interest).toFixed(2))
+    const releaseDate = loan.release_date ? (() => { const [y,m,d] = loan.release_date.split('-').map(Number); return new Date(y,m-1,d) })() : new Date()
+    const day15Date = new Date(releaseDate); day15Date.setDate(day15Date.getDate() + 15)
+    const day30Date = new Date(releaseDate); day30Date.setDate(day30Date.getDate() + 30)
+    const fmt = d => d.toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' })
+    const releaseDateStr = fmt(releaseDate)
+    const day15Str = fmt(day15Date)
+    const day30Str = fmt(day30Date)
+    const signedDateStr = loan.e_signature_date ? fmt(new Date(loan.e_signature_date)) : fmt(new Date())
+    const name = loan.e_signature_name || borrower?.full_name || ''
+    const img = loan.e_signature_image || borrower?.e_signature_image
+    const imgTag = img ? `<img src="${img}" style="height:68px;max-width:240px;display:block;" />` : '<div style="height:68px;"></div>'
+    const refId = `QL-${(borrower?.id || '').slice(-6).toUpperCase()}`
+
+    const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"/>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Caveat:wght@600&display=swap');
+  *{margin:0;padding:0;box-sizing:border-box;}body{font-family:'EB Garamond',Georgia,serif;color:#111827;background:#fff;font-size:12px;line-height:1.6;}
+  @media print{@page{size:A4;margin:15mm 18mm;}}
+  .page{padding:36px 44px;}
+  .header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2.5px solid #92400e;padding-bottom:14px;margin-bottom:20px;}
+  .logo{font-size:24px;font-weight:700;letter-spacing:-0.5px;color:#111;}.logo span{color:#D97706;}
+  .doc-meta{text-align:right;font-size:10.5px;color:#6B7280;line-height:1.7;}
+  .badge{display:inline-block;padding:4px 12px;border-radius:20px;background:#fffbeb;border:1px solid #D97706;color:#92400e;font-size:11px;font-weight:700;margin-bottom:16px;}
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:18px;}
+  .section{margin-bottom:18px;}.section-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#B45309;border-bottom:1.5px solid #FDE68A;padding-bottom:5px;margin-bottom:10px;}
+  .row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid #FEF3C7;font-size:11.5px;}.row .lbl{color:#6B7280;}.row .val{font-weight:600;color:#111827;text-align:right;}
+  .highlight-row{background:#fffbeb;padding:6px 10px;border-radius:6px;margin-bottom:6px;display:flex;justify-content:space-between;font-size:12px;}
+  .tc-item{font-size:11.5px;color:#374151;margin-bottom:10px;line-height:1.65;}.tc-item strong{color:#111827;}
+  .sig-grid{display:grid;grid-template-columns:1fr 1fr;gap:48px;margin-top:32px;}
+  .sig-col{display:flex;flex-direction:column;}.sig-label{font-size:9.5px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:1.2px;margin-bottom:12px;}
+  .sig-image-box{height:72px;display:flex;align-items:flex-end;margin-bottom:0;}.sig-line{border-bottom:1.5px solid #374151;margin-bottom:6px;}
+  .sig-name{font-size:22px;font-style:italic;font-family:'Caveat',cursive;color:#111827;margin-bottom:4px;line-height:1.2;}.sig-sub{font-size:10px;color:#9CA3AF;line-height:1.5;}
+  .disclaimer{font-size:9.5px;color:#9CA3AF;margin-top:28px;padding-top:12px;border-top:1px solid #E5E7EB;line-height:1.6;}
+  .warning-box{background:#fffbeb;border:1px solid #D97706;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:11px;color:#92400e;}
+</style></head><body>
+<div class="page">
+  <div class="header">
+    <div><div class="logo">Moneyfest<span>Lending</span></div><div style="font-size:10.5px;color:#6B7280;margin-top:3px;">⚡ QuickLoan Agreement</div></div>
+    <div class="doc-meta"><div><strong>Ref:</strong> ${refId}</div><div><strong>Release Date:</strong> ${releaseDateStr}</div><div><strong>Day 15 Target:</strong> <span style="color:#D97706;font-weight:700;">${day15Str}</span></div><div><strong>Day 30 Deadline:</strong> <span style="color:#DC2626;font-weight:700;">${day30Str}</span></div></div>
+  </div>
+
+  <div class="badge">⚡ QuickLoan — Short-Term Cash Loan</div>
+
+  <div class="two-col">
+    <div class="section"><div class="section-title">Parties to this Agreement</div>
+      <div class="row"><span class="lbl">Borrower</span><span class="val">${borrower?.full_name || ''}</span></div>
+      <div class="row"><span class="lbl">Department</span><span class="val">${borrower?.department || 'N/A'}</span></div>
+      <div class="row"><span class="lbl">Access Code</span><span class="val">${borrower?.access_code || '—'}</span></div>
+      <div class="row"><span class="lbl">Lender</span><span class="val">MoneyfestLending</span></div>
+      <div class="row"><span class="lbl">Release Date</span><span class="val">${releaseDateStr}</span></div>
+    </div>
+    <div class="section"><div class="section-title">RA 3765 — Truth in Lending Disclosure</div>
+      <div class="row"><span class="lbl">Loan Principal</span><span class="val">&#8369;${principal.toLocaleString('en-PH', {minimumFractionDigits:2})}</span></div>
+      <div class="row"><span class="lbl">Funds Released (no hold)</span><span class="val">&#8369;${principal.toLocaleString('en-PH', {minimumFractionDigits:2})}</span></div>
+      <div class="row"><span class="lbl">Monthly Interest Rate</span><span class="val">10% per month</span></div>
+      <div class="row"><span class="lbl">Daily Interest Rate</span><span class="val">0.3333%/day</span></div>
+      <div class="row"><span class="lbl">Daily Interest Amount</span><span class="val">&#8369;${dailyInterest.toFixed(2)}/day</span></div>
+      <div class="row"><span class="lbl">If paid on Day 15</span><span class="val" style="color:#16a34a;font-weight:700;">&#8369;${day15Total.toLocaleString('en-PH', {minimumFractionDigits:2})}</span></div>
+      <div class="row"><span class="lbl">Extension Fee (if missed)</span><span class="val">&#8369;100.00 (one-time)</span></div>
+      <div class="row"><span class="lbl">Penalty after Day 30</span><span class="val" style="color:#DC2626;">&#8369;25.00/day (uncapped)</span></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Payment Timeline</div>
+    <div class="highlight-row"><span>Release Date</span><span style="font-weight:700;">${releaseDateStr}</span></div>
+    <div class="highlight-row" style="border-left:3px solid #16a34a;"><span>✅ Day 15 — Target Due Date</span><span style="font-weight:700;color:#16a34a;">${day15Str}</span></div>
+    <div class="highlight-row" style="background:#fff7ed;border-left:3px solid #D97706;"><span>⚠️ Day 15 Missed → ₱100 extension fee, principal rolls over</span><span style="font-weight:700;color:#D97706;">₱100 collected</span></div>
+    <div class="highlight-row" style="background:#fef2f2;border-left:3px solid #DC2626;"><span>🔴 Day 30 — Hard Deadline</span><span style="font-weight:700;color:#DC2626;">${day30Str}</span></div>
+    <div class="highlight-row" style="background:#fef2f2;"><span>After Day 30 → ₱25/day penalty + daily interest run simultaneously</span><span style="font-weight:700;color:#DC2626;">No cap</span></div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Terms & Conditions</div>
+    <p class="tc-item">1. <strong>Interest Accrual</strong> — Interest accrues daily at 0.3333% per day (10%/month) on the outstanding principal from the date of release. Interest does not compound.</p>
+    <p class="tc-item">2. <strong>Pay Anytime</strong> — The Borrower may settle the full outstanding balance at any time. Interest stops on the day payment is confirmed. No prepayment penalty applies.</p>
+    <p class="tc-item">3. <strong>Day 15 Target Due Date</strong> — The target due date is 15 calendar days from release (${day15Str}). If settled by Day 15, total payment = ₱${principal.toLocaleString('en-PH')} principal + ₱${day15Interest.toFixed(2)} interest = ₱${day15Total.toLocaleString('en-PH')}.</p>
+    <p class="tc-item">4. <strong>Extension Fee</strong> — If Day 15 is missed, a one-time extension fee of ₱100 is charged. The admin collects the accrued 15-day interest + ₱100 fee. The principal rolls over to Day 30.</p>
+    <p class="tc-item">5. <strong>Day 30 Hard Deadline & Penalty</strong> — Day 30 (${day30Str}) is the absolute deadline. After Day 30, a ₱25/day penalty accrues on top of the continuing daily interest, with no cap, until fully settled.</p>
+    <p class="tc-item">6. <strong>No Security Hold</strong> — QuickLoan carries no Security Hold deduction. The full approved amount is released to the Borrower.</p>
+    <p class="tc-item">7. <strong>Full Payoff Only</strong> — QuickLoan must be settled in a single full payment. Partial principal payments are not accepted.</p>
+    <p class="tc-item">8. <strong>One Active Loan</strong> — Only one active loan (of any type) is permitted per Borrower at a time.</p>
+    <p class="tc-item">9. <strong>Data Privacy (RA 10173)</strong> — Personal information is processed solely for loan administration purposes.</p>
+    <p class="tc-item">10. <strong>Governing Law</strong> — This agreement is governed by Philippine law including RA 3765, RA 10173, and RA 8792. Disputes shall first go to barangay conciliation under RA 7160.</p>
+  </div>
+
+  <div class="sig-grid">
+    <div class="sig-col"><div class="sig-label">Borrower E-Signature</div><div class="sig-image-box">${imgTag}</div><div class="sig-line"></div><div class="sig-name">${name}</div><div class="sig-sub">${borrower?.full_name || ''}</div><div class="sig-sub">Signed electronically on ${signedDateStr}</div><div class="sig-sub" style="margin-top:3px;">Pursuant to RA 8792 — E-Commerce Act</div></div>
+    <div class="sig-col"><div class="sig-label">Admin / Authorized Representative</div><div class="sig-image-box"><div style="height:68px;"></div></div><div class="sig-line"></div><div style="height:28px;margin-bottom:4px;"></div><div class="sig-sub">MoneyfestLending Administration</div><div class="sig-sub">Authorized Representative</div><div class="sig-sub" style="margin-top:3px;">Date: ___________________________</div></div>
+  </div>
+
+  <div class="disclaimer">This QuickLoan Agreement is executed in compliance with RA 3765 (Truth in Lending Act), RA 10173 (Data Privacy Act), and RA 8792 (E-Commerce Act). The electronic signature affixed herein has the same legal effect as a handwritten signature. MoneyfestLending is a private colleague lending program, not a BSP-regulated institution.</div>
+</div></body></html>`
+
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '')
+    const safeName = (borrower?.full_name || 'Borrower').replace(/\s+/g, '_')
+    const a = document.createElement('a'); a.href = url; a.download = `QuickLoanAgreement_${safeName}_${dateStr}.html`
     a.click(); URL.revokeObjectURL(url)
   }
 
@@ -1250,7 +1357,7 @@ export default function BorrowerPortalPage() {
               {loan.agreement_confirmed && loan.e_signature_name && (
                 <div className="pc" style={{ background: 'rgba(34,197,94,0.05)', border: '1px solid rgba(34,197,94,0.15)', borderRadius: 14, padding: '12px 18px', marginBottom: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div style={{ fontSize: 12, color: '#22C55E', fontWeight: 600 }}>✅ Loan Agreement signed by {loan.e_signature_name} · {new Date(loan.e_signature_date || '').toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
-                  <button onClick={() => generateLoanAgreementPDF()} style={{ padding: '7px 14px', borderRadius: 8, border: '1px solid rgba(34,197,94,0.25)', background: 'rgba(34,197,94,0.08)', color: '#22C55E', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>↓ Download</button>
+                  <button onClick={() => loan.loan_type === 'quickloan' ? generateQuickLoanAgreementPDF() : generateLoanAgreementPDF()} style={{ padding: '7px 14px', borderRadius: 8, border: '1px solid rgba(34,197,94,0.25)', background: 'rgba(34,197,94,0.08)', color: '#22C55E', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>↓ Download</button>
                 </div>
               )}
 
@@ -1349,7 +1456,7 @@ export default function BorrowerPortalPage() {
                           ✍ Sign Loan Agreement
                         </button>
                       ) : (
-                        <button onClick={() => generateLoanAgreementPDF()}
+                        <button onClick={() => loan.loan_type === 'quickloan' ? generateQuickLoanAgreementPDF() : generateLoanAgreementPDF()}
                           style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '10px', borderRadius: 10, border: '1px solid rgba(99,102,241,0.25)', background: 'rgba(99,102,241,0.06)', color: '#a78bfa', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
                           ↓ Download Loan Agreement
                         </button>

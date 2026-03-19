@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase'
 
 export default function TermsPage() {
   const [interestRate, setInterestRate] = useState(0.07)
+  const [termsTab, setTermsTab] = useState('installment')
   const effectiveDate = 'March 14, 2026'
 
   useEffect(() => {
@@ -130,7 +131,127 @@ ${content.innerHTML}
       {/* Main content */}
       <div className="print-container" style={{ maxWidth: 860, margin: '0 auto', padding: '48px 28px 80px' }}>
 
-        {/* Header */}
+        {/* Tab toggle — hidden on print */}
+        <div className="no-print" style={{ display: 'flex', gap: 4, background: 'rgba(255,255,255,0.03)', borderRadius: 12, padding: 4, width: 'fit-content', marginBottom: 32 }}>
+          {[
+            { key: 'installment', label: '📅 Installment Loan' },
+            { key: 'quickloan',   label: '⚡ QuickLoan' },
+          ].map(tab => (
+            <button key={tab.key} onClick={() => setTermsTab(tab.key)}
+              style={{
+                padding: '8px 20px', borderRadius: 9, border: 'none', cursor: 'pointer',
+                fontSize: 13, fontWeight: 600, transition: 'all 0.15s ease',
+                background: termsTab === tab.key
+                  ? tab.key === 'quickloan' ? 'rgba(245,158,11,0.2)' : 'rgba(139,92,246,0.15)'
+                  : 'transparent',
+                color: termsTab === tab.key
+                  ? tab.key === 'quickloan' ? '#F59E0B' : '#a78bfa'
+                  : '#7A8AAA',
+              }}>
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* ── QUICKLOAN TERMS ── */}
+        {termsTab === 'quickloan' && (
+          <div>
+            <div className="print-header" style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: 28, marginBottom: 36 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                <img src="/favicon-96x96.png" alt="MoneyfestLending" className="no-print" style={{ width: 40, height: 40, objectFit: 'contain' }} />
+                <div style={{ fontFamily: 'Space Grotesk', fontWeight: 900, fontSize: 22, color: '#F0F4FF' }} className="print-title">MoneyfestLending</div>
+              </div>
+              <h1 style={{ fontFamily: 'Space Grotesk', fontWeight: 900, fontSize: 32, color: '#F59E0B', margin: '0 0 8px', letterSpacing: -1 }}>
+                ⚡ QuickLoan Terms & Conditions
+              </h1>
+              <div style={{ fontSize: 13, color: '#7A8AAA', marginBottom: 16 }}>Effective: {effectiveDate} · Private & Exclusive Program</div>
+              <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+                {[
+                  { label: 'Max Loan', value: '₱3,000' },
+                  { label: 'Daily Interest', value: '0.3333%/day' },
+                  { label: 'Monthly Rate', value: '10%/month' },
+                  { label: 'Target Due', value: 'Day 15' },
+                  { label: 'Hard Deadline', value: 'Day 30' },
+                  { label: 'Extension Fee', value: '₱100 (once)' },
+                  { label: 'Penalty After Day 30', value: '₱25/day' },
+                ].map(s => (
+                  <div key={s.label} style={{ padding: '8px 14px', background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 8 }}>
+                    <div style={{ fontSize: 10, color: '#7A8AAA', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2 }}>{s.label}</div>
+                    <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 14, color: '#F59E0B' }}>{s.value}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {[
+              {
+                num: 1, title: 'Nature of QuickLoan',
+                body: `QuickLoan is a short-term cash loan product offered exclusively to active team members of MoneyfestLending's workplace lending program. The maximum loan amount is ₱3,000. QuickLoan is fundamentally different from the Installment Loan — it does not have a fixed term or installment schedule. Interest accrues daily and the borrower may settle at any time.`
+              },
+              {
+                num: 2, title: 'Interest Rate & Daily Accrual',
+                body: `The monthly interest rate for QuickLoan is 10% per month, computed as a daily rate of 0.3333% per day (10% ÷ 30 days). Interest accrues on the outstanding principal from the day of release. On a ₱3,000 loan, this equals ₱10.00 per day. On a ₱1,000 loan, this equals ₱3.33 per day. Interest is not compounded — it is a simple daily flat rate on the original principal.`
+              },
+              {
+                num: 3, title: 'Pay Anytime — Early Settlement',
+                body: `The Borrower may settle the full outstanding balance at any time before Day 15 or Day 30. Interest stops accruing on the day payment is received and confirmed by the admin. There is no prepayment penalty. Settling early saves the Borrower money — for example, settling on Day 7 instead of Day 15 saves 8 days of interest.`
+              },
+              {
+                num: 4, title: 'Day 15 Target Due Date',
+                body: `The target due date is 15 calendar days from the release date. On Day 15, the Borrower is expected to pay the full outstanding balance: the original principal plus all accrued interest (15 days × daily rate × principal). Example: a ₱3,000 loan released on March 19 has a Day 15 target of April 3. Total owed on Day 15 = ₱3,000 + ₱150 = ₱3,150. Payment by Day 15 closes the loan with no additional fees.`
+              },
+              {
+                num: 5, title: 'Day 15 Missed — Extension Fee',
+                body: `If the Borrower does not pay by Day 15, a one-time Extension Fee of ₱100 is charged. On the Day 15 collection event, the admin will collect: accrued interest (₱150 on a ₱3,000 loan) + ₱100 extension fee = ₱250 total collected. The ₱3,000 principal remains outstanding and rolls over to the Day 30 hard deadline. Interest continues to accrue daily on the outstanding ₱3,000 principal during the extension period.`
+              },
+              {
+                num: 6, title: 'Day 30 Hard Deadline & Penalty',
+                body: `Day 30 from the release date is the absolute final deadline. If the full outstanding balance (principal + all accrued interest + extension fee) is not settled by Day 30, a daily penalty of ₱25.00 per calendar day begins to accrue with no cap, in addition to the continuing daily interest. The ₱25/day penalty and daily interest both run simultaneously after Day 30 until the loan is fully settled. Example on Day 35: ₱3,000 principal + ₱350 interest (35 days × ₱10) + ₱100 extension fee + ₱125 penalty (5 days × ₱25) = ₱3,575 total.`
+              },
+              {
+                num: 7, title: 'No Security Hold',
+                body: `QuickLoan does not carry a Security Hold deduction. The full approved loan amount is released to the Borrower upon activation. There are no deductions from the principal at the time of release. The interest structure (daily accrual, extension fee, and penalty after Day 30) serves as the risk management mechanism in place of a Security Hold.`
+              },
+              {
+                num: 8, title: 'Full Payoff Only — No Partial Principal Payments',
+                body: `QuickLoan requires full settlement of the outstanding balance in a single payment. Partial payments toward the principal are not accepted under the QuickLoan structure. The Borrower must pay the complete amount (principal + all accrued interest + any extension fee + any penalty) in one transaction to close the loan.`
+              },
+              {
+                num: 9, title: 'One Active Loan at a Time',
+                body: `A Borrower may not hold more than one active loan at a time, regardless of loan type. A Borrower with an active Installment Loan may not take a QuickLoan, and vice versa. The Borrower must fully settle any existing loan before applying for a new one.`
+              },
+              {
+                num: 10, title: 'Credit Score',
+                body: `QuickLoan activity is tracked internally but does not currently affect the credit score system used for Installment Loan limit upgrades. A QuickLoan fully settled by Day 15 is recorded as a clean closure. A QuickLoan that triggers the extension fee or penalty is recorded accordingly in the Borrower's loan history.`
+              },
+              {
+                num: 11, title: 'Data Privacy (RA 10173)',
+                body: `The Borrower's personal information is collected and processed solely for the purpose of administering this loan, in compliance with Republic Act No. 10173 (Data Privacy Act of 2012). Information will not be shared with third parties outside the program administrators.`
+              },
+              {
+                num: 12, title: 'Governing Law',
+                body: `This agreement is governed by the laws of the Republic of the Philippines, including but not limited to RA 3765 (Truth in Lending Act), RA 10173 (Data Privacy Act), and RA 8792 (E-Commerce Act). Disputes shall first be referred to barangay conciliation under RA 7160 before court action. MoneyfestLending is a private colleague lending program and is not a bank, quasi-bank, or BSP-supervised financial institution.`
+              },
+            ].map((section, i) => (
+              <div key={i} className="print-section" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(245,158,11,0.12)', borderRadius: 12, padding: '18px 20px', marginBottom: 14 }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                  <div style={{ width: 28, height: 28, borderRadius: 7, background: 'rgba(245,158,11,0.15)', border: '1px solid rgba(245,158,11,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 12, color: '#F59E0B', flexShrink: 0 }}>{section.num}</div>
+                  <div>
+                    <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 15, color: '#F0F4FF', marginBottom: 6 }} className="print-highlight">{section.title}</div>
+                    <div style={{ fontSize: 13, color: '#8892B0', lineHeight: 1.75 }} className="print-body">{section.body}</div>
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            <div style={{ marginTop: 24, padding: '16px 20px', background: 'rgba(245,158,11,0.05)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 12, fontSize: 12, color: '#7A8AAA', lineHeight: 1.7 }}>
+              <strong style={{ color: '#F59E0B' }}>RA 3765 — Truth in Lending Act Disclosure:</strong> QuickLoan carries a monthly interest rate of 10% (daily rate: 0.3333%). There is no compounding. The total finance charge depends on the number of days the loan is outstanding. An extension fee of ₱100 applies if Day 15 is missed. A daily penalty of ₱25 applies after Day 30. MoneyfestLending is a private colleague lending program, not a BSP-regulated institution.
+            </div>
+          </div>
+        )}
+
+        {/* ── INSTALLMENT LOAN TERMS ── (existing content below, wrapped in conditional) */}
+        {termsTab === 'installment' && (
         <div className="print-header" style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: 28, marginBottom: 36 }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 20, flexWrap: 'wrap' }}>
             <div>
@@ -403,6 +524,9 @@ ${content.innerHTML}
             In compliance with: RA 3765 (Truth in Lending Act) · RA 10173 (Data Privacy Act of 2012) · RA 9474 (Lending Company Regulation Act)
           </div>
         </div>
+
+      </div>
+        )} {/* end installment tab */}
 
       </div>
 
