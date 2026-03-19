@@ -299,6 +299,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [bannerDismissed, setBannerDismissed] = useState(false)
   const [visitStats, setVisitStats] = useState({ total: 0, today: 0, pages: {} })
+  const [dashTab, setDashTab] = useState('installment')
   const navigate = useNavigate()
 
   const fetchData = useCallback(async () => {
@@ -451,15 +452,42 @@ export default function DashboardPage() {
 
   return (
     <div style={{ padding: '32px 28px', maxWidth: 1200, margin: '0 auto' }}>
-      {/* Header */}
+      {/* Header with tab toggle */}
       <div className="page-header">
         <div>
-          <h1 className="page-title">Dashboard</h1>
+          <h1 className="page-title">
+            {dashTab === 'installment' ? 'Dashboard' : '⚡ QuickLoan Dashboard'}
+          </h1>
           <p className="page-subtitle">
             {new Date().toLocaleDateString('en-PH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
           </p>
         </div>
+        {/* Tab toggle */}
+        <div style={{ display: 'flex', gap: 4, background: 'rgba(255,255,255,0.03)', borderRadius: 12, padding: 4 }}>
+          {[
+            { key: 'installment', label: '📅 Installment Loans' },
+            { key: 'quickloan',   label: '⚡ QuickLoan' },
+          ].map(tab => (
+            <button key={tab.key} onClick={() => setDashTab(tab.key)}
+              style={{
+                padding: '8px 18px', borderRadius: 9, border: 'none', cursor: 'pointer',
+                fontSize: 13, fontWeight: 600, transition: 'all 0.15s ease',
+                background: dashTab === tab.key
+                  ? tab.key === 'quickloan' ? 'rgba(245,158,11,0.2)' : 'rgba(59,130,246,0.2)'
+                  : 'transparent',
+                color: dashTab === tab.key
+                  ? tab.key === 'quickloan' ? '#F59E0B' : 'var(--blue)'
+                  : 'var(--text-muted)',
+              }}>
+              {tab.label}
+            </button>
+          ))}
+        </div>
       </div>
+
+      {/* ── INSTALLMENT LOAN DASHBOARD ── */}
+      {dashTab === 'installment' && (
+        <div>
 
       {/* Cutoff Banner */}
       {!bannerDismissed && (
@@ -720,6 +748,147 @@ export default function DashboardPage() {
 
       {/* Audit History Widget */}
       <AuditWidget logs={auditLogs} />
+        </div> {/* end installment tab */}
+      )}
+
+      {/* ── QUICKLOAN DASHBOARD ── */}
+      {dashTab === 'quickloan' && (
+        <div>
+          {/* Summary stats */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16, marginBottom: 24 }}>
+            {[
+              { label: 'Active QuickLoans', value: activeQuickLoans.length, color: '#F59E0B', sub: `${paidQuickLoans.length} paid all-time` },
+              { label: 'Principal Outstanding', value: formatCurrency(qlTotalPrincipalOut), color: '#F59E0B', sub: 'across active loans' },
+              { label: 'Interest Earned', value: formatCurrency(qlTotalInterestEarned), color: 'var(--green)', sub: 'from paid QuickLoans' },
+              { label: 'Day 15 Missed', value: qlDay15Overdue, color: qlDay15Overdue > 0 ? 'var(--gold)' : 'var(--text-muted)', sub: 'fee not yet charged' },
+              { label: 'Past Day 30', value: qlPastDeadline, color: qlPastDeadline > 0 ? 'var(--red)' : 'var(--text-muted)', sub: '₱25/day penalty accruing' },
+            ].map(s => (
+              <div key={s.label} className="card" style={{ padding: '18px 20px', borderColor: 'rgba(245,158,11,0.2)' }}>
+                <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>{s.label}</div>
+                <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 24, color: s.color, lineHeight: 1.1, marginBottom: 4 }}>{s.value}</div>
+                <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{s.sub}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Live balance list */}
+          <div className="card" style={{ padding: '20px 22px', marginBottom: 24, borderColor: 'rgba(245,158,11,0.15)' }}>
+            <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 15, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+              ⚡ Active QuickLoans — Live Balance
+              <span style={{ fontSize: 11, color: '#F59E0B', background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.2)', padding: '2px 8px', borderRadius: 10, fontWeight: 600 }}>
+                Updates in real-time
+              </span>
+            </div>
+            {activeQuickLoans.length > 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {activeQuickLoans.map(loan => {
+                  const b = borrowers.find(x => x.id === loan.borrower_id)
+                  const days = Math.max(0, Math.floor((new Date() - new Date(loan.release_date)) / (1000 * 60 * 60 * 24)))
+                  const dailyInterest = parseFloat((loan.loan_amount * 0.1 / 30).toFixed(2))
+                  const accruedInterest = parseFloat((dailyInterest * days).toFixed(2))
+                  const extensionFee = loan.extension_fee_charged ? 100 : 0
+                  const penaltyDays = Math.max(0, days - 30)
+                  const penalty = penaltyDays * 25
+                  const totalOwed = parseFloat((loan.loan_amount + accruedInterest + extensionFee + penalty).toFixed(2))
+                  const phase = days > 30 ? 'penalty' : days > 15 ? 'extended' : 'active'
+                  const phaseColor = phase === 'penalty' ? 'var(--red)' : phase === 'extended' ? '#F59E0B' : 'var(--green)'
+                  const phaseBg = phase === 'penalty' ? 'rgba(239,68,68,0.06)' : phase === 'extended' ? 'rgba(245,158,11,0.06)' : 'rgba(34,197,94,0.04)'
+                  const phaseBorder = phase === 'penalty' ? 'rgba(239,68,68,0.2)' : phase === 'extended' ? 'rgba(245,158,11,0.2)' : 'rgba(34,197,94,0.15)'
+                  const phaseLabel = phase === 'penalty' ? '🔴 PENALTY' : phase === 'extended' ? '⚠️ Extended' : '✅ Active'
+
+                  // Day 15 and Day 30 dates
+                  const releaseDate = new Date(loan.release_date)
+                  const day15Date = new Date(releaseDate); day15Date.setDate(day15Date.getDate() + 15)
+                  const day30Date = new Date(releaseDate); day30Date.setDate(day30Date.getDate() + 30)
+                  const daysToDay15 = Math.max(0, Math.ceil((day15Date - new Date()) / (1000 * 60 * 60 * 24)))
+                  const daysToDay30 = Math.max(0, Math.ceil((day30Date - new Date()) / (1000 * 60 * 60 * 24)))
+
+                  return (
+                    <div key={loan.id} style={{ background: phaseBg, border: `1px solid ${phaseBorder}`, borderRadius: 12, padding: '16px 18px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12, marginBottom: 12 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(245,158,11,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 14, color: '#F59E0B' }}>
+                            {b?.full_name?.charAt(0) || '?'}
+                          </div>
+                          <div>
+                            <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>{b?.full_name || 'Unknown'}</div>
+                            <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{b?.department} · Released {new Date(loan.release_date).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20, background: phaseBg, border: `1px solid ${phaseBorder}`, color: phaseColor }}>{phaseLabel}</span>
+                          <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Day {days}</span>
+                        </div>
+                      </div>
+
+                      {/* Balance breakdown */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: 10, marginBottom: 12 }}>
+                        {[
+                          { label: 'Principal', value: formatCurrency(loan.loan_amount), color: 'var(--text-primary)' },
+                          { label: 'Accrued Interest', value: formatCurrency(accruedInterest), color: '#a78bfa' },
+                          { label: 'Extension Fee', value: extensionFee > 0 ? formatCurrency(extensionFee) : '—', color: '#F59E0B' },
+                          { label: 'Penalty', value: penalty > 0 ? formatCurrency(penalty) : '—', color: 'var(--red)' },
+                          { label: 'Total Owed Now', value: formatCurrency(totalOwed), color: phaseColor },
+                        ].map(item => (
+                          <div key={item.label} style={{ background: 'rgba(0,0,0,0.15)', borderRadius: 8, padding: '8px 10px' }}>
+                            <div style={{ fontSize: 10, color: 'var(--text-muted)', marginBottom: 3, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{item.label}</div>
+                            <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 14, color: item.color }}>{item.value}</div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Timeline */}
+                      <div style={{ display: 'flex', gap: 12, fontSize: 11, color: 'var(--text-muted)', flexWrap: 'wrap' }}>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                          <span style={{ width: 6, height: 6, borderRadius: '50%', background: days <= 15 ? 'var(--green)' : 'var(--red)', display: 'inline-block' }} />
+                          Day 15: {day15Date.toLocaleDateString('en-PH', { month: 'short', day: 'numeric' })}
+                          {days <= 15 ? ` · ${daysToDay15} day${daysToDay15 !== 1 ? 's' : ''} left` : ' · missed'}
+                        </span>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                          <span style={{ width: 6, height: 6, borderRadius: '50%', background: days <= 30 ? '#F59E0B' : 'var(--red)', display: 'inline-block' }} />
+                          Day 30: {day30Date.toLocaleDateString('en-PH', { month: 'short', day: 'numeric' })}
+                          {days <= 30 ? ` · ${daysToDay30} day${daysToDay30 !== 1 ? 's' : ''} left` : ' · PAST DEADLINE'}
+                        </span>
+                        <span>₱{dailyInterest.toFixed(2)}/day interest · {penalty > 0 ? `₱25/day penalty` : 'no penalty yet'}</span>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            ) : (
+              <div style={{ padding: '32px', textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>
+                No active QuickLoans right now.{' '}
+                <a href="/admin/loans" style={{ color: '#F59E0B', textDecoration: 'none', fontWeight: 600 }}>Create one from the Loans page →</a>
+              </div>
+            )}
+          </div>
+
+          {/* Paid QuickLoans history */}
+          {paidQuickLoans.length > 0 && (
+            <div className="card" style={{ padding: '20px 22px', borderColor: 'rgba(245,158,11,0.1)' }}>
+              <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 15, marginBottom: 14 }}>✅ Paid QuickLoans</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {paidQuickLoans.map(loan => {
+                  const b = borrowers.find(x => x.id === loan.borrower_id)
+                  const earned = parseFloat(((loan.total_repayment || 0) - (loan.loan_amount || 0)).toFixed(2))
+                  return (
+                    <div key={loan.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: 'rgba(34,197,94,0.04)', border: '1px solid rgba(34,197,94,0.15)', borderRadius: 8 }}>
+                      <div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{b?.full_name || 'Unknown'}</div>
+                        <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{formatCurrency(loan.loan_amount)} principal · Paid</div>
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--green)' }}>+{formatCurrency(earned)}</div>
+                        <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>interest earned</div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
