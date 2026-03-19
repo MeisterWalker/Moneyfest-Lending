@@ -526,9 +526,9 @@ ${content.innerHTML}
           </div>
         </div>
 
-      </div>
         </div>
         )} {/* end installment tab */}
+        </div>
 
       </div>
 
