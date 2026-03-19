@@ -350,10 +350,8 @@ function LoanCard({ loan: rawLoan, borrowers, onEdit, onDelete, onRecordPayment,
         </button>
 
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          {/* Record Payment */}
-          {canPay && !confirming && (
-            {/* QuickLoan pay button */}
-            {isQuickLoan && canPay && !confirming && (
+          {/* QuickLoan pay button */}
+          {isQuickLoan && canPay && !confirming && (
               <button
                 onClick={() => setConfirming(true)}
                 className="btn-primary"
