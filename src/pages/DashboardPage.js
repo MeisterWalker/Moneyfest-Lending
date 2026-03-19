@@ -435,7 +435,34 @@ export default function DashboardPage() {
     capital: capital + monthlyData.slice(0, i + 1).reduce((sum, x) => sum + x.profit, 0)
   }))
 
-  // Donut chart data
+  // ── QuickLoan dashboard stats ────────────────────────────────
+  const qlResetDate = settings?.ql_last_reset_date ? new Date(settings.ql_last_reset_date) : null
+  const qlCapital = settings?.ql_starting_capital || 0
+  const qlAmountLentOut = activeQuickLoans.reduce((sum, l) => sum + (l.loan_amount || 0), 0)
+  const qlAvailableLiquidity = qlCapital - qlAmountLentOut
+
+  const qlPaidAfterReset = qlResetDate
+    ? paidQuickLoans.filter(l => new Date(l.updated_at) >= qlResetDate)
+    : paidQuickLoans
+  const qlTotalProfitAllTime = paidQuickLoans.reduce((sum, l) => sum + Math.max(0, (l.total_repayment || 0) - (l.loan_amount || 0)), 0)
+
+  const now2 = new Date()
+  const qlProfitThisMonth = paidQuickLoans
+    .filter(l => new Date(l.updated_at).getMonth() === now2.getMonth() && new Date(l.updated_at).getFullYear() === now2.getFullYear())
+    .reduce((sum, l) => sum + Math.max(0, (l.total_repayment || 0) - (l.loan_amount || 0)), 0)
+
+  // QuickLoan ROI — based on capital if set, otherwise based on principal deployed
+  const qlRoi = qlCapital > 0 ? (qlTotalProfitAllTime / qlCapital) * 100 : 0
+  // Projected: 2 cycles/month at 10%/month = 5% per cycle × 2 = 10%/month on deployed capital
+  const qlProjectedYearly = qlAvailableLiquidity > 0 ? qlAvailableLiquidity * 0.10 * 12 : (qlCapital * 0.10 * 12)
+
+  // QL collection efficiency — ratio of loans paid on time (day 15) vs extended/late
+  const qlPaidOnDay15 = paidQuickLoans.filter(l => {
+    if (!l.release_date) return false
+    const days = Math.floor((new Date(l.updated_at) - new Date(l.release_date)) / (1000 * 60 * 60 * 24))
+    return days <= 15
+  }).length
+  const qlEfficiency = paidQuickLoans.length > 0 ? (qlPaidOnDay15 / paidQuickLoans.length) * 100 : 100
   const donutData = [
     { name: 'Active', value: activeLoans.length, color: 'var(--blue)' },
     { name: 'Paid', value: paidLoans.length, color: 'var(--green)' },
@@ -683,30 +710,41 @@ export default function DashboardPage() {
       {/* ── QUICKLOAN DASHBOARD ── */}
       {dashTab === 'quickloan' && (
         <div>
-          {/* Summary stats */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16, marginBottom: 24 }}>
-            {[
-              { label: 'Active QuickLoans', value: activeQuickLoans.length, color: '#F59E0B', sub: `${paidQuickLoans.length} paid all-time` },
-              { label: 'Principal Outstanding', value: formatCurrency(qlTotalPrincipalOut), color: '#F59E0B', sub: 'across active loans' },
-              { label: 'Interest Earned', value: formatCurrency(qlTotalInterestEarned), color: 'var(--green)', sub: 'from paid QuickLoans' },
-              { label: 'Day 15 Missed', value: qlDay15Overdue, color: qlDay15Overdue > 0 ? 'var(--gold)' : 'var(--text-muted)', sub: 'fee not yet charged' },
-              { label: 'Past Day 30', value: qlPastDeadline, color: qlPastDeadline > 0 ? 'var(--red)' : 'var(--text-muted)', sub: '₱25/day penalty accruing' },
-            ].map(s => (
-              <div key={s.label} className="card" style={{ padding: '18px 20px', borderColor: 'rgba(245,158,11,0.2)' }}>
-                <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>{s.label}</div>
-                <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 24, color: s.color, lineHeight: 1.1, marginBottom: 4 }}>{s.value}</div>
-                <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{s.sub}</div>
-              </div>
-            ))}
+          {/* Stat cards — mirrors installment dashboard */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 24 }}>
+            <StatCard label="Total Capital" value={qlCapital > 0 ? formatCurrency(qlCapital) : '—'} sub="QuickLoan capital pool" icon={Banknote} color="var(--blue)" />
+            <StatCard label="Amount Lent Out" value={formatCurrency(qlAmountLentOut)} sub={`${activeQuickLoans.length} active loans`} icon={CreditCard} color="var(--purple)" />
+            <StatCard label="Total Profit" value={formatCurrency(qlTotalProfitAllTime)} sub="All-time interest earned" icon={TrendingUp} color="var(--green)" />
+            <StatCard label="Profit This Month" value={formatCurrency(qlProfitThisMonth)} sub="Paid QuickLoans this month" icon={Activity} color="var(--teal)" />
+            <StatCard label="Projected Yearly" value={formatCurrency(qlProjectedYearly)} sub="10%/mo on available capital" icon={ArrowUpRight} color="var(--blue)" />
+            <StatCard label="Day 15 Missed" value={qlDay15Overdue} sub="Extension fee pending" icon={AlertTriangle} color={qlDay15Overdue > 0 ? 'var(--gold)' : 'var(--text-muted)'} />
+            <StatCard label="Available Liquidity" value={qlCapital > 0 ? formatCurrency(qlAvailableLiquidity) : '—'} sub="Ready to lend" icon={Banknote} color="var(--green)" />
+            <StatCard label="ROI" value={qlCapital > 0 ? `${qlRoi.toFixed(1)}%` : '—'} sub="Return on capital" icon={Percent} color="var(--purple)" />
+            <StatCard label="Active QuickLoans" value={activeQuickLoans.length} sub={`${paidQuickLoans.length} paid all-time`} icon={Users} color="#F59E0B" />
           </div>
+
+          {/* Day 15 on-time rate */}
+          {paidQuickLoans.length > 0 && (
+            <div className="card" style={{ padding: '18px 22px', marginBottom: 24 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                <span style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 14 }}>Day 15 On-Time Rate</span>
+                <span style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 20, color: qlEfficiency >= 80 ? 'var(--green)' : qlEfficiency >= 50 ? 'var(--gold)' : 'var(--red)' }}>
+                  {qlEfficiency.toFixed(1)}%
+                </span>
+              </div>
+              <div style={{ height: 8, background: 'rgba(255,255,255,0.06)', borderRadius: 4, overflow: 'hidden' }}>
+                <div style={{ height: '100%', width: `${qlEfficiency}%`, background: qlEfficiency >= 80 ? 'var(--green)' : qlEfficiency >= 50 ? 'var(--gold)' : 'var(--red)', borderRadius: 4, transition: 'width 0.5s ease' }} />
+              </div>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 6 }}>
+                {qlPaidOnDay15} of {paidQuickLoans.length} paid loans settled by Day 15
+              </div>
+            </div>
+          )}
 
           {/* Live balance list */}
           <div className="card" style={{ padding: '20px 22px', marginBottom: 24, borderColor: 'rgba(245,158,11,0.15)' }}>
             <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 15, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
               ⚡ Active QuickLoans — Live Balance
-              <span style={{ fontSize: 11, color: '#F59E0B', background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.2)', padding: '2px 8px', borderRadius: 10, fontWeight: 600 }}>
-                Updates in real-time
-              </span>
             </div>
             {activeQuickLoans.length > 0 ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -724,14 +762,11 @@ export default function DashboardPage() {
                   const phaseBg = phase === 'penalty' ? 'rgba(239,68,68,0.06)' : phase === 'extended' ? 'rgba(245,158,11,0.06)' : 'rgba(34,197,94,0.04)'
                   const phaseBorder = phase === 'penalty' ? 'rgba(239,68,68,0.2)' : phase === 'extended' ? 'rgba(245,158,11,0.2)' : 'rgba(34,197,94,0.15)'
                   const phaseLabel = phase === 'penalty' ? '🔴 PENALTY' : phase === 'extended' ? '⚠️ Extended' : '✅ Active'
-
-                  // Day 15 and Day 30 dates
                   const releaseDate = new Date(loan.release_date)
                   const day15Date = new Date(releaseDate); day15Date.setDate(day15Date.getDate() + 15)
                   const day30Date = new Date(releaseDate); day30Date.setDate(day30Date.getDate() + 30)
                   const daysToDay15 = Math.max(0, Math.ceil((day15Date - new Date()) / (1000 * 60 * 60 * 24)))
                   const daysToDay30 = Math.max(0, Math.ceil((day30Date - new Date()) / (1000 * 60 * 60 * 24)))
-
                   return (
                     <div key={loan.id} style={{ background: phaseBg, border: `1px solid ${phaseBorder}`, borderRadius: 12, padding: '16px 18px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12, marginBottom: 12 }}>
@@ -749,8 +784,6 @@ export default function DashboardPage() {
                           <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Day {days}</span>
                         </div>
                       </div>
-
-                      {/* Balance breakdown */}
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: 10, marginBottom: 12 }}>
                         {[
                           { label: 'Principal', value: formatCurrency(loan.loan_amount), color: 'var(--text-primary)' },
@@ -765,8 +798,6 @@ export default function DashboardPage() {
                           </div>
                         ))}
                       </div>
-
-                      {/* Timeline */}
                       <div style={{ display: 'flex', gap: 12, fontSize: 11, color: 'var(--text-muted)', flexWrap: 'wrap' }}>
                         <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                           <span style={{ width: 6, height: 6, borderRadius: '50%', background: days <= 15 ? 'var(--green)' : 'var(--red)', display: 'inline-block' }} />
@@ -778,16 +809,15 @@ export default function DashboardPage() {
                           Day 30: {day30Date.toLocaleDateString('en-PH', { month: 'short', day: 'numeric' })}
                           {days <= 30 ? ` · ${daysToDay30} day${daysToDay30 !== 1 ? 's' : ''} left` : ' · PAST DEADLINE'}
                         </span>
-                        <span>₱{dailyInterest.toFixed(2)}/day interest · {penalty > 0 ? `₱25/day penalty` : 'no penalty yet'}</span>
+                        <span>₱{dailyInterest.toFixed(2)}/day · {penalty > 0 ? '₱25/day penalty' : 'no penalty yet'}</span>
                       </div>
                     </div>
                   )
                 })}
               </div>
             ) : (
-              <div style={{ padding: '32px', textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>
-                No active QuickLoans right now.{' '}
-                <a href="/admin/loans" style={{ color: '#F59E0B', textDecoration: 'none', fontWeight: 600 }}>Create one from the Loans page →</a>
+              <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>
+                No active QuickLoans.
               </div>
             )}
           </div>

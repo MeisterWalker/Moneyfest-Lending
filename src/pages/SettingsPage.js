@@ -106,6 +106,57 @@ function LoanConfigSection({ settings, onSave }) {
   )
 }
 
+// ─── QuickLoan Config ──────────────────────────────────────────
+function QuickLoanConfigSection({ settings, onSave }) {
+  const [form, setForm] = useState({ ql_starting_capital: '' })
+  const [saved, setSaved] = useState(false)
+
+  useEffect(() => {
+    if (settings) setForm({ ql_starting_capital: settings.ql_starting_capital || 0 })
+  }, [settings])
+
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
+
+  const handleSave = async () => {
+    await onSave({ ql_starting_capital: parseFloat(form.ql_starting_capital) || 0 })
+    setSaved(true)
+    setTimeout(() => setSaved(false), 2000)
+  }
+
+  const qlCapital = parseFloat(form.ql_starting_capital) || 0
+  const projMonthly = qlCapital * 0.10
+  const projYearly = projMonthly * 12
+
+  return (
+    <Section icon={Sliders} title="⚡ QuickLoan Configuration" color="#F59E0B">
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 18, marginBottom: 20 }}>
+        <div className="form-group">
+          <label className="form-label">QuickLoan Capital Pool (₱)</label>
+          <input type="number" min="0" step="500" value={form.ql_starting_capital} onChange={e => set('ql_starting_capital', e.target.value)} />
+          <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>Separate from installment loan capital</div>
+        </div>
+      </div>
+      {qlCapital > 0 && (
+        <div style={{ background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.15)', borderRadius: 10, padding: '14px 18px', marginBottom: 18, display: 'flex', gap: 30, flexWrap: 'wrap' }}>
+          <div>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 3 }}>Projected monthly profit</div>
+            <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 18, color: '#F59E0B' }}>{formatCurrency(projMonthly)}</div>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>at 10%/month</div>
+          </div>
+          <div>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 3 }}>Projected yearly profit</div>
+            <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 18, color: 'var(--green)' }}>{formatCurrency(projYearly)}</div>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>with full reinvestment</div>
+          </div>
+        </div>
+      )}
+      <button onClick={handleSave} className="btn-primary" style={{ gap: 8 }}>
+        {saved ? <><Check size={15} /> Saved!</> : <><Save size={15} /> Save QuickLoan Config</>}
+      </button>
+    </Section>
+  )
+}
+
 // ─── Departments ──────────────────────────────────────────────
 function DepartmentsSection({ departments, onRefresh, adminEmail }) {
   const [newDept, setNewDept] = useState('')
@@ -451,6 +502,30 @@ function DangerZoneSection({ loans, adminEmail, onReset }) {
         )}
       </div>
 
+      {/* QuickLoan Dashboard Reset */}
+      <div style={{ background: 'rgba(245,158,11,0.04)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 12, padding: '20px 22px', marginTop: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+          <div>
+            <div style={{ fontWeight: 600, fontSize: 15, marginBottom: 6, color: 'var(--text-primary)' }}>⚡ Reset QuickLoan Dashboard</div>
+            <div style={{ fontSize: 13, color: 'var(--text-label)', maxWidth: 500 }}>
+              Resets the QuickLoan capital tracking date. Sets a new baseline for profit calculations.
+              <strong style={{ color: 'var(--text-primary)' }}> Does NOT delete any QuickLoan records.</strong>
+            </div>
+          </div>
+          <button
+            onClick={async () => {
+              if (!window.confirm('Reset the QuickLoan dashboard? This will set a new tracking start date. No loans will be deleted.')) return
+              await supabase.from('settings').update({ ql_last_reset_date: new Date().toISOString() }).eq('id', 1)
+              await logAudit({ action_type: 'QL_DASHBOARD_RESET', module: 'Settings', description: 'QuickLoan dashboard reset performed.', changed_by: adminEmail })
+              alert('QuickLoan dashboard reset complete.')
+            }}
+            style={{ background: 'rgba(245,158,11,0.15)', color: '#F59E0B', border: '1px solid rgba(245,158,11,0.3)', borderRadius: 8, padding: '8px 18px', cursor: 'pointer', fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap' }}
+          >
+            Reset QuickLoan Dashboard
+          </button>
+        </div>
+      </div>
+
       {/* Manual archive download */}
       <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 18px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--card-border)', borderRadius: 10 }}>
         <div>
@@ -781,6 +856,7 @@ export default function SettingsPage() {
       </div>
 
       <LoanConfigSection settings={settings} onSave={handleSaveConfig} />
+      <QuickLoanConfigSection settings={settings} onSave={handleSaveConfig} />
       <SecuritySection settings={settings} onSave={handleSaveConfig} />
       <DepartmentsSection departments={departments} onRefresh={fetchData} adminEmail={user?.email} />
       <EmailSection adminEmail={user?.email} />
