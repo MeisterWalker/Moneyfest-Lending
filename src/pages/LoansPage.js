@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { CREDIT_CONFIG, getBadgeFromScore, getBadgeFromCleanLoans, calcSecurityHold, getSecurityHoldRate } from '../lib/creditSystem'
-import { logAudit, formatCurrency, formatDate, getInstallmentDates, getNumInstallments } from '../lib/helpers'
+import { logAudit, formatCurrency, formatDate, getInstallmentDates, getNumInstallments, calcQuickLoanBalance, getQuickLoanDueDates, QUICKLOAN_CONFIG, getQuickLoanDaysElapsed } from '../lib/helpers'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../components/Toast'
 import LoanModal from '../components/LoanModal'
@@ -144,7 +144,7 @@ function StatusBadge({ status }) {
   )
 }
 
-function LoanCard({ loan: rawLoan, borrowers, onEdit, onDelete, onRecordPayment, onDefault, onRenew }) {
+function LoanCard({ loan: rawLoan, borrowers, onEdit, onDelete, onRecordPayment, onDefault, onRenew, onQuickLoanPayoff, onQuickLoanDay15Missed }) {
   const [expanded, setExpanded] = useState(false)
   const [confirming, setConfirming] = useState(false)
   // Normalize installment to whole peso — handles loans created before rounding was added
@@ -159,7 +159,7 @@ function LoanCard({ loan: rawLoan, borrowers, onEdit, onDelete, onRecordPayment,
   const today = new Date()
   today.setHours(0, 0, 0, 0)
 
-
+  const isQuickLoan = loan.loan_type === 'quickloan'
 
   const nextInstallment = loan.payments_made + 1
   const canPay = loan.status === 'Active' || loan.status === 'Partially Paid'
@@ -168,12 +168,17 @@ function LoanCard({ loan: rawLoan, borrowers, onEdit, onDelete, onRecordPayment,
     ? Math.ceil((new Date(loan.release_date) - today) / (1000 * 60 * 60 * 24))
     : null
 
+  // QuickLoan live balance
+  const qlBalance = isQuickLoan && loan.release_date && loan.status !== 'Paid'
+    ? calcQuickLoanBalance(loan)
+    : null
+
   // Get next installment due date using shared helper
   const allDates = getInstallmentDates(loan.release_date, loan.num_installments || 4)
   const nextDue = allDates[loan.payments_made] || null
 
   return (
-    <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+    <div className="card" style={{ padding: 0, overflow: 'hidden', borderColor: isQuickLoan ? 'rgba(245,158,11,0.2)' : undefined }}>
       {/* Card header */}
       <div style={{ padding: '20px 22px' }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 14 }}>
@@ -183,6 +188,11 @@ function LoanCard({ loan: rawLoan, borrowers, onEdit, onDelete, onRecordPayment,
                 {formatCurrency(loan.loan_amount)}
               </span>
               <StatusBadge status={loan.status} />
+              {isQuickLoan && (
+                <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.3)', color: '#F59E0B' }}>
+                  ⚡ QuickLoan
+                </span>
+              )}
               {loan.status === 'Overdue' && (
                 <span style={{ fontSize: 11, color: 'var(--gold)', display: 'flex', alignItems: 'center', gap: 3 }}>
                   <AlertTriangle size={12} /> Overdue
@@ -264,20 +274,53 @@ function LoanCard({ loan: rawLoan, borrowers, onEdit, onDelete, onRecordPayment,
       {/* Expanded details */}
       {expanded && (
         <div style={{ borderTop: '1px solid var(--card-border)', padding: '16px 22px', background: 'rgba(255,255,255,0.01)' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 14 }}>
-            {[
-              { label: 'Installment', value: formatCurrency(loan.installment_amount) },
-              { label: 'Payments Made', value: `${loan.payments_made} of ${loan.num_installments || 4}` },
-              { label: 'Remaining', value: formatCurrency(loan.remaining_balance) },
-              { label: 'Final Due', value: (() => { try { const d = loan.release_date ? (() => { const [y,m,dy] = loan.release_date.split('-').map(Number); const rel = new Date(y,m-1,dy); let fd = new Date(rel); for(let i=1;i<=4;i++){if(rel.getDate()<=5){fd=new Date(rel.getFullYear(),rel.getMonth()+Math.floor((i-1)/2),i%2===1?20:5);if(i%2===0)fd.setMonth(fd.getMonth()+1)}else{fd=new Date(rel.getFullYear(),rel.getMonth()+Math.ceil(i/2),i%2===1?5:20)}} return fd.toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'}) })() : '—'; return d } catch(e){return '—'} })() },
-              { label: 'Security Hold', value: loan.security_hold > 0 ? `${formatCurrency(loan.security_hold)} ${loan.security_hold_returned ? '(returned)' : '(held)'}` : '—' },
-            ].map(item => (
-              <div key={item.label}>
-                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 3, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{item.label}</div>
-                <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{item.value}</div>
+          {isQuickLoan && qlBalance ? (
+            /* ── QuickLoan live balance panel ── */
+            <div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 14, marginBottom: 14 }}>
+                {[
+                  { label: 'Principal', value: formatCurrency(qlBalance.principal) },
+                  { label: 'Days Elapsed', value: `${qlBalance.daysElapsed} days` },
+                  { label: 'Accrued Interest', value: formatCurrency(qlBalance.accruedInterest), color: 'var(--gold)' },
+                  { label: 'Total Owed Now', value: formatCurrency(qlBalance.totalOwed), color: qlBalance.phase === 'penalty' ? 'var(--red)' : 'var(--gold)' },
+                  { label: 'Extension Fee', value: qlBalance.extensionFee > 0 ? formatCurrency(qlBalance.extensionFee) : '—' },
+                  { label: 'Penalty Accrued', value: qlBalance.penaltyAccrued > 0 ? formatCurrency(qlBalance.penaltyAccrued) : '—', color: qlBalance.penaltyAccrued > 0 ? 'var(--red)' : undefined },
+                ].map(item => (
+                  <div key={item.label}>
+                    <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 3, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{item.label}</div>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: item.color || 'var(--text-primary)' }}>{item.value}</div>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+              {/* Phase indicator */}
+              <div style={{
+                padding: '10px 14px', borderRadius: 8, fontSize: 12, display: 'flex', alignItems: 'center', gap: 8,
+                background: qlBalance.phase === 'penalty' ? 'rgba(239,68,68,0.06)' : qlBalance.phase === 'extended' ? 'rgba(245,158,11,0.06)' : 'rgba(34,197,94,0.06)',
+                border: `1px solid ${qlBalance.phase === 'penalty' ? 'rgba(239,68,68,0.25)' : qlBalance.phase === 'extended' ? 'rgba(245,158,11,0.25)' : 'rgba(34,197,94,0.2)'}`,
+                color: qlBalance.phase === 'penalty' ? 'var(--red)' : qlBalance.phase === 'extended' ? 'var(--gold)' : 'var(--green)'
+              }}>
+                {qlBalance.phase === 'penalty' && <><AlertTriangle size={13} /><span>⚠️ Past Day 30 hard deadline — ₱25/day penalty accruing on top of daily interest</span></>}
+                {qlBalance.phase === 'extended' && <><AlertTriangle size={13} /><span>Day 15 missed — extension period active. ₱100 extension fee {loan.extension_fee_charged ? 'charged' : 'pending'}. Hard deadline: {loan.release_date ? (() => { const { day30 } = getQuickLoanDueDates(loan.release_date); return day30?.toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' }) })() : '—'}</span></>}
+                {qlBalance.phase === 'active' && <><CheckCircle size={13} /><span>Active — Day 15 target: {loan.release_date ? (() => { const { day15 } = getQuickLoanDueDates(loan.release_date); return day15?.toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' }) })() : '—'} · ₱{parseFloat((loan.loan_amount * QUICKLOAN_CONFIG.DAILY_RATE).toFixed(2)).toLocaleString()}/day accruing</span></>}
+              </div>
+            </div>
+          ) : (
+            /* ── Regular loan details ── */
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 14 }}>
+              {[
+                { label: 'Installment', value: formatCurrency(loan.installment_amount) },
+                { label: 'Payments Made', value: `${loan.payments_made} of ${loan.num_installments || 4}` },
+                { label: 'Remaining', value: formatCurrency(loan.remaining_balance) },
+                { label: 'Final Due', value: (() => { try { const d = loan.release_date ? (() => { const [y,m,dy] = loan.release_date.split('-').map(Number); const rel = new Date(y,m-1,dy); let fd = new Date(rel); for(let i=1;i<=4;i++){if(rel.getDate()<=5){fd=new Date(rel.getFullYear(),rel.getMonth()+Math.floor((i-1)/2),i%2===1?20:5);if(i%2===0)fd.setMonth(fd.getMonth()+1)}else{fd=new Date(rel.getFullYear(),rel.getMonth()+Math.ceil(i/2),i%2===1?5:20)}} return fd.toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'}) })() : '—'; return d } catch(e){return '—'} })() },
+                { label: 'Security Hold', value: loan.security_hold > 0 ? `${formatCurrency(loan.security_hold)} ${loan.security_hold_returned ? '(returned)' : '(held)'}` : '—' },
+              ].map(item => (
+                <div key={item.label}>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 3, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{item.label}</div>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{item.value}</div>
+                </div>
+              ))}
+            </div>
+          )}
           {/* LA Signature status row */}
           <div style={{ marginTop: 14, padding: '10px 14px', borderRadius: 8, fontSize: 12, display: 'flex', alignItems: 'center', gap: 8,
             background: loan.e_signature_name ? 'rgba(34,197,94,0.05)' : 'rgba(245,158,11,0.05)',
@@ -309,30 +352,69 @@ function LoanCard({ loan: rawLoan, borrowers, onEdit, onDelete, onRecordPayment,
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           {/* Record Payment */}
           {canPay && !confirming && (
-            <button
-              onClick={() => setConfirming(true)}
-              className="btn-primary"
-              style={{ fontSize: 12, padding: '6px 14px' }}
-            >
-              <CheckCircle size={13} /> Record Payment {nextInstallment} of {loan.num_installments || 4}
-            </button>
-          )}
+            {/* QuickLoan pay button */}
+            {isQuickLoan && canPay && !confirming && (
+              <button
+                onClick={() => setConfirming(true)}
+                className="btn-primary"
+                style={{ fontSize: 12, padding: '6px 14px', background: 'linear-gradient(135deg,#F59E0B,#D97706)', border: 'none' }}
+              >
+                ⚡ Record Full Payoff
+              </button>
+            )}
+
+            {/* Regular loan record payment button */}
+            {!isQuickLoan && canPay && !confirming && (
+              <button
+                onClick={() => setConfirming(true)}
+                className="btn-primary"
+                style={{ fontSize: 12, padding: '6px 14px' }}
+              >
+                <CheckCircle size={13} /> Record Payment {nextInstallment} of {loan.num_installments || 4}
+              </button>
+            )}
 
           {/* Payment confirmation inline */}
           {confirming && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 8, padding: '6px 12px', fontSize: 12 }}>
-              <span style={{ color: 'var(--text-label)' }}>
-                Confirm {formatCurrency(loan.installment_amount)} — Installment {nextInstallment} of {loan.num_installments || 4}?
-              </span>
-              <button onClick={() => { onRecordPayment(loan); setConfirming(false) }}
-                style={{ background: 'var(--green)', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 10px', cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>
-                Yes
-              </button>
-              <button onClick={() => setConfirming(false)}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 12 }}>
-                Cancel
-              </button>
-            </div>
+            isQuickLoan ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.25)', borderRadius: 8, padding: '6px 12px', fontSize: 12 }}>
+                <span style={{ color: 'var(--text-label)' }}>
+                  Collect {qlBalance ? formatCurrency(qlBalance.totalOwed) : '—'} (day {qlBalance?.daysElapsed})?
+                </span>
+                <button onClick={() => { onQuickLoanPayoff(loan); setConfirming(false) }}
+                  style={{ background: '#F59E0B', color: '#000', border: 'none', borderRadius: 6, padding: '4px 10px', cursor: 'pointer', fontSize: 12, fontWeight: 700 }}>
+                  Yes
+                </button>
+                <button onClick={() => setConfirming(false)}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 12 }}>
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 8, padding: '6px 12px', fontSize: 12 }}>
+                <span style={{ color: 'var(--text-label)' }}>
+                  Confirm {formatCurrency(loan.installment_amount)} — Installment {nextInstallment} of {loan.num_installments || 4}?
+                </span>
+                <button onClick={() => { onRecordPayment(loan); setConfirming(false) }}
+                  style={{ background: 'var(--green)', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 10px', cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>
+                  Yes
+                </button>
+                <button onClick={() => setConfirming(false)}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 12 }}>
+                  Cancel
+                </button>
+              </div>
+            )
+          )}
+
+          {/* QuickLoan Day 15 missed button */}
+          {isQuickLoan && qlBalance?.phase !== 'active' && !loan.extension_fee_charged && canPay && !confirming && (
+            <button
+              onClick={() => onQuickLoanDay15Missed(loan)}
+              style={{ fontSize: 12, padding: '6px 14px', borderRadius: 8, border: '1px solid rgba(245,158,11,0.3)', background: 'rgba(245,158,11,0.08)', color: '#F59E0B', cursor: 'pointer', fontWeight: 600 }}
+            >
+              ⚠️ Day 15 Missed — Collect Fee
+            </button>
           )}
 
           {/* Renew loan button (paid loans) */}
@@ -378,6 +460,7 @@ export default function LoansPage() {
   const [prefillLoan, setPrefillLoan] = useState(null)
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [defaultTarget, setDefaultTarget] = useState(null)
+  const [loanTypeTab, setLoanTypeTab] = useState('all')
   const { user } = useAuth()
   const { toast } = useToast()
 
@@ -437,20 +520,24 @@ export default function LoansPage() {
 
       const { error } = await supabase.from('loans').insert({
         borrower_id: form.borrower_id,
+        loan_type: form.loan_type || 'regular',
         loan_amount: form.loan_amount,
         interest_rate: form.interest_rate,
         total_repayment: form.total_repayment,
         installment_amount: form.installment_amount,
+        loan_term: form.loan_term || null,
+        num_installments: form.num_installments,
         release_date: form.release_date,
         due_date: form.due_date,
-        remaining_balance: form.total_repayment,
+        remaining_balance: form.loan_type === 'quickloan' ? form.loan_amount : form.total_repayment,
         payments_made: 0,
         status: 'Pending',
         agreement_confirmed: form.agreement_confirmed,
         notes: form.notes,
-        security_hold: hold,
-        funds_released: released,
-        security_hold_returned: false
+        security_hold: form.loan_type === 'quickloan' ? 0 : hold,
+        funds_released: form.loan_type === 'quickloan' ? form.loan_amount : released,
+        security_hold_returned: false,
+        extension_fee_charged: false
       })
       if (error) { toast('Failed to create loan', 'error'); return }
 
@@ -730,9 +817,78 @@ export default function LoansPage() {
   }
 
   const handleRenew = (loan) => {
-    setPrefillLoan({ borrower_id: loan.borrower_id, loan_amount: loan.loan_amount, interest_rate: loan.interest_rate })
+    setPrefillLoan({ borrower_id: loan.borrower_id, loan_amount: loan.loan_amount, interest_rate: loan.interest_rate, loan_type: loan.loan_type })
     setEditingLoan(null)
     setModalOpen(true)
+  }
+
+  // ── QuickLoan full payoff ─────────────────────────────────────
+  // Collects everything owed today: principal + accrued interest + extension fee + any penalty
+  const handleQuickLoanPayoff = async (loan) => {
+    const balance = calcQuickLoanBalance(loan)
+    const borrower = borrowers.find(b => b.id === loan.borrower_id)
+    const totalCollected = balance.totalOwed
+
+    const { error } = await supabase.from('loans').update({
+      status: 'Paid',
+      payments_made: 1,
+      remaining_balance: 0,
+      updated_at: new Date().toISOString()
+    }).eq('id', loan.id)
+
+    if (error) { toast('Failed to record QuickLoan payoff', 'error'); return }
+
+    // Log penalty if in penalty phase
+    if (balance.penaltyAccrued > 0) {
+      const penaltyDays = balance.daysElapsed - QUICKLOAN_CONFIG.DAY30_THRESHOLD
+      await supabase.from('penalty_charges').insert({
+        borrower_id: loan.borrower_id,
+        loan_id: loan.id,
+        installment_number: 1,
+        days_late: penaltyDays,
+        penalty_per_day: QUICKLOAN_CONFIG.PENALTY_PER_DAY,
+        penalty_amount: balance.penaltyAccrued,
+        cap_applied: false,
+        created_at: new Date().toISOString()
+      })
+    }
+
+    await logAudit({
+      action_type: 'QUICKLOAN_PAID',
+      module: 'Loan',
+      description: `QuickLoan fully paid by ${borrower?.full_name} — ₱${totalCollected.toLocaleString('en-PH', { minimumFractionDigits: 2 })} collected (principal ₱${balance.principal} + interest ₱${balance.accruedInterest}${balance.extensionFee > 0 ? ` + ext fee ₱${balance.extensionFee}` : ''}${balance.penaltyAccrued > 0 ? ` + penalty ₱${balance.penaltyAccrued}` : ''}) on day ${balance.daysElapsed}`,
+      changed_by: user?.email
+    })
+
+    toast(`✅ QuickLoan paid — ${formatCurrency(totalCollected)} collected`, 'success')
+    fetchData()
+  }
+
+  // ── QuickLoan Day 15 missed: collect interest + extension fee, roll principal ──
+  const handleQuickLoanDay15Missed = async (loan) => {
+    if (loan.extension_fee_charged) { toast('Extension fee already charged', 'info'); return }
+    const { EXTENSION_FEE, DAY15_THRESHOLD, DAILY_RATE } = QUICKLOAN_CONFIG
+    const accruedInterest = parseFloat((loan.loan_amount * DAILY_RATE * DAY15_THRESHOLD).toFixed(2))
+    const collectNow = parseFloat((accruedInterest + EXTENSION_FEE).toFixed(2))
+    const borrower = borrowers.find(b => b.id === loan.borrower_id)
+
+    const { error } = await supabase.from('loans').update({
+      extension_fee_charged: true,
+      status: 'Overdue',
+      updated_at: new Date().toISOString()
+    }).eq('id', loan.id)
+
+    if (error) { toast('Failed to record extension', 'error'); return }
+
+    await logAudit({
+      action_type: 'QUICKLOAN_DAY15_MISSED',
+      module: 'Loan',
+      description: `QuickLoan Day 15 missed for ${borrower?.full_name} — Collected ₱${collectNow} (₱${accruedInterest} interest + ₱${EXTENSION_FEE} extension fee). Principal ₱${loan.loan_amount} rolls to Day 30.`,
+      changed_by: user?.email
+    })
+
+    toast(`⚡ Collected ${formatCurrency(collectNow)} — principal rolls to Day 30`, 'success')
+    fetchData()
   }
 
   const statuses = ['All', 'Pending', 'Active', 'Partially Paid', 'Paid', 'Overdue', 'Defaulted']
@@ -740,15 +896,18 @@ export default function LoansPage() {
     const borrower = borrowers.find(b => b.id === l.borrower_id)
     const matchSearch = borrower?.full_name?.toLowerCase().includes(search.toLowerCase())
     const matchStatus = statusFilter === 'All' || l.status === statusFilter
-    return matchSearch && matchStatus
+    const matchType = loanTypeTab === 'all' || l.loan_type === loanTypeTab || (!l.loan_type && loanTypeTab === 'regular')
+    return matchSearch && matchStatus && matchType
   })
 
+  const tabLoans = (tab) => loans.filter(l => tab === 'all' || l.loan_type === tab || (!l.loan_type && tab === 'regular'))
+
   const stats = {
-    active: loans.filter(l => ['Active', 'Partially Paid'].includes(l.status)).length,
-    pending: loans.filter(l => l.status === 'Pending').length,
-    paid: loans.filter(l => l.status === 'Paid').length,
-    overdue: loans.filter(l => l.status === 'Overdue').length,
-    defaulted: loans.filter(l => l.status === 'Defaulted').length,
+    active: filtered.filter(l => ['Active', 'Partially Paid'].includes(l.status)).length,
+    pending: filtered.filter(l => l.status === 'Pending').length,
+    paid: filtered.filter(l => l.status === 'Paid').length,
+    overdue: filtered.filter(l => l.status === 'Overdue').length,
+    defaulted: filtered.filter(l => l.status === 'Defaulted').length,
   }
 
   return (
@@ -768,6 +927,38 @@ export default function LoansPage() {
             <Plus size={16} /> New Loan
           </button>
         </div>
+      </div>
+
+      {/* Loan type tabs */}
+      <div style={{ display: 'flex', gap: 4, marginBottom: 22, background: 'rgba(255,255,255,0.03)', borderRadius: 12, padding: 4, width: 'fit-content' }}>
+        {[
+          { key: 'all', label: 'All Loans', count: loans.length },
+          { key: 'regular', label: 'Regular', count: tabLoans('regular').length },
+          { key: 'quickloan', label: '⚡ QuickLoan', count: tabLoans('quickloan').length },
+        ].map(tab => (
+          <button key={tab.key} onClick={() => { setLoanTypeTab(tab.key); setStatusFilter('All') }}
+            style={{
+              padding: '7px 16px', borderRadius: 9, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600,
+              background: loanTypeTab === tab.key
+                ? tab.key === 'quickloan' ? 'rgba(245,158,11,0.15)' : 'rgba(59,130,246,0.15)'
+                : 'transparent',
+              color: loanTypeTab === tab.key
+                ? tab.key === 'quickloan' ? '#F59E0B' : 'var(--blue)'
+                : 'var(--text-muted)',
+              transition: 'all 0.15s ease', display: 'flex', alignItems: 'center', gap: 7
+            }}>
+            {tab.label}
+            <span style={{
+              fontSize: 11, fontWeight: 700, padding: '1px 7px', borderRadius: 20,
+              background: loanTypeTab === tab.key
+                ? tab.key === 'quickloan' ? 'rgba(245,158,11,0.2)' : 'rgba(59,130,246,0.2)'
+                : 'rgba(255,255,255,0.06)',
+              color: loanTypeTab === tab.key
+                ? tab.key === 'quickloan' ? '#F59E0B' : 'var(--blue)'
+                : 'var(--text-muted)'
+            }}>{tab.count}</span>
+          </button>
+        ))}
       </div>
 
       {/* Stats */}
@@ -828,6 +1019,8 @@ export default function LoansPage() {
               onDefault={setDefaultTarget}
               onRecordPayment={handleRecordPayment}
               onRenew={handleRenew}
+              onQuickLoanPayoff={handleQuickLoanPayoff}
+              onQuickLoanDay15Missed={handleQuickLoanDay15Missed}
             />
           ))}
         </div>

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
-import { formatCurrency, formatDate, getInstallmentDates, formatDateValue } from '../lib/helpers'
+import { formatCurrency, formatDate, getInstallmentDates, formatDateValue, getQuickLoanDueDates, calcQuickLoanBalance, QUICKLOAN_CONFIG } from '../lib/helpers'
 import { Calendar, List, ChevronLeft, ChevronRight, CheckCircle, Clock, AlertTriangle, Mail, Send, X } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { sendBulkReminders } from '../lib/emailService'
@@ -9,20 +9,52 @@ function toLocalDateKey(date) {
   return formatDateValue(date)
 }
 
-function buildSchedule(loans, borrowers) {
+function buildSchedule(loans, borrowers, loanTypeFilter = 'all') {
   const events = []
   for (const loan of loans) {
     if (!['Pending', 'Active', 'Partially Paid', 'Overdue'].includes(loan.status)) continue
+    const loanType = loan.loan_type || 'regular'
+    if (loanTypeFilter !== 'all' && loanType !== loanTypeFilter) continue
     const borrower = borrowers.find(b => b.id === loan.borrower_id)
-    const dates = getInstallmentDates(loan.release_date, loan.num_installments || 4)
-    dates.forEach((date, i) => {
-      const installmentNum = i + 1
-      const isPaid = installmentNum <= loan.payments_made
-      const isNext = installmentNum === loan.payments_made + 1
+
+    if (loanType === 'quickloan') {
+      // QuickLoan: show Day 15 and Day 30 as events
+      const { day15, day30 } = getQuickLoanDueDates(loan.release_date)
       const today = new Date(); today.setHours(0, 0, 0, 0)
-      const isPast = date < today && !isPaid
-      events.push({ date, dateKey: toLocalDateKey(date), loan, borrower, installmentNum, isPaid, isNext, isPast, amount: loan.installment_amount })
-    })
+      if (day15) {
+        const isPaid = loan.payments_made >= 1
+        const isPast = day15 < today && !isPaid
+        const isNext = !isPaid
+        const balance = calcQuickLoanBalance(loan)
+        events.push({
+          date: day15, dateKey: toLocalDateKey(day15), loan, borrower,
+          installmentNum: 1, isPaid, isNext, isPast,
+          amount: parseFloat((loan.loan_amount + loan.loan_amount * QUICKLOAN_CONFIG.DAILY_RATE * 15).toFixed(2)),
+          isQuickLoan: true, label: 'Day 15 Target', balance
+        })
+      }
+      if (day30) {
+        const isPaid = loan.payments_made >= 1
+        const isPast = day30 < today && !isPaid
+        const isNext = !isPaid && loan.extension_fee_charged
+        events.push({
+          date: day30, dateKey: toLocalDateKey(day30), loan, borrower,
+          installmentNum: 1, isPaid, isNext, isPast,
+          amount: parseFloat((loan.loan_amount + loan.loan_amount * QUICKLOAN_CONFIG.DAILY_RATE * 30 + (loan.extension_fee_charged ? QUICKLOAN_CONFIG.EXTENSION_FEE : 0)).toFixed(2)),
+          isQuickLoan: true, label: 'Day 30 Deadline', isDeadline: true
+        })
+      }
+    } else {
+      const dates = getInstallmentDates(loan.release_date, loan.num_installments || 4)
+      dates.forEach((date, i) => {
+        const installmentNum = i + 1
+        const isPaid = installmentNum <= loan.payments_made
+        const isNext = installmentNum === loan.payments_made + 1
+        const today = new Date(); today.setHours(0, 0, 0, 0)
+        const isPast = date < today && !isPaid
+        events.push({ date, dateKey: toLocalDateKey(date), loan, borrower, installmentNum, isPaid, isNext, isPast, amount: loan.installment_amount, isQuickLoan: false })
+      })
+    }
   }
   return events.sort((a, b) => a.date - b.date)
 }
@@ -297,17 +329,25 @@ function AgendaView({ events }) {
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   {dayEvents.map((ev, i) => (
-                    <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--card-border)', borderRadius: 8 }}>
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px', background: ev.isQuickLoan ? 'rgba(245,158,11,0.04)' : 'rgba(255,255,255,0.02)', border: `1px solid ${ev.isDeadline ? 'rgba(239,68,68,0.25)' : ev.isQuickLoan ? 'rgba(245,158,11,0.2)' : 'var(--card-border)'}`, borderRadius: 8 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                         <Clock size={13} color="var(--text-muted)" />
                         <div>
-                          <div style={{ fontSize: 13, fontWeight: 500 }}>{ev.borrower?.full_name}</div>
-                          <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{ev.borrower?.department} · Installment {ev.installmentNum} of {ev.loan?.num_installments || 4}</div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13, fontWeight: 500 }}>
+                            {ev.borrower?.full_name}
+                            {ev.isQuickLoan && <span style={{ fontSize: 10, fontWeight: 700, padding: '1px 6px', borderRadius: 10, background: ev.isDeadline ? 'rgba(239,68,68,0.15)' : 'rgba(245,158,11,0.15)', color: ev.isDeadline ? 'var(--red)' : '#F59E0B', border: `1px solid ${ev.isDeadline ? 'rgba(239,68,68,0.3)' : 'rgba(245,158,11,0.3)'}` }}>⚡ {ev.label}</span>}
+                          </div>
+                          <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                            {ev.isQuickLoan
+                              ? `${ev.borrower?.department} · QuickLoan · ${ev.isDeadline ? 'Hard deadline' : 'Target due date'}`
+                              : `${ev.borrower?.department} · Installment ${ev.installmentNum} of ${ev.loan?.num_installments || 4}`
+                            }
+                          </div>
                         </div>
                       </div>
                       <div style={{ textAlign: 'right' }}>
-                        <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{formatCurrency(ev.amount)}</div>
-                        <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Loan: {formatCurrency(ev.loan.loan_amount)}</div>
+                        <div style={{ fontWeight: 700, color: ev.isDeadline ? 'var(--red)' : ev.isQuickLoan ? '#F59E0B' : 'var(--text-primary)' }}>{formatCurrency(ev.amount)}</div>
+                        <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Principal: {formatCurrency(ev.loan.loan_amount)}</div>
                       </div>
                     </div>
                   ))}
@@ -328,6 +368,7 @@ export default function CollectionPage() {
   const [view, setView] = useState('agenda')
   const [currentMonth, setCurrentMonth] = useState(new Date())
   const [showEmailModal, setShowEmailModal] = useState(false)
+  const [loanTypeFilter, setLoanTypeFilter] = useState('all')
   const navigate = useNavigate()
 
   const fetchData = useCallback(async () => {
@@ -352,7 +393,7 @@ export default function CollectionPage() {
     })
   }
 
-  const events = buildSchedule(loans, borrowers)
+  const events = buildSchedule(loans, borrowers, loanTypeFilter)
   const today = new Date(); today.setHours(0, 0, 0, 0)
   const upcomingCount = events.filter(e => !e.isPaid && e.date >= today).length
   const overdueCount = events.filter(e => e.isPast).length
@@ -384,6 +425,29 @@ export default function CollectionPage() {
             ))}
           </div>
         </div>
+      </div>
+
+      {/* Loan type filter */}
+      <div style={{ display: 'flex', gap: 4, marginBottom: 20, background: 'rgba(255,255,255,0.03)', borderRadius: 12, padding: 4, width: 'fit-content' }}>
+        {[
+          { key: 'all', label: 'All' },
+          { key: 'regular', label: 'Regular' },
+          { key: 'quickloan', label: '⚡ QuickLoan' },
+        ].map(tab => (
+          <button key={tab.key} onClick={() => setLoanTypeFilter(tab.key)}
+            style={{
+              padding: '7px 16px', borderRadius: 9, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600,
+              background: loanTypeFilter === tab.key
+                ? tab.key === 'quickloan' ? 'rgba(245,158,11,0.15)' : 'rgba(59,130,246,0.15)'
+                : 'transparent',
+              color: loanTypeFilter === tab.key
+                ? tab.key === 'quickloan' ? '#F59E0B' : 'var(--blue)'
+                : 'var(--text-muted)',
+              transition: 'all 0.15s ease'
+            }}>
+            {tab.label}
+          </button>
+        ))}
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 14, marginBottom: 24 }}>

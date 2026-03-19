@@ -141,8 +141,18 @@ function ApplicationCard({ app, onApprove, onReject }) {
                 <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 24, color: '#22C55E' }}>₱{app.loan_amount?.toLocaleString()}</div>
               </div>
               <div style={{ textAlign: 'right' }}>
-                <div style={{ fontSize: 11, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Est. Installment · {app.loan_term || 2}-month term</div>
-                <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 18, color: '#F0F4FF' }}>₱{Math.ceil(app.loan_amount * (1 + 0.07 * (app.loan_term || 2)) / ((app.loan_term || 2) * 2)).toLocaleString('en-PH')}/cutoff</div>
+                {app.loan_type === 'quickloan' ? (
+                  <>
+                    <div style={{ marginBottom: 4 }}><span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 10, background: 'rgba(245,158,11,0.15)', color: '#F59E0B', border: '1px solid rgba(245,158,11,0.3)' }}>⚡ QuickLoan</span></div>
+                    <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 15, color: '#F0F4FF' }}>₱{(app.loan_amount * 0.1 / 30).toFixed(2)}/day interest</div>
+                    <div style={{ fontSize: 11, color: '#4B5580' }}>Day 15 target · max ₱3,000</div>
+                  </>
+                ) : (
+                  <>
+                    <div style={{ fontSize: 11, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Est. Installment · {app.loan_term || 2}-month term</div>
+                    <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 18, color: '#F0F4FF' }}>₱{Math.ceil(app.loan_amount * (1 + 0.07 * (app.loan_term || 2)) / ((app.loan_term || 2) * 2)).toLocaleString('en-PH')}/cutoff</div>
+                  </>
+                )}
               </div>
             </div>
             {app.loan_purpose && (

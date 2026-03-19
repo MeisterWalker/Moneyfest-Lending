@@ -205,6 +205,91 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ── CHOOSE YOUR LOAN ─────────────────────────────────── */}
+      <section style={{ padding: '80px 32px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+        <div style={{ maxWidth: 1080, margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: 48 }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 14px', borderRadius: 20, background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.25)', marginBottom: 16 }}>
+              <span style={{ fontSize: 11, fontWeight: 700, color: '#F59E0B', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Two Loan Types</span>
+            </div>
+            <h2 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 900, fontSize: 'clamp(28px,4vw,44px)', color: '#F0F4FF', letterSpacing: -1, margin: '0 0 12px' }}>
+              Pick the right loan<br />for your situation.
+            </h2>
+            <p style={{ fontSize: 15, color: '#7A8AAA', maxWidth: 480, margin: '0 auto', lineHeight: 1.7 }}>
+              Need cash fast for a few weeks? QuickLoan. Need more for a bigger expense over 2–3 months? Regular Loan. Both are fair, digital, and exclusive to our team.
+            </p>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, maxWidth: 860, margin: '0 auto' }}>
+
+            {/* Regular Loan card */}
+            <div style={{ background: 'rgba(59,130,246,0.05)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: 24, padding: '32px 28px' }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, marginBottom: 20, padding: '5px 14px', borderRadius: 20, background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.25)' }}>
+                <img src="/money.png" alt="" style={{ width: 14, height: 14, objectFit: 'contain' }} />
+                <span style={{ fontSize: 11, fontWeight: 700, color: '#60A5FA', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Regular Loan</span>
+              </div>
+              <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 900, fontSize: 36, color: '#F0F4FF', letterSpacing: -1, marginBottom: 4 }}>Up to ₱10,000</div>
+              <div style={{ fontSize: 13, color: '#7A8AAA', marginBottom: 24 }}>7% monthly · 2–3 month term</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 28 }}>
+                {[
+                  '4 or 6 semi-monthly installments',
+                  'Pay every 5th & 20th of the month',
+                  'Fixed repayment — no surprises',
+                  'Earn loyalty tiers & higher limits',
+                  'Security Hold returned after full payment',
+                ].map((f, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 9, fontSize: 13, color: '#8892B0' }}>
+                    <div style={{ width: 16, height: 16, borderRadius: '50%', background: 'rgba(59,130,246,0.15)', border: '1px solid rgba(59,130,246,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
+                      <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#60A5FA' }} />
+                    </div>
+                    {f}
+                  </div>
+                ))}
+              </div>
+              <div style={{ padding: '12px 16px', background: 'rgba(59,130,246,0.08)', borderRadius: 12, fontSize: 12, color: '#60A5FA', marginBottom: 20 }}>
+                💡 Best for: Bills, tuition, rent, medical — anything that needs a bigger amount repaid gradually.
+              </div>
+              <a href="/apply" style={{ display: 'block', textAlign: 'center', padding: '13px', borderRadius: 12, background: 'rgba(59,130,246,0.15)', border: '1px solid rgba(59,130,246,0.3)', color: '#60A5FA', textDecoration: 'none', fontSize: 14, fontWeight: 700, fontFamily: 'Syne, sans-serif' }}>
+                Apply for Regular Loan →
+              </a>
+            </div>
+
+            {/* QuickLoan card */}
+            <div style={{ background: 'rgba(245,158,11,0.05)', border: '1px solid rgba(245,158,11,0.25)', borderRadius: 24, padding: '32px 28px', position: 'relative' }}>
+              <div style={{ position: 'absolute', top: 16, right: 16, padding: '3px 10px', borderRadius: 20, background: '#F59E0B', fontSize: 10, fontWeight: 800, color: '#000', letterSpacing: '0.06em' }}>NEW</div>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, marginBottom: 20, padding: '5px 14px', borderRadius: 20, background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.3)' }}>
+                <span style={{ fontSize: 13 }}>⚡</span>
+                <span style={{ fontSize: 11, fontWeight: 700, color: '#F59E0B', letterSpacing: '0.08em', textTransform: 'uppercase' }}>QuickLoan</span>
+              </div>
+              <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 900, fontSize: 36, color: '#F0F4FF', letterSpacing: -1, marginBottom: 4 }}>Up to ₱3,000</div>
+              <div style={{ fontSize: 13, color: '#7A8AAA', marginBottom: 24 }}>10% monthly · pay any time · daily interest</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 28 }}>
+                {[
+                  'Pay anytime — interest stops when you pay',
+                  'Target due: Day 15 from release',
+                  '₱10/day on ₱3,000 · ₱3.33/day on ₱1,000',
+                  '₱100 extension fee if Day 15 is missed',
+                  'No Security Hold — receive full amount',
+                ].map((f, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 9, fontSize: 13, color: '#8892B0' }}>
+                    <div style={{ width: 16, height: 16, borderRadius: '50%', background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
+                      <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#F59E0B' }} />
+                    </div>
+                    {f}
+                  </div>
+                ))}
+              </div>
+              <div style={{ padding: '12px 16px', background: 'rgba(245,158,11,0.08)', borderRadius: 12, fontSize: 12, color: '#F59E0B', marginBottom: 20 }}>
+                💡 Best for: Short cash gaps — a week before payday, a quick emergency, something small and immediate.
+              </div>
+              <a href="/apply" style={{ display: 'block', textAlign: 'center', padding: '13px', borderRadius: 12, background: 'rgba(245,158,11,0.15)', border: '1px solid rgba(245,158,11,0.35)', color: '#F59E0B', textDecoration: 'none', fontSize: 14, fontWeight: 700, fontFamily: 'Syne, sans-serif' }}>
+                Apply for QuickLoan →
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ── FEATURES ────────────────────────────────────────── */}
       <section style={{ padding: '80px 32px', position: 'relative' }}>
         <div style={{ maxWidth: 1080, margin: '0 auto' }}>

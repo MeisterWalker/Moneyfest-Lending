@@ -184,6 +184,7 @@ export default function PublicApplyPage() {
 
   const [form, setForm] = useState({
     full_name: '', department: '', tenure_years: '', phone: '', email: '', address: '',
+    loan_type: 'regular',
     loan_amount: '', loan_purpose: '', release_method: '', loan_term: 2,
     gcash_number: '', gcash_name: '', bank_account_number: '', bank_account_confirm: '', bank_account_holder: '', bank_name: '',
     agreed: false
@@ -278,9 +279,10 @@ export default function PublicApplyPage() {
       phone: form.phone.trim(),
       email: form.email.trim(),
       address: form.address.trim(),
+      loan_type: form.loan_type || 'regular',
       loan_amount: parseFloat(form.loan_amount),
       loan_purpose: form.loan_purpose.trim(),
-      loan_term: form.loan_term || 2,
+      loan_term: form.loan_type === 'quickloan' ? null : (form.loan_term || 2),
       release_method: form.release_method,
       gcash_number: form.gcash_number.trim() || null,
       gcash_name: form.gcash_name.trim() || null,
@@ -566,6 +568,32 @@ export default function PublicApplyPage() {
             {step === 3 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 
+                {/* Loan Type Selector */}
+                <div style={cardStyle}>
+                  <div style={cardHeader}>
+                    <div style={{ width: 36, height: 36, borderRadius: 9, background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>⚡</div>
+                    <div><div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 15, color: '#F0F4FF' }}>Loan Type</div><div style={{ fontSize: 11, color: '#4B5580', marginTop: 1 }}>Choose the right loan for your need</div></div>
+                  </div>
+                  <div style={cardBody}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                      {[
+                        { value: 'regular', label: 'Regular Loan', sub: 'Up to ₱10,000 · 2–3 months · semi-monthly payments', color: '#3B82F6' },
+                        { value: 'quickloan', label: '⚡ QuickLoan', sub: 'Up to ₱3,000 · pay anytime · daily interest · Day 15 target', color: '#F59E0B' },
+                      ].map(opt => (
+                        <button key={opt.value} onClick={() => { set('loan_type', opt.value); set('loan_amount', '') }}
+                          style={{
+                            border: `2px solid ${form.loan_type === opt.value ? opt.color : 'rgba(255,255,255,0.07)'}`,
+                            background: form.loan_type === opt.value ? `${opt.color}18` : 'rgba(255,255,255,0.02)',
+                            borderRadius: 10, padding: '14px 16px', cursor: 'pointer', textAlign: 'left', transition: 'all 0.15s'
+                          }}>
+                          <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 14, color: form.loan_type === opt.value ? opt.color : '#7A8AAA', marginBottom: 4 }}>{opt.label}</div>
+                          <div style={{ fontSize: 11, color: '#4B5580', lineHeight: 1.5 }}>{opt.sub}</div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
                 {/* Loan Amount card */}
                 <div style={cardStyle}>
                   <div style={cardHeader}>
@@ -573,36 +601,60 @@ export default function PublicApplyPage() {
                     <div><div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 15, color: '#F0F4FF' }}>Loan Amount</div><div style={{ fontSize: 11, color: '#4B5580', marginTop: 1 }}>Select how much you need</div></div>
                   </div>
                   <div style={cardBody}>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10, marginBottom: 14 }}>
-                      {LOAN_AMOUNTS.map(amt => (
-                        <button key={amt} className="amt-btn" onClick={() => form.loan_amount === amt ? null : startDisclaimer(amt)}
-                          style={{ border: `2px solid ${form.loan_amount === amt ? '#3B82F6' : 'rgba(255,255,255,0.07)'}`, background: form.loan_amount === amt ? 'rgba(59,130,246,0.12)' : 'rgba(255,255,255,0.02)' }}>
-                          <div style={{ fontFamily: 'Space Grotesk', fontWeight: 900, fontSize: 18, color: form.loan_amount === amt ? '#22C55E' : '#7A8AAA' }}>₱{amt.toLocaleString()}</div>
-                          <div style={{ fontSize: 10, color: '#4B5580', marginTop: 2 }}>₱{Math.ceil(amt * (1 + interestRate * form.loan_term) / (form.loan_term * 2)).toLocaleString('en-PH')}/cutoff</div>
-                        </button>
-                      ))}
-                    </div>
+                    {form.loan_type === 'quickloan' ? (
+                      /* QuickLoan amounts */
+                      <div>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10, marginBottom: 14 }}>
+                          {[1000, 2000, 3000].map(amt => (
+                            <button key={amt} className="amt-btn" onClick={() => set('loan_amount', amt)}
+                              style={{ border: `2px solid ${form.loan_amount === amt ? '#F59E0B' : 'rgba(255,255,255,0.07)'}`, background: form.loan_amount === amt ? 'rgba(245,158,11,0.1)' : 'rgba(255,255,255,0.02)' }}>
+                              <div style={{ fontFamily: 'Space Grotesk', fontWeight: 900, fontSize: 18, color: form.loan_amount === amt ? '#F59E0B' : '#7A8AAA' }}>₱{amt.toLocaleString()}</div>
+                              <div style={{ fontSize: 10, color: '#4B5580', marginTop: 2 }}>₱{(amt * 0.1 / 30).toFixed(2)}/day</div>
+                              <div style={{ fontSize: 10, color: '#4B5580' }}>₱{(amt + amt * 0.1 / 30 * 15).toFixed(0)} at Day 15</div>
+                            </button>
+                          ))}
+                        </div>
+                        <div style={{ padding: '10px 14px', background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 10, fontSize: 12, color: '#7A8AAA', lineHeight: 1.7 }}>
+                          ⚡ <strong style={{ color: '#F59E0B' }}>QuickLoan:</strong> Interest accrues daily at 10%/month. Pay any time — the earlier you pay, the less you owe. Target due date is <strong style={{ color: '#F0F4FF' }}>Day 15</strong> from release. Hard deadline is Day 30. A ₱100 extension fee applies if Day 15 is missed.
+                        </div>
+                      </div>
+                    ) : (
+                      /* Regular loan amounts */
+                      <div>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10, marginBottom: 14 }}>
+                          {LOAN_AMOUNTS.map(amt => (
+                            <button key={amt} className="amt-btn" onClick={() => form.loan_amount === amt ? null : startDisclaimer(amt)}
+                              style={{ border: `2px solid ${form.loan_amount === amt ? '#3B82F6' : 'rgba(255,255,255,0.07)'}`, background: form.loan_amount === amt ? 'rgba(59,130,246,0.12)' : 'rgba(255,255,255,0.02)' }}>
+                              <div style={{ fontFamily: 'Space Grotesk', fontWeight: 900, fontSize: 18, color: form.loan_amount === amt ? '#22C55E' : '#7A8AAA' }}>₱{amt.toLocaleString()}</div>
+                              <div style={{ fontSize: 10, color: '#4B5580', marginTop: 2 }}>₱{Math.ceil(amt * (1 + interestRate * form.loan_term) / (form.loan_term * 2)).toLocaleString('en-PH')}/cutoff</div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                     <div><label style={lbl}>Loan Purpose *</label><textarea className="apply-inp" value={form.loan_purpose} onChange={e => set('loan_purpose', e.target.value)} placeholder="e.g. Bills payment, Emergency, Allowance, Tuition, Medical, Rent..." rows={2} style={{ ...inp, resize: 'none' }} /></div>
 
-                    {/* Loan term selector */}
-                    <div style={{ marginTop: 14 }}>
-                      <label style={lbl}>Loan Term *</label>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                        {[
-                          { term: 2, label: '2 Months', sub: '4 installments · 14% total interest' },
-                          { term: 3, label: '3 Months', sub: '6 installments · 21% total interest' },
-                        ].map(({ term, label, sub }) => (
-                          <button key={term} onClick={() => set('loan_term', term)} style={{
-                            border: `2px solid ${form.loan_term === term ? '#8B5CF6' : 'rgba(255,255,255,0.07)'}`,
-                            background: form.loan_term === term ? 'rgba(139,92,246,0.12)' : 'rgba(255,255,255,0.02)',
-                            borderRadius: 10, padding: '12px 14px', cursor: 'pointer', textAlign: 'left', transition: 'all 0.15s'
-                          }}>
-                            <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 15, color: form.loan_term === term ? '#a78bfa' : '#7A8AAA' }}>{label}</div>
-                            <div style={{ fontSize: 10, color: form.loan_term === term ? '#8B5CF6' : '#4B5580', marginTop: 3 }}>{sub}</div>
-                          </button>
-                        ))}
+                    {/* Loan term selector — only for regular loans */}
+                    {form.loan_type !== 'quickloan' && (
+                      <div style={{ marginTop: 14 }}>
+                        <label style={lbl}>Loan Term *</label>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                          {[
+                            { term: 2, label: '2 Months', sub: '4 installments · 14% total interest' },
+                            { term: 3, label: '3 Months', sub: '6 installments · 21% total interest' },
+                          ].map(({ term, label, sub }) => (
+                            <button key={term} onClick={() => set('loan_term', term)} style={{
+                              border: `2px solid ${form.loan_term === term ? '#8B5CF6' : 'rgba(255,255,255,0.07)'}`,
+                              background: form.loan_term === term ? 'rgba(139,92,246,0.12)' : 'rgba(255,255,255,0.02)',
+                              borderRadius: 10, padding: '12px 14px', cursor: 'pointer', textAlign: 'left', transition: 'all 0.15s'
+                            }}>
+                              <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 15, color: form.loan_term === term ? '#a78bfa' : '#7A8AAA' }}>{label}</div>
+                              <div style={{ fontSize: 10, color: form.loan_term === term ? '#8B5CF6' : '#4B5580', marginTop: 3 }}>{sub}</div>
+                            </button>
+                          ))}
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 </div>
 

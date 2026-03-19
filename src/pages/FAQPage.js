@@ -23,11 +23,12 @@ function FAQItem({ question, answer, children }) {
 }
 
 const CATEGORIES = [
-  { id: 'eligibility', label: 'Eligibility', img: '/candidate.png' },
-  { id: 'amounts',     label: 'Amounts',     img: '/money.png' },
-  { id: 'payments',    label: 'Payments',    img: '/calendar.png' },
-  { id: 'release',     label: 'Release',     img: '/payment-method.png' },
-  { id: 'other',       label: 'Other',       img: '/boxes.png' },
+  { id: 'eligibility', label: 'Eligibility',  img: '/candidate.png' },
+  { id: 'amounts',     label: 'Amounts',      img: '/money.png' },
+  { id: 'payments',    label: 'Payments',     img: '/calendar.png' },
+  { id: 'release',     label: 'Release',      img: '/payment-method.png' },
+  { id: 'quickloan',   label: '⚡ QuickLoan', img: '/calculator.png' },
+  { id: 'other',       label: 'Other',        img: '/boxes.png' },
 ]
 
 export default function FAQPage() {
@@ -129,6 +130,17 @@ export default function FAQPage() {
         </div>
       )},
     ],
+    quickloan: [
+      { q: 'What is a QuickLoan?', a: 'QuickLoan is a short-term cash loan of up to ₱3,000 with a flexible repayment schedule. Unlike the regular loan with fixed semi-monthly installments, QuickLoan lets you pay it off any time you want. Interest accrues daily, so the earlier you pay, the less you owe.' },
+      { q: 'How is QuickLoan interest calculated?', a: 'QuickLoan uses a 10% monthly rate, converted to a daily rate of 0.3333%/day (10% ÷ 30). On a ₱3,000 loan, that\'s ₱10/day. On a ₱1,000 loan, it\'s ₱3.33/day. The interest simply multiplies by the number of days you\'ve had the loan — no compounding, no hidden fees.' },
+      { q: 'When is the QuickLoan due?', a: 'The target due date is Day 15 from the release date — this is when we expect full repayment of principal plus accrued interest. If you can\'t pay on Day 15, a ₱100 extension fee is charged and your principal rolls over to a hard deadline of Day 30. After Day 30, a ₱25/day penalty accrues on top of the daily interest until fully settled.' },
+      { q: 'What happens if I miss the Day 15 target?', a: 'If you don\'t pay by Day 15, the admin will collect the 15 days of accrued interest plus a one-time ₱100 extension fee — for a ₱3,000 loan that\'s ₱150 + ₱100 = ₱250. Your ₱3,000 principal then rolls over to Day 30 as the final deadline, with interest still running daily.' },
+      { q: 'What happens after Day 30?', a: 'Day 30 is the hard deadline. After that, you still owe the full balance (principal + all accrued interest + extension fee) and a ₱25/day penalty starts accruing on top. There is no cap on this penalty — the longer you wait, the more you owe. Since all borrowers are salaried colleagues, we expect settlement to happen at the next payday at the latest.' },
+      { q: 'Can I pay a QuickLoan early?', a: 'Yes — in fact, paying early saves you money. If you pay on Day 7 instead of Day 15, you only pay 7 days of interest instead of 15. On a ₱3,000 loan, that\'s ₱70 instead of ₱150. There is no prepayment penalty.' },
+      { q: 'Does QuickLoan have a Security Hold?', a: 'No. QuickLoan does not have a Security Hold — you receive the full approved amount. The interest structure (daily accrual + extension fee + penalty) is the risk management mechanism instead.' },
+      { q: 'Does QuickLoan affect my credit score?', a: 'QuickLoan payments are tracked but do not currently affect the regular credit score used for limit upgrades. Your regular loan tiers and limits are separate from QuickLoan activity.' },
+      { q: 'Can I have both a regular loan and a QuickLoan at the same time?', a: 'No. Only one active loan is allowed per borrower at any time, regardless of type. You must fully settle your current loan — regular or QuickLoan — before applying for a new one.' },
+    ],
   }
 
   const activeFAQs = faqByCategory[activeCategory] || []
@@ -187,7 +199,7 @@ export default function FAQPage() {
             <div style={{ fontSize: 11, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700, padding: '4px 10px 10px' }}>Categories</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               {CATEGORIES.map(cat => (
-                <button key={cat.id} onClick={() => setActiveCategory(cat.id)} style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: 'none', background: activeCategory === cat.id ? 'rgba(59,130,246,0.12)' : 'transparent', color: activeCategory === cat.id ? '#60A5FA' : '#7A8AAA', fontSize: 13, fontWeight: activeCategory === cat.id ? 700 : 400, cursor: 'pointer', textAlign: 'left', transition: 'all 0.15s', borderLeft: `3px solid ${activeCategory === cat.id ? '#3B82F6' : 'transparent'}`, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <button key={cat.id} onClick={() => setActiveCategory(cat.id)} style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: 'none', background: activeCategory === cat.id ? (cat.id === 'quickloan' ? 'rgba(245,158,11,0.12)' : 'rgba(59,130,246,0.12)') : 'transparent', color: activeCategory === cat.id ? (cat.id === 'quickloan' ? '#F59E0B' : '#60A5FA') : '#7A8AAA', fontSize: 13, fontWeight: activeCategory === cat.id ? 700 : 400, cursor: 'pointer', textAlign: 'left', transition: 'all 0.15s', borderLeft: `3px solid ${activeCategory === cat.id ? (cat.id === 'quickloan' ? '#F59E0B' : '#3B82F6') : 'transparent'}`, display: 'flex', alignItems: 'center', gap: 8 }}>
                   <img src={cat.img} alt={cat.label} style={{ width: 18, height: 18, objectFit: 'contain', flexShrink: 0 }} />
                   {cat.label}
                 </button>

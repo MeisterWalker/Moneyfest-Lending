@@ -114,3 +114,101 @@ export function formatDateValue(date) {
   const d = String(date.getDate()).padStart(2, '0')
   return `${y}-${m}-${d}`
 }
+
+// ── QuickLoan helpers ──────────────────────────────────────────
+// Single source of truth for all QuickLoan interest, penalty,
+// and date calculations.
+//
+// Rules:
+//   - Monthly rate: 10% → daily rate = 10% / 30 = 0.3333%/day
+//   - Interest accrues daily on outstanding principal
+//   - Day 15 from release: target due date — collect accrued interest + ₱100 extension fee if missed
+//   - Day 30 from release: hard deadline — after this, ₱25/day penalty accrues on top of daily interest
+//   - Max loan: ₱3,000
+//   - Pay anytime — interest stops on actual payment date
+
+export const QUICKLOAN_CONFIG = {
+  MONTHLY_RATE: 0.10,           // 10% per month
+  DAILY_RATE: 0.10 / 30,        // 0.003333.../day
+  MAX_AMOUNT: 3000,
+  EXTENSION_FEE: 100,           // charged once when Day 15 is missed
+  PENALTY_PER_DAY: 25,          // daily penalty after Day 30
+  DAY15_THRESHOLD: 15,          // days from release to first due date
+  DAY30_THRESHOLD: 30,          // days from release to hard deadline
+}
+
+// Calculate daily interest amount for a given principal
+export function calcQuickLoanDailyInterest(principal) {
+  return parseFloat((principal * QUICKLOAN_CONFIG.DAILY_RATE).toFixed(2))
+}
+
+// Calculate total accrued interest for N days on a principal
+export function calcQuickLoanAccruedInterest(principal, days) {
+  return parseFloat((principal * QUICKLOAN_CONFIG.DAILY_RATE * days).toFixed(2))
+}
+
+// Get Day 15 and Day 30 dates from a release date string
+export function getQuickLoanDueDates(releaseDateStr) {
+  if (!releaseDateStr) return { day15: null, day30: null }
+  const [y, m, d] = String(releaseDateStr).slice(0, 10).split('-').map(Number)
+  const release = new Date(y, m - 1, d)
+  const day15 = new Date(release)
+  day15.setDate(day15.getDate() + QUICKLOAN_CONFIG.DAY15_THRESHOLD)
+  const day30 = new Date(release)
+  day30.setDate(day30.getDate() + QUICKLOAN_CONFIG.DAY30_THRESHOLD)
+  return { day15, day30 }
+}
+
+// Get number of days elapsed since release date (today or a specific date)
+export function getQuickLoanDaysElapsed(releaseDateStr, asOfDateStr = null) {
+  if (!releaseDateStr) return 0
+  const [ry, rm, rd] = String(releaseDateStr).slice(0, 10).split('-').map(Number)
+  const release = new Date(ry, rm - 1, rd)
+  const asOf = asOfDateStr
+    ? (() => { const [ay, am, ad] = String(asOfDateStr).slice(0, 10).split('-').map(Number); return new Date(ay, am - 1, ad) })()
+    : new Date()
+  // Use local date only (strip time)
+  const releaseDay = new Date(release.getFullYear(), release.getMonth(), release.getDate())
+  const asOfDay = new Date(asOf.getFullYear(), asOf.getMonth(), asOf.getDate())
+  const diff = Math.floor((asOfDay - releaseDay) / (1000 * 60 * 60 * 24))
+  return Math.max(0, diff)
+}
+
+// Calculate the full current balance owed on a QuickLoan
+// Returns: { principal, accruedInterest, extensionFee, penaltyAccrued, totalOwed, daysElapsed, phase }
+// phase: 'active' | 'extended' | 'penalty'
+export function calcQuickLoanBalance(loan, asOfDateStr = null) {
+  const principal = parseFloat(loan.loan_amount) || 0
+  const daysElapsed = getQuickLoanDaysElapsed(loan.release_date, asOfDateStr)
+  const extensionFeeCharged = loan.extension_fee_charged || false
+
+  let accruedInterest = calcQuickLoanAccruedInterest(principal, daysElapsed)
+  let extensionFee = extensionFeeCharged ? QUICKLOAN_CONFIG.EXTENSION_FEE : 0
+  let penaltyAccrued = 0
+  let phase = 'active'
+
+  if (daysElapsed > QUICKLOAN_CONFIG.DAY30_THRESHOLD) {
+    phase = 'penalty'
+    const penaltyDays = daysElapsed - QUICKLOAN_CONFIG.DAY30_THRESHOLD
+    penaltyAccrued = parseFloat((penaltyDays * QUICKLOAN_CONFIG.PENALTY_PER_DAY).toFixed(2))
+  } else if (daysElapsed > QUICKLOAN_CONFIG.DAY15_THRESHOLD) {
+    phase = 'extended'
+  }
+
+  const totalOwed = parseFloat((principal + accruedInterest + extensionFee + penaltyAccrued).toFixed(2))
+  return { principal, accruedInterest, extensionFee, penaltyAccrued, totalOwed, daysElapsed, phase }
+}
+
+// What the admin collects on Day 15 miss: accrued interest + extension fee
+// Principal stays outstanding and rolls to Day 30
+export function calcQuickLoanDay15Collection(loan) {
+  const principal = parseFloat(loan.loan_amount) || 0
+  const accruedInterest = calcQuickLoanAccruedInterest(principal, QUICKLOAN_CONFIG.DAY15_THRESHOLD)
+  const extensionFee = QUICKLOAN_CONFIG.EXTENSION_FEE
+  return {
+    collectNow: parseFloat((accruedInterest + extensionFee).toFixed(2)),
+    accruedInterest,
+    extensionFee,
+    principalRemaining: principal,
+  }
+}
