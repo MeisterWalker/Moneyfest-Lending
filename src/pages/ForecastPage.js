@@ -50,6 +50,7 @@ export default function ForecastPage() {
   const [qlCapital, setQlCapital] = useState(10000)
   const [qlCyclesPerMonth, setQlCyclesPerMonth] = useState(2)
   const [qlDefaultRate, setQlDefaultRate] = useState(0)
+  const [qlReinvest, setQlReinvest] = useState(true)
   const [loading, setLoading] = useState(true)
 
   const fetchData = useCallback(async () => {
@@ -159,10 +160,10 @@ export default function ForecastPage() {
     for (let m = 1; m <= months; m++) {
       const cycleProfit = currentCapital * qlEffectiveRate * qlCyclesPerMonth
       totalProfit += cycleProfit
-      currentCapital += cycleProfit
+      if (qlReinvest) currentCapital += cycleProfit
       data.push({
         month: `Mo ${m}`,
-        capital: Math.round(currentCapital),
+        capital: Math.round(qlReinvest ? currentCapital : qlCapital + totalProfit),
         profit: Math.round(totalProfit),
         monthly: Math.round(cycleProfit)
       })
@@ -363,6 +364,17 @@ export default function ForecastPage() {
                 <label className="form-label">Default Rate (%)</label>
                 <input type="number" min="0" max="100" step="1" value={qlDefaultRate} onChange={e => setQlDefaultRate(parseFloat(e.target.value) || 0)} />
                 <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>Estimated bad loans</div>
+              </div>
+              <div>
+                <label className="form-label">Reinvestment</label>
+                <div onClick={() => setQlReinvest(!qlReinvest)} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', marginTop: 8, padding: '10px 14px', background: qlReinvest ? 'rgba(245,158,11,0.08)' : 'rgba(255,255,255,0.03)', border: `1px solid ${qlReinvest ? 'rgba(245,158,11,0.3)' : 'rgba(255,255,255,0.1)'}`, borderRadius: 8, transition: 'all 0.15s ease' }}>
+                  <div style={{ width: 36, height: 20, borderRadius: 10, background: qlReinvest ? '#F59E0B' : 'rgba(255,255,255,0.1)', position: 'relative', transition: 'all 0.2s ease', flexShrink: 0 }}>
+                    <div style={{ width: 14, height: 14, borderRadius: '50%', background: '#fff', position: 'absolute', top: 3, left: qlReinvest ? 19 : 3, transition: 'left 0.2s ease' }} />
+                  </div>
+                  <span style={{ fontSize: 13, color: qlReinvest ? '#F59E0B' : 'var(--text-muted)', fontWeight: 500 }}>
+                    {qlReinvest ? 'Reinvesting profits' : 'No reinvestment'}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
