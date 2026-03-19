@@ -851,14 +851,24 @@ export default function LoansPage() {
       })
     }
 
+    // +25 credit score completion bonus
+    if (borrower) {
+      const newScore = Math.min(CREDIT_CONFIG.MAX_SCORE, (borrower.credit_score || CREDIT_CONFIG.STARTING_SCORE) + CREDIT_CONFIG.FULL_LOAN_COMPLETE)
+      const newRisk = CREDIT_CONFIG.riskFromScore(newScore)
+      await supabase.from('borrowers').update({
+        credit_score: newScore,
+        risk_score: newRisk
+      }).eq('id', borrower.id)
+    }
+
     await logAudit({
       action_type: 'QUICKLOAN_PAID',
       module: 'Loan',
-      description: `QuickLoan fully paid by ${borrower?.full_name} — ₱${totalCollected.toLocaleString('en-PH', { minimumFractionDigits: 2 })} collected (principal ₱${balance.principal} + interest ₱${balance.accruedInterest}${balance.extensionFee > 0 ? ` + ext fee ₱${balance.extensionFee}` : ''}${balance.penaltyAccrued > 0 ? ` + penalty ₱${balance.penaltyAccrued}` : ''}) on day ${balance.daysElapsed}`,
+      description: `QuickLoan fully paid by ${borrower?.full_name} — ${formatCurrency(totalCollected)} collected (principal ${formatCurrency(balance.principal)} + interest ${formatCurrency(balance.accruedInterest)}${balance.extensionFee > 0 ? ` + ext fee ${formatCurrency(balance.extensionFee)}` : ''}${balance.penaltyAccrued > 0 ? ` + penalty ${formatCurrency(balance.penaltyAccrued)}` : ''}) on day ${balance.daysElapsed}. Credit score +${CREDIT_CONFIG.FULL_LOAN_COMPLETE}.`,
       changed_by: user?.email
     })
 
-    toast(`✅ QuickLoan paid — ${formatCurrency(totalCollected)} collected`, 'success')
+    toast(`✅ QuickLoan paid — ${formatCurrency(totalCollected)} collected · Credit score +${CREDIT_CONFIG.FULL_LOAN_COMPLETE}`, 'success')
     fetchData()
   }
 
