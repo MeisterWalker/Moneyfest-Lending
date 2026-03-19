@@ -252,6 +252,7 @@ ${content.innerHTML}
 
         {/* ── INSTALLMENT LOAN TERMS ── (existing content below, wrapped in conditional) */}
         {termsTab === 'installment' && (
+        <div>
         <div className="print-header" style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: 28, marginBottom: 36 }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 20, flexWrap: 'wrap' }}>
             <div>
@@ -526,6 +527,7 @@ ${content.innerHTML}
         </div>
 
       </div>
+        </div>
         )} {/* end installment tab */}
 
       </div>

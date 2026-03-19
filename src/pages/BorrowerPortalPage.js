@@ -1412,6 +1412,115 @@ export default function BorrowerPortalPage() {
               {/* Loan Disclosure */}
               {(() => {
                 const principal = Number(loan.loan_amount)
+                const isQL = loan.loan_type === 'quickloan'
+
+                if (isQL) {
+                  // ── QuickLoan disclosure ──
+                  const dailyInterest = parseFloat((principal * 0.1 / 30).toFixed(2))
+                  const daysElapsed = loan.release_date
+                    ? Math.max(0, Math.floor((new Date() - new Date(loan.release_date)) / (1000 * 60 * 60 * 24)))
+                    : 0
+                  const accruedNow = parseFloat((dailyInterest * daysElapsed).toFixed(2))
+                  const extensionFee = loan.extension_fee_charged ? 100 : 0
+                  const penaltyDays = Math.max(0, daysElapsed - 30)
+                  const penalty = penaltyDays * 25
+                  const totalOwedNow = parseFloat((principal + accruedNow + extensionFee + penalty).toFixed(2))
+                  const day15Interest = parseFloat((dailyInterest * 15).toFixed(2))
+                  const day15Total = parseFloat((principal + day15Interest).toFixed(2))
+                  const releaseDate = loan.release_date ? (() => { const [y,m,d] = loan.release_date.split('-').map(Number); return new Date(y,m-1,d) })() : null
+                  const day15Date = releaseDate ? new Date(releaseDate.getTime() + 15 * 86400000) : null
+                  const day30Date = releaseDate ? new Date(releaseDate.getTime() + 30 * 86400000) : null
+                  const fmt = d => d.toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })
+                  const phase = daysElapsed > 30 ? 'penalty' : daysElapsed > 15 ? 'extended' : 'active'
+                  const phaseColor = phase === 'penalty' ? '#EF4444' : phase === 'extended' ? '#F59E0B' : '#22C55E'
+
+                  return (
+                    <div className="pc" style={{ background: '#0E1320', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 18, overflow: 'hidden', marginBottom: 16 }}>
+                      <div style={{ padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 14, color: '#F59E0B' }}>⚡ Loan Disclosure</div>
+                        <div style={{ fontSize: 10, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.07em' }}>RA 3765 — Truth in Lending Act</div>
+                      </div>
+                      <div style={{ padding: '14px 20px' }}>
+                        {[
+                          { label: 'Approved Loan Amount', value: '₱' + principal.toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#F0F4FF' },
+                          { label: 'Security Hold', value: 'None — full amount released', color: '#22C55E' },
+                          { label: 'Funds Released to You', value: '₱' + principal.toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#22C55E' },
+                          { label: 'Daily Interest Rate', value: `0.3333%/day  (₱${dailyInterest.toFixed(2)}/day)`, color: '#60A5FA' },
+                          { label: 'Monthly Interest Rate', value: '10% per month', color: '#60A5FA' },
+                          { label: 'Effective Rate (per annum)', value: '120% p.a. (RA 3765)', color: '#a78bfa' },
+                          { label: 'If paid on Day 15', value: '₱' + day15Total.toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#22C55E' },
+                          { label: 'Extension Fee (if Day 15 missed)', value: '₱100.00 one-time', color: '#F59E0B' },
+                          { label: 'Penalty after Day 30', value: '₱25.00/day (no cap)', color: '#EF4444' },
+                        ].map((row, i) => (
+                          <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 10px', background: i % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent', borderRadius: 8, gap: 12 }}>
+                            <span style={{ fontSize: 12, color: '#7A8AAA', flex: 1 }}>{row.label}</span>
+                            <span style={{ fontSize: 13, fontWeight: 700, color: row.color, textAlign: 'right' }}>{row.value}</span>
+                          </div>
+                        ))}
+
+                        {/* Live balance box */}
+                        <div style={{ marginTop: 12, padding: '12px 14px', background: phase === 'penalty' ? 'rgba(239,68,68,0.06)' : phase === 'extended' ? 'rgba(245,158,11,0.06)' : 'rgba(34,197,94,0.06)', border: `1px solid ${phase === 'penalty' ? 'rgba(239,68,68,0.2)' : phase === 'extended' ? 'rgba(245,158,11,0.2)' : 'rgba(34,197,94,0.2)'}`, borderRadius: 10 }}>
+                          <div style={{ fontSize: 10, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 8 }}>Live Balance Today (Day {daysElapsed})</div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                            <span style={{ fontSize: 12, color: '#7A8AAA' }}>Principal</span>
+                            <span style={{ fontSize: 12, fontWeight: 700, color: '#F0F4FF' }}>₱{principal.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                            <span style={{ fontSize: 12, color: '#7A8AAA' }}>Accrued Interest ({daysElapsed} days)</span>
+                            <span style={{ fontSize: 12, fontWeight: 700, color: '#a78bfa' }}>₱{accruedNow.toFixed(2)}</span>
+                          </div>
+                          {extensionFee > 0 && (
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                              <span style={{ fontSize: 12, color: '#7A8AAA' }}>Extension Fee</span>
+                              <span style={{ fontSize: 12, fontWeight: 700, color: '#F59E0B' }}>₱100.00</span>
+                            </div>
+                          )}
+                          {penalty > 0 && (
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                              <span style={{ fontSize: 12, color: '#7A8AAA' }}>Penalty ({penaltyDays} days × ₱25)</span>
+                              <span style={{ fontSize: 12, fontWeight: 700, color: '#EF4444' }}>₱{penalty.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+                            </div>
+                          )}
+                          <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: 8, borderTop: '1px solid rgba(255,255,255,0.06)', marginTop: 4 }}>
+                            <span style={{ fontSize: 13, fontWeight: 700, color: '#F0F4FF' }}>Total Owed Now</span>
+                            <span style={{ fontSize: 16, fontWeight: 800, color: phaseColor, fontFamily: 'Syne, sans-serif' }}>₱{totalOwedNow.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+                          </div>
+                        </div>
+
+                        {/* Day 15 / Day 30 timeline */}
+                        {releaseDate && (
+                          <div style={{ marginTop: 10, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                            <div style={{ flex: 1, padding: '8px 10px', background: daysElapsed <= 15 ? 'rgba(34,197,94,0.06)' : 'rgba(239,68,68,0.06)', border: `1px solid ${daysElapsed <= 15 ? 'rgba(34,197,94,0.2)' : 'rgba(239,68,68,0.2)'}`, borderRadius: 8 }}>
+                              <div style={{ fontSize: 10, color: '#4B5580', marginBottom: 2 }}>Day 15 Target</div>
+                              <div style={{ fontSize: 12, fontWeight: 700, color: daysElapsed <= 15 ? '#22C55E' : '#EF4444' }}>{day15Date ? fmt(day15Date) : '—'}</div>
+                              <div style={{ fontSize: 10, color: '#4B5580', marginTop: 2 }}>{daysElapsed <= 15 ? `${15 - daysElapsed} day${15 - daysElapsed !== 1 ? 's' : ''} left` : 'Missed'}</div>
+                            </div>
+                            <div style={{ flex: 1, padding: '8px 10px', background: daysElapsed <= 30 ? 'rgba(245,158,11,0.06)' : 'rgba(239,68,68,0.08)', border: `1px solid ${daysElapsed <= 30 ? 'rgba(245,158,11,0.2)' : 'rgba(239,68,68,0.3)'}`, borderRadius: 8 }}>
+                              <div style={{ fontSize: 10, color: '#4B5580', marginBottom: 2 }}>Day 30 Deadline</div>
+                              <div style={{ fontSize: 12, fontWeight: 700, color: daysElapsed <= 30 ? '#F59E0B' : '#EF4444' }}>{day30Date ? fmt(day30Date) : '—'}</div>
+                              <div style={{ fontSize: 10, color: '#4B5580', marginTop: 2 }}>{daysElapsed <= 30 ? `${30 - daysElapsed} day${30 - daysElapsed !== 1 ? 's' : ''} left` : 'PAST DEADLINE'}</div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      <div style={{ padding: '12px 20px', borderTop: '1px solid rgba(255,255,255,0.04)', display: 'flex', gap: 10 }}>
+                        {!loan.e_signature_name ? (
+                          <button onClick={() => setShowSignModal(true)}
+                            style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '10px', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#F59E0B,#D97706)', color: '#000', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Syne, sans-serif' }}>
+                            ✍ Sign QuickLoan Agreement
+                          </button>
+                        ) : (
+                          <button onClick={() => generateQuickLoanAgreementPDF()}
+                            style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '10px', borderRadius: 10, border: '1px solid rgba(245,158,11,0.3)', background: 'rgba(245,158,11,0.06)', color: '#F59E0B', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+                            ↓ Download QuickLoan Agreement
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )
+                }
+
+                // ── Installment loan disclosure ──
                 const holdAmt = loan.security_hold ? Number(loan.security_hold) : principal * 0.10
                 const holdRate = principal > 0 ? ((holdAmt / principal) * 100).toFixed(0) : 10
                 const total = Number(loan.total_repayment)
@@ -1456,7 +1565,7 @@ export default function BorrowerPortalPage() {
                           ✍ Sign Loan Agreement
                         </button>
                       ) : (
-                        <button onClick={() => loan.loan_type === 'quickloan' ? generateQuickLoanAgreementPDF() : generateLoanAgreementPDF()}
+                        <button onClick={() => generateLoanAgreementPDF()}
                           style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '10px', borderRadius: 10, border: '1px solid rgba(99,102,241,0.25)', background: 'rgba(99,102,241,0.06)', color: '#a78bfa', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
                           ↓ Download Loan Agreement
                         </button>
