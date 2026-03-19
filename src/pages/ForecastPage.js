@@ -63,6 +63,10 @@ export default function ForecastPage() {
   useEffect(() => { fetchData() }, [fetchData])
 
   // ── Core calculation ───────────────────────────────────────
+  // Only use Installment loans for forecast — QuickLoans have different math
+  const installmentLoans = loans.filter(l => l.loan_type !== 'quickloan')
+  const quickLoans = loans.filter(l => l.loan_type === 'quickloan')
+
   // Portfolio may contain 2-month (4 installments) and 3-month (6 installments) loans
   // Monthly rate stored in DB (e.g. 0.07 = 7%/month)
   // 2-month cycle earns: capital × rate × 2 (6 cycles/year)
@@ -70,12 +74,12 @@ export default function ForecastPage() {
   // Per month equivalent: capital × rate (same regardless of term)
   const rateDecimal = rate / 100
 
-  // Derive avg cycles/year from actual loan portfolio (default assumes 2-month)
-  const avgCyclesPerYear = loans.length > 0
-    ? loans.reduce((sum, l) => sum + (12 / (l.loan_term || 2)), 0) / loans.length
+  // Derive avg cycles/year from actual installment loan portfolio (default assumes 2-month)
+  const avgCyclesPerYear = installmentLoans.length > 0
+    ? installmentLoans.reduce((sum, l) => sum + (12 / (l.loan_term || 2)), 0) / installmentLoans.length
     : 6
-  const avgTermMonths = loans.length > 0
-    ? loans.reduce((sum, l) => sum + (l.loan_term || 2), 0) / loans.length
+  const avgTermMonths = installmentLoans.length > 0
+    ? installmentLoans.reduce((sum, l) => sum + (l.loan_term || 2), 0) / installmentLoans.length
     : 2
   const defaultDecimal = defaultRate / 100
   const effectiveRate = rateDecimal * (1 - defaultDecimal)
@@ -132,7 +136,7 @@ export default function ForecastPage() {
   })
 
   // Real data comparison
-  const realProfit = loans.filter(l => l.status === 'Paid').reduce((sum, l) => sum + ((l.total_repayment || 0) - (l.loan_amount || 0)), 0)
+  const realProfit = installmentLoans.filter(l => l.status === 'Paid').reduce((sum, l) => sum + ((l.total_repayment || 0) - (l.loan_amount || 0)), 0)
 
   if (loading) return (
     <div style={{ padding: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>

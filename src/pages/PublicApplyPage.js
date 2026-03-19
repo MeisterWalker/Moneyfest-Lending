@@ -125,14 +125,54 @@ function SidebarTiers() {
   )
 }
 
-function SidebarCalc({ interestRate, selectedAmount, loanTerm = 2 }) {
+function SidebarCalc({ interestRate, selectedAmount, loanTerm = 2, loanType = 'regular' }) {
   if (!selectedAmount) return (
     <div style={{ background: '#0f1420', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '18px 20px' }}>
       <div style={{ fontSize: 11, fontWeight: 700, color: '#7A8AAA', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>💰 Quick estimate</div>
       <div style={{ fontSize: 12, color: '#4B5580', textAlign: 'center', padding: '12px 0' }}>Select a loan amount to see your breakdown</div>
     </div>
   )
+
   const principal = parseFloat(selectedAmount)
+  const isQuickLoan = loanType === 'quickloan'
+
+  if (isQuickLoan) {
+    const dailyInterest = parseFloat((principal * 0.1 / 30).toFixed(2))
+    const day15Interest = parseFloat((dailyInterest * 15).toFixed(2))
+    const day15Total = parseFloat((principal + day15Interest).toFixed(2))
+    const day30Interest = parseFloat((dailyInterest * 30).toFixed(2))
+    const day30Total = parseFloat((principal + day30Interest + 100).toFixed(2))
+    return (
+      <div style={{ background: 'linear-gradient(135deg,rgba(15,23,41,1),rgba(40,25,10,0.9))', border: '1px solid rgba(245,158,11,0.25)', borderRadius: 14, padding: '18px 20px' }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: '#F59E0B', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>⚡ QuickLoan Breakdown</div>
+        {[
+          { lbl: 'Loan principal', val: '₱' + principal.toLocaleString('en-PH'), color: '#F0F4FF' },
+          { lbl: 'Daily interest', val: '₱' + dailyInterest.toFixed(2) + '/day', color: '#a78bfa' },
+          { lbl: 'You receive', val: '₱' + principal.toLocaleString('en-PH'), color: '#22C55E' },
+          { lbl: 'No security hold', val: '✓', color: '#22C55E' },
+        ].map((r, i) => (
+          <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', borderBottom: i < 3 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
+            <span style={{ fontSize: 11, color: '#4B5580' }}>{r.lbl}</span>
+            <span style={{ fontSize: 12, fontWeight: 700, color: r.color }}>{r.val}</span>
+          </div>
+        ))}
+        <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ padding: '10px 12px', background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 9, textAlign: 'center' }}>
+            <div style={{ fontSize: 10, color: '#4B5580', marginBottom: 3, textTransform: 'uppercase', letterSpacing: '0.05em' }}>If paid on Day 15</div>
+            <div style={{ fontSize: 20, fontWeight: 900, color: '#22C55E', fontFamily: 'Space Grotesk' }}>₱{day15Total.toLocaleString('en-PH')}</div>
+            <div style={{ fontSize: 10, color: '#4B5580', marginTop: 2 }}>principal + {day15Interest.toFixed(2)} interest</div>
+          </div>
+          <div style={{ padding: '10px 12px', background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 9, textAlign: 'center' }}>
+            <div style={{ fontSize: 10, color: '#4B5580', marginBottom: 3, textTransform: 'uppercase', letterSpacing: '0.05em' }}>If missed Day 15 (Day 30 max)</div>
+            <div style={{ fontSize: 18, fontWeight: 900, color: '#F59E0B', fontFamily: 'Space Grotesk' }}>₱{day30Total.toLocaleString('en-PH')}</div>
+            <div style={{ fontSize: 10, color: '#4B5580', marginTop: 2 }}>+ ₱100 extension fee</div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Regular / Installment loan breakdown
   const numInstallments = loanTerm * 2
   const interest = principal * interestRate * loanTerm
   const total = principal + interest
@@ -790,7 +830,7 @@ export default function PublicApplyPage() {
           <div className="apply-sidebar" style={{ position: 'sticky', top: 72 }}>
             <SidebarInfo step={step} />
             <SidebarTiers />
-            <SidebarCalc interestRate={interestRate} selectedAmount={form.loan_amount} loanTerm={form.loan_term} />
+            <SidebarCalc interestRate={interestRate} selectedAmount={form.loan_amount} loanTerm={form.loan_term} loanType={form.loan_type} />
           </div>
 
         </div>
