@@ -303,29 +303,33 @@ export default function DashboardPage() {
   const navigate = useNavigate()
 
   const fetchData = useCallback(async () => {
-    const [{ data: l }, { data: b }, { data: s }, { data: a }, { data: apps }, { data: visits }] = await Promise.all([
-      supabase.from('loans').select('*').order('created_at', { ascending: false }),
-      supabase.from('borrowers').select('*'),
-      supabase.from('settings').select('*').eq('id', 1).single(),
-      supabase.from('audit_logs').select('*').order('created_at', { ascending: false }).limit(10),
-      supabase.from('applications').select('id').eq('status', 'Pending'),
-      supabase.from('page_visits').select('page, visited_at')
-    ])
-    setLoans(l || [])
-    setBorrowers(b || [])
-    setPendingApps((apps || []).length)
-    setSettings(s)
-    setAuditLogs(a || [])
+    try {
+      const [{ data: l }, { data: b }, { data: s }, { data: a }, { data: apps }, { data: visits }] = await Promise.all([
+        supabase.from('loans').select('*').order('created_at', { ascending: false }),
+        supabase.from('borrowers').select('*'),
+        supabase.from('settings').select('*').eq('id', 1).single(),
+        supabase.from('audit_logs').select('*').order('created_at', { ascending: false }).limit(10),
+        supabase.from('applications').select('id').eq('status', 'Pending'),
+        supabase.from('page_visits').select('page, visited_at')
+      ])
+      setLoans(l || [])
+      setBorrowers(b || [])
+      setPendingApps((apps || []).length)
+      setSettings(s)
+      setAuditLogs(a || [])
 
-    // Compute visitor stats
-    const allVisits = visits || []
-    const todayStr = new Date().toISOString().slice(0, 10)
-    const todayVisits = allVisits.filter(v => v.visited_at?.slice(0, 10) === todayStr)
-    const pages = {}
-    allVisits.forEach(v => { pages[v.page] = (pages[v.page] || 0) + 1 })
-    setVisitStats({ total: allVisits.length, today: todayVisits.length, pages })
-
-    setLoading(false)
+      // Compute visitor stats
+      const allVisits = visits || []
+      const todayStr = new Date().toISOString().slice(0, 10)
+      const todayVisits = allVisits.filter(v => v.visited_at?.slice(0, 10) === todayStr)
+      const pages = {}
+      allVisits.forEach(v => { pages[v.page] = (pages[v.page] || 0) + 1 })
+      setVisitStats({ total: allVisits.length, today: todayVisits.length, pages })
+    } catch (err) {
+      console.error('Dashboard fetch error:', err)
+    } finally {
+      setLoading(false)
+    }
   }, [])
 
   useEffect(() => { fetchData() }, [fetchData])
