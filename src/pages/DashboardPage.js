@@ -748,7 +748,7 @@ export default function DashboardPage() {
 
       {/* Audit History Widget */}
       <AuditWidget logs={auditLogs} />
-        </div> {/* end installment tab */}
+        </div>
       )}
 
       {/* ── QUICKLOAN DASHBOARD ── */}
