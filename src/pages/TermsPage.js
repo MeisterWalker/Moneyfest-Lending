@@ -527,8 +527,8 @@ ${content.innerHTML}
         </div>
 
         </div>
-        )} {/* end installment tab */}
         </div>
+        )} {/* end installment tab */}
 
       </div>
 
