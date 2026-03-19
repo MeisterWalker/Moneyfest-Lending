@@ -199,7 +199,7 @@ export default function TermsPage() {
                   <div style={{ marginLeft: 44, display: 'flex', flexDirection: 'column', gap: 8 }}>
                     {sec.items.map((item, j) => (
                       <div key={j} className="print-row" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 8, padding: '10px 14px', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-                        <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#6366F1', flexShrink: 0, marginTop: 6 }} />
+                        <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#6366F1', flexShrink: 0, marginTop: 6 }}></div>
                         <div style={{ fontSize: 13, color: '#8892B0', lineHeight: 1.7 }} className="print-body">
                           {item.term && <strong className="print-highlight" style={{ color: '#CBD5F0' }}>{item.term}: </strong>}
                           {item.def}
@@ -249,8 +249,6 @@ export default function TermsPage() {
         <button onClick={handleDownload} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '11px 20px', borderRadius: 12, background: 'rgba(15,23,42,0.95)', border: '1px solid rgba(59,130,246,0.4)', color: '#60a5fa', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Space Grotesk', backdropFilter: 'blur(8px)' }}>Download</button>
         <button onClick={handlePrint} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '11px 20px', borderRadius: 12, background: 'linear-gradient(135deg,#22C55E,#16A34A)', border: 'none', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Space Grotesk', boxShadow: '0 4px 20px rgba(34,197,94,0.4)' }}>Print / PDF</button>
       </div>
-
-    </div>
 
     </div>
   )
