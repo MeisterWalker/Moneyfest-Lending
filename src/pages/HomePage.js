@@ -541,7 +541,17 @@ export default function HomePage() {
               onMouseLeave={e => e.currentTarget.style.color = '#4B5580'}>{l.label}</a>
           ))}
         </div>
-        <div style={{ fontSize: 12, color: '#4B5580' }}>"Borrow smart. Pay early. Get rewarded."</div>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
+          <div style={{ fontSize: 12, color: '#4B5580' }}>"Borrow smart. Pay early. Get rewarded."</div>
+          <div style={{ fontSize: 11, color: '#323a52', display: 'flex', alignItems: 'center', gap: 5 }}>
+            <span>Designed & developed by</span>
+            <span style={{ fontFamily: 'Space Grotesk', fontWeight: 700, color: '#3d4766',
+              background: 'linear-gradient(90deg,#3B82F6,#8B5CF6)',
+              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+              John Paul Lacaron
+            </span>
+          </div>
+        </div>
       </footer>
 
     </div>
