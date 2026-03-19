@@ -83,7 +83,7 @@ export default function LoanModal({ isOpen, onClose, onSave, loan, borrower, bor
   const minLoan = isQuickLoan ? 500 : 5000
   const amount = parseFloat(form.loan_amount) || 0
 
-  // Regular loan calcs
+  // Installment loan calcs
   const rate = parseFloat(form.interest_rate) || 0.07
   const loanTerm = parseInt(form.loan_term) || 2
   const numInstallments = getNumInstallments(loanTerm)
@@ -169,7 +169,7 @@ export default function LoanModal({ isOpen, onClose, onSave, loan, borrower, bor
               <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-label)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 10 }}>Loan Type</div>
               <div style={{ display: 'flex', gap: 10 }}>
                 {[
-                  { value: 'regular', label: 'Regular Loan', desc: '2–3 month · semi-monthly payments' },
+                  { value: 'regular', label: 'Installment Loan', desc: '2–3 month · semi-monthly payments' },
                   { value: 'quickloan', label: '⚡ QuickLoan', desc: 'Pay anytime · max ₱3,000 · daily interest' },
                 ].map(opt => (
                   <div key={opt.value} onClick={() => set('loan_type', opt.value)} style={{

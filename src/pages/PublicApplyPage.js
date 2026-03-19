@@ -577,7 +577,7 @@ export default function PublicApplyPage() {
                   <div style={cardBody}>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                       {[
-                        { value: 'regular', label: 'Regular Loan', sub: 'Up to ₱10,000 · 2–3 months · semi-monthly payments', color: '#3B82F6' },
+                        { value: 'regular', label: 'Installment Loan', sub: 'Up to ₱10,000 · 2–3 months · semi-monthly payments', color: '#3B82F6' },
                         { value: 'quickloan', label: '⚡ QuickLoan', sub: 'Up to ₱3,000 · pay anytime · daily interest · Day 15 target', color: '#F59E0B' },
                       ].map(opt => (
                         <button key={opt.value} onClick={() => { set('loan_type', opt.value); set('loan_amount', '') }}
@@ -619,7 +619,7 @@ export default function PublicApplyPage() {
                         </div>
                       </div>
                     ) : (
-                      /* Regular loan amounts */
+                      /* Installment loan amounts */
                       <div>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10, marginBottom: 14 }}>
                           {LOAN_AMOUNTS.map(amt => (
@@ -634,7 +634,7 @@ export default function PublicApplyPage() {
                     )}
                     <div><label style={lbl}>Loan Purpose *</label><textarea className="apply-inp" value={form.loan_purpose} onChange={e => set('loan_purpose', e.target.value)} placeholder="e.g. Bills payment, Emergency, Allowance, Tuition, Medical, Rent..." rows={2} style={{ ...inp, resize: 'none' }} /></div>
 
-                    {/* Loan term selector — only for regular loans */}
+                    {/* Loan term selector — only for installment loans */}
                     {form.loan_type !== 'quickloan' && (
                       <div style={{ marginTop: 14 }}>
                         <label style={lbl}>Loan Term *</label>

@@ -377,6 +377,8 @@ export default function DashboardPage() {
     const days = Math.floor((new Date() - new Date(l.release_date)) / (1000 * 60 * 60 * 24))
     return days > 30
   }).length
+
+  const defaultedLoans = loans.filter(l => l.status === 'Defaulted')
   const defaultRate = loans.length > 0 ? (defaultedLoans.length / loans.length) * 100 : 0
   const availableLiquidity = capital - amountLentOut
   const roi = capital > 0 ? (totalProfit / capital) * 100 : 0

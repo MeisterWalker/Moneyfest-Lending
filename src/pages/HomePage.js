@@ -216,17 +216,17 @@ export default function HomePage() {
               Pick the right loan<br />for your situation.
             </h2>
             <p style={{ fontSize: 15, color: '#7A8AAA', maxWidth: 480, margin: '0 auto', lineHeight: 1.7 }}>
-              Need cash fast for a few weeks? QuickLoan. Need more for a bigger expense over 2–3 months? Regular Loan. Both are fair, digital, and exclusive to our team.
+              Need cash fast for a few weeks? QuickLoan. Need more for a bigger expense over 2–3 months? Installment Loan. Both are fair, digital, and exclusive to our team.
             </p>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, maxWidth: 860, margin: '0 auto' }}>
 
-            {/* Regular Loan card */}
+            {/* Installment Loan card */}
             <div style={{ background: 'rgba(59,130,246,0.05)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: 24, padding: '32px 28px' }}>
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, marginBottom: 20, padding: '5px 14px', borderRadius: 20, background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.25)' }}>
                 <img src="/money.png" alt="" style={{ width: 14, height: 14, objectFit: 'contain' }} />
-                <span style={{ fontSize: 11, fontWeight: 700, color: '#60A5FA', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Regular Loan</span>
+                <span style={{ fontSize: 11, fontWeight: 700, color: '#60A5FA', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Installment Loan</span>
               </div>
               <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 900, fontSize: 36, color: '#F0F4FF', letterSpacing: -1, marginBottom: 4 }}>Up to ₱10,000</div>
               <div style={{ fontSize: 13, color: '#7A8AAA', marginBottom: 24 }}>7% monthly · 2–3 month term</div>
@@ -250,7 +250,7 @@ export default function HomePage() {
                 💡 Best for: Bills, tuition, rent, medical — anything that needs a bigger amount repaid gradually.
               </div>
               <a href="/apply" style={{ display: 'block', textAlign: 'center', padding: '13px', borderRadius: 12, background: 'rgba(59,130,246,0.15)', border: '1px solid rgba(59,130,246,0.3)', color: '#60A5FA', textDecoration: 'none', fontSize: 14, fontWeight: 700, fontFamily: 'Syne, sans-serif' }}>
-                Apply for Regular Loan →
+                Apply for Installment Loan →
               </a>
             </div>
 

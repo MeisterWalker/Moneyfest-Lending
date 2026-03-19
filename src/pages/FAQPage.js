@@ -131,15 +131,15 @@ export default function FAQPage() {
       )},
     ],
     quickloan: [
-      { q: 'What is a QuickLoan?', a: 'QuickLoan is a short-term cash loan of up to ₱3,000 with a flexible repayment schedule. Unlike the regular loan with fixed semi-monthly installments, QuickLoan lets you pay it off any time you want. Interest accrues daily, so the earlier you pay, the less you owe.' },
+      { q: 'What is a QuickLoan?', a: 'QuickLoan is a short-term cash loan of up to ₱3,000 with a flexible repayment schedule. Unlike the installment loan with fixed semi-monthly installments, QuickLoan lets you pay it off any time you want. Interest accrues daily, so the earlier you pay, the less you owe.' },
       { q: 'How is QuickLoan interest calculated?', a: 'QuickLoan uses a 10% monthly rate, converted to a daily rate of 0.3333%/day (10% ÷ 30). On a ₱3,000 loan, that\'s ₱10/day. On a ₱1,000 loan, it\'s ₱3.33/day. The interest simply multiplies by the number of days you\'ve had the loan — no compounding, no hidden fees.' },
       { q: 'When is the QuickLoan due?', a: 'The target due date is Day 15 from the release date — this is when we expect full repayment of principal plus accrued interest. If you can\'t pay on Day 15, a ₱100 extension fee is charged and your principal rolls over to a hard deadline of Day 30. After Day 30, a ₱25/day penalty accrues on top of the daily interest until fully settled.' },
       { q: 'What happens if I miss the Day 15 target?', a: 'If you don\'t pay by Day 15, the admin will collect the 15 days of accrued interest plus a one-time ₱100 extension fee — for a ₱3,000 loan that\'s ₱150 + ₱100 = ₱250. Your ₱3,000 principal then rolls over to Day 30 as the final deadline, with interest still running daily.' },
       { q: 'What happens after Day 30?', a: 'Day 30 is the hard deadline. After that, you still owe the full balance (principal + all accrued interest + extension fee) and a ₱25/day penalty starts accruing on top. There is no cap on this penalty — the longer you wait, the more you owe. Since all borrowers are salaried colleagues, we expect settlement to happen at the next payday at the latest.' },
       { q: 'Can I pay a QuickLoan early?', a: 'Yes — in fact, paying early saves you money. If you pay on Day 7 instead of Day 15, you only pay 7 days of interest instead of 15. On a ₱3,000 loan, that\'s ₱70 instead of ₱150. There is no prepayment penalty.' },
       { q: 'Does QuickLoan have a Security Hold?', a: 'No. QuickLoan does not have a Security Hold — you receive the full approved amount. The interest structure (daily accrual + extension fee + penalty) is the risk management mechanism instead.' },
-      { q: 'Does QuickLoan affect my credit score?', a: 'QuickLoan payments are tracked but do not currently affect the regular credit score used for limit upgrades. Your regular loan tiers and limits are separate from QuickLoan activity.' },
-      { q: 'Can I have both a regular loan and a QuickLoan at the same time?', a: 'No. Only one active loan is allowed per borrower at any time, regardless of type. You must fully settle your current loan — regular or QuickLoan — before applying for a new one.' },
+      { q: 'Does QuickLoan affect my credit score?', a: 'QuickLoan payments are tracked but do not currently affect the regular credit score used for limit upgrades. Your installment loan tiers and limits are separate from QuickLoan activity.' },
+      { q: 'Can I have both a installment loan and a QuickLoan at the same time?', a: 'No. Only one active loan is allowed per borrower at any time, regardless of type. You must fully settle your current loan — regular or QuickLoan — before applying for a new one.' },
     ],
   }
 

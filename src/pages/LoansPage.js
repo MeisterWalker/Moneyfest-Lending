@@ -305,7 +305,7 @@ function LoanCard({ loan: rawLoan, borrowers, onEdit, onDelete, onRecordPayment,
               </div>
             </div>
           ) : (
-            /* ── Regular loan details ── */
+            /* ── Installment loan details ── */
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 14 }}>
               {[
                 { label: 'Installment', value: formatCurrency(loan.installment_amount) },
@@ -361,7 +361,7 @@ function LoanCard({ loan: rawLoan, borrowers, onEdit, onDelete, onRecordPayment,
               </button>
             )}
 
-            {/* Regular loan record payment button */}
+            {/* Installment loan record payment button */}
             {!isQuickLoan && canPay && !confirming && (
               <button
                 onClick={() => setConfirming(true)}
@@ -931,7 +931,7 @@ export default function LoansPage() {
       <div style={{ display: 'flex', gap: 4, marginBottom: 22, background: 'rgba(255,255,255,0.03)', borderRadius: 12, padding: 4, width: 'fit-content' }}>
         {[
           { key: 'all', label: 'All Loans', count: loans.length },
-          { key: 'regular', label: 'Regular', count: tabLoans('regular').length },
+          { key: 'regular', label: 'Installment', count: tabLoans('regular').length },
           { key: 'quickloan', label: '⚡ QuickLoan', count: tabLoans('quickloan').length },
         ].map(tab => (
           <button key={tab.key} onClick={() => { setLoanTypeTab(tab.key); setStatusFilter('All') }}
