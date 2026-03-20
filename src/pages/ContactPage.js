@@ -1,7 +1,17 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { usePageVisit } from '../hooks/usePageVisit'
 
 function ContactCard({ initials, gradient, badge, badgeBg, badgeBorder, badgeColor, name, role, email, expandedContent, accentColor, accentBg, accentBorder, glowColor }) {
+  const [copied, setCopied] = useState(false)
+
+  const handleCopy = useCallback((e) => {
+    e.stopPropagation()
+    if (!email) return
+    navigator.clipboard.writeText(email).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    })
+  }, [email])
   const [open, setOpen] = useState(false)
 
   return (
@@ -52,25 +62,22 @@ function ContactCard({ initials, gradient, badge, badgeBg, badgeBorder, badgeCol
       {/* Contact rows — always visible */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: open ? 20 : 0, transition: 'margin 0.3s' }}>
         {email && (
-          <a
-            href={`mailto:${email}`}
-            onClick={e => e.stopPropagation()}
-            style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', borderRadius: 12, background: accentBg, border: `1px solid ${accentBorder}`, textDecoration: 'none' }}
+          <div
+            onClick={handleCopy}
+            style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', borderRadius: 12, background: copied ? 'rgba(34,197,94,0.1)' : accentBg, border: `1px solid ${copied ? 'rgba(34,197,94,0.4)' : accentBorder}`, cursor: 'pointer', transition: 'all 0.2s' }}
           >
-            <div style={{ width: 32, height: 32, borderRadius: 9, background: `${accentBg}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, border: `1px solid ${accentBorder}` }}>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={accentColor} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="2" y="4" width="20" height="16" rx="3"/>
-                <path d="m2 7 8.5 6a2.5 2.5 0 0 0 3 0L22 7"/>
-              </svg>
+            <div style={{ width: 32, height: 32, borderRadius: 9, background: copied ? 'rgba(34,197,94,0.15)' : accentBg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, border: `1px solid ${copied ? 'rgba(34,197,94,0.4)' : accentBorder}`, transition: 'all 0.2s' }}>
+              {copied
+                ? <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#22C55E" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                : <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={accentColor} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="3"/><path d="m2 7 8.5 6a2.5 2.5 0 0 0 3 0L22 7"/></svg>
+              }
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 10, color: accentColor, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2 }}>Email</div>
+              <div style={{ fontSize: 10, color: copied ? '#22C55E' : accentColor, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2, transition: 'color 0.2s' }}>Email — {copied ? 'Copied! ✓' : 'Click to Copy'}</div>
               <div style={{ fontSize: 12, color: '#CBD5F0', fontFamily: 'Space Grotesk, sans-serif', fontWeight: 600, wordBreak: 'break-all', lineHeight: 1.4 }}>{email}</div>
             </div>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={accentColor} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, opacity: 0.7 }}>
-              <path d="M7 17L17 7M17 7H7M17 7v10"/>
-            </svg>
-          </a>
+            <div style={{ fontSize: 11, color: copied ? '#22C55E' : '#4B5580', flexShrink: 0, transition: 'color 0.2s' }}>{copied ? '✓' : '⎘'}</div>
+          </div>
         )}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', borderRadius: 12, background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.07)' }}>
           <div style={{ width: 32, height: 32, borderRadius: 9, background: 'rgba(99,102,241,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -248,7 +255,7 @@ export default function ContactPage() {
               badgeColor="#2DD4BF"
               name="Charlou June Ramil"
               role="Admin"
-              email={null}
+              email="jramil725@gmail.com"
               accentColor="#2DD4BF"
               accentBg="rgba(20,184,166,0.07)"
               accentBorder="rgba(20,184,166,0.2)"
