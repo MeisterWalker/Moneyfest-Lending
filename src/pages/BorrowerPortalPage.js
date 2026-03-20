@@ -723,7 +723,9 @@ export default function BorrowerPortalPage() {
             {pendingApp.status === 'Rejected' ? 'Application Not Approved' : 'Application Under Review'}
           </div>
           <div style={{ fontSize: 14, color: '#7A8AAA', marginBottom: 24, lineHeight: 1.7 }}>
-            {pendingApp.status === 'Rejected' ? 'Your application was not approved. Please contact an admin for more information.' : 'Your application is currently being reviewed by the admin. Please check back later or contact an admin directly via Microsoft Teams for updates.'}
+            {pendingApp.status === 'Rejected'
+              ? (pendingApp.reject_reason || 'Your application was not approved. Please contact an admin for more information.')
+              : 'Your application is currently being reviewed by the admin. Please check back later or contact an admin directly via Microsoft Teams for updates.'}
           </div>
           <div style={{ background: '#0E1320', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: '16px 20px', marginBottom: 20, textAlign: 'left' }}>
             <div style={{ fontSize: 11, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 12, fontWeight: 700 }}>Application Details</div>
