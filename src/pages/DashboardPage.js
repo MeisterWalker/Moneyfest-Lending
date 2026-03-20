@@ -81,6 +81,9 @@ function CutoffBanner({ loans, borrowers, onMarkPaid, onDismiss }) {
     l.loan_type !== 'quickloan' &&
     String(l.release_date).slice(0, 10) !== todayStr
   )
+
+  if (due.length === 0) return null
+
   const total = due.reduce((sum, l) => sum + (l.installment_amount || 0), 0)
 
   return (
