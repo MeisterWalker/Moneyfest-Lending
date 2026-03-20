@@ -714,41 +714,86 @@ export default function BorrowerPortalPage() {
   if (pendingApp) return (
     <div style={{ minHeight: '100vh', background: '#080B14', fontFamily: 'DM Sans, sans-serif' }}>
       <PortalHeader />
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 60px)', padding: 20 }}>
-        <div style={{ maxWidth: 420, width: '100%', textAlign: 'center' }}>
-          <div style={{ width: 72, height: 72, borderRadius: 20, background: pendingApp.status === 'Rejected' ? 'rgba(239,68,68,0.1)' : 'rgba(245,158,11,0.1)', border: `1px solid ${pendingApp.status === 'Rejected' ? 'rgba(239,68,68,0.3)' : 'rgba(245,158,11,0.3)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, margin: '0 auto 20px' }}>
-            {pendingApp.status === 'Rejected' ? '❌' : '⏳'}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 60px)', padding: '20px 16px' }}>
+        <div style={{ maxWidth: 520, width: '100%' }}>
+
+          {/* Status card */}
+          <div style={{
+            background: pendingApp.status === 'Rejected' ? 'rgba(239,68,68,0.04)' : 'rgba(245,158,11,0.04)',
+            border: `1px solid ${pendingApp.status === 'Rejected' ? 'rgba(239,68,68,0.2)' : 'rgba(245,158,11,0.2)'}`,
+            borderRadius: 20, padding: '32px 28px', marginBottom: 16
+          }}>
+            {/* Icon + Title */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 20 }}>
+              <div style={{
+                width: 52, height: 52, borderRadius: 14, flexShrink: 0,
+                background: pendingApp.status === 'Rejected' ? 'rgba(239,68,68,0.1)' : 'rgba(245,158,11,0.1)',
+                border: `1px solid ${pendingApp.status === 'Rejected' ? 'rgba(239,68,68,0.25)' : 'rgba(245,158,11,0.25)'}`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24
+              }}>
+                {pendingApp.status === 'Rejected' ? '❌' : '⏳'}
+              </div>
+              <div>
+                <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 800, fontSize: 20, color: '#F0F4FF', marginBottom: 3 }}>
+                  {pendingApp.status === 'Rejected' ? 'Application Not Approved' : 'Application Under Review'}
+                </div>
+                <div style={{ fontSize: 12, color: pendingApp.status === 'Rejected' ? '#EF4444' : '#F59E0B', fontWeight: 600 }}>
+                  {pendingApp.status === 'Rejected' ? 'Status: Rejected' : 'Status: Pending Review'}
+                </div>
+              </div>
+            </div>
+
+            {/* Reason / message */}
+            <div style={{
+              background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)',
+              borderRadius: 12, padding: '16px 18px', marginBottom: 20,
+              fontSize: 13.5, color: '#9AA4BC', lineHeight: 1.8
+            }}>
+              {pendingApp.status === 'Rejected'
+                ? (pendingApp.reject_reason || 'Your application was not approved. Please contact an admin for more information.')
+                : 'Your application is currently being reviewed by our admin team. Please check back later or reach out directly via Microsoft Teams for updates.'}
+            </div>
+
+            {/* Application details */}
+            <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 16 }}>
+              <div style={{ fontSize: 10, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700, marginBottom: 12 }}>Application Details</div>
+              {[
+                { label: 'Applicant', value: pendingApp.full_name },
+                { label: 'Requested Amount', value: '₱' + Number(pendingApp.loan_amount).toLocaleString() },
+                { label: 'Reference Code', value: pendingApp.access_code },
+                { label: 'Submitted', value: new Date(pendingApp.created_at).toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' }) },
+              ].map((r, i, arr) => (
+                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '9px 0', borderBottom: i < arr.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
+                  <span style={{ fontSize: 12, color: '#4B5580' }}>{r.label}</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: '#CBD5F0', fontFamily: 'Space Grotesk, sans-serif' }}>{r.value}</span>
+                </div>
+              ))}
+            </div>
           </div>
-          <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 22, color: '#F0F4FF', marginBottom: 8 }}>
-            {pendingApp.status === 'Rejected' ? 'Application Not Approved' : 'Application Under Review'}
-          </div>
-          <div style={{ fontSize: 14, color: '#7A8AAA', marginBottom: 24, lineHeight: 1.7 }}>
-            {pendingApp.status === 'Rejected'
-              ? (pendingApp.reject_reason || 'Your application was not approved. Please contact an admin for more information.')
-              : 'Your application is currently being reviewed by the admin. Please check back later or contact an admin directly via Microsoft Teams for updates.'}
-          </div>
-          <div style={{ background: '#0E1320', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: '16px 20px', marginBottom: 20, textAlign: 'left' }}>
-            <div style={{ fontSize: 11, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 12, fontWeight: 700 }}>Application Details</div>
+
+          {/* Contact admins */}
+          <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, padding: '20px 22px', marginBottom: 16 }}>
+            <div style={{ fontSize: 10, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700, marginBottom: 14 }}>Need help? Contact your admin</div>
             {[
-              { label: 'Name', value: pendingApp.full_name },
-              { label: 'Amount', value: '₱' + Number(pendingApp.loan_amount).toLocaleString() },
-              { label: 'Status', value: pendingApp.status },
-              { label: 'Access Code', value: pendingApp.access_code },
-            ].map((r, i) => (
-              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: i < 3 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
-                <span style={{ fontSize: 12, color: '#4B5580' }}>{r.label}</span>
-                <span style={{ fontSize: 13, fontWeight: 600, color: '#F0F4FF' }}>{r.value}</span>
+              { initials: 'JP', name: 'John Paul Lacaron', gradient: 'linear-gradient(135deg,#3B82F6,#8B5CF6)', role: 'Admin & Developer · Teams Chat' },
+              { initials: 'CJ', name: 'Charlou June Ramil', gradient: 'linear-gradient(135deg,#14B8A6,#3B82F6)', role: 'Admin · Teams Chat' }
+            ].map(a => (
+              <div key={a.name} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderRadius: 10, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', marginBottom: 8 }}>
+                <div style={{ width: 34, height: 34, borderRadius: '50%', background: a.gradient, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, color: '#fff', flexShrink: 0 }}>{a.initials}</div>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#F0F4FF' }}>{a.name}</div>
+                  <div style={{ fontSize: 11, color: '#4B5580' }}>{a.role}</div>
+                </div>
               </div>
             ))}
           </div>
-          <div style={{ fontSize: 12, color: '#4B5580', marginBottom: 16, lineHeight: 1.7 }}>Contact your admin directly via <strong style={{ color: '#7A8AAA' }}>Microsoft Teams</strong> for updates on your application.</div>
-          {[{ initials: 'JP', name: 'John Paul Lacaron', gradient: 'linear-gradient(135deg,#3B82F6,#8B5CF6)', role: 'Admin & Developer · Teams Chat' }, { initials: 'CJ', name: 'Charlou June Ramil', gradient: 'linear-gradient(135deg,#14B8A6,#3B82F6)', role: 'Admin · Teams Chat' }].map(a => (
-            <div key={a.name} style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.03)', borderRadius: 10, padding: '10px 14px', marginBottom: 8, textAlign: 'left' }}>
-              <div style={{ width: 32, height: 32, borderRadius: '50%', background: a.gradient, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, color: '#fff', flexShrink: 0 }}>{a.initials}</div>
-              <div><div style={{ fontSize: 13, fontWeight: 600, color: '#F0F4FF' }}>{a.name}</div><div style={{ fontSize: 11, color: '#4B5580' }}>{a.role}</div></div>
-            </div>
-          ))}
-          <button onClick={() => { setPendingApp(null); setInputCode(''); setCode('') }} style={{ width: '100%', marginTop: 16, padding: '11px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.08)', background: 'transparent', color: '#7A8AAA', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>← Back</button>
+
+          <button onClick={() => { setPendingApp(null); setInputCode(''); setCode('') }}
+            style={{ width: '100%', padding: '12px', borderRadius: 12, border: '1px solid rgba(255,255,255,0.08)', background: 'transparent', color: '#7A8AAA', fontSize: 13, fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.color = '#F0F4FF' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#7A8AAA' }}
+          >← Back to Portal</button>
+
         </div>
       </div>
     </div>
