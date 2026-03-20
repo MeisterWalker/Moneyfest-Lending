@@ -77,11 +77,22 @@ export default function PartnersPage() {
 
   const partnerTypes = [
     {
-      badge: 'Employer Partners',
+      badge: 'Platform Licensing',
       icon: '🏢',
-      title: 'Bring it to your workforce',
-      desc: 'Companies and HR teams who want to offer a structured financial wellness program to their employees. Zero cost to the organization — we handle everything end to end.',
-      perks: ['Dedicated admin dashboard', 'Custom borrower onboarding', 'Real-time loan visibility', 'Zero employer liability'],
+      title: 'Your brand. Our platform.',
+      desc: 'License the full MoneyfestLending system under your own brand. Your organization gets a complete, production-ready lending platform — customized, deployed, and yours to operate.',
+      perks: [
+        'White-labeled admin dashboard (your logo, your colors)',
+        'Borrower portal — application, e-signature, loan tracking',
+        'Credit scoring engine with loyalty tiers & security hold',
+        'Automated installment scheduling & payment proof uploads',
+        'Real-time notifications & portal activity logs',
+        'Rebate Credits reward system & withdrawal management',
+        'QuickLoan module (short-term, daily-interest loans)',
+        'Full RA 3765 / RA 10173 compliant loan agreement generation',
+        'Supabase backend — PostgreSQL, Row-Level Security, Realtime DB',
+        'Hosted, maintained, and supported by our dev team',
+      ],
       color: '#60A5FA', border: 'rgba(59,130,246,0.25)', bg: 'rgba(59,130,246,0.05)',
     },
     {
