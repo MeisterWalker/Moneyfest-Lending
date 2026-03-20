@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react'
 import { usePageVisit } from '../hooks/usePageVisit'
 
-function ContactCard({ initials, gradient, badge, badgeBg, badgeBorder, badgeColor, name, role, email, expandedContent, accentColor, accentBg, accentBorder, glowColor }) {
+function ContactCard({ initials, gradient, badge, badgeBg, badgeBorder, badgeColor, name, role, email, teamsEmail, expandedContent, accentColor, accentBg, accentBorder, glowColor }) {
   const [copied, setCopied] = useState(false)
 
   const handleCopy = useCallback((e) => {
@@ -79,7 +79,15 @@ function ContactCard({ initials, gradient, badge, badgeBg, badgeBorder, badgeCol
             <div style={{ fontSize: 11, color: copied ? '#22C55E' : '#4B5580', flexShrink: 0, transition: 'color 0.2s' }}>{copied ? '✓' : '⎘'}</div>
           </div>
         )}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', borderRadius: 12, background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.07)' }}>
+        <a
+          href={teamsEmail ? `https://teams.microsoft.com/l/chat/0/0?users=${teamsEmail}` : '#'}
+          target="_blank"
+          rel="noreferrer"
+          onClick={e => e.stopPropagation()}
+          style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', borderRadius: 12, background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.07)', textDecoration: 'none', transition: 'all 0.2s' }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(99,102,241,0.08)'; e.currentTarget.style.borderColor = 'rgba(99,102,241,0.25)' }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.025)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)' }}
+        >
           <div style={{ width: 32, height: 32, borderRadius: 9, background: 'rgba(99,102,241,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
@@ -90,9 +98,9 @@ function ContactCard({ initials, gradient, badge, badgeBg, badgeBorder, badgeCol
           </div>
           <div>
             <div style={{ fontSize: 10, color: '#a78bfa', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2 }}>Microsoft Teams</div>
-            <div style={{ fontSize: 12, color: '#7A8AAA' }}>Internal chat — colleagues only</div>
+            <div style={{ fontSize: 12, color: '#7A8AAA' }}>Click to open chat in Teams →</div>
           </div>
-        </div>
+        </a>
       </div>
 
       {/* Expanded content */}
@@ -234,6 +242,7 @@ export default function ContactPage() {
               name="John Paul Lacaron"
               role="Developer · System Admin"
               email="johnpaullacaron@moneyfestlending.loan"
+              teamsEmail="john.lacaron@mysourcesolutions.com"
               accentColor="#60A5FA"
               accentBg="rgba(59,130,246,0.08)"
               accentBorder="rgba(59,130,246,0.25)"
@@ -256,6 +265,7 @@ export default function ContactPage() {
               name="Charlou June Ramil"
               role="Admin"
               email="jramil725@gmail.com"
+              teamsEmail="charlou.ramil@mysourcesolutions.com"
               accentColor="#2DD4BF"
               accentBg="rgba(20,184,166,0.07)"
               accentBorder="rgba(20,184,166,0.2)"
