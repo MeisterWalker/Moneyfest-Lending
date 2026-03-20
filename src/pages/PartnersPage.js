@@ -279,11 +279,45 @@ export default function PartnersPage() {
                 Whether you run a company, manage capital, or know the right people — there's a way to work with us.
               </p>
             </div>
-            <div className="partners-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 18 }}>
-              {partnerTypes.map((pt, i) => (
-                <div key={i} className="partner-card" style={{ background: pt.bg, border: `1px solid ${pt.border}`, borderRadius: 22, padding: '30px 26px', boxShadow: `0 0 0 0 ${pt.border}` }}
+
+            {/* ── Featured: Platform Licensing ── */}
+            {(() => {
+              const pt = partnerTypes[0]
+              return (
+                <div className="partner-card" style={{ background: pt.bg, border: `1px solid ${pt.border}`, borderRadius: 22, padding: '36px 36px', marginBottom: 18 }}
                   onMouseEnter={e => e.currentTarget.style.boxShadow = `0 12px 40px ${pt.border}`}
-                  onMouseLeave={e => e.currentTarget.style.boxShadow = '0 0 0 0 transparent'}
+                  onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}
+                >
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 32, flexWrap: 'wrap' }}>
+                    {/* Left: title + desc */}
+                    <div style={{ flex: '1 1 260px', minWidth: 220 }}>
+                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '3px 12px', borderRadius: 20, background: 'rgba(255,255,255,0.05)', border: `1px solid ${pt.border}`, fontSize: 10, fontWeight: 700, color: pt.color, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 18 }}>
+                        {pt.badge}
+                      </div>
+                      <div style={{ fontSize: 30, marginBottom: 14 }}>{pt.icon}</div>
+                      <div style={{ fontFamily: 'Space Grotesk,sans-serif', fontWeight: 800, fontSize: 22, color: '#F0F4FF', marginBottom: 12, lineHeight: 1.25 }}>{pt.title}</div>
+                      <div style={{ fontSize: 14, color: '#7A8AAA', lineHeight: 1.8 }}>{pt.desc}</div>
+                    </div>
+                    {/* Right: perks in 2-col grid */}
+                    <div style={{ flex: '2 1 400px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 24px' }}>
+                      {pt.perks.map((perk, j) => (
+                        <div key={j} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 12.5, color: '#9AA4BC', lineHeight: 1.5 }}>
+                          <div style={{ width: 6, height: 6, borderRadius: '50%', background: pt.color, flexShrink: 0, marginTop: 5 }} />
+                          {perk}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )
+            })()}
+
+            {/* ── Capital + Network 2-col ── */}
+            <div className="partners-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18 }}>
+              {partnerTypes.slice(1).map((pt, i) => (
+                <div key={i} className="partner-card" style={{ background: pt.bg, border: `1px solid ${pt.border}`, borderRadius: 22, padding: '30px 26px' }}
+                  onMouseEnter={e => e.currentTarget.style.boxShadow = `0 12px 40px ${pt.border}`}
+                  onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}
                 >
                   <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '3px 12px', borderRadius: 20, background: 'rgba(255,255,255,0.05)', border: `1px solid ${pt.border}`, fontSize: 10, fontWeight: 700, color: pt.color, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 20 }}>
                     {pt.badge}
@@ -291,7 +325,7 @@ export default function PartnersPage() {
                   <div style={{ fontSize: 28, marginBottom: 14 }}>{pt.icon}</div>
                   <div style={{ fontFamily: 'Space Grotesk,sans-serif', fontWeight: 800, fontSize: 17, color: '#F0F4FF', marginBottom: 12, lineHeight: 1.3 }}>{pt.title}</div>
                   <div style={{ fontSize: 13, color: '#7A8AAA', lineHeight: 1.8, marginBottom: 20 }}>{pt.desc}</div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     {pt.perks.map((perk, j) => (
                       <div key={j} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: '#9AA4BC' }}>
                         <div style={{ width: 6, height: 6, borderRadius: '50%', background: pt.color, flexShrink: 0 }} />
@@ -302,6 +336,7 @@ export default function PartnersPage() {
                 </div>
               ))}
             </div>
+
           </div>
         </section>
 
