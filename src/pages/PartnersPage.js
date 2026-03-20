@@ -206,6 +206,7 @@ export default function PartnersPage() {
               <h2 style={{ fontFamily:'Syne,sans-serif', fontWeight:900, fontSize:'clamp(26px,4vw,38px)', color:'#F0F4FF', margin:'0 0 14px', letterSpacing:-1 }}>
                 This isn't an idea. It's running.
               </h2>
+              <p style={{ fontSize:13, color:'#4B5580', fontFamily:'Space Grotesk, sans-serif', fontWeight:600, letterSpacing:'0.05em', marginBottom:10 }}>PostgreSQL · Supabase · REST API · Realtime DB · Row-Level Security · Edge Functions</p>
               <p style={{ fontSize:15, color:'#7A8AAA', maxWidth:520, margin:'0 auto', lineHeight:1.8 }}>
                 We've already built the hard things. The infrastructure, the compliance layer, the admin tooling — all live in production.
               </p>
@@ -242,7 +243,7 @@ export default function PartnersPage() {
                 {[
                   { icon:'🏦', text:'Employees access loans at fair rates — no predatory lenders, no awkward colleague asks' },
                   { icon:'📈', text:'Repayments are tied to payroll cycles — structurally low default risk' },
-                  { icon:'⚙️', text:'Entirely admin-managed — no burden on the employer organization' },
+                  { icon:'⚙️', text:'Peer-managed within the organization — a trusted colleague-run program, with no dependency on external HR infrastructure' },
                   { icon:'🌏', text:'Designed for the Philippine workforce, with full regulatory compliance built in' },
                 ].map((item, i) => (
                   <div key={i} style={{ display:'flex', alignItems:'flex-start', gap:12, padding:'14px 16px', background:'rgba(255,255,255,0.02)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:12 }}>
