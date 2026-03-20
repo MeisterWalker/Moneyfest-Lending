@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../components/Toast'
 import { logAudit } from '../lib/helpers'
+import { sendPaymentConfirmedEmail } from '../lib/emailService'
 import { ExternalLink, Image, CheckCircle, XCircle } from 'lucide-react'
 
 // ── Notify borrower helper ────────────────────────────────────
@@ -21,7 +22,7 @@ function PaymentProofsPanel({ user }) {
     setLoading(true)
     const { data } = await supabase
       .from('payment_proofs')
-      .select('*, borrowers(full_name, access_code), loans(loan_amount, installment_amount)')
+      .select('*, borrowers(full_name, access_code, email), loans(loan_amount, installment_amount, num_installments, remaining_balance)')
       .eq('status', 'Pending')
       .order('created_at', { ascending: false })
     setProofs(data || [])
@@ -49,6 +50,24 @@ function PaymentProofsPanel({ user }) {
     }).eq('id', proof.id)
     await logAudit({ action_type: 'PAYMENT_PROOF_CONFIRMED', module: 'Approvals', description: `Payment proof confirmed for ${proof.borrowers?.full_name} — Installment ${proof.installment_number}`, changed_by: user?.email })
     await notifyBorrower({ borrower_id: proof.borrower_id, type: 'payment_confirmed', title: '✅ Payment Confirmed', message: `Your Installment ${proof.installment_number} payment of ₱${Number(proof.loans?.installment_amount || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })} has been confirmed by the admin.` })
+    // Send payment confirmed email
+    if (proof.borrowers?.email) {
+      const numInstallments = proof.loans?.num_installments || 4
+      const installAmt = Math.ceil(proof.loans?.installment_amount || 0)
+      const remaining = Math.max(0, (proof.loans?.remaining_balance || 0) - installAmt)
+      const loanFullyPaid = remaining <= 0 || proof.installment_number >= numInstallments
+      sendPaymentConfirmedEmail({
+        to: proof.borrowers.email,
+        borrowerName: proof.borrowers.full_name,
+        accessCode: proof.borrowers.access_code,
+        installmentNum: proof.installment_number,
+        numInstallments,
+        amountPaid: installAmt,
+        paymentDate: new Date().toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' }),
+        remainingBalance: remaining,
+        loanFullyPaid,
+      }).catch(e => console.warn('Payment email failed:', e))
+    }
     toast('Payment proof confirmed', 'success')
     fetchProofs()
   }

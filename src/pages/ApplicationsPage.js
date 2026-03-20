@@ -4,6 +4,7 @@ import { CREDIT_CONFIG, calcSecurityHold } from '../lib/creditSystem'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../components/Toast'
 import { logAudit } from '../lib/helpers'
+import { sendApplicationApprovedEmail, sendApplicationRejectedEmail } from '../lib/emailService'
 import { ClipboardList, Check, X, Clock, ChevronDown, ChevronUp, User, Phone, Mail, MapPin, Users, DollarSign, ExternalLink, Image } from 'lucide-react'
 
 const STATUS_COLORS = {
@@ -579,7 +580,36 @@ export default function ApplicationsPage() {
         changed_by: user?.email
       })
 
-      // 8. Update UI immediately
+      // 8. Send approval email
+      if (app.email) {
+        const loanAmount = Number(app.loan_amount) || 5000
+        const loanTerm   = Number(app.loan_term) || 2
+        const numInstallments = loanTerm * 2
+        const totalRepayment = Math.ceil(loanAmount * (1 + 0.07 * loanTerm))
+        const installmentAmount = Math.ceil(totalRepayment / numInstallments)
+        const today = new Date()
+        const day = today.getDate()
+        let rel
+        if (day <= 5) rel = new Date(today.getFullYear(), today.getMonth(), 5)
+        else if (day <= 20) rel = new Date(today.getFullYear(), today.getMonth(), 20)
+        else rel = new Date(today.getFullYear(), today.getMonth() + 1, 5)
+        const releaseDateStr = rel.toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' })
+        const loanType = app.loan_type === 'quickloan' ? 'QuickLoan' : 'Installment Loan'
+        sendApplicationApprovedEmail({
+          to: app.email,
+          borrowerName: app.full_name,
+          accessCode: finalCode,
+          loanAmount,
+          loanType,
+          releaseDate: releaseDateStr,
+          installmentAmount,
+          totalRepayment,
+          loanTerm,
+          numInstallments,
+        }).catch(e => console.warn('Approval email failed:', e))
+      }
+
+      // 9. Update UI immediately
       setApplications(prev => prev.map(a => a.id === app.id ? { ...a, status: 'Approved' } : a))
       toast(`✅ ${app.full_name} approved! Code: ${finalCode}`, 'success')
 
@@ -592,6 +622,16 @@ export default function ApplicationsPage() {
   const handleReject = async (app, reason) => {
     await supabase.from('applications').update({ status: 'Rejected', reject_reason: reason }).eq('id', app.id)
     await logAudit({ action_type: 'APPLICATION_REJECTED', module: 'Applications', description: `Application rejected for ${app.full_name}. Reason: ${reason}`, changed_by: user?.email })
+    // Send rejection email
+    if (app.email) {
+      sendApplicationRejectedEmail({
+        to: app.email,
+        borrowerName: app.full_name,
+        loanAmount: app.loan_amount,
+        loanType: app.loan_type === 'quickloan' ? 'QuickLoan' : 'Installment Loan',
+        reason,
+      }).catch(e => console.warn('Rejection email failed:', e))
+    }
     toast(`Application rejected`, 'success')
     setApplications(prev => prev.map(a => a.id === app.id ? { ...a, status: 'Rejected', reject_reason: reason } : a))
   }

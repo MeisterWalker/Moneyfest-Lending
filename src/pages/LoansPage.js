@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase'
 import { CREDIT_CONFIG, getBadgeFromScore, getBadgeFromCleanLoans, calcSecurityHold, getSecurityHoldRate } from '../lib/creditSystem'
 import { logAudit, formatCurrency, formatDate, getInstallmentDates, getNumInstallments, calcQuickLoanBalance, getQuickLoanDueDates, QUICKLOAN_CONFIG, getQuickLoanDaysElapsed } from '../lib/helpers'
 import { notifyBorrower } from '../lib/portalNotifications'
+import { sendFundsReleasedEmail, sendPaymentConfirmedEmail } from '../lib/emailService'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../components/Toast'
 import LoanModal from '../components/LoanModal'
@@ -793,6 +794,24 @@ export default function LoansPage() {
 
     // Download receipt
     downloadReceiptPDF({ loan, borrower, installmentNum: newPaymentsMade, amount: installAmt })
+
+    // Send payment confirmed email
+    if (borrower?.email) {
+      const paymentDate = new Date().toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' })
+      const loanFullyPaid = newStatus === 'Paid'
+      sendPaymentConfirmedEmail({
+        to: borrower.email,
+        borrowerName: borrower.full_name,
+        accessCode: borrower.access_code,
+        installmentNum: newPaymentsMade,
+        numInstallments: loan.num_installments || 4,
+        amountPaid: installAmt,
+        paymentDate,
+        remainingBalance: Math.max(0, loan.remaining_balance - installAmt),
+        loanFullyPaid,
+      }).catch(e => console.warn('Payment confirmed email failed:', e))
+    }
+
     fetchData()
   }
 
@@ -867,6 +886,25 @@ export default function LoansPage() {
       title: '💸 Your funds have been released!',
       message: `Your loan of ${formatCurrency(loan.loan_amount)} has been released today (${todayStr}). Check your payment schedule in the portal for your installment due dates.`
     })
+
+    // Send funds released email
+    if (borrower?.email) {
+      const numInstallments = loan.num_installments || 4
+      const allDates = getInstallmentDates(todayStr, numInstallments)
+      const firstDueDate = allDates[0]?.toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' }) || '—'
+      const releaseDateFormatted = today.toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' })
+      sendFundsReleasedEmail({
+        to: borrower.email,
+        borrowerName: borrower.full_name,
+        accessCode: borrower.access_code,
+        loanAmount: loan.loan_amount,
+        loanType: loan.loan_type === 'quickloan' ? 'QuickLoan' : 'Installment Loan',
+        releaseDate: releaseDateFormatted,
+        firstDueDate,
+        numInstallments,
+        installmentAmount: Math.ceil(loan.installment_amount),
+      }).catch(e => console.warn('Funds released email failed:', e))
+    }
 
     await logAudit({
       action_type: 'LOAN_FUNDS_RELEASED',
