@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { CREDIT_CONFIG, getBadgeFromScore, getBadgeFromCleanLoans, calcSecurityHold, getSecurityHoldRate } from '../lib/creditSystem'
 import { logAudit, formatCurrency, formatDate, getInstallmentDates, getNumInstallments, calcQuickLoanBalance, getQuickLoanDueDates, QUICKLOAN_CONFIG, getQuickLoanDaysElapsed } from '../lib/helpers'
+import { notifyBorrower } from '../lib/portalNotifications'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../components/Toast'
 import LoanModal from '../components/LoanModal'
@@ -859,6 +860,13 @@ export default function LoansPage() {
     }).eq('id', loan.id)
 
     if (error) { toast('Failed to confirm release', 'error'); return }
+
+    await notifyBorrower({
+      borrower_id: loan.borrower_id,
+      type: 'funds_released',
+      title: '💸 Your funds have been released!',
+      message: `Your loan of ${formatCurrency(loan.loan_amount)} has been released today (${todayStr}). Check your payment schedule in the portal for your installment due dates.`
+    })
 
     await logAudit({
       action_type: 'LOAN_FUNDS_RELEASED',
