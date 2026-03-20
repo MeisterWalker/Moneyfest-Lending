@@ -58,7 +58,7 @@ function SuccessScreen({ accessCode, fullName, loanAmount }) {
         </div>
         <div style={{ background: 'rgba(99,102,241,0.06)', border: '1px solid rgba(99,102,241,0.2)', borderRadius: 12, padding: '12px 16px', marginBottom: 16, display: 'flex', alignItems: 'flex-start', gap: 10 }}>
           <span style={{ fontSize: 18, flexShrink: 0, marginTop: 1 }}>📸</span>
-          <div style={{ fontSize: 12, color: '#7A8AAA', lineHeight: 1.6 }}><strong style={{ color: '#CBD5F0', display: 'block', marginBottom: 2 }}>Tip: Take a screenshot of this page</strong>Your access code is <strong style={{ color: '#F0F4FF' }}>{accessCode}</strong>. Without it, you won't be able to check your application status. No email confirmation is sent at this time.</div>
+          <div style={{ fontSize: 12, color: '#7A8AAA', lineHeight: 1.6 }}><strong style={{ color: '#CBD5F0', display: 'block', marginBottom: 2 }}>Tip: Take a screenshot of this page</strong>Your access code is <strong style={{ color: '#F0F4FF' }}>{accessCode}</strong>. Without it, you won't be able to check your application status. A confirmation email has been sent to your email address.</div>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
           <div style={{ background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 12, padding: '14px 16px' }}><div style={{ fontSize: 11, color: '#4B5580', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Loan Amount</div><div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 20, color: '#22C55E' }}>₱{parseFloat(loanAmount).toLocaleString()}</div></div>
@@ -289,6 +289,7 @@ export default function PublicApplyPage() {
 
   const handleSubmit = async () => {
     const err = validateStep3(); if (err) { setError(err); return }
+    if (loading) return  // ← double-submit guard
     setError(''); setLoading(true)
     const code = 'LM-' + Math.random().toString(36).substring(2, 6).toUpperCase()
     let validIdPath = null, validIdBackPath = null
@@ -330,10 +331,9 @@ export default function PublicApplyPage() {
       access_code: code,
       status: 'Pending',
     })
-    setLoading(false)
-    if (dbErr) { setError('Submission failed. Please try again.'); return }
-    if (form.email.trim()) await sendPendingEmail({ to: form.email.trim(), borrowerName: form.full_name.trim(), accessCode: code, loanAmount: parseFloat(form.loan_amount) })
-    setAccessCode(code); setSubmitted(true)
+    if (dbErr) { setError('Submission failed. Please try again.'); setLoading(false); return }
+    if (form.email.trim()) sendPendingEmail({ to: form.email.trim(), borrowerName: form.full_name.trim(), accessCode: code, loanAmount: parseFloat(form.loan_amount) }).catch(() => {})
+    setAccessCode(code); setSubmitted(true); setLoading(false)
   }
 
   const inp = { width: '100%', boxSizing: 'border-box', padding: '10px 13px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 9, color: '#F0F4FF', fontSize: 13, outline: 'none', fontFamily: 'DM Sans, sans-serif', transition: 'border-color 0.2s' }
