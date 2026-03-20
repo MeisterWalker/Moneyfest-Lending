@@ -135,6 +135,11 @@ export default function HomePage() {
               onMouseLeave={e => { e.currentTarget.style.color = '#7A8AAA'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)' }}>
               <img src="/faq.png" alt="faq" style={{ width: 13, height: 13, objectFit: 'contain', marginRight: 6, verticalAlign: 'middle' }} />FAQ
             </a>
+            <a href="/contact" style={{ padding: '8px 16px', borderRadius: 9, background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#7A8AAA', fontSize: 13, fontWeight: 600, textDecoration: 'none', transition: 'all 0.2s' }}
+              onMouseEnter={e => { e.currentTarget.style.color = '#F0F4FF'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.25)' }}
+              onMouseLeave={e => { e.currentTarget.style.color = '#7A8AAA'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)' }}>
+              Contact Us
+            </a>
             <a href="/portal" style={{ padding: '8px 16px', borderRadius: 9, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: '#CBD5F0', fontSize: 13, fontWeight: 600, textDecoration: 'none', transition: 'all 0.2s' }}
               onMouseEnter={e => { e.currentTarget.style.color = '#F0F4FF' }}
               onMouseLeave={e => { e.currentTarget.style.color = '#CBD5F0' }}>
@@ -400,7 +405,7 @@ export default function HomePage() {
           </div>
 
           {/* Bottom callouts */}
-          <div ref={ref('rewards-bottom')} className={`reveal ${visible['rewards-bottom'] ? 'visible' : ''}`} className="rewards-bottom-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 14, marginBottom: 28 }}>
+          <div ref={ref('rewards-bottom')} className={`reveal rewards-bottom-grid ${visible['rewards-bottom'] ? 'visible' : ''}`} style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 14, marginBottom: 28 }}>
             {[
               { icon: '/giftbox.png',         text: 'Security Hold drops from 10% down to just 5% as you level up',    color: '#F59E0B' },
               { icon: '/philippine-peso.png', text: 'Loan limit grows from ₱5,000 all the way up to ₱10,000',          color: '#22C55E' },
@@ -535,7 +540,7 @@ export default function HomePage() {
           <span style={{ fontSize: 12, color: '#4B5580' }}>· Workplace Lending Program</span>
         </div>
         <div style={{ display: 'flex', gap: 20 }}>
-          {[{ label: 'Apply', href: '/apply' }, { label: 'My Portal', href: '/portal' }, { label: 'FAQ', href: '/faq' }, { label: 'Privacy Notice', href: '/privacy' }, { label: 'Terms & Conditions', href: '/terms' }].map((l, i) => (
+          {[{ label: 'Apply', href: '/apply' }, { label: 'My Portal', href: '/portal' }, { label: 'FAQ', href: '/faq' }, { label: 'Contact Us', href: '/contact' }, { label: 'Privacy Notice', href: '/privacy' }, { label: 'Terms & Conditions', href: '/terms' }].map((l, i) => (
             <a key={i} href={l.href} style={{ fontSize: 12, color: '#4B5580', textDecoration: 'none', transition: 'color 0.2s' }}
               onMouseEnter={e => e.currentTarget.style.color = '#7A8AAA'}
               onMouseLeave={e => e.currentTarget.style.color = '#4B5580'}>{l.label}</a>

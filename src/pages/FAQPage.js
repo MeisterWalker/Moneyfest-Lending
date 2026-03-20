@@ -172,6 +172,9 @@ export default function FAQPage() {
             </div>
           </a>
           <div style={{ display: 'flex', gap: 8 }}>
+            <a href="/contact" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: 10, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: '#7A8AAA', fontSize: 13, fontWeight: 600, textDecoration: 'none', whiteSpace: 'nowrap' }}>
+              Contact Us
+            </a>
             <a href="/apply" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: 10, background: 'linear-gradient(135deg,rgba(59,130,246,0.15),rgba(139,92,246,0.15))', border: '1px solid rgba(139,92,246,0.3)', color: '#a78bfa', fontSize: 13, fontWeight: 700, textDecoration: 'none', fontFamily: 'Space Grotesk', whiteSpace: 'nowrap' }}>
               <img src="/startup.png" alt="launch" style={{ width: 15, height: 15, objectFit: 'contain', marginRight: 5 }} />Apply Now
             </a>

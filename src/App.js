@@ -21,6 +21,7 @@ import HomePage from './pages/HomePage'
 import PrivacyPage from './pages/PrivacyPage'
 import InvestorPitchPage from './pages/InvestorPitchPage'
 import TermsPage from './pages/TermsPage'
+import ContactPage from './pages/ContactPage'
 import NotificationBell from './components/NotificationBell'
 import { useAutoLogout } from './hooks/useAutoLogout'
 import { useEffect, useState } from 'react'
@@ -83,6 +84,7 @@ function AppRoutes() {
       <Route path="/privacy"           element={<PrivacyPage />} />
       <Route path="/admin/investor-pitch" element={<ProtectedRoute><AppLayout><InvestorPitchPage /></AppLayout></ProtectedRoute>} />
       <Route path="/terms"            element={<TermsPage />} />
+      <Route path="/contact"          element={<ContactPage />} />
 
       {/* ── Catch old routes ── */}
       <Route path="/dashboard"   element={<Navigate to="/admin/dashboard" replace />} />
