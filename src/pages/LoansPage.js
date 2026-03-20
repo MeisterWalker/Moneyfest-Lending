@@ -156,7 +156,7 @@ function LoanCard({ loan: rawLoan, borrowers, applications, onEdit, onDelete, on
       : rawLoan.remaining_balance
   }
   const borrower = borrowers.find(b => b.id === loan.borrower_id)
-  const app = (applications || []).find(a => a.borrower_id === loan.borrower_id)
+  const app = (applications || []).find(a => a.email === borrower?.email)
   const today = new Date()
   today.setHours(0, 0, 0, 0)
 
