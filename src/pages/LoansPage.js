@@ -144,7 +144,7 @@ function StatusBadge({ status }) {
   )
 }
 
-function LoanCard({ loan: rawLoan, borrowers, onEdit, onDelete, onRecordPayment, onDefault, onRenew, onQuickLoanPayoff, onQuickLoanDay15Missed, onConfirmRelease }) {
+function LoanCard({ loan: rawLoan, borrowers, applications, onEdit, onDelete, onRecordPayment, onDefault, onRenew, onQuickLoanPayoff, onQuickLoanDay15Missed, onConfirmRelease }) {
   const [expanded, setExpanded] = useState(false)
   const [confirming, setConfirming] = useState(false)
   // Normalize installment to whole peso — handles loans created before rounding was added
@@ -156,6 +156,7 @@ function LoanCard({ loan: rawLoan, borrowers, onEdit, onDelete, onRecordPayment,
       : rawLoan.remaining_balance
   }
   const borrower = borrowers.find(b => b.id === loan.borrower_id)
+  const app = (applications || []).find(a => a.borrower_id === loan.borrower_id)
   const today = new Date()
   today.setHours(0, 0, 0, 0)
 
@@ -263,6 +264,33 @@ function LoanCard({ loan: rawLoan, borrowers, onEdit, onDelete, onRecordPayment,
               <div style={{ padding: '10px 14px', background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.25)', borderRadius: 8, fontSize: 12, color: 'var(--gold)', display: 'flex', alignItems: 'center', gap: 8 }}>
                 <AlertTriangle size={13} />
                 <span>⚠️ Loan Agreement <strong>not yet signed</strong> — borrower must sign via portal before funds can be released</span>
+              </div>
+            )}
+            {app?.release_method && (
+              <div style={{ padding: '10px 14px', background: 'rgba(139,92,246,0.06)', border: '1px solid rgba(139,92,246,0.2)', borderRadius: 8, fontSize: 12, display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                <span style={{ fontSize: 15 }}>
+                  {app.release_method === 'GCash' ? '📱' : app.release_method === 'Physical Cash' ? '💵' : '🏦'}
+                </span>
+                <div>
+                  <div style={{ color: '#A78BFA', fontWeight: 700, marginBottom: 3 }}>
+                    Release via {app.release_method}{app.bank_name ? ` — ${app.bank_name}` : ''}
+                  </div>
+                  {app.release_method === 'GCash' && (
+                    <div style={{ color: '#7A8AAA' }}>
+                      {app.gcash_number && <span>📞 {app.gcash_number}</span>}
+                      {app.gcash_name && <span style={{ marginLeft: 10 }}>👤 {app.gcash_name}</span>}
+                    </div>
+                  )}
+                  {(app.release_method === 'RCBC' || app.release_method === 'Other Bank Transfer') && app.bank_account_number && (
+                    <div style={{ color: '#7A8AAA' }}>
+                      {app.bank_account_holder && <span>👤 {app.bank_account_holder} · </span>}
+                      <span>Acct# {app.bank_account_number}</span>
+                    </div>
+                  )}
+                  {app.release_method === 'Physical Cash' && (
+                    <div style={{ color: '#7A8AAA' }}>Hand over cash directly to borrower</div>
+                  )}
+                </div>
               </div>
             )}
           </div>
@@ -459,6 +487,7 @@ export default function LoansPage() {
   const [loans, setLoans] = useState([])
   const [borrowers, setBorrowers] = useState([])
   const [settings, setSettings] = useState(null)
+  const [applications, setApplications] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('All')
@@ -472,14 +501,16 @@ export default function LoansPage() {
   const { toast } = useToast()
 
   const fetchData = useCallback(async () => {
-    const [{ data: l }, { data: b }, { data: s }] = await Promise.all([
+    const [{ data: l }, { data: b }, { data: s }, { data: apps }] = await Promise.all([
       supabase.from('loans').select('*').order('created_at', { ascending: false }),
       supabase.from('borrowers').select('*'),
-      supabase.from('settings').select('*').eq('id', 1).single()
+      supabase.from('settings').select('*').eq('id', 1).single(),
+      supabase.from('applications').select('id,borrower_id,release_method,gcash_number,gcash_name,bank_account_number,bank_name,bank_account_holder,full_name,email').eq('status', 'Approved').order('created_at', { ascending: false })
     ])
     setLoans(l || [])
     setBorrowers(b || [])
     setSettings(s)
+    setApplications(apps || [])
     setLoading(false)
   }, [])
 
@@ -1040,6 +1071,7 @@ export default function LoansPage() {
               key={loan.id}
               loan={loan}
               borrowers={borrowers}
+              applications={applications}
               onEdit={l => { setEditingLoan(l); setPrefillLoan(null); setModalOpen(true) }}
               onDelete={setDeleteTarget}
               onDefault={setDefaultTarget}
