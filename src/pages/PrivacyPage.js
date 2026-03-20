@@ -104,8 +104,8 @@ export default function PrivacyPage() {
       title: 'How to Exercise Your Rights or Contact Us',
       content: 'To exercise any of your rights, raise a concern, or request deletion of your data, please contact the program administrators directly via Microsoft Teams Chat:',
       list: [
-        { label: 'John Paul Lacaron', detail: 'Administrator / Developer — reachable via Microsoft Teams.' },
-        { label: 'Charlou June Ramil', detail: 'Administrator — reachable via Microsoft Teams.' },
+        { label: 'John Paul Lacaron', detail: 'Administrator / Developer — reachable via the Contact Us page.' },
+        { label: 'Charlou June Ramil', detail: 'Administrator — reachable via the Contact Us page.' },
       ]
     },
   ]

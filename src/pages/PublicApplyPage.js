@@ -66,14 +66,10 @@ function SuccessScreen({ accessCode, fullName, loanAmount }) {
         </div>
         <div style={{ background: 'rgba(59,130,246,0.06)', border: '1px solid rgba(59,130,246,0.15)', borderRadius: 12, padding: '16px 20px' }}>
           <div style={{ fontSize: 13, color: '#60A5FA', fontWeight: 700, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 7 }}><img src='/mail.png' alt='mail' style={{ width: 16, height: 16, objectFit: 'contain' }} />Need to follow up?</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {[{ i: 'JP', n: 'John Paul Lacaron', g: 'linear-gradient(135deg,#3B82F6,#8B5CF6)', r: 'Admin & Developer · Teams Chat' }, { i: 'CJ', n: 'Charlou June Ramil', g: 'linear-gradient(135deg,#14B8A6,#3B82F6)', r: 'Admin · Microsoft Teams Chat' }].map(a => (
-              <div key={a.n} style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.03)', borderRadius: 8, padding: '10px 12px' }}>
-                <div style={{ width: 32, height: 32, borderRadius: '50%', background: a.g, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 800, color: '#fff', flexShrink: 0 }}>{a.i}</div>
-                <div><div style={{ fontSize: 13, fontWeight: 600, color: '#F0F4FF' }}>{a.n}</div><div style={{ fontSize: 11, color: '#4B5580' }}>{a.r}</div></div>
-              </div>
-            ))}
-          </div>
+          <p style={{ fontSize: 13, color: '#7A8AAA', lineHeight: 1.7, margin: '0 0 12px' }}>Our admin team is here to help with any questions about your application.</p>
+          <a href="/contact" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 18px', borderRadius: 10, background: 'linear-gradient(135deg,rgba(59,130,246,0.15),rgba(139,92,246,0.15))', border: '1px solid rgba(139,92,246,0.3)', color: '#a78bfa', textDecoration: 'none', fontSize: 13, fontWeight: 700, fontFamily: 'Space Grotesk' }}>
+            💬 Contact Us →
+          </a>
         </div>
       </div>
     </div>

@@ -773,19 +773,11 @@ export default function BorrowerPortalPage() {
 
           {/* Contact admins */}
           <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, padding: '20px 22px', marginBottom: 16 }}>
-            <div style={{ fontSize: 10, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700, marginBottom: 14 }}>Need help? Contact your admin</div>
-            {[
-              { initials: 'JP', name: 'John Paul Lacaron', gradient: 'linear-gradient(135deg,#3B82F6,#8B5CF6)', role: 'Admin & Developer · Teams Chat' },
-              { initials: 'CJ', name: 'Charlou June Ramil', gradient: 'linear-gradient(135deg,#14B8A6,#3B82F6)', role: 'Admin · Teams Chat' }
-            ].map(a => (
-              <div key={a.name} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderRadius: 10, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', marginBottom: 8 }}>
-                <div style={{ width: 34, height: 34, borderRadius: '50%', background: a.gradient, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, color: '#fff', flexShrink: 0 }}>{a.initials}</div>
-                <div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: '#F0F4FF' }}>{a.name}</div>
-                  <div style={{ fontSize: 11, color: '#4B5580' }}>{a.role}</div>
-                </div>
-              </div>
-            ))}
+            <div style={{ fontSize: 10, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700, marginBottom: 12 }}>Need help? Contact your admin</div>
+            <p style={{ fontSize: 13, color: '#7A8AAA', lineHeight: 1.7, margin: '0 0 14px' }}>Our team is ready to assist with any questions about your application.</p>
+            <a href="/contact" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '11px 20px', borderRadius: 11, background: 'linear-gradient(135deg,rgba(59,130,246,0.12),rgba(139,92,246,0.12))', border: '1px solid rgba(139,92,246,0.25)', color: '#a78bfa', textDecoration: 'none', fontSize: 13, fontWeight: 700, fontFamily: 'Space Grotesk, sans-serif' }}>
+              💬 Contact Us →
+            </a>
           </div>
 
           <button onClick={() => { setPendingApp(null); setInputCode(''); setCode('') }}
@@ -856,7 +848,7 @@ export default function BorrowerPortalPage() {
               {loading ? 'Checking...' : 'Access My Loan →'}
             </button>
             <div style={{ marginTop: 16, padding: '12px 14px', background: 'rgba(99,102,241,0.06)', borderRadius: 10, fontSize: 12, color: '#4B5580', lineHeight: 1.7, textAlign: 'center' }}>
-              💡 Your code was sent when your loan was approved.<br/>Contact <strong style={{ color: '#7A8AAA' }}>John Paul</strong> or <strong style={{ color: '#7A8AAA' }}>Charlou</strong> via Teams if you need help.
+              💡 Your code was sent when your loan was approved.<br/>Need help? <a href="/contact" style={{ color: '#7A8AAA', fontWeight: 700, textDecoration: 'none' }}>Contact us here →</a>
             </div>
           </div>
         </div>
@@ -1676,19 +1668,10 @@ export default function BorrowerPortalPage() {
               {/* Need Help */}
               <div className="pc" style={{ background: '#0E1320', border: '1px solid rgba(59,130,246,0.12)', borderRadius: 16, padding: 14 }}>
                 <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 12, color: '#F0F4FF', marginBottom: 10 }}>❓ Need Help?</div>
-                <div style={{ fontSize: 11, color: '#7A8AAA', marginBottom: 10, lineHeight: 1.6 }}>Contact your admin via <strong style={{ color: '#F0F4FF' }}>Microsoft Teams</strong>:</div>
-                {[
-                  { initials: 'JP', name: 'John Paul Lacaron', gradient: 'linear-gradient(135deg,#3B82F6,#8B5CF6)', role: 'Admin & Developer · Teams Chat' },
-                  { initials: 'CJ', name: 'Charlou June Ramil', gradient: 'linear-gradient(135deg,#14B8A6,#3B82F6)', role: 'Admin · Teams Chat' },
-                ].map(a => (
-                  <div key={a.name} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.02)', borderRadius: 8, padding: '7px 10px', marginBottom: 6 }}>
-                    <div style={{ width: 26, height: 26, borderRadius: '50%', background: a.gradient, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 800, color: '#fff', flexShrink: 0 }}>{a.initials}</div>
-                    <div>
-                      <div style={{ fontSize: 11, fontWeight: 600, color: '#F0F4FF' }}>{a.name}</div>
-                      <div style={{ fontSize: 10, color: '#4B5580' }}>{a.role}</div>
-                    </div>
-                  </div>
-                ))}
+                <div style={{ fontSize: 11, color: '#7A8AAA', marginBottom: 12, lineHeight: 1.6 }}>Questions about your loan, payments, or schedule? Our admin team is here to help.</div>
+                <a href="/contact" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 14px', borderRadius: 9, background: 'linear-gradient(135deg,rgba(59,130,246,0.1),rgba(139,92,246,0.1))', border: '1px solid rgba(139,92,246,0.25)', color: '#a78bfa', textDecoration: 'none', fontSize: 12, fontWeight: 700, fontFamily: 'Space Grotesk, sans-serif' }}>
+                  💬 Contact Us →
+                </a>
               </div>
 
               <a href="/faq" className="pc nav-btn" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '11px 14px', background: 'rgba(99,102,241,0.05)', border: '1px solid rgba(99,102,241,0.15)', borderRadius: 14, textDecoration: 'none' }}>

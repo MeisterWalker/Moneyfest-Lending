@@ -114,19 +114,11 @@ export default function FAQPage() {
       { q: 'How do I track my application?', a: 'After submitting, you will receive an access code. Use this code to log in to the Borrower Portal at moneyfestlending.online/portal — you can track your application status, view your loan schedule, and upload payment proofs from there.' },
       { q: 'What are Rebate Credits and how do they work?', a: 'Rebate Credits is your in-app rewards balance. Two things are credited here automatically by the system: (1) Early Payoff Rebates — a fixed 1% of your loan amount is credited if you pay your final installment at least 1 day early. (2) Security Hold Return — once you fully pay your final installment, the Security Hold that was withheld when your loan was released is automatically returned here in full. You cannot add funds manually. Once your total Rebate Credits balance reaches ₱500, a withdrawal button becomes available in the Borrower Portal. Withdrawal requests are reviewed and processed by the admin.' },
       { q: 'Who can I contact for questions?', children: (
-        <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {[
-            { initials: 'JP', name: 'John Paul Lacaron', gradient: 'linear-gradient(135deg,#3B82F6,#8B5CF6)', role: 'Admin & Developer · Microsoft Teams Chat' },
-            { initials: 'CJ', name: 'Charlou June Ramil', gradient: 'linear-gradient(135deg,#14B8A6,#3B82F6)', role: 'Admin · Microsoft Teams Chat' },
-          ].map((p, i) => (
-            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(59,130,246,0.07)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: 10, padding: '12px 16px' }}>
-              <div style={{ width: 36, height: 36, borderRadius: '50%', background: p.gradient, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 14, color: '#fff', flexShrink: 0 }}>{p.initials}</div>
-              <div>
-                <div style={{ fontWeight: 700, color: '#F0F4FF', fontSize: 14 }}>{p.name}</div>
-                <div style={{ fontSize: 12, color: '#3B82F6' }}>{p.role}</div>
-              </div>
-            </div>
-          ))}
+        <div style={{ marginTop: 12 }}>
+          <p style={{ fontSize: 13, color: '#9AA4BC', lineHeight: 1.7, margin: '0 0 12px' }}>Our admin team is happy to help with any questions about your loan, application, schedule, or anything else.</p>
+          <a href="/contact" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '11px 20px', borderRadius: 11, background: 'linear-gradient(135deg,rgba(59,130,246,0.15),rgba(139,92,246,0.15))', border: '1px solid rgba(139,92,246,0.3)', color: '#a78bfa', textDecoration: 'none', fontSize: 13, fontWeight: 700, fontFamily: 'Space Grotesk, sans-serif' }}>
+            💬 Visit our Contact Us page →
+          </a>
         </div>
       )},
     ],
