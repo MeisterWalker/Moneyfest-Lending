@@ -505,7 +505,7 @@ export default function LoansPage() {
       supabase.from('loans').select('*').order('created_at', { ascending: false }),
       supabase.from('borrowers').select('*'),
       supabase.from('settings').select('*').eq('id', 1).single(),
-      supabase.from('applications').select('id,borrower_id,release_method,gcash_number,gcash_name,bank_account_number,bank_name,bank_account_holder,full_name,email').eq('status', 'Approved').order('created_at', { ascending: false })
+      supabase.from('applications').select('id,release_method,gcash_number,gcash_name,bank_account_number,bank_name,bank_account_holder,full_name,email').eq('status', 'Approved').order('created_at', { ascending: false })
     ])
     setLoans(l || [])
     setBorrowers(b || [])
