@@ -135,6 +135,11 @@ export default function HomePage() {
               onMouseLeave={e => { e.currentTarget.style.color = '#7A8AAA'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)' }}>
               <img src="/faq.png" alt="faq" style={{ width: 13, height: 13, objectFit: 'contain', marginRight: 6, verticalAlign: 'middle' }} />FAQ
             </a>
+            <a href="/partners" style={{ padding: '8px 16px', borderRadius: 9, background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#7A8AAA', fontSize: 13, fontWeight: 600, textDecoration: 'none', transition: 'all 0.2s' }}
+              onMouseEnter={e => { e.currentTarget.style.color = '#F0F4FF'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.25)' }}
+              onMouseLeave={e => { e.currentTarget.style.color = '#7A8AAA'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)' }}>
+              Work With Us
+            </a>
             <a href="/contact" style={{ padding: '8px 16px', borderRadius: 9, background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#7A8AAA', fontSize: 13, fontWeight: 600, textDecoration: 'none', transition: 'all 0.2s' }}
               onMouseEnter={e => { e.currentTarget.style.color = '#F0F4FF'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.25)' }}
               onMouseLeave={e => { e.currentTarget.style.color = '#7A8AAA'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)' }}>
