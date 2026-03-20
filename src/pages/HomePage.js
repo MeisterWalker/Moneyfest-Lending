@@ -130,22 +130,22 @@ export default function HomePage() {
             </span>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
-            <a href="/faq" style={{ padding: '8px 16px', borderRadius: 9, background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#7A8AAA', fontSize: 13, fontWeight: 600, textDecoration: 'none', transition: 'all 0.2s' }}
+            <a href="/faq" className="nav-lh" style={{ padding: '8px 16px', borderRadius: 9, background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#7A8AAA', fontSize: 13, fontWeight: 600, textDecoration: 'none', transition: 'all 0.2s' }}
               onMouseEnter={e => { e.currentTarget.style.color = '#F0F4FF'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.25)' }}
               onMouseLeave={e => { e.currentTarget.style.color = '#7A8AAA'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)' }}>
               <img src="/faq.png" alt="faq" style={{ width: 13, height: 13, objectFit: 'contain', marginRight: 6, verticalAlign: 'middle' }} />FAQ
             </a>
-            <a href="/partners" style={{ padding: '8px 16px', borderRadius: 9, background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#7A8AAA', fontSize: 13, fontWeight: 600, textDecoration: 'none', transition: 'all 0.2s' }}
+            <a href="/partners" className="nav-lh" style={{ padding: '8px 16px', borderRadius: 9, background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#7A8AAA', fontSize: 13, fontWeight: 600, textDecoration: 'none', transition: 'all 0.2s' }}
               onMouseEnter={e => { e.currentTarget.style.color = '#F0F4FF'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.25)' }}
               onMouseLeave={e => { e.currentTarget.style.color = '#7A8AAA'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)' }}>
               Work With Us
             </a>
-            <a href="/contact" style={{ padding: '8px 16px', borderRadius: 9, background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#7A8AAA', fontSize: 13, fontWeight: 600, textDecoration: 'none', transition: 'all 0.2s' }}
+            <a href="/contact" className="nav-lh" style={{ padding: '8px 16px', borderRadius: 9, background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#7A8AAA', fontSize: 13, fontWeight: 600, textDecoration: 'none', transition: 'all 0.2s' }}
               onMouseEnter={e => { e.currentTarget.style.color = '#F0F4FF'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.25)' }}
               onMouseLeave={e => { e.currentTarget.style.color = '#7A8AAA'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)' }}>
               Contact Us
             </a>
-            <a href="/portal" style={{ padding: '8px 16px', borderRadius: 9, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: '#CBD5F0', fontSize: 13, fontWeight: 600, textDecoration: 'none', transition: 'all 0.2s' }}
+            <a href="/portal" className="nav-lh" style={{ padding: '8px 16px', borderRadius: 9, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: '#CBD5F0', fontSize: 13, fontWeight: 600, textDecoration: 'none', transition: 'all 0.2s' }}
               onMouseEnter={e => { e.currentTarget.style.color = '#F0F4FF' }}
               onMouseLeave={e => { e.currentTarget.style.color = '#CBD5F0' }}>
               My Portal

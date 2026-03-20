@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>MoneyfestLending — Hard Launch</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800;900&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&family=Space+Grotesk:wght@600;700;800&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  body { width: 1100px; background: #06080F; font-family: 'DM Sans', sans-serif; overflow: hidden; }
+
+  .banner {
+    width: 1100px;
+    background: #06080F;
+    position: relative;
+    overflow: hidden;
+    padding: 44px 56px 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+  }
+
+  /* Background */
+  .orb { position: absolute; border-radius: 50%; filter: blur(90px); pointer-events: none; }
+  .orb-1 { width: 550px; height: 550px; background: radial-gradient(circle, rgba(99,102,241,0.16) 0%, transparent 70%); top: -150px; left: -100px; }
+  .orb-2 { width: 420px; height: 420px; background: radial-gradient(circle, rgba(245,158,11,0.12) 0%, transparent 70%); bottom: -120px; right: -60px; }
+  .orb-3 { width: 280px; height: 280px; background: radial-gradient(circle, rgba(34,197,94,0.08) 0%, transparent 70%); top: 40%; right: 220px; }
+  .grid {
+    position: absolute; inset: 0; pointer-events: none;
+    background-image: linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+    background-size: 60px 60px;
+  }
+
+  /* Top bar */
+  .topbar { display: flex; align-items: center; justify-content: space-between; position: relative; z-index: 2; }
+  .logo-wrap { display: flex; align-items: center; gap: 10px; }
+  .logo-icon { width: 38px; height: 38px; border-radius: 10px; background: linear-gradient(135deg, #6366F1, #8B5CF6); display: flex; align-items: center; justify-content: center; font-size: 18px; }
+  .logo-text { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 18px; color: #F0F4FF; }
+  .logo-text span { background: linear-gradient(90deg, #818CF8, #A78BFA); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+  .launch-badge {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 16px; border-radius: 20px;
+    background: linear-gradient(135deg, rgba(34,197,94,0.15), rgba(16,163,74,0.1));
+    border: 1px solid rgba(34,197,94,0.35);
+  }
+  .launch-dot { width: 7px; height: 7px; border-radius: 50%; background: #22C55E; box-shadow: 0 0 8px rgba(34,197,94,0.8); animation: pulse 1.5s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.6;transform:scale(0.85)} }
+  .launch-text { font-size: 12px; font-weight: 700; color: #22C55E; letter-spacing: 0.07em; text-transform: uppercase; }
+
+  /* Hero */
+  .hero { position: relative; z-index: 2; }
+  .eyebrow { font-size: 11px; font-weight: 600; color: #6366F1; text-transform: uppercase; letter-spacing: 0.14em; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+  .eyebrow::before { content: ''; display: inline-block; width: 20px; height: 1px; background: #6366F1; }
+
+  .headline { font-family: 'Syne', sans-serif; font-weight: 900; font-size: 48px; line-height: 1.05; letter-spacing: -1.5px; color: #F0F4FF; margin-bottom: 14px; }
+  .headline .green { background: linear-gradient(90deg, #22C55E, #16A34A); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .headline .amber { background: linear-gradient(90deg, #FBBF24, #F59E0B); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+  .subtext { font-size: 15px; color: #7A8AAA; line-height: 1.75; max-width: 580px; font-weight: 300; margin-bottom: 18px; }
+
+  .domain-chip {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 8px 16px; border-radius: 10px;
+    background: rgba(99,102,241,0.08); border: 1px solid rgba(99,102,241,0.25);
+  }
+  .domain-chip .dot { width: 6px; height: 6px; border-radius: 50%; background: #22C55E; }
+  .domain-chip span { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 14px; color: #818CF8; }
+
+  /* Stats pills */
+  .stats-row { display: flex; gap: 10px; position: relative; z-index: 2; }
+  .stat-pill { padding: 9px 16px; border-radius: 30px; display: flex; align-items: center; gap: 8px; }
+  .sp-1 { background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.2); }
+  .sp-2 { background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); }
+  .sp-3 { background: rgba(99,102,241,0.08); border: 1px solid rgba(99,102,241,0.2); }
+  .sp-4 { background: rgba(139,92,246,0.08); border: 1px solid rgba(139,92,246,0.2); }
+  .pill-val { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 13px; }
+  .pill-lbl { font-size: 11px; color: #4B5580; }
+  .pv-green { color: #22C55E; } .pv-amber { color: #F59E0B; } .pv-purple { color: #818CF8; } .pv-violet { color: #A78BFA; }
+
+  /* Cards */
+  .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; position: relative; z-index: 2; }
+  .card { border-radius: 16px; padding: 22px 24px; position: relative; overflow: hidden; }
+  .card-inst { background: rgba(99,102,241,0.05); border: 1px solid rgba(99,102,241,0.18); }
+  .card-inst::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, #6366F1, #8B5CF6); }
+  .card-ql { background: rgba(245,158,11,0.05); border: 1px solid rgba(245,158,11,0.22); }
+  .card-ql::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, #F59E0B, #FBBF24); }
+
+  .card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .card-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
+  .ci-inst { background: rgba(99,102,241,0.15); } .ci-ql { background: rgba(245,158,11,0.15); }
+  .card-title { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 15px; color: #F0F4FF; }
+  .card-title-ql { color: #F59E0B; }
+  .card-badge { margin-left: auto; padding: 3px 10px; border-radius: 12px; font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+  .cb-classic { background: rgba(99,102,241,0.12); color: #818CF8; border: 1px solid rgba(99,102,241,0.2); }
+  .cb-new { background: rgba(245,158,11,0.12); color: #F59E0B; border: 1px solid rgba(245,158,11,0.25); }
+
+  .card-desc { font-size: 12.5px; color: '#7A8AAA'; color: #7A8AAA; line-height: 1.65; margin-bottom: 14px; }
+  .specs { display: flex; flex-direction: column; gap: 7px; }
+  .spec-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 10px; border-radius: 7px; background: rgba(255,255,255,0.02); }
+  .spec-label { font-size: 11px; color: '#4B5580'; color: #4B5580; }
+  .spec-val { font-family: 'Space Grotesk', sans-serif; font-size: 11.5px; font-weight: 700; }
+  .sv-purple { color: #A78BFA; } .sv-amber { color: #F59E0B; } .sv-green { color: #22C55E; } .sv-red { color: #F87171; } .sv-blue { color: #60A5FA; }
+
+  /* Footer */
+  .footer-strip { display: flex; align-items: center; justify-content: space-between; position: relative; z-index: 2; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.06); }
+  .footer-links { display: flex; gap: 20px; }
+  .footer-link { font-size: 11.5px; color: #4B5580; display: flex; align-items: center; gap: 5px; }
+  .footer-link .dot { width: 4px; height: 4px; border-radius: 50%; background: #4B5580; }
+  .footer-right { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+  .footer-cta { font-family: 'Space Grotesk', sans-serif; font-size: 13px; font-weight: 700; color: #22C55E; }
+  .built-by { font-size: 10px; color: #2A3150; }
+  .built-by span { background: linear-gradient(90deg, #3B82F6, #8B5CF6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700; }
+
+  /* Contact footnote */
+  .footnote { position: relative; z-index: 2; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.04); display: flex; align-items: center; justify-content: space-between; }
+  .footnote-text { font-size: 11px; color: #6B7A99; font-style: italic; }
+  .contact-cards { display: flex; gap: 10px; }
+  .contact-card { display: flex; align-items: center; gap: 8px; padding: 7px 13px; border-radius: 10px; }
+  .cc-jp { background: rgba(59,130,246,0.07); border: 1px solid rgba(59,130,246,0.15); }
+  .cc-cj { background: rgba(20,184,166,0.07); border: 1px solid rgba(20,184,166,0.15); }
+  .avatar { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Space Grotesk', sans-serif; font-weight: 800; font-size: 10px; color: #fff; flex-shrink: 0; }
+  .av-jp { background: linear-gradient(135deg,#3B82F6,#8B5CF6); }
+  .av-cj { background: linear-gradient(135deg,#14B8A6,#3B82F6); }
+  .contact-name { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 11px; color: #F0F4FF; }
+  .contact-role-jp { font-size: 9.5px; color: #3B82F6; }
+  .contact-role-cj { font-size: 9.5px; color: #14B8A6; }
+
+  /* Disclaimer */
+  .disclaimer {
+    position: relative; z-index: 2;
+    padding: 10px 16px; border-radius: 10px;
+    background: rgba(239,68,68,0.04); border: 1px solid rgba(239,68,68,0.15);
+    font-size: 11px; color: #7A8AAA; line-height: 1.6;
+    display: flex; align-items: flex-start; gap: 8px;
+  }
+  .disclaimer-icon { font-size: 13px; flex-shrink: 0; margin-top: 1px; }
+  .disclaimer strong { color: #F87171; }
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="grid"></div>
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+
+  <!-- Top bar -->
+  <div class="topbar">
+    <div class="logo-wrap">
+      <div class="logo-icon">💸</div>
+      <div class="logo-text">Moneyfest<span>Lending</span></div>
+    </div>
+    <div class="launch-badge">
+      <div class="launch-dot"></div>
+      <div class="launch-text">🚀 Hard Launch — March 20, 2026</div>
+    </div>
+  </div>
+
+  <!-- Hero -->
+  <div class="hero">
+    <div class="eyebrow">Workplace Lending Program · Official Launch</div>
+    <div class="headline">
+      We're officially <span class="green">live.</span><br/>
+      Borrow smart. Pay <span class="amber">early.</span>
+    </div>
+    <div class="subtext">
+      MoneyfestLending is now officially launched with a brand-new custom domain.
+      Two loan products, a full borrower portal, credit score rewards, and everything
+      you need — built exclusively for our team.
+    </div>
+    <div class="domain-chip">
+      <div class="dot"></div>
+      <span>moneyfestlending.loan</span>
+    </div>
+  </div>
+
+  <!-- Stats pills -->
+  <div class="stats-row">
+    <div class="stat-pill sp-1">
+      <span class="pill-val pv-green">₱10,000</span>
+      <span class="pill-lbl">Max Installment</span>
+    </div>
+    <div class="stat-pill sp-2">
+      <span class="pill-val pv-amber">₱3,000</span>
+      <span class="pill-lbl">Max QuickLoan</span>
+    </div>
+    <div class="stat-pill sp-3">
+      <span class="pill-val pv-purple">Pay Anytime</span>
+      <span class="pill-lbl">QuickLoan Feature</span>
+    </div>
+    <div class="stat-pill sp-4">
+      <span class="pill-val pv-violet">Credit Score</span>
+      <span class="pill-lbl">Rewards System</span>
+    </div>
+  </div>
+
+  <!-- Cards -->
+  <div class="cards">
+    <div class="card card-inst">
+      <div class="card-header">
+        <div class="card-icon ci-inst">📅</div>
+        <div class="card-title">Installment Loan</div>
+        <div class="card-badge cb-classic">Classic</div>
+      </div>
+      <div class="card-desc">Fixed semi-monthly payments every 5th & 20th. Ideal for planned expenses with a structured schedule. Earn credit score points on every on-time payment.</div>
+      <div class="specs">
+        <div class="spec-row"><span class="spec-label">Loan Amount</span><span class="spec-val sv-purple">₱5,000 – ₱10,000</span></div>
+        <div class="spec-row"><span class="spec-label">Interest Rate</span><span class="spec-val sv-purple">7% / month (flat)</span></div>
+        <div class="spec-row"><span class="spec-label">Term</span><span class="spec-val sv-blue">2 or 3 months</span></div>
+        <div class="spec-row"><span class="spec-label">Repayment</span><span class="spec-val sv-blue">4 or 6 installments</span></div>
+        <div class="spec-row"><span class="spec-label">Security Hold</span><span class="spec-val sv-green">Returned after final payment</span></div>
+      </div>
+    </div>
+
+    <div class="card card-ql">
+      <div class="card-header">
+        <div class="card-icon ci-ql">⚡</div>
+        <div class="card-title card-title-ql">QuickLoan</div>
+        <div class="card-badge cb-new">✨ New</div>
+      </div>
+      <div class="card-desc">No fixed schedule — pay any day you want. Interest accrues daily so the earlier you pay, the less you owe. Full amount released with zero security hold.</div>
+      <div class="specs">
+        <div class="spec-row"><span class="spec-label">Loan Amount</span><span class="spec-val sv-amber">₱1,000 – ₱3,000</span></div>
+        <div class="spec-row"><span class="spec-label">Interest Rate</span><span class="spec-val sv-amber">10% / month · ₱10/day on ₱3K</span></div>
+        <div class="spec-row"><span class="spec-label">Target Due</span><span class="spec-val sv-green">Day 15 from release</span></div>
+        <div class="spec-row"><span class="spec-label">Hard Deadline</span><span class="spec-val sv-red">Day 30 · ₱25/day after</span></div>
+        <div class="spec-row"><span class="spec-label">Security Hold</span><span class="spec-val sv-green">None — full amount released</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer strip -->
+  <div class="footer-strip">
+    <div class="footer-links">
+      <div class="footer-link"><div class="dot"></div> moneyfestlending.loan/apply</div>
+      <div class="footer-link"><div class="dot"></div> moneyfestlending.loan/portal</div>
+      <div class="footer-link"><div class="dot"></div> Credit score rewards on every loan</div>
+    </div>
+    <div class="footer-right">
+      <div class="footer-cta">Apply now →</div>
+      <div class="built-by">Designed & developed by <span>John Paul Lacaron</span></div>
+    </div>
+  </div>
+
+  <!-- Contact footnote -->
+  <div class="footnote">
+    <div class="footnote-text">For questions, concerns, or loan inquiries — reach out to either admin via Microsoft Teams.</div>
+    <div class="contact-cards">
+      <div class="contact-card cc-jp">
+        <div class="avatar av-jp">JP</div>
+        <div>
+          <div class="contact-name">John Paul Lacaron</div>
+          <div class="contact-role-jp">Admin & Developer · Teams</div>
+        </div>
+      </div>
+      <div class="contact-card cc-cj">
+        <div class="avatar av-cj">CJ</div>
+        <div>
+          <div class="contact-name">Charlou June Ramil</div>
+          <div class="contact-role-cj">Admin · Teams</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Disclaimer -->
+  <div class="disclaimer">
+    <div class="disclaimer-icon">⚠️</div>
+    <div><strong>Disclaimer:</strong> MoneyfestLending is a private colleague lending program and is <strong>not affiliated with, endorsed by, or connected to the company</strong> in any way. Please access the platform using your <strong>personal device only.</strong> Do not use any company-owned equipment, devices, or networks to access this service.</div>
+  </div>
+
+</div>
+</body>
+</html>

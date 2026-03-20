@@ -237,7 +237,7 @@ export default function PartnersPage() {
         {/* ── OPPORTUNITY BAND ── */}
         <section style={{ padding: '0 32px 80px' }}>
           <div style={{ maxWidth: 1000, margin: '0 auto', background: 'linear-gradient(135deg,rgba(99,102,241,0.07),rgba(20,184,166,0.05))', border: '1px solid rgba(99,102,241,0.18)', borderRadius: 24, padding: '48px 44px' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 48, alignItems: 'center' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 48, alignItems: 'center' }} className="partners-opp-grid">
               <div>
                 <div style={{ fontSize: 11, color: '#60A5FA', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 16 }}>The Opportunity</div>
                 <h2 style={{ fontFamily: 'Syne,sans-serif', fontWeight: 900, fontSize: 'clamp(24px,3vw,34px)', color: '#F0F4FF', margin: '0 0 18px', letterSpacing: -1, lineHeight: 1.2 }}>
@@ -288,7 +288,7 @@ export default function PartnersPage() {
                   onMouseEnter={e => e.currentTarget.style.boxShadow = `0 12px 40px ${pt.border}`}
                   onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}
                 >
-                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 32, flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 32, flexWrap: 'wrap' }} className="partners-feature-inner">
                     {/* Left: title + desc */}
                     <div style={{ flex: '1 1 260px', minWidth: 220 }}>
                       <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '3px 12px', borderRadius: 20, background: 'rgba(255,255,255,0.05)', border: `1px solid ${pt.border}`, fontSize: 10, fontWeight: 700, color: pt.color, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 18 }}>
@@ -299,7 +299,7 @@ export default function PartnersPage() {
                       <div style={{ fontSize: 14, color: '#7A8AAA', lineHeight: 1.8 }}>{pt.desc}</div>
                     </div>
                     {/* Right: perks in 2-col grid */}
-                    <div style={{ flex: '2 1 400px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 24px' }}>
+                    <div style={{ flex: '2 1 400px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 24px' }} className="partners-feature-perks">
                       {pt.perks.map((perk, j) => (
                         <div key={j} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 12.5, color: '#9AA4BC', lineHeight: 1.5 }}>
                           <div style={{ width: 6, height: 6, borderRadius: '50%', background: pt.color, flexShrink: 0, marginTop: 5 }} />
@@ -350,7 +350,7 @@ export default function PartnersPage() {
             <p style={{ fontSize: 15, color: '#7A8AAA', lineHeight: 1.85, maxWidth: 520, margin: '0 auto 32px' }}>
               We keep our conversations private and our expectations clear. If you're curious about what a partnership looks like, reach out — no commitment, no pressure.
             </p>
-            <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }} className="partners-cta-btns">
               <a href="/contact" className="cta-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '15px 34px', borderRadius: 13, background: 'linear-gradient(135deg,#6366F1,#8B5CF6)', color: '#fff', textDecoration: 'none', fontSize: 15, fontWeight: 700, fontFamily: 'Syne,sans-serif' }}>
                 Start the conversation →
               </a>

@@ -1,7 +1,31 @@
-/* ── LoanMoneyfest Mobile Responsive Styles ─────────────────── */
+/* ── MoneyfestLending — Mobile Responsive Styles ───────────────────────── */
+/* Breakpoints: 768px (tablet), 480px (phone) */
 
-/* ── HomePage ───────────────────────────────────────────────── */
+/* ─────────────────────────────────────────────────────────────────────── */
+/* GLOBAL                                                                   */
+/* ─────────────────────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
+  .mobile-stack {
+    grid-template-columns: 1fr !important;
+    flex-direction: column !important;
+  }
+  .mobile-hide { display: none !important; }
+  .mobile-full { width: 100% !important; max-width: 100% !important; }
+}
+
+/* ─────────────────────────────────────────────────────────────────────── */
+/* SHARED NAV — collapse links to only show primary CTA on small screens   */
+/* ─────────────────────────────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .nav-lh { display: none !important; }           /* hide ghost nav links  */
+  .nav-links-secondary { display: none !important; }
+}
+
+/* ─────────────────────────────────────────────────────────────────────── */
+/* HOME PAGE                                                                */
+/* ─────────────────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  /* Hero */
   .hero-stats {
     grid-template-columns: repeat(2, 1fr) !important;
   }
@@ -12,15 +36,34 @@
   .hero-ctas a {
     justify-content: center !important;
   }
-}
 
-@media (max-width: 640px) {
-  .hero-stats {
-    grid-template-columns: repeat(2, 1fr) !important;
+  /* Sections with side-by-side columns */
+  .rewards-bottom-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .home-features-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .home-steps-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Footer links row */
+  .home-footer-links {
+    flex-wrap: wrap !important;
+    gap: 10px !important;
   }
 }
 
-/* ── FAQ Page ───────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .hero-stats {
+    grid-template-columns: 1fr 1fr !important;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────── */
+/* FAQ PAGE                                                                 */
+/* ─────────────────────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
   .faq-layout {
     grid-template-columns: 1fr !important;
@@ -30,17 +73,109 @@
   }
 }
 
-/* ── General utility ────────────────────────────────────────── */
+/* ─────────────────────────────────────────────────────────────────────── */
+/* CONTACT PAGE                                                             */
+/* ─────────────────────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
-  .mobile-stack {
+  .contact-cards-grid {
     grid-template-columns: 1fr !important;
+  }
+  .contact-info-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .contact-cta-btns {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+  .contact-cta-btns a {
+    justify-content: center !important;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────── */
+/* PARTNERS PAGE                                                            */
+/* ─────────────────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  /* Stats grid: 2 columns on tablet */
+  .stats-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  /* Platform pillars: 1 column */
+  .partners-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Featured licensing card: stack vertically */
+  .partners-feature-inner {
     flex-direction: column !important;
   }
-  .mobile-hide {
+  .partners-feature-perks {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Opportunity section inner grid */
+  .partners-opp-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* CTA buttons */
+  .partners-cta-btns {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+  .partners-cta-btns a {
+    justify-content: center !important;
+    text-align: center !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────── */
+/* APPLY PAGE                                                               */
+/* ─────────────────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .apply-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .apply-fields-row {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────── */
+/* PRIVACY & TERMS PAGES                                                    */
+/* ─────────────────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .legal-layout {
+    grid-template-columns: 1fr !important;
+  }
+  .legal-sidebar {
     display: none !important;
   }
-  .mobile-full {
-    width: 100% !important;
-    max-width: 100% !important;
+}
+
+/* ─────────────────────────────────────────────────────────────────────── */
+/* GLOBAL PADDING REDUCTION ON SMALL SCREENS                                */
+/* ─────────────────────────────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  /* Reduce horizontal page padding */
+  section, nav, footer {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+  /* Ensure nothing overflows */
+  * {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+  img {
+    max-width: 100%;
+    height: auto;
   }
 }
