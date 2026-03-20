@@ -31,58 +31,78 @@ export default function TermsPage() {
   }
 
   const qlSections = [
-    { num: '1', title: 'Nature of QuickLoan', content: null, items: [
-      { term: 'Product', def: 'QuickLoan is a short-term cash loan offered exclusively to active team members of MoneyfestLending\'s workplace lending program.' },
-      { term: 'Maximum Amount', def: 'P3,000 per loan.' },
-      { term: 'No Fixed Term', def: 'Unlike the Installment Loan, QuickLoan has no fixed repayment schedule. Interest accrues daily and the Borrower may settle at any time.' },
-    ]},
-    { num: '2', title: 'Interest Rate and Daily Accrual', content: null, items: [
-      { term: 'Monthly Rate', def: '10% per month, flat.' },
-      { term: 'Daily Rate', def: '0.3333% per day (10% divided by 30 days). Interest is NOT compounded.' },
-      { term: 'Daily Interest Amount', def: 'P3.33/day on a P1,000 loan. P6.67/day on a P2,000 loan. P10.00/day on a P3,000 loan.' },
-      { term: 'Effective Annual Rate', def: 'Approximately 120% per annum (monthly rate x 12), in compliance with RA 3765.' },
-      { term: 'Accrual Start', def: 'Interest begins accruing on the date of fund release.' },
-    ]},
-    { num: '3', title: 'Pay Anytime — Early Settlement', content: 'The Borrower may settle the full outstanding balance at any time before Day 15 or Day 30:', items: [
-      { term: 'No Prepayment Penalty', def: 'Settling early saves money. Paying on Day 7 instead of Day 15 saves 8 days of interest.' },
-      { term: 'Interest Stops', def: 'Interest stops accruing on the day payment is received and confirmed by the admin.' },
-      { term: 'Full Payment Required', def: 'The full balance (principal + all accrued interest) must be paid in one transaction.' },
-    ]},
-    { num: '4', title: 'Day 15 Target Due Date', content: null, items: [
-      { term: 'Target Date', def: '15 calendar days from the fund release date.' },
-      { term: 'Amount Due on Day 15', def: 'Principal + 15 days of accrued interest. Example: P3,000 loan = P3,000 + P150 interest = P3,150 total.' },
-      { term: 'Clean Closure', def: 'Paying in full by Day 15 closes the loan with no additional fees.' },
-    ]},
-    { num: '5', title: 'Day 15 Missed — Extension Fee', content: 'If the Borrower does not pay in full by Day 15:', items: [
-      { term: 'Extension Fee', def: 'A one-time fee of P100.00 is charged.' },
-      { term: 'Day 15 Collection', def: 'Admin collects: 15-day accrued interest + P100 extension fee. Example on a P3,000 loan: P150 + P100 = P250 collected.' },
-      { term: 'Principal Rolls Over', def: 'The P3,000 principal remains outstanding and the deadline moves to Day 30.' },
-      { term: 'Interest Continues', def: 'Daily interest continues to accrue on the outstanding principal during the extension period.' },
-    ]},
-    { num: '6', title: 'Day 30 Hard Deadline and Penalty', content: 'Day 30 from the fund release date is the absolute final deadline:', items: [
-      { term: 'Hard Deadline', def: '30 calendar days from the release date.' },
-      { term: 'Penalty Rate', def: 'P25.00 per calendar day, with no cap, beginning Day 31.' },
-      { term: 'Simultaneous Charges', def: 'After Day 30, the P25/day penalty and daily interest both accrue simultaneously until fully settled.' },
-      { term: 'Example (Day 35 on P3,000)', def: 'P3,000 principal + P350 interest (35 days x P10) + P100 extension fee + P125 penalty (5 days x P25) = P3,575 total.' },
-    ]},
-    { num: '7', title: 'No Security Hold', content: null, items: [
-      { term: 'Full Release', def: 'QuickLoan carries no Security Hold deduction. The full approved loan amount is released to the Borrower upon activation.' },
-      { term: 'Risk Management', def: 'The daily interest structure, extension fee, and post-Day 30 penalty serve as the risk management mechanism in place of a Security Hold.' },
-    ]},
-    { num: '8', title: 'Full Payoff Only', content: null, items: [
-      { term: 'Single Payment', def: 'QuickLoan must be settled in a single full payment covering principal + all accrued interest + any extension fee + any penalty.' },
-      { term: 'No Partial Principal Payments', def: 'Partial payments toward the principal are not accepted under the QuickLoan structure.' },
-    ]},
-    { num: '9', title: 'One Active Loan at a Time', content: null, items: [
-      { term: 'One Loan Rule', def: 'A Borrower may not hold more than one active loan at a time, regardless of loan type.' },
-      { term: 'Cross-Type Restriction', def: 'A Borrower with an active Installment Loan may not take a QuickLoan, and vice versa.' },
-      { term: 'Prerequisite', def: 'The Borrower must fully settle any existing loan before applying for a new one.' },
-    ]},
-    { num: '10', title: 'Loan History and Credit Record', content: null, items: [
-      { term: 'Clean Closure', def: 'A QuickLoan fully settled by Day 15 is recorded as a clean closure in the Borrower\'s history.' },
-      { term: 'Extension Record', def: 'A QuickLoan that triggers the extension fee is recorded accordingly.' },
-      { term: 'Penalty Record', def: 'A QuickLoan that incurs post-Day 30 penalties is recorded as a penalty case in the Borrower\'s loan history.' },
-    ]},
+    {
+      num: '1', title: 'Nature of QuickLoan', content: null, items: [
+        { term: 'Product', def: 'QuickLoan is a short-term cash loan offered exclusively to active team members of MoneyfestLending\'s workplace lending program.' },
+        { term: 'Maximum Amount', def: 'P3,000 per loan.' },
+        { term: 'No Fixed Term', def: 'Unlike the Installment Loan, QuickLoan has no fixed repayment schedule. Interest accrues daily and the Borrower may settle at any time.' },
+      ]
+    },
+    {
+      num: '2', title: 'Interest Rate and Daily Accrual', content: null, items: [
+        { term: 'Monthly Rate', def: '10% per month, flat.' },
+        { term: 'Daily Rate', def: '0.3333% per day (10% divided by 30 days). Interest is NOT compounded.' },
+        { term: 'Daily Interest Amount', def: 'P3.33/day on a P1,000 loan. P6.67/day on a P2,000 loan. P10.00/day on a P3,000 loan.' },
+        { term: 'Effective Annual Rate', def: 'Approximately 120% per annum (monthly rate x 12), in compliance with RA 3765.' },
+        { term: 'Accrual Start', def: 'Interest begins accruing on the date of fund release.' },
+      ]
+    },
+    {
+      num: '3', title: 'Pay Anytime — Early Settlement', content: 'The Borrower may settle the full outstanding balance at any time before Day 15 or Day 30:', items: [
+        { term: 'No Prepayment Penalty', def: 'Settling early saves money. Paying on Day 7 instead of Day 15 saves 8 days of interest.' },
+        { term: 'Interest Stops', def: 'Interest stops accruing on the day payment is received and confirmed by the admin.' },
+        { term: 'Full Payment Required', def: 'The full balance (principal + all accrued interest) must be paid in one transaction.' },
+      ]
+    },
+    {
+      num: '4', title: 'Day 15 Target Due Date', content: null, items: [
+        { term: 'Target Date', def: '15 calendar days from the fund release date.' },
+        { term: 'Amount Due on Day 15', def: 'Principal + 15 days of accrued interest. Example: P3,000 loan = P3,000 + P150 interest = P3,150 total.' },
+        { term: 'Clean Closure', def: 'Paying in full by Day 15 closes the loan with no additional fees.' },
+      ]
+    },
+    {
+      num: '5', title: 'Day 15 Missed — Extension Fee', content: 'If the Borrower does not pay in full by Day 15:', items: [
+        { term: 'Extension Fee', def: 'A one-time fee of P100.00 is charged.' },
+        { term: 'Day 15 Collection', def: 'Admin collects: 15-day accrued interest + P100 extension fee. Example on a P3,000 loan: P150 + P100 = P250 collected.' },
+        { term: 'Principal Rolls Over', def: 'The P3,000 principal remains outstanding and the deadline moves to Day 30.' },
+        { term: 'Interest Continues', def: 'Daily interest continues to accrue on the outstanding principal during the extension period.' },
+      ]
+    },
+    {
+      num: '6', title: 'Day 30 Hard Deadline and Penalty', content: 'Day 30 from the fund release date is the absolute final deadline:', items: [
+        { term: 'Hard Deadline', def: '30 calendar days from the release date.' },
+        { term: 'Penalty Rate', def: 'P25.00 per calendar day, with no cap, beginning Day 31.' },
+        { term: 'Simultaneous Charges', def: 'After Day 30, the P25/day penalty and daily interest both accrue simultaneously until fully settled.' },
+        { term: 'Example (Day 35 on P3,000)', def: 'P3,000 principal + P350 interest (35 days x P10) + P100 extension fee + P125 penalty (5 days x P25) = P3,575 total.' },
+      ]
+    },
+    {
+      num: '7', title: 'No Security Hold', content: null, items: [
+        { term: 'Full Release', def: 'QuickLoan carries no Security Hold deduction. The full approved loan amount is released to the Borrower upon activation.' },
+        { term: 'Risk Management', def: 'The daily interest structure, extension fee, and post-Day 30 penalty serve as the risk management mechanism in place of a Security Hold.' },
+      ]
+    },
+    {
+      num: '8', title: 'Full Payoff Only', content: null, items: [
+        { term: 'Single Payment', def: 'QuickLoan must be settled in a single full payment covering principal + all accrued interest + any extension fee + any penalty.' },
+        { term: 'No Partial Principal Payments', def: 'Partial payments toward the principal are not accepted under the QuickLoan structure.' },
+      ]
+    },
+    {
+      num: '9', title: 'One Active Loan at a Time', content: null, items: [
+        { term: 'One Loan Rule', def: 'A Borrower may not hold more than one active loan at a time, regardless of loan type.' },
+        { term: 'Cross-Type Restriction', def: 'A Borrower with an active Installment Loan may not take a QuickLoan, and vice versa.' },
+        { term: 'Prerequisite', def: 'The Borrower must fully settle any existing loan before applying for a new one.' },
+      ]
+    },
+    {
+      num: '10', title: 'Loan History and Credit Record', content: null, items: [
+        { term: 'Clean Closure', def: 'A QuickLoan fully settled by Day 15 is recorded as a clean closure in the Borrower\'s history.' },
+        { term: 'Extension Record', def: 'A QuickLoan that triggers the extension fee is recorded accordingly.' },
+        { term: 'Penalty Record', def: 'A QuickLoan that incurs post-Day 30 penalties is recorded as a penalty case in the Borrower\'s loan history.' },
+      ]
+    },
     { num: '11', title: 'Data Privacy (RA 10173)', content: 'The Borrower\'s personal information is collected and processed solely for loan administration in compliance with Republic Act No. 10173 (Data Privacy Act of 2012).', items: null },
     { num: '12', title: 'Truth in Lending Disclosure (RA 3765)', content: 'In compliance with Republic Act No. 3765, MoneyfestLending discloses: the loan principal, the daily and monthly interest rate (10%/month, 0.3333%/day), the extension fee of P100 if Day 15 is missed, the penalty of P25/day after Day 30, and the total amount payable as of the date of settlement. The effective annual rate is approximately 120% per annum.', items: null },
     { num: '13', title: 'Amendments', content: 'MoneyfestLending reserves the right to amend these Terms and Conditions at any time. Any changes will be communicated to active Borrowers via the Borrower Portal or direct notification.', items: null },
@@ -224,7 +244,7 @@ export default function TermsPage() {
           </div>
 
           <div className="print-footer" style={{ marginTop: 36, paddingTop: 20, borderTop: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
-            <div style={{ fontSize: 12, color: '#4B5580' }} className="print-muted">MoneyfestLending - Workplace Lending Program - moneyfestlending.online</div>
+            <div style={{ fontSize: 12, color: '#4B5580' }} className="print-muted">MoneyfestLending - Workplace Lending Program - moneyfestlending.loan</div>
             <div style={{ fontSize: 12, color: '#4B5580' }} className="print-muted">Effective: {effectiveDate} - Version 1.0</div>
             <div style={{ fontSize: 11, color: '#4B5580', width: '100%' }} className="print-muted">In compliance with: RA 3765 (Truth in Lending Act) - RA 10173 (Data Privacy Act of 2012) - RA 8792 (E-Commerce Act of 2000)</div>
           </div>
@@ -321,7 +341,7 @@ export default function TermsPage() {
           </div>
 
           <div className="print-footer" style={{ marginTop: 36, paddingTop: 20, borderTop: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
-            <div style={{ fontSize: 12, color: '#4B5580' }} className="print-muted">MoneyfestLending - Workplace Lending Program - moneyfestlending.online</div>
+            <div style={{ fontSize: 12, color: '#4B5580' }} className="print-muted">MoneyfestLending - Workplace Lending Program - moneyfestlending.loan</div>
             <div style={{ fontSize: 12, color: '#4B5580' }} className="print-muted">Effective: {effectiveDate} - Version 1.0</div>
             <div style={{ fontSize: 11, color: '#4B5580', width: '100%' }} className="print-muted">In compliance with: RA 3765 (Truth in Lending Act) - RA 10173 (Data Privacy Act of 2012) - RA 9474 (Lending Company Regulation Act)</div>
           </div>
