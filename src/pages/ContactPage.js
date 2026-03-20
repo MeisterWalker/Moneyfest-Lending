@@ -68,8 +68,8 @@ function ContactCard({ initials, gradient, badge, badgeBg, badgeBorder, badgeCol
           >
             <div style={{ width: 32, height: 32, borderRadius: 9, background: copied ? 'rgba(34,197,94,0.15)' : accentBg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, border: `1px solid ${copied ? 'rgba(34,197,94,0.4)' : accentBorder}`, transition: 'all 0.2s' }}>
               {copied
-                ? <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#22C55E" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                : <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={accentColor} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="3"/><path d="m2 7 8.5 6a2.5 2.5 0 0 0 3 0L22 7"/></svg>
+                ? <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#22C55E" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                : <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={accentColor} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="3" /><path d="m2 7 8.5 6a2.5 2.5 0 0 0 3 0L22 7" /></svg>
               }
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
@@ -90,10 +90,10 @@ function ContactCard({ initials, gradient, badge, badgeBg, badgeBorder, badgeCol
         >
           <div style={{ width: 32, height: 32, borderRadius: 9, background: 'rgba(99,102,241,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-              <circle cx="9" cy="7" r="4"/>
-              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
             </svg>
           </div>
           <div>
@@ -181,29 +181,29 @@ export default function ContactPage() {
       `}</style>
 
       {/* Background */}
-      <div style={{ position:'fixed', inset:0, pointerEvents:'none', opacity:0.03, backgroundImage:'linear-gradient(rgba(255,255,255,0.8) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.8) 1px,transparent 1px)', backgroundSize:'48px 48px', zIndex:0 }} />
-      <div style={{ position:'fixed', width:500, height:500, borderRadius:'50%', background:'radial-gradient(circle,rgba(59,130,246,0.1) 0%,transparent 70%)', top:'-8%', right:'-8%', pointerEvents:'none', zIndex:0 }} />
-      <div style={{ position:'fixed', width:350, height:350, borderRadius:'50%', background:'radial-gradient(circle,rgba(139,92,246,0.08) 0%,transparent 70%)', bottom:'5%', left:'-5%', pointerEvents:'none', zIndex:0 }} />
+      <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', opacity: 0.03, backgroundImage: 'linear-gradient(rgba(255,255,255,0.8) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.8) 1px,transparent 1px)', backgroundSize: '48px 48px', zIndex: 0 }} />
+      <div style={{ position: 'fixed', width: 500, height: 500, borderRadius: '50%', background: 'radial-gradient(circle,rgba(59,130,246,0.1) 0%,transparent 70%)', top: '-8%', right: '-8%', pointerEvents: 'none', zIndex: 0 }} />
+      <div style={{ position: 'fixed', width: 350, height: 350, borderRadius: '50%', background: 'radial-gradient(circle,rgba(139,92,246,0.08) 0%,transparent 70%)', bottom: '5%', left: '-5%', pointerEvents: 'none', zIndex: 0 }} />
 
-      <div style={{ position:'relative', zIndex:1 }}>
+      <div style={{ position: 'relative', zIndex: 1 }}>
 
         {/* ── NAV ── */}
-        <nav style={{ position:'sticky', top:0, zIndex:100, background:'rgba(7,9,15,0.85)', backdropFilter:'blur(20px)', borderBottom:'1px solid rgba(255,255,255,0.06)', padding:'0 32px' }}>
-          <div style={{ maxWidth:1080, margin:'0 auto', display:'flex', alignItems:'center', justifyContent:'space-between', height:64 }}>
-            <a href="/" style={{ display:'flex', alignItems:'center', gap:10, textDecoration:'none' }}>
-              <img src="/favicon-96x96.png" alt="MoneyfestLending" style={{ width:32, height:32, objectFit:'contain' }} />
-              <span style={{ fontFamily:'Syne,sans-serif', fontWeight:800, fontSize:17, color:'#F0F4FF', letterSpacing:-0.3 }}>
+        <nav style={{ position: 'sticky', top: 0, zIndex: 100, background: 'rgba(7,9,15,0.85)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(255,255,255,0.06)', padding: '0 32px' }}>
+          <div style={{ maxWidth: 1080, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 64 }}>
+            <a href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
+              <img src="/favicon-96x96.png" alt="MoneyfestLending" style={{ width: 32, height: 32, objectFit: 'contain' }} />
+              <span style={{ fontFamily: 'Syne,sans-serif', fontWeight: 800, fontSize: 17, color: '#F0F4FF', letterSpacing: -0.3 }}>
                 Moneyfest<span className="shimmer-text">Lending</span>
               </span>
             </a>
-            <div style={{ display:'flex', gap:8 }}>
-              <a href="/faq" className="nav-lh" style={{ padding:'8px 16px', borderRadius:9, background:'transparent', border:'1px solid rgba(255,255,255,0.1)', color:'#7A8AAA', fontSize:13, fontWeight:600, textDecoration:'none' }}>
-                <img src="/faq.png" alt="" style={{ width:13, height:13, objectFit:'contain', marginRight:6, verticalAlign:'middle' }} />FAQ
+            <div style={{ display: 'flex', gap: 8 }}>
+              <a href="/faq" className="nav-lh" style={{ padding: '8px 16px', borderRadius: 9, background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#7A8AAA', fontSize: 13, fontWeight: 600, textDecoration: 'none' }}>
+                <img src="/faq.png" alt="" style={{ width: 13, height: 13, objectFit: 'contain', marginRight: 6, verticalAlign: 'middle' }} />FAQ
               </a>
-              <a href="/portal" className="nav-lh" style={{ padding:'8px 16px', borderRadius:9, background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.08)', color:'#CBD5F0', fontSize:13, fontWeight:600, textDecoration:'none' }}>
+              <a href="/portal" className="nav-lh" style={{ padding: '8px 16px', borderRadius: 9, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: '#CBD5F0', fontSize: 13, fontWeight: 600, textDecoration: 'none' }}>
                 My Portal
               </a>
-              <a href="/apply" className="cta-primary" style={{ padding:'8px 18px', borderRadius:9, background:'linear-gradient(135deg,#6366F1,#8B5CF6)', color:'#fff', fontSize:13, fontWeight:700, textDecoration:'none', fontFamily:'Syne,sans-serif' }}>
+              <a href="/apply" className="cta-primary" style={{ padding: '8px 18px', borderRadius: 9, background: 'linear-gradient(135deg,#6366F1,#8B5CF6)', color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none', fontFamily: 'Syne,sans-serif' }}>
                 Apply Now
               </a>
             </div>
@@ -211,26 +211,26 @@ export default function ContactPage() {
         </nav>
 
         {/* ── HERO ── */}
-        <section style={{ padding:'80px 32px 52px', textAlign:'center', position:'relative' }}>
-          <div style={{ position:'absolute', width:360, height:360, borderRadius:'50%', background:'radial-gradient(circle,rgba(99,102,241,0.1) 0%,transparent 70%)', top:0, left:'50%', transform:'translateX(-50%)', pointerEvents:'none' }} />
+        <section style={{ padding: '80px 32px 52px', textAlign: 'center', position: 'relative' }}>
+          <div style={{ position: 'absolute', width: 360, height: 360, borderRadius: '50%', background: 'radial-gradient(circle,rgba(99,102,241,0.1) 0%,transparent 70%)', top: 0, left: '50%', transform: 'translateX(-50%)', pointerEvents: 'none' }} />
 
-          <div className="contact-hero-1" style={{ display:'inline-flex', alignItems:'center', gap:8, padding:'6px 16px', borderRadius:20, background:'rgba(59,130,246,0.1)', border:'1px solid rgba(59,130,246,0.25)', marginBottom:24 }}>
-            <span style={{ fontSize:12, fontWeight:700, color:'#60A5FA', letterSpacing:'0.06em', textTransform:'uppercase' }}>Get in Touch</span>
+          <div className="contact-hero-1" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 16px', borderRadius: 20, background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.25)', marginBottom: 24 }}>
+            <span style={{ fontSize: 12, fontWeight: 700, color: '#60A5FA', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Get in Touch</span>
           </div>
 
-          <h1 className="contact-hero-2" style={{ fontFamily:'Syne,sans-serif', fontWeight:900, fontSize:'clamp(36px,6vw,60px)', color:'#F0F4FF', lineHeight:1.1, letterSpacing:-2, margin:'0 0 16px' }}>
+          <h1 className="contact-hero-2" style={{ fontFamily: 'Syne,sans-serif', fontWeight: 900, fontSize: 'clamp(36px,6vw,60px)', color: '#F0F4FF', lineHeight: 1.1, letterSpacing: -2, margin: '0 0 16px' }}>
             We're here to <span className="shimmer-text">help you.</span>
           </h1>
 
-          <p className="contact-hero-3" style={{ fontSize:'clamp(14px,1.8vw,17px)', color:'#7A8AAA', lineHeight:1.8, maxWidth:520, margin:'0 auto 12px' }}>
+          <p className="contact-hero-3" style={{ fontSize: 'clamp(14px,1.8vw,17px)', color: '#7A8AAA', lineHeight: 1.8, maxWidth: 520, margin: '0 auto 12px' }}>
             Have a question about your loan, application, or account? Reach out and we'll get back to you.
           </p>
-          <p className="contact-hero-3" style={{ fontSize:13, color:'#4B5580', marginBottom:52 }}>
+          <p className="contact-hero-3" style={{ fontSize: 13, color: '#4B5580', marginBottom: 52 }}>
             👇 Click on a card below to see what each admin handles
           </p>
 
           {/* ── CONTACT CARDS ── */}
-          <div className="contact-hero-4 cards-grid" style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:20, maxWidth:820, margin:'0 auto 32px' }}>
+          <div className="contact-hero-4 cards-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, maxWidth: 820, margin: '0 auto 32px' }}>
 
             <ContactCard
               initials="JP"
@@ -281,36 +281,36 @@ export default function ContactPage() {
           </div>
 
           {/* ── INFO CARDS ── */}
-          <div className="info-grid" style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:14, maxWidth:820, margin:'0 auto' }}>
+          <div className="info-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 14, maxWidth: 820, margin: '0 auto' }}>
             {[
-              { icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>, color:'#F59E0B', bg:'rgba(245,158,11,0.07)', border:'rgba(245,158,11,0.2)', label:'Response Time', value:'Within 12 hrs', sub:'On business days' },
-              { icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22C55E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>, color:'#22C55E', bg:'rgba(34,197,94,0.07)', border:'rgba(34,197,94,0.2)', label:'Office Hours', value:'Mon – Fri', sub:'8:00 AM – 5:00 PM' },
-              { icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>, color:'#a78bfa', bg:'rgba(139,92,246,0.07)', border:'rgba(139,92,246,0.2)', label:'Fastest Way', value:'Send an Email', sub:'Goes straight to JP' },
+              { icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>, color: '#F59E0B', bg: 'rgba(245,158,11,0.07)', border: 'rgba(245,158,11,0.2)', label: 'Response Time', value: 'Within 12 hrs', sub: 'On business days' },
+              { icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22C55E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>, color: '#22C55E', bg: 'rgba(34,197,94,0.07)', border: 'rgba(34,197,94,0.2)', label: 'Office Hours', value: 'Mon – Fri', sub: '8:00 AM – 5:00 PM' },
+              { icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" /></svg>, color: '#a78bfa', bg: 'rgba(139,92,246,0.07)', border: 'rgba(139,92,246,0.2)', label: 'Fastest Way', value: 'Send an Email', sub: 'Goes straight to Admins' },
             ].map((c, i) => (
-              <div key={i} className="info-card" style={{ background:c.bg, border:`1px solid ${c.border}`, borderRadius:16, padding:'20px 18px', textAlign:'center' }}>
-                <div style={{ width:44, height:44, borderRadius:12, background:c.bg, border:`1px solid ${c.border}`, display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 14px' }}>{c.icon}</div>
-                <div style={{ fontSize:11, color:c.color, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:6 }}>{c.label}</div>
-                <div style={{ fontFamily:'Space Grotesk,sans-serif', fontWeight:800, fontSize:15, color:'#F0F4FF', marginBottom:3 }}>{c.value}</div>
-                <div style={{ fontSize:11, color:'#4B5580' }}>{c.sub}</div>
+              <div key={i} className="info-card" style={{ background: c.bg, border: `1px solid ${c.border}`, borderRadius: 16, padding: '20px 18px', textAlign: 'center' }}>
+                <div style={{ width: 44, height: 44, borderRadius: 12, background: c.bg, border: `1px solid ${c.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>{c.icon}</div>
+                <div style={{ fontSize: 11, color: c.color, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>{c.label}</div>
+                <div style={{ fontFamily: 'Space Grotesk,sans-serif', fontWeight: 800, fontSize: 15, color: '#F0F4FF', marginBottom: 3 }}>{c.value}</div>
+                <div style={{ fontSize: 11, color: '#4B5580' }}>{c.sub}</div>
               </div>
             ))}
           </div>
         </section>
 
         {/* ── BOTTOM CTA ── */}
-        <section style={{ padding:'20px 32px 80px' }}>
-          <div style={{ maxWidth:820, margin:'0 auto' }}>
-            <div style={{ background:'linear-gradient(135deg,rgba(59,130,246,0.08),rgba(139,92,246,0.08))', border:'1px solid rgba(139,92,246,0.2)', borderRadius:22, padding:'36px 40px', display:'flex', alignItems:'center', justifyContent:'space-between', gap:28, flexWrap:'wrap' }}>
+        <section style={{ padding: '20px 32px 80px' }}>
+          <div style={{ maxWidth: 820, margin: '0 auto' }}>
+            <div style={{ background: 'linear-gradient(135deg,rgba(59,130,246,0.08),rgba(139,92,246,0.08))', border: '1px solid rgba(139,92,246,0.2)', borderRadius: 22, padding: '36px 40px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 28, flexWrap: 'wrap' }}>
               <div>
-                <div style={{ fontFamily:'Syne,sans-serif', fontWeight:900, fontSize:22, color:'#F0F4FF', marginBottom:6 }}>Looking for quick answers?</div>
-                <div style={{ fontSize:14, color:'#7A8AAA', lineHeight:1.7 }}>Most questions are already covered in our FAQ — check there first before sending a message.</div>
+                <div style={{ fontFamily: 'Syne,sans-serif', fontWeight: 900, fontSize: 22, color: '#F0F4FF', marginBottom: 6 }}>Looking for quick answers?</div>
+                <div style={{ fontSize: 14, color: '#7A8AAA', lineHeight: 1.7 }}>Most questions are already covered in our FAQ — check there first before sending a message.</div>
               </div>
-              <div style={{ display:'flex', gap:10, flexShrink:0, flexWrap:'wrap' }}>
-                <a href="/faq" className="cta-primary" style={{ display:'inline-flex', alignItems:'center', gap:7, padding:'12px 24px', borderRadius:11, background:'linear-gradient(135deg,#6366F1,#8B5CF6)', color:'#fff', textDecoration:'none', fontSize:13, fontWeight:700, fontFamily:'Syne,sans-serif' }}>
-                  <img src="/faq.png" alt="" style={{ width:15, height:15, objectFit:'contain' }} />Browse FAQ
+              <div style={{ display: 'flex', gap: 10, flexShrink: 0, flexWrap: 'wrap' }}>
+                <a href="/faq" className="cta-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '12px 24px', borderRadius: 11, background: 'linear-gradient(135deg,#6366F1,#8B5CF6)', color: '#fff', textDecoration: 'none', fontSize: 13, fontWeight: 700, fontFamily: 'Syne,sans-serif' }}>
+                  <img src="/faq.png" alt="" style={{ width: 15, height: 15, objectFit: 'contain' }} />Browse FAQ
                 </a>
-                <a href="/apply" className="cta-secondary" style={{ display:'inline-flex', alignItems:'center', gap:7, padding:'12px 22px', borderRadius:11, background:'transparent', border:'1px solid rgba(255,255,255,0.12)', color:'#CBD5F0', textDecoration:'none', fontSize:13, fontWeight:600 }}>
-                  <img src="/startup.png" alt="" style={{ width:14, height:14, objectFit:'contain' }} />Apply Now
+                <a href="/apply" className="cta-secondary" style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '12px 22px', borderRadius: 11, background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', color: '#CBD5F0', textDecoration: 'none', fontSize: 13, fontWeight: 600 }}>
+                  <img src="/startup.png" alt="" style={{ width: 14, height: 14, objectFit: 'contain' }} />Apply Now
                 </a>
               </div>
             </div>
@@ -318,22 +318,22 @@ export default function ContactPage() {
         </section>
 
         {/* ── FOOTER ── */}
-        <footer style={{ borderTop:'1px solid rgba(255,255,255,0.05)', padding:'28px 32px', display:'flex', alignItems:'center', justifyContent:'space-between', flexWrap:'wrap', gap:12 }}>
-          <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-            <img src="/favicon-96x96.png" alt="" style={{ width:22, height:22, objectFit:'contain' }} />
-            <span style={{ fontFamily:'Syne', fontWeight:800, fontSize:13, color:'#4B5580' }}>MoneyfestLending</span>
-            <span style={{ fontSize:12, color:'#4B5580' }}>· Workplace Lending Program</span>
+        <footer style={{ borderTop: '1px solid rgba(255,255,255,0.05)', padding: '28px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <img src="/favicon-96x96.png" alt="" style={{ width: 22, height: 22, objectFit: 'contain' }} />
+            <span style={{ fontFamily: 'Syne', fontWeight: 800, fontSize: 13, color: '#4B5580' }}>MoneyfestLending</span>
+            <span style={{ fontSize: 12, color: '#4B5580' }}>· Workplace Lending Program</span>
           </div>
-          <div style={{ display:'flex', gap:20 }}>
-            {[{ label:'Apply', href:'/apply' }, { label:'My Portal', href:'/portal' }, { label:'FAQ', href:'/faq' }, { label:'Privacy Notice', href:'/privacy' }, { label:'Terms & Conditions', href:'/terms' }].map((l, i) => (
-              <a key={i} href={l.href} className="footer-lh" style={{ fontSize:12, color:'#4B5580', textDecoration:'none' }}>{l.label}</a>
+          <div style={{ display: 'flex', gap: 20 }}>
+            {[{ label: 'Apply', href: '/apply' }, { label: 'My Portal', href: '/portal' }, { label: 'FAQ', href: '/faq' }, { label: 'Privacy Notice', href: '/privacy' }, { label: 'Terms & Conditions', href: '/terms' }].map((l, i) => (
+              <a key={i} href={l.href} className="footer-lh" style={{ fontSize: 12, color: '#4B5580', textDecoration: 'none' }}>{l.label}</a>
             ))}
           </div>
-          <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:4 }}>
-            <div style={{ fontSize:12, color:'#4B5580' }}>"Borrow smart. Pay early. Get rewarded."</div>
-            <div style={{ fontSize:11, color:'#323a52', display:'flex', alignItems:'center', gap:5 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
+            <div style={{ fontSize: 12, color: '#4B5580' }}>"Borrow smart. Pay early. Get rewarded."</div>
+            <div style={{ fontSize: 11, color: '#323a52', display: 'flex', alignItems: 'center', gap: 5 }}>
               <span>Designed & developed by</span>
-              <span style={{ fontFamily:'Space Grotesk', fontWeight:700, background:'linear-gradient(90deg,#3B82F6,#8B5CF6)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>
+              <span style={{ fontFamily: 'Space Grotesk', fontWeight: 700, background: 'linear-gradient(90deg,#3B82F6,#8B5CF6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
                 John Paul Lacaron
               </span>
             </div>
