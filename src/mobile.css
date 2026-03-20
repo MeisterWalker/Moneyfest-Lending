@@ -14,10 +14,10 @@
 }
 
 /* ─────────────────────────────────────────────────────────────────────── */
-/* SHARED NAV — collapse links to only show primary CTA on small screens   */
+/* SHARED NAV — collapse links on small screens, keep only the CTA         */
 /* ─────────────────────────────────────────────────────────────────────── */
-@media (max-width: 600px) {
-  .nav-lh { display: none !important; }           /* hide ghost nav links  */
+@media (max-width: 768px) {
+  .nav-lh { display: none !important; }
   .nav-links-secondary { display: none !important; }
 }
 
@@ -37,11 +37,17 @@
     justify-content: center !important;
   }
 
+  /* Loan product comparison cards */
+  .loan-cards-grid {
+    grid-template-columns: 1fr !important;
+  }
+
   /* Sections with side-by-side columns */
   .rewards-bottom-grid {
     grid-template-columns: 1fr !important;
   }
-  .home-features-grid {
+  .home-features-grid,
+  .features-grid {
     grid-template-columns: 1fr !important;
   }
   .home-steps-grid {
