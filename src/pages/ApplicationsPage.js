@@ -123,6 +123,7 @@ function ApplicationCard({ app, onApprove, onReject }) {
                 {[
                   { icon: <Phone size={13} />, label: app.phone },
                   { icon: <Mail size={13} />, label: app.email },
+                  { icon: <Users size={13} />, label: (app.tenure_years || 0) + ' Year' + (app.tenure_years > 1 ? 's' : '') + ' Tenure' },
                   { icon: <MapPin size={13} />, label: app.address || 'Not provided' },
                 ].map((item, i) => (
                   <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#CBD5F0' }}>
