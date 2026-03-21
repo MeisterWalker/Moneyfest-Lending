@@ -759,8 +759,8 @@ export default function PublicApplyPage() {
                   </div>
                 </div>
 
-                {/* Payment schedule */}
-                {form.loan_amount && (() => {
+                {/* Payment schedule — Only for installment loans */}
+                {form.loan_type !== 'quickloan' && form.loan_amount && (() => {
                   const principal = parseFloat(form.loan_amount)
                   const loanTerm = form.loan_term || 2
                   const numInstallments = loanTerm * 2
@@ -788,6 +788,43 @@ export default function PublicApplyPage() {
                               </div>
                             </div>
                           ))}
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })()}
+
+                {/* QuickLoan Summary — Show in main column for mobile since sidebar is hidden */}
+                {form.loan_type === 'quickloan' && form.loan_amount && (() => {
+                  const principal = parseFloat(form.loan_amount)
+                  const dailyInterest = parseFloat((principal * 0.1 / 30).toFixed(2))
+                  const day15Total = parseFloat((principal + dailyInterest * 15).toFixed(2))
+                  const day30Total = parseFloat((principal + dailyInterest * 30 + 100).toFixed(2))
+                  return (
+                    <div style={cardStyle}>
+                      <div style={cardHeader}>
+                        <div style={{ width: 36, height: 36, borderRadius: 9, background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>⚡</div>
+                        <div><div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 15, color: '#F0F4FF' }}>⚡ QuickLoan Summary</div><div style={{ fontSize: 11, color: '#4B5580', marginTop: 1 }}>Pay anytime — no fixed installments</div></div>
+                      </div>
+                      <div style={cardBody}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 14px', background: 'rgba(255,255,255,0.02)', borderRadius: 9, border: '1px solid rgba(255,255,255,0.05)' }}>
+                            <span style={{ fontSize: 12, color: '#7A8AAA' }}>Daily Interest</span>
+                            <span style={{ fontSize: 13, fontWeight: 700, color: '#a78bfa' }}>₱{dailyInterest.toFixed(2)} / day</span>
+                          </div>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                            <div style={{ padding: '12px', background: 'rgba(34,197,94,0.08)', borderRadius: 10, border: '1px solid rgba(34,197,94,0.2)', textAlign: 'center' }}>
+                              <div style={{ fontSize: 10, color: '#4B5580', textTransform: 'uppercase', marginBottom: 4 }}>Pay on Day 15</div>
+                              <div style={{ fontSize: 16, fontWeight: 900, color: '#22C55E', fontFamily: 'Space Grotesk' }}>₱{day15Total.toLocaleString('en-PH')}</div>
+                            </div>
+                            <div style={{ padding: '12px', background: 'rgba(245,158,11,0.06)', borderRadius: 10, border: '1px solid rgba(245,158,11,0.2)', textAlign: 'center' }}>
+                              <div style={{ fontSize: 10, color: '#4B5580', textTransform: 'uppercase', marginBottom: 4 }}>After Day 15</div>
+                              <div style={{ fontSize: 16, fontWeight: 900, color: '#F59E0B', fontFamily: 'Space Grotesk' }}>₱{day30Total.toLocaleString('en-PH')}</div>
+                            </div>
+                          </div>
+                          <div style={{ padding: '10px 14px', background: 'rgba(59,130,246,0.05)', borderRadius: 9, border: '1px solid rgba(59,130,246,0.1)', fontSize: 11, color: '#4B5580', lineHeight: 1.6 }}>
+                            📌 <strong>Target Date:</strong> Day 15 from release. Hard deadline is Day 30. A ₱100 extension fee applies if Day 15 is missed.
+                          </div>
                         </div>
                       </div>
                     </div>
