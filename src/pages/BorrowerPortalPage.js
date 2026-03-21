@@ -737,9 +737,9 @@ export default function BorrowerPortalPage() {
 
   // ── PENDING APP SCREEN ───────────────────────────────────────
   if (pendingApp) return (
-    <div style={{ minHeight: '100vh', background: '#080B14', fontFamily: 'DM Sans, sans-serif' }}>
+    <div style={{ minHeight: '100dvh', background: '#080B14', fontFamily: 'DM Sans, sans-serif', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
       <PortalHeader />
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 60px)', padding: '20px 16px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', minHeight: 'calc(100dvh - 60px)', padding: '20px 16px' }}>
         <div style={{ maxWidth: 520, width: '100%' }}>
 
           {/* Status card */}
@@ -820,7 +820,7 @@ export default function BorrowerPortalPage() {
 
   // ── LOGIN SCREEN ─────────────────────────────────────────────
   if (!borrower) return (
-    <div style={{ minHeight: '100vh', background: '#080B14', fontFamily: 'DM Sans, sans-serif', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ minHeight: '100dvh', background: '#080B14', fontFamily: 'DM Sans, sans-serif', display: 'flex', flexDirection: 'column', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
       <style>{`
         
         .portal-login-input:focus { border-color: rgba(99,102,241,0.5) !important; box-shadow: 0 0 0 3px rgba(99,102,241,0.1) !important; }
@@ -844,7 +844,7 @@ export default function BorrowerPortalPage() {
         </div>
       </header>
 
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px 20px 40px' }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', padding: '20px 20px 40px' }}>
         <div style={{ width: '100%', maxWidth: 380 }} className="login-card">
           {/* Icon */}
           <div style={{ textAlign: 'center', marginBottom: 32 }}>
@@ -885,7 +885,7 @@ export default function BorrowerPortalPage() {
 
   // ── PROFILE PAGE ─────────────────────────────────────────────
   if (page === 'profile') return (
-    <div style={{ minHeight: '100vh', background: '#080B14', fontFamily: 'DM Sans, sans-serif' }}>
+    <div style={{ minHeight: '100dvh', background: '#080B14', fontFamily: 'DM Sans, sans-serif', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
       
       <PortalHeader borrower={borrower} notifications={notifications} showNotifs={showNotifs} setShowNotifs={setShowNotifs} markAllRead={markAllRead} onBack={() => setPage('home')} subtitle="My Profile" />
       <div style={{ maxWidth: 640, margin: '0 auto', padding: '32px 20px 40px' }}>
@@ -1006,7 +1006,7 @@ export default function BorrowerPortalPage() {
 
   // ── PAYMENT HISTORY PAGE ──────────────────────────────────────
   if (page === 'payment-history') return (
-    <div style={{ minHeight: '100vh', background: '#080B14', fontFamily: 'DM Sans, sans-serif' }}>
+    <div style={{ minHeight: '100dvh', background: '#080B14', fontFamily: 'DM Sans, sans-serif', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
       
       <PortalHeader borrower={borrower} notifications={notifications} showNotifs={showNotifs} setShowNotifs={setShowNotifs} markAllRead={markAllRead} onBack={() => setPage('home')} subtitle="Payment History" />
       <div style={{ maxWidth: 680, margin: '0 auto', padding: '32px 20px 40px' }}>
@@ -1087,7 +1087,7 @@ export default function BorrowerPortalPage() {
     const canWithdraw = rebateCredits?.balance >= 500
     return (
       <>
-      <div style={{ minHeight: '100vh', background: '#080B14', fontFamily: 'DM Sans, sans-serif' }}>
+      <div style={{ minHeight: '100dvh', background: '#080B14', fontFamily: 'DM Sans, sans-serif', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
         <PortalHeader borrower={borrower} notifications={notifications} showNotifs={showNotifs} setShowNotifs={setShowNotifs} markAllRead={markAllRead} onBack={() => setPage('home')} subtitle="Rebate Credits" />
         <div style={{ maxWidth: 520, margin: '0 auto', padding: '32px 20px 40px' }}>
 
@@ -1240,7 +1240,7 @@ export default function BorrowerPortalPage() {
 
   // ── PAYMENT METHODS PAGE ──────────────────────────────────────
   if (page === 'payment-methods') return (
-    <div style={{ minHeight: '100vh', background: '#080B14', fontFamily: 'DM Sans, sans-serif' }}>
+    <div style={{ minHeight: '100dvh', background: '#080B14', fontFamily: 'DM Sans, sans-serif', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
       
       <PortalHeader borrower={borrower} notifications={notifications} showNotifs={showNotifs} setShowNotifs={setShowNotifs} markAllRead={markAllRead} onBack={() => setPage('home')} subtitle="Payment Methods" />
       <div style={{ maxWidth: 620, margin: '0 auto', padding: '32px 20px 40px' }}>
@@ -1286,7 +1286,7 @@ export default function BorrowerPortalPage() {
 
   // ── HOME PAGE ────────────────────────────────────────────────
   return (
-    <div style={{ minHeight: '100vh', background: '#080B14', fontFamily: 'DM Sans, sans-serif' }}>
+    <div style={{ minHeight: '100dvh', background: '#080B14', fontFamily: 'DM Sans, sans-serif', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
       <style>{`
         
         @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }

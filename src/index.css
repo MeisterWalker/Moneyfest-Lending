@@ -31,6 +31,7 @@ body {
   line-height: 1.6;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
+  padding-bottom: env(safe-area-inset-bottom, 20px);
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -60,7 +61,7 @@ input, textarea, select {
   border-radius: var(--radius-sm);
   padding: 10px 14px;
   font-family: 'DM Sans', sans-serif;
-  font-size: 14px;
+  font-size: 16px; /* 16px prevents mobile auto-zoom on focus */
   outline: none;
   width: 100%;
   transition: border-color 0.15s ease;
