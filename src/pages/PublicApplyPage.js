@@ -31,7 +31,7 @@ function SuccessScreen({ accessCode, fullName, loanAmount }) {
     })
   }
   return (
-    <div style={{ minHeight: '100vh', background: '#0B0F1A', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, position: 'relative', overflow: 'hidden' }}>
+    <div style={{ minHeight: '100vh', background: '#0B0F1A', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 24px', position: 'relative', overflowY: 'auto' }}>
       <style>{`@keyframes confettiFall{0%{transform:translateY(-20px) rotate(0deg);opacity:1}100%{transform:translateY(110vh) rotate(720deg);opacity:0}}@keyframes confettiSway{0%,100%{margin-left:0px}25%{margin-left:30px}75%{margin-left:-30px}}@keyframes codePulse{0%,100%{box-shadow:0 0 0 0 rgba(139,92,246,0.4)}50%{box-shadow:0 0 0 8px rgba(139,92,246,0)}}@keyframes warningPulse{0%,100%{border-color:rgba(245,158,11,0.4)}50%{border-color:rgba(245,158,11,0.9)}}.confetti-piece{position:fixed;top:-20px;animation:confettiFall linear forwards,confettiSway ease-in-out infinite;z-index:0;border-radius:2px;pointer-events:none}.code-pulse{animation:codePulse 2s ease-in-out infinite}.warning-pulse{animation:warningPulse 1.5s ease-in-out infinite}`}</style>
       {Array.from({ length: 80 }, (_, i) => { const colors = ['#3B82F6','#8B5CF6','#22C55E','#F59E0B','#EF4444','#14B8A6','#EC4899','#F97316','#A78BFA','#34D399']; const isCircle = i % 5 === 0; const w = 6 + (i % 3) * 4; const h = 8 + (i % 4) * 4; return <div key={i} className="confetti-piece" style={{ left: ((i * 1.27) % 100) + 'vw', width: isCircle ? w : w, height: isCircle ? w : h, borderRadius: isCircle ? '50%' : '2px', background: colors[i % colors.length], animationDuration: (2.5 + (i % 4) * 0.5) + 's, ' + ((2.5 + (i % 4) * 0.5) * 0.8) + 's', animationDelay: ((i * 0.07) % 3) + 's, ' + ((i * 0.07) % 3) + 's', opacity: 0.9 }} /> })}
       <div style={{ maxWidth: 500, width: '100%', position: 'relative', zIndex: 1 }}>
@@ -391,7 +391,7 @@ export default function PublicApplyPage() {
         {/* Disclaimer Modal */}
         {showDisclaimer && (
           <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: 20 }}>
-            <div style={{ background: '#141B2D', border: '1px solid rgba(245,158,11,0.3)', borderRadius: 20, padding: 32, width: '100%', maxWidth: 460 }}>
+            <div style={{ background: '#141B2D', border: '1px solid rgba(245,158,11,0.3)', borderRadius: 20, padding: 32, width: '100%', maxWidth: 460, maxHeight: '90vh', overflowY: 'auto' }}>
               <div style={{ textAlign: 'center', marginBottom: 24 }}>
                 <img src="/warning.png" alt="warning" style={{ width: 44, height: 44, objectFit: 'contain', marginBottom: 12 }} />
                 <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 20, color: '#F59E0B', marginBottom: 6 }}>Important Loan Disclaimer</div>
