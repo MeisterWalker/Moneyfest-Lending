@@ -426,7 +426,12 @@ export default function PublicApplyPage() {
               <div style={{ padding: '22px 28px', borderBottom: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <img src="/list.png" alt="terms" style={{ width: 22, height: 22, objectFit: 'contain' }} />
-                  <div><div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 17, color: '#F0F4FF' }}>Terms & Conditions</div><div style={{ fontSize: 11, color: '#4B5580', marginTop: 1 }}>MoneyfestLending Workplace Lending Program</div></div>
+                  <div>
+                    <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 17, color: '#F0F4FF' }}>
+                      {form.loan_type === 'quickloan' ? '⚡ QuickLoan Terms & Conditions' : 'Terms & Conditions'}
+                    </div>
+                    <div style={{ fontSize: 11, color: '#4B5580', marginTop: 1 }}>MoneyfestLending Workplace Lending Program</div>
+                  </div>
                 </div>
                 <button onClick={() => setShowTnC(false)} style={{ width: 30, height: 30, borderRadius: '50%', border: 'none', background: 'rgba(255,255,255,0.07)', color: '#7A8AAA', fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
               </div>
@@ -471,7 +476,9 @@ export default function PublicApplyPage() {
                     { title: '15. Governing Law', body: 'Governed by Philippine laws (RA 3765, RA 10173, RA 8792). Disputes are first handled via barangay conciliation (RA 7160).' },
                   ]
 
-                  const activeTerms = form.loan_type === 'quickloan' ? quickloanTerms : installmentTerms
+                  const isQL = form.loan_type === 'quickloan'
+                  const activeTerms = isQL ? quickloanTerms : installmentTerms
+                  console.log('T&C Modal Rendered for:', form.loan_type, 'isQL:', isQL)
 
                   return activeTerms.map((sec, i) => (
                     <div key={i} style={{ marginBottom: 20 }}>
