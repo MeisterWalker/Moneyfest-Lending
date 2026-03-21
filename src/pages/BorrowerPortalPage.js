@@ -2,7 +2,8 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { CREDIT_CONFIG, BADGE_TIERS, SECURITY_HOLD_TIERS, getBadgeConfig, getBadgeFromScore, getSecurityHoldRate } from '../lib/creditSystem'
 import { supabase } from '../lib/supabase'
 import { usePageVisit } from '../hooks/usePageVisit'
-import { getInstallmentDates, formatDateValue } from '../lib/helpers'
+import { getInstallmentDates, formatDateValue, logAudit } from '../lib/helpers'
+import { sendLoanAgreementSignedAdminEmail } from '../lib/emailService'
 import {
   Lock, CheckCircle, Clock, AlertCircle, Upload,
   FileText, Calendar, CreditCard, ChevronDown, ChevronUp, X
@@ -457,11 +458,35 @@ export default function BorrowerPortalPage() {
   }
   const handleUploaded = () => { setUploadModal(null); setUploadSuccess(true); fetchPortalData(code); setTimeout(() => setUploadSuccess(false), 5000) }
   const handleSaveSignature = async ({ typedName, signatureImage, signedAt }) => {
+    // 1. Update DB
     await supabase.from('loans').update({ e_signature_name: typedName, e_signature_image: signatureImage, e_signature_date: signedAt, agreement_confirmed: true }).eq('id', loan.id)
     await supabase.from('borrowers').update({ e_signature_name: typedName, e_signature_image: signatureImage, e_signature_date: signedAt }).eq('id', borrower.id)
+    
+    // 2. Notify Admin
+    try {
+      await sendLoanAgreementSignedAdminEmail({
+        borrowerName: borrower.full_name,
+        loanAmount: loan.loan_amount,
+        loanType: loan.loan_type === 'quickloan' ? 'QuickLoan' : 'Installment Loan',
+        accessCode: borrower.access_code
+      })
+      
+      await logAudit({
+        action_type: 'LA_SIGNED',
+        module: 'Portal',
+        description: `Loan Agreement signed by ${borrower.full_name} (${loan.loan_type === 'quickloan' ? 'QuickLoan' : 'Installment'})`,
+        changed_by: borrower.full_name
+      })
+    } catch (e) {
+      console.error('Notification failed:', e)
+    }
+
+    // 3. Update State
     setLoan(prev => ({ ...prev, e_signature_name: typedName, e_signature_image: signatureImage, e_signature_date: signedAt, agreement_confirmed: true }))
     setBorrower(prev => ({ ...prev, e_signature_name: typedName, e_signature_image: signatureImage, e_signature_date: signedAt }))
     setSignatureSaved(true); setShowSignModal(false)
+    
+    // 4. Generate PDF
     setTimeout(() => loan.loan_type === 'quickloan' ? generateQuickLoanAgreementPDF() : generateLoanAgreementPDF(typedName, signatureImage, signedAt), 500)
   }
 
@@ -759,6 +784,8 @@ export default function BorrowerPortalPage() {
               <div style={{ fontSize: 10, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700, marginBottom: 12 }}>Application Details</div>
               {[
                 { label: 'Applicant', value: pendingApp.full_name },
+                { label: 'Department', value: pendingApp.department },
+                { label: 'Tenurity', value: (pendingApp.tenure_years || 0) + ' Year' + (pendingApp.tenure_years > 1 ? 's' : '') },
                 { label: 'Requested Amount', value: '₱' + Number(pendingApp.loan_amount).toLocaleString() },
                 { label: 'Reference Code', value: pendingApp.access_code },
                 { label: 'Submitted', value: new Date(pendingApp.created_at).toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' }) },
