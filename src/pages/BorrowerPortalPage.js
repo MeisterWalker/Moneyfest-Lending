@@ -401,6 +401,15 @@ export default function BorrowerPortalPage() {
   const [notifications, setNotifications] = useState([])
   const [showNotifs, setShowNotifs] = useState(false)
   const [hoveredMethod, setHoveredMethod] = useState(null)
+  const [activeMethod, setActiveMethod] = useState(null)
+  const [copiedKey, setCopiedKey] = useState(null)
+
+  const handleCopy = (text, key) => {
+    navigator.clipboard.writeText(text)
+    setCopiedKey(key)
+    setTimeout(() => setCopiedKey(null), 2000)
+  }
+
 
   const fetchPortalData = useCallback(async (accessCode) => {
     setLoading(true); setError('')
@@ -1251,58 +1260,96 @@ export default function BorrowerPortalPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {[
             { logo: '/cash-logo.png', label: 'Physical Cash', fee: 'Free', feeColor: '#10B981', accent: 'rgba(16,185,129,0.05)', glow: 'rgba(16,185,129,0.2)', desc: 'Pay your admin directly in person.', steps: ['Prepare the exact installment amount in cash', 'Coordinate with your admin via Teams Chat', 'Hand over payment and request acknowledgement', 'Upload photo of receipt or acknowledgement'] },
-            { logo: '/gcash-logo.png', label: 'GCash', fee: 'GCash Free', feeColor: '#3B82F6', accent: 'rgba(59,130,246,0.05)', glow: 'rgba(59,130,246,0.2)', desc: 'Send via GCash to Charlou June Ramil.', steps: ['Open GCash and select Send Money', 'Send to: 09665835179 (Charlou June R.)', 'Send the exact installment amount', '⚠️ Note: GCash to GCash is free. You must cover fees if using Bank-to-GCash or 3rd party apps.', 'Screenshot and upload the successful transaction'] },
-            { logo: '/rcbc-logo.png', label: 'RCBC to RCBC', fee: 'Free', feeColor: '#EF4444', accent: 'rgba(239,68,68,0.05)', glow: 'rgba(239,68,68,0.2)', desc: 'Same-bank RCBC transfers are completely free.', steps: ['Log in to RCBC Online or App', 'Transfer to: 9051147397 (John Paul Lacaron)', 'Transfer exact installment amount', 'Screenshot the transfer confirmation', 'Upload the screenshot in the portal'] },
-            { logo: '/maribank.png', label: 'MariBank', fee: 'Free', feeColor: '#F59E0B', accent: 'rgba(245,158,11,0.05)', glow: 'rgba(245,158,11,0.2)', desc: 'Send to Charlou June Ramil via MariBank.', steps: ['Open your bank app and select Transfer', 'Bank: MariBank PH', 'Account: 12476681477 (Charlou June R.)', 'Screenshot the transfer confirmation', 'Upload the screenshot in the portal'] },
+            { logo: '/gcash-logo.png', label: 'GCash', fee: 'GCash Free', feeColor: '#3B82F6', accent: 'rgba(59,130,246,0.05)', glow: 'rgba(59,130,246,0.2)', desc: 'Send via GCash to Charlou June Ramil.', steps: ['Open GCash and select Send Money', { label: 'Send to: 09665835179 (Charlou June R.)', copy: '09665835179' }, 'Send the exact installment amount', '⚠️ Note: GCash to GCash is free. You must cover fees if using Bank-to-GCash or 3rd party apps.', 'Screenshot and upload the successful transaction'] },
+            { logo: '/rcbc-logo.png', label: 'RCBC to RCBC', fee: 'Free', feeColor: '#EF4444', accent: 'rgba(239,68,68,0.05)', glow: 'rgba(239,68,68,0.2)', desc: 'Same-bank RCBC transfers are completely free.', steps: ['Log in to RCBC Online or App', { label: 'Transfer to: 9051147397 (John Paul Lacaron)', copy: '9051147397' }, 'Transfer exact installment amount', 'Screenshot the transfer confirmation', 'Upload the screenshot in the portal'] },
+            { logo: '/maribank.png', label: 'MariBank', fee: 'Free', feeColor: '#F59E0B', accent: 'rgba(245,158,11,0.05)', glow: 'rgba(245,158,11,0.2)', desc: 'Send to Charlou June Ramil via MariBank.', steps: ['Open your bank app and select Transfer', 'Bank: MariBank PH', { label: 'Account: 12476681477 (Charlou June R.)', copy: '12476681477' }, 'Screenshot the transfer confirmation', 'Upload the screenshot in the portal'] },
             { logo: '/bank-logo.png', label: 'Other Bank', fee: 'Fee Applies', feeColor: '#8B5CF6', accent: 'rgba(139,92,246,0.05)', glow: 'rgba(139,92,246,0.2)', desc: 'Transfer from any bank via Instapay/PESONet.', steps: ['Use your bank online transfer or app', 'Choose Instapay (faster) or PESONet', 'Send exact installment amount + fee', 'Upload the screenshot in the portal'] },
           ].map((item, i) => (
             <div key={i} 
               onMouseEnter={() => setHoveredMethod(i)}
               onMouseLeave={() => setHoveredMethod(null)}
+              onClick={() => setActiveMethod(activeMethod === i ? null : i)}
               style={{ 
                 background: 'rgba(255,255,255,0.025)', 
                 backdropFilter: 'blur(10px)',
-                border: `1px solid ${hoveredMethod === i ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.06)'}`,
-                borderRadius: 20, 
+                border: `1px solid ${activeMethod === i ? 'rgba(255,255,255,0.2)' : hoveredMethod === i ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.06)'}`,
+                borderRadius: 24, 
                 overflow: 'hidden', 
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                transition: 'all 0.4s cubic-bezier(0.19, 1, 0.22, 1)',
                 transform: hoveredMethod === i ? 'translateY(-4px)' : 'translateY(0)',
-                boxShadow: hoveredMethod === i ? `0 12px 30px -10px ${item.glow}` : '0 4px 12px rgba(0,0,0,0.1)',
-                cursor: 'default'
+                boxShadow: hoveredMethod === i ? `0 20px 40px -15px ${item.glow}` : '0 4px 12px rgba(0,0,0,0.1)',
+                cursor: 'pointer'
               }}
             >
-              <div style={{ padding: '20px 24px', display: 'flex', alignItems: 'center', gap: 18, background: item.accent }}>
+              <div style={{ padding: '22px 26px', display: 'flex', alignItems: 'center', gap: 20, background: activeMethod === i ? `${item.accent.replace('0.05', '0.08')}` : item.accent }}>
                 <div style={{ 
-                  width: 56, height: 56, borderRadius: 14, background: 'rgba(255,255,255,0.05)', 
+                  width: 60, height: 60, borderRadius: 16, background: 'rgba(255,255,255,0.05)', 
                   display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden',
-                  border: '1px solid rgba(255,255,255,0.08)'
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  boxShadow: '0 8px 16px rgba(0,0,0,0.2)'
                 }}>
-                  <img src={item.logo} alt={item.label} style={{ width: 38, height: 38, objectFit: 'contain' }} />
+                  <img src={item.logo} alt={item.label} style={{ width: 40, height: 40, objectFit: 'contain' }} />
                 </div>
                 <div style={{ flex: 1 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-                    <span style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 16, color: '#F0F4FF', letterSpacing: '-0.02em' }}>{item.label}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
+                    <span style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 17, color: '#F0F4FF', letterSpacing: '-0.02em' }}>{item.label}</span>
                     <span style={{ fontSize: 10, fontWeight: 800, color: item.feeColor, background: `${item.feeColor}15`, padding: '3px 10px', borderRadius: 20, border: `1px solid ${item.feeColor}30`, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{item.fee}</span>
                   </div>
                   <div style={{ fontSize: 13, color: '#7A8AAA', fontWeight: 500 }}>{item.desc}</div>
                 </div>
+                <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#4B5580', transition: 'all 0.3s', transform: activeMethod === i ? 'rotate(180deg)' : 'rotate(0)' }}>
+                  <ChevronDown size={18} />
+                </div>
               </div>
-              <div style={{ padding: '18px 24px', background: 'rgba(0,0,0,0.15)' }}>
-                <div style={{ fontSize: 10, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12, fontWeight: 800 }}>Repayment Steps</div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  {item.steps.map((step, si) => (
-                    <div key={si} style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-                      <div style={{ 
-                        width: 22, height: 22, borderRadius: '50%', 
-                        background: step.includes('⚠️') ? 'rgba(245,158,11,0.15)' : 'rgba(255,255,255,0.05)', 
-                        border: `1px solid ${step.includes('⚠️') ? 'rgba(245,158,11,0.3)' : 'rgba(255,255,255,0.1)'}`,
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', 
-                        fontSize: 10, fontWeight: 800, color: step.includes('⚠️') ? '#F59E0B' : '#7A8AAA', 
-                        flexShrink: 0, marginTop: 1 
-                      }}>{si + 1}</div>
-                      <span style={{ fontSize: 13, color: step.includes('⚠️') ? '#F59E0B' : '#CBD5F0', lineHeight: 1.5, fontWeight: step.includes('⚠️') ? 600 : 400 }}>{step}</span>
-                    </div>
-                  ))}
+
+              {/* Accordion Content */}
+              <div style={{ 
+                maxHeight: activeMethod === i ? 600 : 0, 
+                opacity: activeMethod === i ? 1 : 0,
+                transition: 'all 0.5s cubic-bezier(0.19, 1, 0.22, 1)',
+                padding: activeMethod === i ? '0 26px 22px' : '0 26px 0',
+                background: 'rgba(0,0,0,0.15)',
+                overflow: 'hidden'
+              }}>
+                <div style={{ height: activeMethod === i ? 'auto' : 0 }}>
+                  <div style={{ height: 1.5, background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent)', margin: '0 0 18px' }} />
+                  <div style={{ fontSize: 10, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 14, fontWeight: 800 }}>Repayment Instructions</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    {item.steps.map((step, si) => {
+                      const isObj = typeof step === 'object'
+                      const txt = isObj ? step.label : step
+                      const isWarn = txt.includes('⚠️')
+                      return (
+                        <div key={si} style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
+                          <div style={{ 
+                            width: 24, height: 24, borderRadius: 8, 
+                            background: isWarn ? 'rgba(245,158,11,0.15)' : 'rgba(255,255,255,0.05)', 
+                            border: `1px solid ${isWarn ? 'rgba(245,158,11,0.3)' : 'rgba(255,255,255,0.1)'}`,
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', 
+                            fontSize: 10, fontWeight: 800, color: isWarn ? '#F59E0B' : '#7A8AAA', 
+                            flexShrink: 0, marginTop: 1 
+                          }}>{si + 1}</div>
+                          <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                            <span style={{ fontSize: 13.5, color: isWarn ? '#F59E0B' : '#CBD5F0', lineHeight: 1.5, fontWeight: isWarn ? 600 : 400 }}>{txt}</span>
+                            {isObj && step.copy && (
+                              <button 
+                                onClick={(e) => { e.stopPropagation(); handleCopy(step.copy, txt) }}
+                                style={{ 
+                                  padding: '4px 10px', borderRadius: 8, border: `1px solid ${copiedKey === txt ? '#10B981' : 'rgba(99,102,241,0.3)'}`, 
+                                  background: copiedKey === txt ? 'rgba(16,185,129,0.1)' : 'rgba(99,102,241,0.1)', 
+                                  color: copiedKey === txt ? '#10B981' : '#8B5CF6', 
+                                  fontSize: 11, fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s',
+                                  display: 'flex', alignItems: 'center', gap: 6, margin: '2px 0'
+                                }}
+                              >
+                                {copiedKey === txt ? '✓ Copied!' : '⧉ Copy'}
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
                 </div>
               </div>
             </div>
