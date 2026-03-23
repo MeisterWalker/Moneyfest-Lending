@@ -400,6 +400,7 @@ export default function BorrowerPortalPage() {
   const [allLoans, setAllLoans] = useState([])
   const [notifications, setNotifications] = useState([])
   const [showNotifs, setShowNotifs] = useState(false)
+  const [hoveredMethod, setHoveredMethod] = useState(null)
 
   const fetchPortalData = useCallback(async (accessCode) => {
     setLoading(true); setError('')
@@ -1249,37 +1250,76 @@ export default function BorrowerPortalPage() {
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {[
-            { logo: '/cash-logo.png', label: 'Physical Cash', fee: 'Free', feeColor: '#22C55E', feeBg: 'rgba(34,197,94,0.08)', feeBorder: 'rgba(34,197,94,0.2)', accent: 'rgba(34,197,94,0.12)', desc: 'Pay your admin directly in person.', steps: ['Prepare the exact installment amount in cash', 'Coordinate with your admin via Teams Chat', 'Hand over payment and request acknowledgement', 'Upload photo of receipt or acknowledgement'] },
-            { logo: '/gcash-logo.png', label: 'GCash', fee: '₱15 fee', feeColor: '#F59E0B', feeBg: 'rgba(245,158,11,0.08)', feeBorder: 'rgba(245,158,11,0.2)', accent: 'rgba(0,163,255,0.1)', desc: 'Send via GCash to Charlou June Ramil.', steps: ['Open GCash and select Send Money', 'Send to: 09665835179 (Charlou June R.)', 'Send the exact installment amount', 'Screenshot the successful transaction', 'Upload the screenshot in the portal'] },
-            { logo: '/rcbc-logo.png', label: 'RCBC to RCBC', fee: 'Free', feeColor: '#22C55E', feeBg: 'rgba(34,197,94,0.08)', feeBorder: 'rgba(34,197,94,0.2)', accent: 'rgba(220,38,38,0.08)', desc: 'Same-bank RCBC transfers are completely free.', steps: ['Log in to RCBC Online or App', 'Transfer to: 9051147397 (John Paul Lacaron)', 'Transfer exact installment amount', 'Screenshot the transfer confirmation', 'Upload the screenshot in the portal'] },
-            { logo: '/bank-logo.png', label: 'Maribank', fee: 'Free', feeColor: '#22C55E', feeBg: 'rgba(34,197,94,0.08)', feeBorder: 'rgba(34,197,94,0.2)', accent: 'rgba(34,197,94,0.12)', desc: 'Send to Charlou June Ramil via MariBank.', steps: ['Open your bank app and select Transfer', 'Bank: MariBank PH', 'Account: 12476681477 (Charlou June R.)', 'Screenshot the transfer confirmation', 'Upload the screenshot in the portal'] },
-            { logo: '/bank-logo.png', label: 'Other Bank (Instapay/PESONet)', fee: 'You cover fee', feeColor: '#F59E0B', feeBg: 'rgba(245,158,11,0.08)', feeBorder: 'rgba(245,158,11,0.2)', accent: 'rgba(139,92,246,0.08)', desc: 'Transfer from any bank. You cover the transfer fee.', steps: ['Use your bank online transfer or app', 'Choose Instapay (faster) or PESONet', 'Send exact installment amount + fee', 'Upload the screenshot in the portal'] },
+            { logo: '/cash-logo.png', label: 'Physical Cash', fee: 'Free', feeColor: '#10B981', accent: 'rgba(16,185,129,0.05)', glow: 'rgba(16,185,129,0.2)', desc: 'Pay your admin directly in person.', steps: ['Prepare the exact installment amount in cash', 'Coordinate with your admin via Teams Chat', 'Hand over payment and request acknowledgement', 'Upload photo of receipt or acknowledgement'] },
+            { logo: '/gcash-logo.png', label: 'GCash', fee: 'GCash Free', feeColor: '#3B82F6', accent: 'rgba(59,130,246,0.05)', glow: 'rgba(59,130,246,0.2)', desc: 'Send via GCash to Charlou June Ramil.', steps: ['Open GCash and select Send Money', 'Send to: 09665835179 (Charlou June R.)', 'Send the exact installment amount', '⚠️ Note: GCash to GCash is free. You must cover fees if using Bank-to-GCash or 3rd party apps.', 'Screenshot and upload the successful transaction'] },
+            { logo: '/rcbc-logo.png', label: 'RCBC to RCBC', fee: 'Free', feeColor: '#EF4444', accent: 'rgba(239,68,68,0.05)', glow: 'rgba(239,68,68,0.2)', desc: 'Same-bank RCBC transfers are completely free.', steps: ['Log in to RCBC Online or App', 'Transfer to: 9051147397 (John Paul Lacaron)', 'Transfer exact installment amount', 'Screenshot the transfer confirmation', 'Upload the screenshot in the portal'] },
+            { logo: '/maribank.png', label: 'MariBank', fee: 'Free', feeColor: '#F59E0B', accent: 'rgba(245,158,11,0.05)', glow: 'rgba(245,158,11,0.2)', desc: 'Send to Charlou June Ramil via MariBank.', steps: ['Open your bank app and select Transfer', 'Bank: MariBank PH', 'Account: 12476681477 (Charlou June R.)', 'Screenshot the transfer confirmation', 'Upload the screenshot in the portal'] },
+            { logo: '/bank-logo.png', label: 'Other Bank', fee: 'Fee Applies', feeColor: '#8B5CF6', accent: 'rgba(139,92,246,0.05)', glow: 'rgba(139,92,246,0.2)', desc: 'Transfer from any bank via Instapay/PESONet.', steps: ['Use your bank online transfer or app', 'Choose Instapay (faster) or PESONet', 'Send exact installment amount + fee', 'Upload the screenshot in the portal'] },
           ].map((item, i) => (
-            <div key={i} style={{ background: '#0E1320', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 16, overflow: 'hidden' }}>
-              <div style={{ padding: '16px 18px', display: 'flex', alignItems: 'center', gap: 14, background: item.accent }}>
-                <img src={item.logo} alt={item.label} style={{ width: 44, height: 44, objectFit: 'contain', flexShrink: 0 }} />
+            <div key={i} 
+              onMouseEnter={() => setHoveredMethod(i)}
+              onMouseLeave={() => setHoveredMethod(null)}
+              style={{ 
+                background: 'rgba(255,255,255,0.025)', 
+                backdropFilter: 'blur(10px)',
+                border: `1px solid ${hoveredMethod === i ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.06)'}`,
+                borderRadius: 20, 
+                overflow: 'hidden', 
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                transform: hoveredMethod === i ? 'translateY(-4px)' : 'translateY(0)',
+                boxShadow: hoveredMethod === i ? `0 12px 30px -10px ${item.glow}` : '0 4px 12px rgba(0,0,0,0.1)',
+                cursor: 'default'
+              }}
+            >
+              <div style={{ padding: '20px 24px', display: 'flex', alignItems: 'center', gap: 18, background: item.accent }}>
+                <div style={{ 
+                  width: 56, height: 56, borderRadius: 14, background: 'rgba(255,255,255,0.05)', 
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden',
+                  border: '1px solid rgba(255,255,255,0.08)'
+                }}>
+                  <img src={item.logo} alt={item.label} style={{ width: 38, height: 38, objectFit: 'contain' }} />
+                </div>
                 <div style={{ flex: 1 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                    <span style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 14, color: '#F0F4FF' }}>{item.label}</span>
-                    <span style={{ fontSize: 10, fontWeight: 700, color: item.feeColor, background: item.feeBg, padding: '2px 8px', borderRadius: 20, border: `1px solid ${item.feeBorder}` }}>{item.fee}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+                    <span style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 16, color: '#F0F4FF', letterSpacing: '-0.02em' }}>{item.label}</span>
+                    <span style={{ fontSize: 10, fontWeight: 800, color: item.feeColor, background: `${item.feeColor}15`, padding: '3px 10px', borderRadius: 20, border: `1px solid ${item.feeColor}30`, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{item.fee}</span>
                   </div>
-                  <div style={{ fontSize: 12, color: '#7A8AAA' }}>{item.desc}</div>
+                  <div style={{ fontSize: 13, color: '#7A8AAA', fontWeight: 500 }}>{item.desc}</div>
                 </div>
               </div>
-              <div style={{ padding: '14px 18px' }}>
-                <div style={{ fontSize: 10, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 10, fontWeight: 700 }}>How to pay</div>
-                {item.steps.map((step, si) => (
-                  <div key={si} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: si < item.steps.length - 1 ? 8 : 0 }}>
-                    <div style={{ width: 18, height: 18, borderRadius: '50%', background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 800, color: '#8B5CF6', flexShrink: 0, marginTop: 2 }}>{si + 1}</div>
-                    <span style={{ fontSize: 12, color: '#CBD5F0', lineHeight: 1.5 }}>{step}</span>
-                  </div>
-                ))}
+              <div style={{ padding: '18px 24px', background: 'rgba(0,0,0,0.15)' }}>
+                <div style={{ fontSize: 10, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12, fontWeight: 800 }}>Repayment Steps</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {item.steps.map((step, si) => (
+                    <div key={si} style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                      <div style={{ 
+                        width: 22, height: 22, borderRadius: '50%', 
+                        background: step.includes('⚠️') ? 'rgba(245,158,11,0.15)' : 'rgba(255,255,255,0.05)', 
+                        border: `1px solid ${step.includes('⚠️') ? 'rgba(245,158,11,0.3)' : 'rgba(255,255,255,0.1)'}`,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', 
+                        fontSize: 10, fontWeight: 800, color: step.includes('⚠️') ? '#F59E0B' : '#7A8AAA', 
+                        flexShrink: 0, marginTop: 1 
+                      }}>{si + 1}</div>
+                      <span style={{ fontSize: 13, color: step.includes('⚠️') ? '#F59E0B' : '#CBD5F0', lineHeight: 1.5, fontWeight: step.includes('⚠️') ? 600 : 400 }}>{step}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           ))}
         </div>
-        <div style={{ marginTop: 18, padding: '14px 18px', background: 'rgba(245,158,11,0.05)', border: '1px solid rgba(245,158,11,0.15)', borderRadius: 12, fontSize: 12, color: '#F59E0B', lineHeight: 1.7 }}>
-          ⚠ <strong>Important:</strong> Always upload your proof of payment after every transaction. Your payment is only confirmed once your admin reviews and approves the proof.
+        <div style={{ 
+          marginTop: 24, padding: '18px 24px', 
+          background: 'rgba(245,158,11,0.05)', 
+          border: '1px solid rgba(245,158,11,0.2)', 
+          borderRadius: 16, fontSize: 13, color: '#F59E0B', 
+          lineHeight: 1.8, display: 'flex', gap: 14, alignItems: 'flex-start' 
+        }}>
+          <div style={{ fontSize: 20 }}>⚠️</div>
+          <div>
+            <strong style={{ color: '#F59E0B', display: 'block', marginBottom: 2, fontSize: 14, fontFamily: 'Syne, sans-serif', fontWeight: 800 }}>Important Reminder</strong>
+            Always upload your proof of payment after every transaction. Your payment is only confirmed once your admin reviews and approves the proof.
+          </div>
         </div>
       </div>
     </div>
