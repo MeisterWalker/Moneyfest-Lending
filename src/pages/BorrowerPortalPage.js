@@ -352,13 +352,13 @@ function generateReceiptHTML({ loan, borrower, installmentNum, amount, date }) {
   </div>
   <div class="amount-box"><div style="font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:#7A8AAA;margin-bottom:8px;">Amount Paid This Installment</div><div class="amount-val">₱${roundedAmount.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</div></div>
   <div style="margin-bottom:20px;"><div style="font-size:12px;font-weight:600;margin-bottom:10px;">Repayment Progress — ${installmentNum} of ${numInstallments}</div>
-  <div style="height:8px;background:#e8ecf5;border-radius:4px;overflow:hidden;margin-bottom:10px;"><div style="height:100%;width:${(installmentNum/numInstallments)*100}%;background:linear-gradient(90deg,#8B5CF6,#22C55E);border-radius:4px;"></div></div>
-  <div class="steps">${Array.from({length:numInstallments},(_,i)=>i+1).map(i=>`<div class="step ${i<=installmentNum?'done':'pending'}">${i<=installmentNum?'✓':i}</div>`).join('')}</div></div>
+  <div style="height:8px;background:#e8ecf5;border-radius:4px;overflow:hidden;margin-bottom:10px;"><div style="height:100%;width:${(installmentNum / numInstallments) * 100}%;background:linear-gradient(90deg,#8B5CF6,#22C55E);border-radius:4px;"></div></div>
+  <div class="steps">${Array.from({ length: numInstallments }, (_, i) => i + 1).map(i => `<div class="step ${i <= installmentNum ? 'done' : 'pending'}">${i <= installmentNum ? '✓' : i}</div>`).join('')}</div></div>
   <div style="background:#f8faff;border-radius:10px;padding:16px;">
-    <div class="row"><span>Loan Principal</span><span>₱${loan.loan_amount?.toLocaleString('en-PH',{minimumFractionDigits:2})}</span></div>
-    <div class="row"><span>Total Repayment</span><span>₱${loan.total_repayment?.toLocaleString('en-PH',{minimumFractionDigits:2})}</span></div>
-    <div class="row"><span>Paid to Date</span><span>₱${totalPaid.toLocaleString('en-PH',{minimumFractionDigits:2})}</span></div>
-    <div class="row" style="color:${remaining<=0?'#22C55E':'#1a1a2e'}"><span>${remaining<=0?'🎉 Fully Paid!':'Remaining Balance'}</span><span>₱${remaining.toLocaleString('en-PH',{minimumFractionDigits:2})}</span></div>
+    <div class="row"><span>Loan Principal</span><span>₱${loan.loan_amount?.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span></div>
+    <div class="row"><span>Total Repayment</span><span>₱${loan.total_repayment?.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span></div>
+    <div class="row"><span>Paid to Date</span><span>₱${totalPaid.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span></div>
+    <div class="row" style="color:${remaining <= 0 ? '#22C55E' : '#1a1a2e'}"><span>${remaining <= 0 ? '🎉 Fully Paid!' : 'Remaining Balance'}</span><span>₱${remaining.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span></div>
   </div>
   <div class="footer"><p><strong>Moneyfest Lending</strong> · Private workplace lending</p><p style="margin-top:3px;">Official proof of payment — Installment ${installmentNum} of ${numInstallments}</p></div>
   </body></html>`
@@ -370,7 +370,7 @@ function downloadReceipt({ loan, borrower, installmentNum, amount }) {
   const blob = new Blob([html], { type: 'text/html' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
-  a.href = url; a.download = `Receipt_${borrower?.full_name?.replace(/\s+/g,'_')}_Inst${installmentNum}.html`
+  a.href = url; a.download = `Receipt_${borrower?.full_name?.replace(/\s+/g, '_')}_Inst${installmentNum}.html`
   a.click(); URL.revokeObjectURL(url)
 }
 
@@ -413,7 +413,7 @@ export default function BorrowerPortalPage() {
       const activeLoans = (allL || []).filter(l => l.status === 'Active')
       for (const activeLoan of activeLoans) {
         if (!activeLoan.release_date) continue
-        const today = new Date(); today.setHours(0,0,0,0)
+        const today = new Date(); today.setHours(0, 0, 0, 0)
         const paid = activeLoan.payments_made || 0
         const numInst = activeLoan.num_installments || 4
         const allDueDates = getDueDates(activeLoan.release_date, paid, numInst)
@@ -461,7 +461,7 @@ export default function BorrowerPortalPage() {
     // 1. Update DB
     await supabase.from('loans').update({ e_signature_name: typedName, e_signature_image: signatureImage, e_signature_date: signedAt, agreement_confirmed: true }).eq('id', loan.id)
     await supabase.from('borrowers').update({ e_signature_name: typedName, e_signature_image: signatureImage, e_signature_date: signedAt }).eq('id', borrower.id)
-    
+
     // 2. Notify Admin
     try {
       await sendLoanAgreementSignedAdminEmail({
@@ -470,7 +470,7 @@ export default function BorrowerPortalPage() {
         loanType: loan.loan_type === 'quickloan' ? 'QuickLoan' : 'Installment Loan',
         accessCode: borrower.access_code
       })
-      
+
       await logAudit({
         action_type: 'LA_SIGNED',
         module: 'Portal',
@@ -485,7 +485,7 @@ export default function BorrowerPortalPage() {
     setLoan(prev => ({ ...prev, e_signature_name: typedName, e_signature_image: signatureImage, e_signature_date: signedAt, agreement_confirmed: true }))
     setBorrower(prev => ({ ...prev, e_signature_name: typedName, e_signature_image: signatureImage, e_signature_date: signedAt }))
     setSignatureSaved(true); setShowSignModal(false)
-    
+
     // 4. Generate PDF
     setTimeout(() => loan.loan_type === 'quickloan' ? generateQuickLoanAgreementPDF() : generateLoanAgreementPDF(typedName, signatureImage, signedAt), 500)
   }
@@ -510,12 +510,12 @@ export default function BorrowerPortalPage() {
     const perInst = Math.ceil(Number(loan.installment_amount))
     const rate = ((loan.interest_rate || 0.07) * 100).toFixed(0)
     const signedDateStr = new Date(date).toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' })
-    const releaseDateStr = loan.release_date ? (() => { const [y,m,d] = loan.release_date.split('-').map(Number); return new Date(y,m-1,d).toLocaleDateString('en-PH',{year:'numeric',month:'long',day:'numeric'}) })() : 'TBD'
+    const releaseDateStr = loan.release_date ? (() => { const [y, m, d] = loan.release_date.split('-').map(Number); return new Date(y, m - 1, d).toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' }) })() : 'TBD'
     const numInstallments = loan.num_installments || 4
     const loanTerm = loan.loan_term || 2
     const dueDatesForPDF = getDueDates(loan.release_date, loan.payments_made || 0, numInstallments)
     const maturityDate = dueDatesForPDF.length >= numInstallments ? dueDatesForPDF[numInstallments - 1].date.toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' }) : 'TBD'
-    const scheduleRows = dueDatesForPDF.map((due, i) => `<tr style="background:${due.paid?'#f0fdf4':i%2===0?'#fafafa':'#fff'}"><td style="padding:5px 8px;border:1px solid #e5e7eb;text-align:center;font-weight:600;">${due.num}</td><td style="padding:5px 8px;border:1px solid #e5e7eb;">${due.date.toLocaleDateString('en-PH',{year:'numeric',month:'long',day:'numeric'})}</td><td style="padding:5px 8px;border:1px solid #e5e7eb;text-align:right;font-weight:600;">&#8369;${perInst.toLocaleString('en-PH',{minimumFractionDigits:2})}</td><td style="padding:5px 8px;border:1px solid #e5e7eb;text-align:center;color:${due.paid?'#16a34a':'#9CA3AF'}">${due.paid?'&#10003; Paid':'Pending'}</td></tr>`).join('')
+    const scheduleRows = dueDatesForPDF.map((due, i) => `<tr style="background:${due.paid ? '#f0fdf4' : i % 2 === 0 ? '#fafafa' : '#fff'}"><td style="padding:5px 8px;border:1px solid #e5e7eb;text-align:center;font-weight:600;">${due.num}</td><td style="padding:5px 8px;border:1px solid #e5e7eb;">${due.date.toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' })}</td><td style="padding:5px 8px;border:1px solid #e5e7eb;text-align:right;font-weight:600;">&#8369;${perInst.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</td><td style="padding:5px 8px;border:1px solid #e5e7eb;text-align:center;color:${due.paid ? '#16a34a' : '#9CA3AF'}">${due.paid ? '&#10003; Paid' : 'Pending'}</td></tr>`).join('')
     const refId = `LM-${(borrower.id || '').slice(-6).toUpperCase()}`
     const borrowerName = borrower.full_name || ''
     const borrowerDept = borrower.department || 'N/A'
@@ -557,21 +557,21 @@ export default function BorrowerPortalPage() {
       <div class="row"><span class="lbl">Maturity Date</span><span class="val" style="color:#D97706;font-weight:700;">${maturityDate}</span></div>
     </div>
     <div class="section"><div class="section-title">RA 3765 — Truth in Lending Act Disclosure</div>
-      <div class="row"><span class="lbl">Approved Loan Amount</span><span class="val">&#8369;${principal.toLocaleString('en-PH',{minimumFractionDigits:2})}</span></div>
-      <div class="row"><span class="lbl">Security Hold (${holdRate}%)</span><span class="val">&#8369;${holdAmt.toLocaleString('en-PH',{minimumFractionDigits:2})}</span></div>
-      <div class="row"><span class="lbl">Funds Released to Borrower</span><span class="val">&#8369;${released.toLocaleString('en-PH',{minimumFractionDigits:2})}</span></div>
-      <div class="row"><span class="lbl">Finance Charge (Interest)</span><span class="val">&#8369;${(total-principal).toLocaleString('en-PH',{minimumFractionDigits:2})}</span></div>
+      <div class="row"><span class="lbl">Approved Loan Amount</span><span class="val">&#8369;${principal.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span></div>
+      <div class="row"><span class="lbl">Security Hold (${holdRate}%)</span><span class="val">&#8369;${holdAmt.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span></div>
+      <div class="row"><span class="lbl">Funds Released to Borrower</span><span class="val">&#8369;${released.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span></div>
+      <div class="row"><span class="lbl">Finance Charge (Interest)</span><span class="val">&#8369;${(total - principal).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span></div>
       <div class="row"><span class="lbl">Monthly Interest Rate</span><span class="val">${rate}% per month × ${loanTerm} months</span></div>
-      <div class="row"><span class="lbl">Effective Annual Rate</span><span class="val">${((loan.interest_rate||0.07)*12*100).toFixed(0)}% p.a. (RA 3765)</span></div>
-      <div class="row"><span class="lbl">Total Amount Payable</span><span class="val" style="font-weight:700;">&#8369;${total.toLocaleString('en-PH',{minimumFractionDigits:2})}</span></div>
+      <div class="row"><span class="lbl">Effective Annual Rate</span><span class="val">${((loan.interest_rate || 0.07) * 12 * 100).toFixed(0)}% p.a. (RA 3765)</span></div>
+      <div class="row"><span class="lbl">Total Amount Payable</span><span class="val" style="font-weight:700;">&#8369;${total.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span></div>
       <div class="row"><span class="lbl">Number of Installments</span><span class="val">${numInstallments} payments every 5th and 20th of the month</span></div>
-      <div class="row"><span class="lbl">Per Installment Amount</span><span class="val">&#8369;${perInst.toLocaleString('en-PH',{minimumFractionDigits:2})}</span></div>
+      <div class="row"><span class="lbl">Per Installment Amount</span><span class="val">&#8369;${perInst.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span></div>
     </div>
   </div>
   <div class="section"><div class="section-title">Payment Schedule</div>
     <table class="schedule-table"><thead><tr><th>#</th><th>Due Date</th><th>Amount Due</th><th>Status</th></tr></thead><tbody>${scheduleRows}</tbody></table>
   </div>
-  ${loan.security_hold_returned ? '<div style="margin-top:8px;display:inline-flex;align-items:center;gap:6px;padding:4px 10px;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);border-radius:20px;font-size:11px;color:#16a34a;font-weight:700;">✅ Security Hold of ₱'+Number(loan.security_hold).toLocaleString('en-PH',{minimumFractionDigits:2})+' has been returned to your Rebate Credits</div>' : ''}
+  ${loan.security_hold_returned ? '<div style="margin-top:8px;display:inline-flex;align-items:center;gap:6px;padding:4px 10px;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);border-radius:20px;font-size:11px;color:#16a34a;font-weight:700;">✅ Security Hold of ₱' + Number(loan.security_hold).toLocaleString('en-PH', { minimumFractionDigits: 2 }) + ' has been returned to your Rebate Credits</div>' : ''}
 </div>
 <div class="page-break"></div>
 <div class="page2">
@@ -579,12 +579,12 @@ export default function BorrowerPortalPage() {
 
   <div class="section">
     <div class="section-title">Loan Disclosure & Borrower Acknowledgements</div>
-    ${loan.e_signature_name ? `<div style="margin-bottom:12px;padding:8px 12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;font-size:11px;color:#16a34a;font-weight:600;">✅ Loan Agreement e-signed by ${loan.e_signature_name} on ${new Date(loan.e_signature_date || date).toLocaleDateString('en-PH',{year:'numeric',month:'long',day:'numeric'})}</div>` : ''}
+    ${loan.e_signature_name ? `<div style="margin-bottom:12px;padding:8px 12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;font-size:11px;color:#16a34a;font-weight:600;">✅ Loan Agreement e-signed by ${loan.e_signature_name} on ${new Date(loan.e_signature_date || date).toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' })}</div>` : ''}
   </div>
 
   <div class="section">
     <div class="section-title">Terms &amp; Conditions</div>
-    <p class="tc-item">1. <strong>Loan Term &amp; Interest</strong> — A monthly interest rate of ${rate}% is applied for each of the ${loanTerm} months of the loan term, resulting in a total finance charge of ${(Number(rate)*loanTerm).toFixed(0)}% of the principal. This charge is fixed and does not compound. It applies regardless of early settlement or prepayment of any installment.</p>
+    <p class="tc-item">1. <strong>Loan Term &amp; Interest</strong> — A monthly interest rate of ${rate}% is applied for each of the ${loanTerm} months of the loan term, resulting in a total finance charge of ${(Number(rate) * loanTerm).toFixed(0)}% of the principal. This charge is fixed and does not compound. It applies regardless of early settlement or prepayment of any installment.</p>
     <p class="tc-item">2. <strong>Repayment Schedule &amp; Installment Rounding</strong> — The loan is repaid in ${numInstallments} equal installments, collected on the 5th and 20th of each month. Where the total repayment does not divide evenly, each installment is rounded up to the nearest whole peso (₱1.00), applied uniformly across all installments, and disclosed in this agreement.</p>
     <p class="tc-item">3. <strong>Security Hold</strong> — ${holdRate}% of the approved loan amount is withheld upon fund release as a Security Hold. The rate is determined by credit score: VIP (1000) — 5%, Reliable (920+) — 6%, Trusted (835+) — 8%, Standard (750+) — 10%, Caution (500+) — 15%, High Risk (below 500) — 20%. Late payment penalties are automatically deducted from the Security Hold balance. The remaining balance is returned to the Borrower's Rebate Credits upon full payment of the final installment.</p>
     <p class="tc-item">4. <strong>Late Payment Penalties</strong> — A penalty of &#8369;20.00 per calendar day is charged for each day an installment remains unpaid past its due date. The penalty accrues daily with no cap until settled. Each late payment results in a deduction of 10 points from the Borrower's credit score.</p>
@@ -599,18 +599,18 @@ export default function BorrowerPortalPage() {
 
   <div style="padding:10px 12px;background:rgba(99,102,241,0.06);border:1px solid rgba(99,102,241,0.15);border-radius:8px;font-size:11px;color:#4B5580;margin-bottom:24px;">
     ${[
-      { label: 'Approved Loan Amount', value: '₱' + principal.toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#F0F4FF' },
-      { label: 'Security Hold (' + holdRate + '%)', value: '₱' + holdAmt.toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#F59E0B' },
-      { label: 'Funds Released to You', value: '₱' + (loan.funds_released ? Number(loan.funds_released).toLocaleString('en-PH', { minimumFractionDigits: 2 }) : (principal * 0.80).toLocaleString('en-PH', { minimumFractionDigits: 2 })), color: '#22C55E' },
-      { label: 'Finance Charge', value: '₱' + (total - principal).toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#F59E0B' },
-      { label: 'Monthly Interest Rate', value: rate + '% per month × ' + loanTerm + ' months', color: '#60A5FA' },
-      { label: 'Effective Interest Rate (per annum)', value: ((loan.interest_rate||0.07)*12*100).toFixed(0) + '% p.a.', color: '#a78bfa' },
-      { label: 'Total Amount Payable', value: '₱' + total.toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#22C55E' },
-      { label: 'Number of Installments', value: numInstallments + ' payments every 5th and 20th of the month', color: '#F0F4FF' },
-      { label: 'Per Installment Amount', value: '₱' + perInst.toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#F0F4FF' },
-    ].map(row => `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.06);"><span style="color:#6B7280;">${row.label}</span><span style="font-weight:700;">${row.value}</span></div>`).join('')}
+        { label: 'Approved Loan Amount', value: '₱' + principal.toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#F0F4FF' },
+        { label: 'Security Hold (' + holdRate + '%)', value: '₱' + holdAmt.toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#F59E0B' },
+        { label: 'Funds Released to You', value: '₱' + (loan.funds_released ? Number(loan.funds_released).toLocaleString('en-PH', { minimumFractionDigits: 2 }) : (principal * 0.80).toLocaleString('en-PH', { minimumFractionDigits: 2 })), color: '#22C55E' },
+        { label: 'Finance Charge', value: '₱' + (total - principal).toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#F59E0B' },
+        { label: 'Monthly Interest Rate', value: rate + '% per month × ' + loanTerm + ' months', color: '#60A5FA' },
+        { label: 'Effective Interest Rate (per annum)', value: ((loan.interest_rate || 0.07) * 12 * 100).toFixed(0) + '% p.a.', color: '#a78bfa' },
+        { label: 'Total Amount Payable', value: '₱' + total.toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#22C55E' },
+        { label: 'Number of Installments', value: numInstallments + ' payments every 5th and 20th of the month', color: '#F0F4FF' },
+        { label: 'Per Installment Amount', value: '₱' + perInst.toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#F0F4FF' },
+      ].map(row => `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.06);"><span style="color:#6B7280;">${row.label}</span><span style="font-weight:700;">${row.value}</span></div>`).join('')}
   </div>
-  ${loan.security_hold_returned ? '<div style="margin-bottom:12px;display:inline-flex;align-items:center;gap:6px;padding:4px 10px;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);border-radius:20px;font-size:11px;color:#16a34a;font-weight:700;">✅ Security Hold of ₱'+Number(loan.security_hold).toLocaleString('en-PH',{minimumFractionDigits:2})+' has been returned to your Rebate Credits</div>' : ''}
+  ${loan.security_hold_returned ? '<div style="margin-bottom:12px;display:inline-flex;align-items:center;gap:6px;padding:4px 10px;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);border-radius:20px;font-size:11px;color:#16a34a;font-weight:700;">✅ Security Hold of ₱' + Number(loan.security_hold).toLocaleString('en-PH', { minimumFractionDigits: 2 }) + ' has been returned to your Rebate Credits</div>' : ''}
   <div style="padding:10px 12px;background:rgba(99,102,241,0.06);border:1px solid rgba(99,102,241,0.15);border-radius:8px;font-size:10px;color:#6B7280;line-height:1.7;margin-bottom:24px;">
     <strong style="color:#818CF8;">RA 3765 — Truth in Lending Act Disclosure.</strong> This statement discloses all finance charges and terms applicable to your loan in compliance with Republic Act No. 3765 of the Philippines. The monthly interest rate is applied for each of the ${loanTerm} months of the loan term. The effective annual rate is the monthly rate multiplied by 12 months.
   </div>
@@ -633,7 +633,7 @@ export default function BorrowerPortalPage() {
     const dailyInterest = parseFloat((principal * 0.1 / 30).toFixed(2))
     const day15Interest = parseFloat((dailyInterest * 15).toFixed(2))
     const day15Total = parseFloat((principal + day15Interest).toFixed(2))
-    const releaseDate = loan.release_date ? (() => { const [y,m,d] = loan.release_date.split('-').map(Number); return new Date(y,m-1,d) })() : new Date()
+    const releaseDate = loan.release_date ? (() => { const [y, m, d] = loan.release_date.split('-').map(Number); return new Date(y, m - 1, d) })() : new Date()
     const day15Date = new Date(releaseDate); day15Date.setDate(day15Date.getDate() + 15)
     const day30Date = new Date(releaseDate); day30Date.setDate(day30Date.getDate() + 30)
     const fmt = d => d.toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' })
@@ -685,12 +685,12 @@ export default function BorrowerPortalPage() {
       <div class="row"><span class="lbl">Release Date</span><span class="val">${releaseDateStr}</span></div>
     </div>
     <div class="section"><div class="section-title">RA 3765 — Truth in Lending Disclosure</div>
-      <div class="row"><span class="lbl">Loan Principal</span><span class="val">&#8369;${principal.toLocaleString('en-PH', {minimumFractionDigits:2})}</span></div>
-      <div class="row"><span class="lbl">Funds Released (no hold)</span><span class="val">&#8369;${principal.toLocaleString('en-PH', {minimumFractionDigits:2})}</span></div>
+      <div class="row"><span class="lbl">Loan Principal</span><span class="val">&#8369;${principal.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span></div>
+      <div class="row"><span class="lbl">Funds Released (no hold)</span><span class="val">&#8369;${principal.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span></div>
       <div class="row"><span class="lbl">Monthly Interest Rate</span><span class="val">10% per month</span></div>
       <div class="row"><span class="lbl">Daily Interest Rate</span><span class="val">0.3333%/day</span></div>
       <div class="row"><span class="lbl">Daily Interest Amount</span><span class="val">&#8369;${dailyInterest.toFixed(2)}/day</span></div>
-      <div class="row"><span class="lbl">If paid on Day 15</span><span class="val" style="color:#16a34a;font-weight:700;">&#8369;${day15Total.toLocaleString('en-PH', {minimumFractionDigits:2})}</span></div>
+      <div class="row"><span class="lbl">If paid on Day 15</span><span class="val" style="color:#16a34a;font-weight:700;">&#8369;${day15Total.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span></div>
       <div class="row"><span class="lbl">Extension Fee (if missed)</span><span class="val">&#8369;100.00 (one-time)</span></div>
       <div class="row"><span class="lbl">Penalty after Day 30</span><span class="val" style="color:#DC2626;">&#8369;25.00/day (uncapped)</span></div>
     </div>
@@ -875,7 +875,7 @@ export default function BorrowerPortalPage() {
               {loading ? 'Checking...' : 'Access My Loan →'}
             </button>
             <div style={{ marginTop: 16, padding: '12px 14px', background: 'rgba(99,102,241,0.06)', borderRadius: 10, fontSize: 12, color: '#4B5580', lineHeight: 1.7, textAlign: 'center' }}>
-              💡 Your code was sent when your loan was approved.<br/>Need help? <a href="/contact" style={{ color: '#7A8AAA', fontWeight: 700, textDecoration: 'none' }}>Contact us here →</a>
+              💡 Your code was sent when your loan was approved.<br />Need help? <a href="/contact" style={{ color: '#7A8AAA', fontWeight: 700, textDecoration: 'none' }}>Contact us here →</a>
             </div>
           </div>
         </div>
@@ -886,7 +886,7 @@ export default function BorrowerPortalPage() {
   // ── PROFILE PAGE ─────────────────────────────────────────────
   if (page === 'profile') return (
     <div style={{ minHeight: '100dvh', background: '#080B14', fontFamily: 'DM Sans, sans-serif', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
-      
+
       <PortalHeader borrower={borrower} notifications={notifications} showNotifs={showNotifs} setShowNotifs={setShowNotifs} markAllRead={markAllRead} onBack={() => setPage('home')} subtitle="My Profile" />
       <div style={{ maxWidth: 640, margin: '0 auto', padding: '32px 20px 40px' }}>
 
@@ -1007,7 +1007,7 @@ export default function BorrowerPortalPage() {
   // ── PAYMENT HISTORY PAGE ──────────────────────────────────────
   if (page === 'payment-history') return (
     <div style={{ minHeight: '100dvh', background: '#080B14', fontFamily: 'DM Sans, sans-serif', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
-      
+
       <PortalHeader borrower={borrower} notifications={notifications} showNotifs={showNotifs} setShowNotifs={setShowNotifs} markAllRead={markAllRead} onBack={() => setPage('home')} subtitle="Payment History" />
       <div style={{ maxWidth: 680, margin: '0 auto', padding: '32px 20px 40px' }}>
         {allLoans.length === 0 ? (
@@ -1087,85 +1087,85 @@ export default function BorrowerPortalPage() {
     const canWithdraw = rebateCredits?.balance >= 500
     return (
       <>
-      <div style={{ minHeight: '100dvh', background: '#080B14', fontFamily: 'DM Sans, sans-serif', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
-        <PortalHeader borrower={borrower} notifications={notifications} showNotifs={showNotifs} setShowNotifs={setShowNotifs} markAllRead={markAllRead} onBack={() => setPage('home')} subtitle="Rebate Credits" />
-        <div style={{ maxWidth: 520, margin: '0 auto', padding: '32px 20px 40px' }}>
+        <div style={{ minHeight: '100dvh', background: '#080B14', fontFamily: 'DM Sans, sans-serif', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
+          <PortalHeader borrower={borrower} notifications={notifications} showNotifs={showNotifs} setShowNotifs={setShowNotifs} markAllRead={markAllRead} onBack={() => setPage('home')} subtitle="Rebate Credits" />
+          <div style={{ maxWidth: 520, margin: '0 auto', padding: '32px 20px 40px' }}>
 
-          {/* Balance card */}
-          <div style={{ background: 'linear-gradient(135deg,#0E1320,#1a1040)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 20, padding: 28, marginBottom: 16, textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
-            <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 50% 120%, rgba(245,158,11,0.06), transparent)', pointerEvents: 'none' }} />
-            <div style={{ fontSize: 11, color: '#7A8AAA', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8, fontWeight: 700 }}>Rebate Credits Balance</div>
-            <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 900, fontSize: 48, color: '#F59E0B', marginBottom: 4, lineHeight: 1 }}>
-              ₱{(rebateCredits?.balance || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
-            </div>
-            {!canWithdraw && (
-              <div style={{ fontSize: 12, color: '#4B5580', marginBottom: 16 }}>₱{(500 - (rebateCredits?.balance || 0)).toLocaleString('en-PH', { minimumFractionDigits: 2 })} more needed to withdraw</div>
-            )}
-            {canWithdraw ? (
-              <button onClick={() => { setWithdrawMethod(''); setWithdrawDetails(''); setShowWithdrawModal(true) }}
-                style={{ padding: '12px 28px', borderRadius: 12, border: 'none', background: 'linear-gradient(135deg,#F59E0B,#D97706)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'Syne, sans-serif' }}>
-                💸 Request Withdrawal
-              </button>
-            ) : (
-              <div style={{ display: 'inline-block', padding: '10px 20px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.03)', fontSize: 12, color: '#4B5580' }}>🔒 Min. ₱500 required to withdraw</div>
-            )}
-          </div>
-
-          {/* How to earn */}
-          <div style={{ background: '#0E1320', border: '1px solid rgba(34,197,94,0.15)', borderRadius: 16, padding: 20, marginBottom: 16 }}>
-            <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 13, color: '#22C55E', marginBottom: 14 }}>🎁 How to earn rebates</div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 14px', background: 'rgba(34,197,94,0.05)', border: '1px solid rgba(34,197,94,0.1)', borderRadius: 10, marginBottom: 8 }}>
-              <div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: '#F0F4FF' }}>Pay final installment at least 1–2 weeks early</div>
-                <div style={{ fontSize: 11, color: '#4B5580', marginTop: 2 }}>₱50 rebate on a ₱5,000 loan</div>
+            {/* Balance card */}
+            <div style={{ background: 'linear-gradient(135deg,#0E1320,#1a1040)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 20, padding: 28, marginBottom: 16, textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
+              <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 50% 120%, rgba(245,158,11,0.06), transparent)', pointerEvents: 'none' }} />
+              <div style={{ fontSize: 11, color: '#7A8AAA', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8, fontWeight: 700 }}>Rebate Credits Balance</div>
+              <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 900, fontSize: 48, color: '#F59E0B', marginBottom: 4, lineHeight: 1 }}>
+                ₱{(rebateCredits?.balance || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
               </div>
-              <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 900, fontSize: 22, color: '#22C55E' }}>1%</div>
+              {!canWithdraw && (
+                <div style={{ fontSize: 12, color: '#4B5580', marginBottom: 16 }}>₱{(500 - (rebateCredits?.balance || 0)).toLocaleString('en-PH', { minimumFractionDigits: 2 })} more needed to withdraw</div>
+              )}
+              {canWithdraw ? (
+                <button onClick={() => { setWithdrawMethod(''); setWithdrawDetails(''); setShowWithdrawModal(true) }}
+                  style={{ padding: '12px 28px', borderRadius: 12, border: 'none', background: 'linear-gradient(135deg,#F59E0B,#D97706)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'Syne, sans-serif' }}>
+                  💸 Request Withdrawal
+                </button>
+              ) : (
+                <div style={{ display: 'inline-block', padding: '10px 20px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.03)', fontSize: 12, color: '#4B5580' }}>🔒 Min. ₱500 required to withdraw</div>
+              )}
             </div>
-            <div style={{ fontSize: 11, color: '#4B5580', lineHeight: 1.7 }}>Fixed 1% of your original loan amount — credited automatically when admin records your payment. Security Hold is also returned here after your final installment.</div>
-          </div>
 
-          {/* Transaction history */}
-          <div style={{ background: '#0E1320', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 16, overflow: 'hidden' }}>
-            <div style={{ padding: '14px 18px', borderBottom: '1px solid rgba(255,255,255,0.05)', fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 14, color: '#F0F4FF' }}>Transaction History</div>
-            {creditTxns.length === 0 ? (
-              <div style={{ padding: '40px 20px', textAlign: 'center', fontSize: 13, color: '#4B5580' }}>No transactions yet. Pay off a loan early to earn rebates!</div>
-            ) : (
-              <div>
-                {creditTxns.map((txn, i) => {
-                  const isHoldReturn = txn.type === 'rebate' && txn.description?.toLowerCase().includes('security hold')
-                  const isRebate = txn.type === 'rebate' && !isHoldReturn
-                  const label = isHoldReturn ? 'Security Hold Returned' : isRebate ? 'Early Payoff Rebate' : 'Withdrawal'
-                  const icon = isHoldReturn ? '🔐' : isRebate ? '🎁' : '💸'
-                  const amountColor = isHoldReturn ? '#F59E0B' : isRebate ? '#22C55E' : '#F0F4FF'
-                  return (
-                    <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 18px', borderBottom: i < creditTxns.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                        <div style={{ width: 36, height: 36, borderRadius: 10, background: isHoldReturn ? 'rgba(245,158,11,0.1)' : isRebate ? 'rgba(34,197,94,0.1)' : txn.status === 'pending' ? 'rgba(245,158,11,0.1)' : 'rgba(59,130,246,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>{icon}</div>
-                        <div>
-                          <div style={{ fontSize: 13, fontWeight: 600, color: '#F0F4FF' }}>{label}</div>
-                          <div style={{ fontSize: 11, color: '#4B5580', marginTop: 2 }}>
-                            {new Date(txn.created_at).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}
-                            {txn.status === 'pending' && <span style={{ color: '#F59E0B', marginLeft: 6 }}>· Pending</span>}
-                            {txn.status === 'rejected' && <span style={{ color: '#EF4444', marginLeft: 6 }}>· Rejected</span>}
+            {/* How to earn */}
+            <div style={{ background: '#0E1320', border: '1px solid rgba(34,197,94,0.15)', borderRadius: 16, padding: 20, marginBottom: 16 }}>
+              <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 13, color: '#22C55E', marginBottom: 14 }}>🎁 How to earn rebates</div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 14px', background: 'rgba(34,197,94,0.05)', border: '1px solid rgba(34,197,94,0.1)', borderRadius: 10, marginBottom: 8 }}>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#F0F4FF' }}>Pay final installment at least 1–2 weeks early</div>
+                  <div style={{ fontSize: 11, color: '#4B5580', marginTop: 2 }}>₱50 rebate on a ₱5,000 loan</div>
+                </div>
+                <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 900, fontSize: 22, color: '#22C55E' }}>1%</div>
+              </div>
+              <div style={{ fontSize: 11, color: '#4B5580', lineHeight: 1.7 }}>Fixed 1% of your original loan amount — credited automatically when admin records your payment. Security Hold is also returned here after your final installment.</div>
+            </div>
+
+            {/* Transaction history */}
+            <div style={{ background: '#0E1320', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 16, overflow: 'hidden' }}>
+              <div style={{ padding: '14px 18px', borderBottom: '1px solid rgba(255,255,255,0.05)', fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 14, color: '#F0F4FF' }}>Transaction History</div>
+              {creditTxns.length === 0 ? (
+                <div style={{ padding: '40px 20px', textAlign: 'center', fontSize: 13, color: '#4B5580' }}>No transactions yet. Pay off a loan early to earn rebates!</div>
+              ) : (
+                <div>
+                  {creditTxns.map((txn, i) => {
+                    const isHoldReturn = txn.type === 'rebate' && txn.description?.toLowerCase().includes('security hold')
+                    const isRebate = txn.type === 'rebate' && !isHoldReturn
+                    const label = isHoldReturn ? 'Security Hold Returned' : isRebate ? 'Early Payoff Rebate' : 'Withdrawal'
+                    const icon = isHoldReturn ? '🔐' : isRebate ? '🎁' : '💸'
+                    const amountColor = isHoldReturn ? '#F59E0B' : isRebate ? '#22C55E' : '#F0F4FF'
+                    return (
+                      <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 18px', borderBottom: i < creditTxns.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                          <div style={{ width: 36, height: 36, borderRadius: 10, background: isHoldReturn ? 'rgba(245,158,11,0.1)' : isRebate ? 'rgba(34,197,94,0.1)' : txn.status === 'pending' ? 'rgba(245,158,11,0.1)' : 'rgba(59,130,246,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>{icon}</div>
+                          <div>
+                            <div style={{ fontSize: 13, fontWeight: 600, color: '#F0F4FF' }}>{label}</div>
+                            <div style={{ fontSize: 11, color: '#4B5580', marginTop: 2 }}>
+                              {new Date(txn.created_at).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}
+                              {txn.status === 'pending' && <span style={{ color: '#F59E0B', marginLeft: 6 }}>· Pending</span>}
+                              {txn.status === 'rejected' && <span style={{ color: '#EF4444', marginLeft: 6 }}>· Rejected</span>}
+                            </div>
                           </div>
                         </div>
+                        <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 15, color: amountColor }}>
+                          {txn.type === 'rebate' ? '+' : '-'}₱{Number(txn.amount).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
+                        </div>
                       </div>
-                      <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 15, color: amountColor }}>
-                        {txn.type === 'rebate' ? '+' : '-'}₱{Number(txn.amount).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+
           </div>
 
         </div>
 
-      </div>
-
-      {/* Withdrawal Modal */}
-      {showWithdrawModal && (
+        {/* Withdrawal Modal */}
+        {showWithdrawModal && (
           <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20 }}>
             <div style={{ width: '100%', maxWidth: 440, background: '#0E1320', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 20, overflow: 'hidden', boxShadow: '0 40px 80px rgba(0,0,0,0.6)' }}>
               <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -1241,7 +1241,7 @@ export default function BorrowerPortalPage() {
   // ── PAYMENT METHODS PAGE ──────────────────────────────────────
   if (page === 'payment-methods') return (
     <div style={{ minHeight: '100dvh', background: '#080B14', fontFamily: 'DM Sans, sans-serif', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
-      
+
       <PortalHeader borrower={borrower} notifications={notifications} showNotifs={showNotifs} setShowNotifs={setShowNotifs} markAllRead={markAllRead} onBack={() => setPage('home')} subtitle="Payment Methods" />
       <div style={{ maxWidth: 620, margin: '0 auto', padding: '32px 20px 40px' }}>
         <div style={{ fontSize: 13, color: '#7A8AAA', marginBottom: 24, lineHeight: 1.7 }}>
@@ -1252,7 +1252,7 @@ export default function BorrowerPortalPage() {
             { logo: '/cash-logo.png', label: 'Physical Cash', fee: 'Free', feeColor: '#22C55E', feeBg: 'rgba(34,197,94,0.08)', feeBorder: 'rgba(34,197,94,0.2)', accent: 'rgba(34,197,94,0.12)', desc: 'Pay your admin directly in person.', steps: ['Prepare the exact installment amount in cash', 'Coordinate with your admin via Teams Chat', 'Hand over payment and request acknowledgement', 'Upload photo of receipt or acknowledgement'] },
             { logo: '/gcash-logo.png', label: 'GCash', fee: '₱15 fee', feeColor: '#F59E0B', feeBg: 'rgba(245,158,11,0.08)', feeBorder: 'rgba(245,158,11,0.2)', accent: 'rgba(0,163,255,0.1)', desc: 'Send via GCash to Charlou June Ramil.', steps: ['Open GCash and select Send Money', 'Send to: 09665835179 (Charlou June R.)', 'Send the exact installment amount', 'Screenshot the successful transaction', 'Upload the screenshot in the portal'] },
             { logo: '/rcbc-logo.png', label: 'RCBC to RCBC', fee: 'Free', feeColor: '#22C55E', feeBg: 'rgba(34,197,94,0.08)', feeBorder: 'rgba(34,197,94,0.2)', accent: 'rgba(220,38,38,0.08)', desc: 'Same-bank RCBC transfers are completely free.', steps: ['Log in to RCBC Online or App', 'Transfer exact installment amount to admin', 'Screenshot the transfer confirmation', 'Upload the screenshot in the portal'] },
-            { logo: '/bank-logo.png', label: 'Mari Bank', fee: 'Free', feeColor: '#22C55E', feeBg: 'rgba(34,197,94,0.08)', feeBorder: 'rgba(34,197,94,0.2)', accent: 'rgba(34,197,94,0.12)', desc: 'Send to Charlou June Ramil via Mari Bank.', steps: ['Open your bank app and select Transfer', 'Bank: Mari Bank PH', 'Account: 12476681477 (Charlou June R.)', 'Screenshot the transfer confirmation', 'Upload the screenshot in the portal'] },
+            { logo: '/bank-logo.png', label: 'Maribank', fee: 'Free', feeColor: '#22C55E', feeBg: 'rgba(34,197,94,0.08)', feeBorder: 'rgba(34,197,94,0.2)', accent: 'rgba(34,197,94,0.12)', desc: 'Send to Charlou June Ramil via Mari Bank.', steps: ['Open your bank app and select Transfer', 'Bank: Mari Bank PH', 'Account: 12476681477 (Charlou June R.)', 'Screenshot the transfer confirmation', 'Upload the screenshot in the portal'] },
             { logo: '/bank-logo.png', label: 'Other Bank (Instapay/PESONet)', fee: 'You cover fee', feeColor: '#F59E0B', feeBg: 'rgba(245,158,11,0.08)', feeBorder: 'rgba(245,158,11,0.2)', accent: 'rgba(139,92,246,0.08)', desc: 'Transfer from any bank. You cover the transfer fee.', steps: ['Use your bank online transfer or app', 'Choose Instapay (faster) or PESONet', 'Send exact installment amount + fee', 'Upload the screenshot in the portal'] },
           ].map((item, i) => (
             <div key={i} style={{ background: '#0E1320', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 16, overflow: 'hidden' }}>
@@ -1494,7 +1494,7 @@ export default function BorrowerPortalPage() {
                   const totalOwedNow = parseFloat((principal + accruedNow + extensionFee + penalty).toFixed(2))
                   const day15Interest = parseFloat((dailyInterest * 15).toFixed(2))
                   const day15Total = parseFloat((principal + day15Interest).toFixed(2))
-                  const releaseDate = loan.release_date ? (() => { const [y,m,d] = loan.release_date.split('-').map(Number); return new Date(y,m-1,d) })() : null
+                  const releaseDate = loan.release_date ? (() => { const [y, m, d] = loan.release_date.split('-').map(Number); return new Date(y, m - 1, d) })() : null
                   const day15Date = releaseDate ? new Date(releaseDate.getTime() + 15 * 86400000) : null
                   const day30Date = releaseDate ? new Date(releaseDate.getTime() + 30 * 86400000) : null
                   const fmt = d => d.toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })
