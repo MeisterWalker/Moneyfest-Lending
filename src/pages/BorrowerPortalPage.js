@@ -6,7 +6,7 @@ import { getInstallmentDates, formatDateValue, logAudit } from '../lib/helpers'
 import { sendLoanAgreementSignedAdminEmail } from '../lib/emailService'
 import {
   Lock, CheckCircle, Clock, AlertCircle, Upload,
-  FileText, Calendar, CreditCard, ChevronDown, ChevronUp, X
+  FileText, Calendar, CreditCard, User, Wallet, ChevronDown, ChevronUp, X
 } from 'lucide-react'
 
 function formatDate(str) {
@@ -1417,6 +1417,7 @@ export default function BorrowerPortalPage() {
         .upload-btn { transition: all 0.2s ease; }
         .upload-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(34,197,94,0.25) !important; }
         @media (max-width: 860px) { .portal-grid { grid-template-columns: 1fr !important; } .portal-sidebar { display: none !important; } }
+        @media (max-width: 640px) { .stats-grid { grid-template-columns: 1fr !important; } }
         @media (max-width: 520px) { .loan-meta-grid { grid-template-columns: 1fr 1fr !important; } }
       `}</style>
 
@@ -1476,7 +1477,7 @@ export default function BorrowerPortalPage() {
             {/* ── LEFT COLUMN ── */}
             <div>
               {/* Dashboard Highlights Row (Mini-Stats) */}
-              <div className="pc" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 16 }}>
+              <div className="pc stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 16 }}>
                 {[
                   { 
                     label: 'Next Payday', 
@@ -1860,6 +1861,26 @@ export default function BorrowerPortalPage() {
                   </div>
                 </div>
 
+                {/* Quick Action Ribbon */}
+                <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+                  {[
+                    { icon: <Clock size={15} />, page: 'payment-history', label: 'History', color: '#22C55E' },
+                    { icon: <User size={15} />, page: 'profile', label: 'Profile', color: '#8B5CF6' },
+                    { icon: <Wallet size={15} />, page: 'wallet', label: 'Wallet', color: '#F59E0B' },
+                    { icon: <CreditCard size={15} />, page: 'payment-methods', label: 'Pay', color: '#60A5FA' },
+                  ].map((item, i) => (
+                    <button key={i} onClick={() => setPage(item.page)} className="nav-btn" title={item.label}
+                      style={{ 
+                        flex: 1, height: 38, borderRadius: 10, border: '1px solid rgba(255,255,255,0.06)', 
+                        background: 'rgba(255,255,255,0.03)', display: 'flex', alignItems: 'center', justifyContent: 'center', 
+                        color: item.color, cursor: 'pointer', transition: 'all 0.2s', position: 'relative', overflow: 'hidden'
+                      }}>
+                      {item.icon}
+                      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 2, background: item.color, opacity: 0.3 }} />
+                    </button>
+                  ))}
+                </div>
+
                 {(() => {
                   const score = borrower.credit_score || 750
                   const currentBadge = getBadgeConfig(borrower.loyalty_badge || 'New')
@@ -1958,25 +1979,6 @@ export default function BorrowerPortalPage() {
                 </div>
               </div>
 
-              {/* Quick Actions */}
-              <div className="pc" style={{ background: '#0E1320', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 16, padding: 14 }}>
-                <div style={{ fontSize: 10, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10, fontWeight: 700 }}>Quick Actions</div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  {[
-                    { icon: '/history.png', label: 'Payment History', page: 'payment-history', color: '#22C55E', bg: 'rgba(34,197,94,0.06)', border: 'rgba(34,197,94,0.15)' },
-                    { icon: '/user.png', label: 'My Profile', page: 'profile', color: '#8B5CF6', bg: 'rgba(139,92,246,0.06)', border: 'rgba(139,92,246,0.15)' },
-                    { icon: '/wallet.png', label: rebateCredits && rebateCredits.balance > 0 ? `Rebate Credits — ₱${rebateCredits.balance.toLocaleString('en-PH', { minimumFractionDigits: 2 })}` : 'Rebate Credits', page: 'wallet', color: '#F59E0B', bg: 'rgba(245,158,11,0.06)', border: 'rgba(245,158,11,0.15)' },
-                    { icon: '/payment-method.png', label: 'Payment Methods', page: 'payment-methods', color: '#60A5FA', bg: 'rgba(59,130,246,0.06)', border: 'rgba(59,130,246,0.15)' },
-                  ].map((item, i) => (
-                    <button key={i} onClick={() => setPage(item.page)} className="nav-btn"
-                      style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '9px 12px', borderRadius: 10, border: `1px solid ${item.border}`, background: item.bg, cursor: 'pointer', textAlign: 'left', width: '100%' }}>
-                      <img src={item.icon} alt={item.label} style={{ width: 16, height: 16, objectFit: 'contain', flexShrink: 0 }} />
-                      <span style={{ fontSize: 12, fontWeight: 600, color: item.color, flex: 1 }}>{item.label}</span>
-                      <span style={{ color: '#4B5580', fontSize: 13 }}>›</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
 
               {/* Smart Rebate Calculator */}
               <div className="pc" style={{ background: 'linear-gradient(135deg,#0E1320,#081c10)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 16, padding: 18 }}>
