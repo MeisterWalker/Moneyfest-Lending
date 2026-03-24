@@ -403,11 +403,40 @@ export default function BorrowerPortalPage() {
   const [hoveredMethod, setHoveredMethod] = useState(null)
   const [activeMethod, setActiveMethod] = useState(null)
   const [copiedKey, setCopiedKey] = useState(null)
+  const [renewing, setRenewing] = useState(false)
+  const [renewalSent, setRenewalSent] = useState(false)
 
   const handleCopy = (text, key) => {
     navigator.clipboard.writeText(text)
     setCopiedKey(key)
     setTimeout(() => setCopiedKey(null), 2000)
+  }
+
+  const handleFastTrackRenewal = async () => {
+    if (!borrower) return
+    setRenewing(true)
+    try {
+      // Create new application
+      const { error: appError } = await supabase.from('applications').insert([{
+        full_name: borrower.full_name,
+        department: borrower.department,
+        contact_number: borrower.contact_number,
+        facebook_account: borrower.facebook_account,
+        requested_amount: borrower.loan_limit_level === 4 ? 10000 : borrower.loan_limit_level === 3 ? 9000 : borrower.loan_limit_level === 2 ? 7000 : 5000,
+        status: 'Pending',
+        is_fast_track: true, // Tagging it for admin
+        borrower_id: borrower.id
+      }])
+      if (appError) throw appError
+      setRenewalSent(true)
+      // Log audit
+      await logAudit(borrower.id, borrower.full_name, 'Fast-Track Renewal Submitted')
+    } catch (err) {
+      console.error(err)
+      alert('Failed to submit renewal. Please contact admin.')
+    } finally {
+      setRenewing(false)
+    }
   }
 
 
@@ -1403,11 +1432,43 @@ export default function BorrowerPortalPage() {
 
         {/* No loan state */}
         {!loan ? (
-          <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-            <div style={{ fontSize: 52, marginBottom: 16 }}>🏦</div>
-            <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 24, color: '#F0F4FF', marginBottom: 8 }}>No Active Loan</div>
-            <div style={{ fontSize: 14, color: '#7A8AAA', marginBottom: 24 }}>You don't have an active loan yet.</div>
-            <a href="/apply" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '12px 24px', borderRadius: 12, background: 'linear-gradient(135deg,#22C55E,#16a34a)', color: '#fff', fontSize: 14, fontWeight: 700, textDecoration: 'none', fontFamily: 'Syne, sans-serif' }}>Apply for a Loan →</a>
+          <div style={{ maxWidth: 500, margin: '0 auto', padding: '40px 0' }}>
+            <div style={{ textAlign: 'center', padding: '40px 20px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 24 }}>
+              <div style={{ fontSize: 52, marginBottom: 16 }}>🏦</div>
+              <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 24, color: '#F0F4FF', marginBottom: 8 }}>No Active Loan</div>
+              <div style={{ fontSize: 14, color: '#7A8AAA', marginBottom: 24 }}>You don't have an active loan yet.</div>
+              <a href="/apply" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '12px 24px', borderRadius: 12, background: 'linear-gradient(135deg,#3B82F6,#2563EB)', color: '#fff', fontSize: 14, fontWeight: 700, textDecoration: 'none', fontFamily: 'Syne, sans-serif' }}>New Application →</a>
+            </div>
+
+            {/* Fast-Track Renewal for Trusted/VIPs */}
+            {(borrower.loyalty_badge !== 'New' && !renewalSent) && (
+              <div className="pc" style={{ marginTop: 24, background: 'linear-gradient(135deg,#0E1320,#1a1040)', border: '1px solid rgba(139,92,246,0.3)', borderRadius: 24, padding: 24, position: 'relative', overflow: 'hidden' }}>
+                <div style={{ position: 'absolute', top: -40, right: -40, width: 140, height: 140, borderRadius: '50%', background: 'radial-gradient(circle,rgba(139,92,246,0.1),transparent)', pointerEvents: 'none' }} />
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+                  <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(139,92,246,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#a78bfa' }}>
+                    <Lock size={18} />
+                  </div>
+                  <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 16, color: '#F0F4FF' }}>Fast-Track Renewal Available</div>
+                </div>
+                <p style={{ fontSize: 13, color: '#7A8AAA', lineHeight: 1.6, marginBottom: 20 }}>
+                  As a **{getBadgeConfig(borrower.loyalty_badge).label}**, you can renew your loan with one click. We'll reuse your existing profile for instant processing.
+                </p>
+                <button 
+                  onClick={handleFastTrackRenewal}
+                  disabled={renewing}
+                  style={{ width: '100%', padding: '13px', borderRadius: 12, border: 'none', background: renewing ? 'rgba(139,92,246,0.3)' : 'linear-gradient(135deg,#6366F1,#8B5CF6)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: renewing ? 'not-allowed' : 'pointer', fontFamily: 'Syne, sans-serif', transition: 'all 0.2s' }}>
+                  {renewing ? 'Submitting...' : '🚀 Renew Loan in One-Click'}
+                </button>
+              </div>
+            )}
+
+            {renewalSent && (
+              <div className="pc" style={{ marginTop: 24, background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 20, padding: 24, textAlign: 'center' }}>
+                <div style={{ fontSize: 32, marginBottom: 12 }}>🚀</div>
+                <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 18, color: '#22C55E', marginBottom: 6 }}>Renewal Submitted!</div>
+                <p style={{ fontSize: 13, color: '#7A8AAA', lineHeight: 1.6 }}>Our admin team has received your fast-track renewal request. We'll notify you once it's approved.</p>
+              </div>
+            )}
           </div>
         ) : (
           <div className="portal-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 20, alignItems: 'start' }}>
@@ -1728,6 +1789,59 @@ export default function BorrowerPortalPage() {
                   </div>
                 )
               })()}
+
+              <div className="pc" style={{ background: '#0E1320', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 18, overflow: 'hidden', marginBottom: 16 }}>
+                <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.01)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <Calendar size={14} style={{ color: '#4B5580' }} />
+                      <span style={{ fontSize: 11, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700 }}>Payment Schedule Visual</span>
+                    </div>
+                    <span style={{ fontSize: 10, color: '#7A8AAA', background: 'rgba(255,255,255,0.05)', padding: '2px 8px', borderRadius: 6 }}>{new Date().toLocaleDateString('en-PH', { month: 'long' })}</span>
+                  </div>
+                  
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4 }}>
+                    {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(d => (
+                      <div key={d} style={{ textAlign: 'center', fontSize: 10, color: '#4B5580', fontWeight: 800, paddingBottom: 6 }}>{d}</div>
+                    ))}
+                    {(() => {
+                      const now = new Date()
+                      const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).getDay()
+                      const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
+                      const items = []
+                      
+                      for (let i = 0; i < firstDay; i++) items.push(<div key={`p-${i}`} />)
+                      
+                      for (let d = 1; d <= daysInMonth; d++) {
+                        const isPayDay = d === 5 || d === 20
+                        const isToday = d === now.getDate()
+                        items.push(
+                          <div key={d} style={{ 
+                            aspectRatio: '1', 
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', 
+                            fontSize: 11, borderRadius: 8,
+                            background: isPayDay ? (isToday ? '#22C55E' : 'rgba(99,102,241,0.15)') : isToday ? 'rgba(255,255,255,0.08)' : 'transparent',
+                            border: isPayDay ? `1px solid ${isToday ? '#22C55E' : 'rgba(99,102,241,0.3)'}` : 'none',
+                            color: isPayDay ? '#F0F4FF' : isToday ? '#F0F4FF' : '#4B5580',
+                            fontWeight: isPayDay || isToday ? 800 : 400,
+                            position: 'relative'
+                          }}>
+                            {d}
+                            {isPayDay && <div style={{ position: 'absolute', bottom: 2, width: 3, height: 3, borderRadius: '50%', background: '#8B5CF6' }} />}
+                          </div>
+                        )
+                      }
+                      return items
+                    })()}
+                  </div>
+                  <div style={{ marginTop: 12, display: 'flex', gap: 12, alignItems: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                      <div style={{ width: 8, height: 8, borderRadius: 2, background: 'rgba(99,102,241,0.3)', border: '1px solid rgba(99,102,241,0.5)' }} />
+                      <span style={{ fontSize: 10, color: '#7A8AAA' }}>Payday (5th & 20th)</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
             </div>{/* end left */}
 
