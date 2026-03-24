@@ -18,6 +18,7 @@ import {
   FileText
 } from 'lucide-react'
 import { SignaturePad } from '../components/SignaturePad'
+import InvestorMoa from '../components/InvestorMoa'
 
 // ── Notify borrower helper ────────────────────────────────────
 async function notifyBorrower({ borrower_id, type, title, message }) {
@@ -409,20 +410,24 @@ function InvestorAgreementsPanel({ user }) {
 
   useEffect(() => { fetchInvestors() }, [])
 
-  const handleAdminSign = async (investorId, signatureData) => {
+  const handleAdminSign = async (investorId, signatureData, slot) => {
     try {
+      const updateData = slot === 1 
+        ? { admin_signed_at: new Date().toISOString(), admin_signature_data: signatureData }
+        : { admin2_signed_at: new Date().toISOString(), admin2_signature_data: signatureData }
+
       const { error } = await supabase
         .from('investors')
-        .update({
-          admin_signed_at: new Date().toISOString(),
-          admin_signature_data: signatureData
-        })
+        .update(updateData)
         .eq('id', investorId)
 
       if (error) throw error
-      toast('MOA Counter-signed successfully!', 'success')
+      toast(`MOA Slot ${slot} signed successfully!`, 'success')
       fetchInvestors()
-      setShowModal(false)
+      // Keep modal open so other admin can sign if needed, or update local state
+      const updated = investors.map(i => i.id === investorId ? { ...i, ...updateData } : i)
+      setInvestors(updated)
+      setSelectedInvestor({ ...selectedInvestor, ...updateData })
     } catch (err) {
       toast('Failed to save signature', 'error')
     }
@@ -501,100 +506,32 @@ function InvestorAgreementsPanel({ user }) {
 
 function AdminAgreementModal({ investor, onClose, onAdminSign }) {
   const [showPad, setShowPad] = useState(false)
-  const isSigned = !!investor.admin_signed_at
+  const [activeSlot, setActiveSlot] = useState(null)
+
+  const handleTriggerSign = (slot) => {
+    setActiveSlot(slot)
+    setShowPad(true)
+  }
 
   return (
-    <div className="modal-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.92)', backdropFilter: 'blur(12px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px 0' }}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Inter:wght@300;400;700&display=swap');
-        .moa-container { background: white; width: 100%; max-width: 800px; max-height: 90vh; padding: 40px 60px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); font-family: 'Cormorant Garamond', serif; color: #1a1a1a; line-height: 1.5; overflow-y: auto; border-radius: 4px; }
-        .moa-header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 15px; }
-        .moa-header h1 { margin: 0; font-size: 28px; text-transform: uppercase; letter-spacing: 2px; font-weight: 700; color: #111; }
-        .moa-header p { margin: 5px 0 0; font-family: 'Inter', sans-serif; font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 1.5px; }
-        .moa-section-title { font-size: 18px; text-transform: uppercase; border-bottom: 1px solid #eee; padding-bottom: 6px; margin-top: 25px; margin-bottom: 12px; font-weight: 700; color: #000; }
-        .moa-clause { margin-bottom: 15px; font-size: 16px; text-align: justify; }
-        .moa-terms-grid { margin: 20px 0; border: 1px solid #ddd; padding: 20px; background: #fafafa; }
-        .moa-term-row { display: flex; justify-content: space-between; margin-bottom: 10px; border-bottom: 1px dotted #bbb; padding-bottom: 4px; }
-        .moa-term-label { font-weight: 700; font-family: 'Inter', sans-serif; font-size: 12px; color: #555; text-transform: uppercase; }
-        .moa-term-value { font-weight: 700; font-size: 16px; color: #000; }
-        .moa-signatures { margin-top: 40px; display: flex; justify-content: space-between; gap: 40px; }
-        .moa-sig-block { flex: 1; text-align: center; }
-        .moa-sig-line { border-top: 1px solid #000; margin-top: 30px; padding-top: 10px; font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 700; text-transform: uppercase; }
-        .moa-sig-sub { font-family: 'Inter', sans-serif; font-size: 10px; color: #777; margin-top: 4px; }
-        @media print { body * { visibility: hidden; } .moa-container, .moa-container * { visibility: visible; } .moa-container { position: absolute; left: 0; top: 0; width: 100%; max-height: none; box-shadow: none; padding: 20px; } .no-print { display: none !important; } }
-      `}</style>
-
-      <div className="moa-container">
-        <div className="moa-header">
-          <h1>Memorandum of Agreement</h1>
-          <p>Moneyfest Lending Workplace Partner Program</p>
+    <div className="modal-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.95)', backdropFilter: 'blur(12px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px 0' }}>
+      <div style={{ position: 'relative', width: '95%', maxWidth: 900, maxHeight: '95vh', overflowY: 'auto', background: '#fff', borderRadius: 12 }}>
+        <div style={{ position: 'sticky', top: 0, right: 0, padding: 15, display: 'flex', justifyContent: 'flex-end', zIndex: 10, background: 'rgba(255,255,255,0.9)' }} className="no-print">
+          <button onClick={onClose} style={{ background: '#000', color: '#fff', border: 'none', borderRadius: 6, padding: '8px 16px', cursor: 'pointer', fontWeight: 600 }}>Close Review</button>
         </div>
-
-        <div className="moa-witness">
-          This Agreement is entered into on {new Date(investor.signed_at).toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' })}.
-        </div>
-
-        <div className="moa-section-title">Section 1: The Partnership</div>
-        <div className="moa-clause">
-          This Memorandum of Agreement ("Agreement") serves as a formal covenant between <strong>Moneyfest Lending</strong> ("the Platform") and <strong>{investor.full_name}</strong> ("the Partner").
-        </div>
-
-        <div className="moa-terms-grid">
-          <div className="moa-term-row"><span className="moa-term-label">Partner Name</span><span className="moa-term-value">{investor.full_name}</span></div>
-          <div className="moa-term-row"><span className="moa-term-label">Tier Designation</span><span className="moa-term-value">{investor.tier} Partner</span></div>
-          <div className="moa-term-row"><span className="moa-term-label">Capital Contribution</span><span className="moa-term-value">₱{Number(investor.total_capital).toLocaleString()}</span></div>
-          <div className="moa-term-row"><span className="moa-term-label">Agreed Return</span><span className="moa-term-value">{investor.tier === 'Premium' ? '9.0%' : investor.tier === 'Standard' ? '8.0%' : '7.0%'} per 90-day Cycle</span></div>
-        </div>
-
-        <div className="moa-section-title">Section 2: Signatures</div>
-        <div className="moa-signatures">
-          <div className="moa-sig-block">
-            <div style={{ minHeight: 60, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <img src={investor.signature_data} alt="Partner Signature" style={{ maxHeight: 60, maxWidth: '100%' }} />
-            </div>
-            <div className="moa-sig-line">{investor.full_name}</div>
-            <div className="moa-sig-sub">PARTNER / INVESTOR SIGNATURE</div>
-            <div style={{ fontSize: 9, color: '#999', marginTop: 4 }}>
-              Digitally Signed: {new Date(investor.signed_at).toLocaleString()}
-            </div>
-          </div>
-
-          <div className="moa-sig-block">
-            <div style={{ minHeight: 60, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              {investor.admin_signature_data ? (
-                <img src={investor.admin_signature_data} alt="Admin Signature" style={{ maxHeight: 60, maxWidth: '100%' }} />
-              ) : (
-                <div 
-                  onClick={() => setShowPad(true)}
-                  style={{ fontStyle: 'italic', color: '#8B5CF6', fontSize: 13, border: '1px dashed #8B5CF6', borderRadius: 8, padding: '10px 20px', cursor: 'pointer', background: 'rgba(139,92,246,0.05)' }}>
-                  CLICK TO COUNTER-SIGN
-                </div>
-              )}
-            </div>
-            <div className="moa-sig-line">JOHN PAUL LACARON & CHARLOU JUNE RAMIL</div>
-            <div className="moa-sig-sub">AUTHORIZED REPRESENTATIVES</div>
-            {investor.admin_signed_at && (
-              <div style={{ fontSize: 9, color: '#999', marginTop: 4 }}>
-                Counter-signed: {new Date(investor.admin_signed_at).toLocaleString()}
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div style={{ marginTop: 40, display: 'flex', justifyContent: 'center', gap: 12 }} className="no-print">
-          <button className="btn-secondary" onClick={() => window.print()} style={{ height: 40, border: '1px solid #ddd', background: '#f5f5f5', color: '#444' }}>
-            <Printer size={16} /> Print/PDF
-          </button>
-          <button className="btn-secondary" onClick={onClose} style={{ height: 40, border: '1px solid #ddd', background: '#000', color: '#fff' }}>
-            Close Review
-          </button>
-        </div>
+        
+        <InvestorMoa 
+          investor={investor} 
+          isAdmin={true} 
+          currentAdminSlot={(!investor.admin_signature_data ? 1 : !investor.admin2_signature_data ? 2 : null)}
+          onSign={handleTriggerSign} 
+        />
       </div>
 
       {showPad && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 1100, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <SignaturePad 
-            onSave={(data) => { onAdminSign(investor.id, data); setShowPad(false) }}
+            onSave={(data) => { onAdminSign(investor.id, data, activeSlot); setShowPad(false) }}
             onCancel={() => setShowPad(false)}
           />
         </div>
