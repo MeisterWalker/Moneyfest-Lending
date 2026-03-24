@@ -278,7 +278,7 @@ function InvestorPayoutsPanel({ user }) {
       await logAudit({ 
         action_type: 'INVESTOR_PAYOUT_APPROVED', 
         module: 'Approvals', 
-        description: `Payout request approved for ${req.investors?.full_name} — Amount: ₱${req.amount}`, 
+        description: `Payout request approved for ${req.investors?.full_name} — Amount: ₱${req.requested_amount}`, 
         changed_by: user?.email 
       })
       
@@ -344,9 +344,18 @@ function InvestorPayoutsPanel({ user }) {
                 <div style={{ flex: 1, minWidth: 200 }}>
                   <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 3 }}>{req.investors?.full_name}</div>
                   <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{req.investors?.tier} Partner · Capital Payout Request</div>
-                  <div style={{ fontSize: 11, color: '#4B5580', marginTop: 4 }}>Requested {new Date(req.created_at).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
+                  <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
+                    <div style={{ padding: '4px 10px', background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: 8, fontSize: 11, color: '#60A5FA', display: 'flex', alignItems: 'center', gap: 6 }}>
+                      {req.payout_method === 'GCash' ? <Smartphone size={12} /> : <Building2 size={12} />}
+                      {req.payout_method}
+                    </div>
+                    <div style={{ fontSize: 11, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <CreditCard size={12} /> {req.account_details}
+                    </div>
+                  </div>
+                  <div style={{ fontSize: 10, color: '#4B5580', marginTop: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Requested {new Date(req.created_at).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
                 </div>
-                <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 22, color: 'var(--text-primary)' }}>₱{Number(req.amount).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</div>
+                <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 22, color: 'var(--text-primary)' }}>₱{Number(req.requested_amount).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</div>
                 <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
                   <button onClick={() => handleApprove(req)}
                     style={{ padding: '8px 16px', borderRadius: 8, border: '1px solid rgba(34,197,94,0.3)', background: 'rgba(34,197,94,0.1)', color: '#22C55E', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>

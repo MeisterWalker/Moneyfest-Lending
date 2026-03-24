@@ -3,7 +3,8 @@ import { supabase } from '../lib/supabase'
 import { formatCurrency } from '../lib/helpers'
 import { 
   TrendingUp, Wallet, ArrowUpRight, 
-  BarChart3, RefreshCw, LayoutDashboard, Info, LogOut
+  BarChart3, RefreshCw, LayoutDashboard, Info, LogOut,
+  XCircle, Smartphone, Building2, CreditCard, ChevronRight
 } from 'lucide-react'
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, 
@@ -16,6 +17,108 @@ const TIER_RATES = {
   'Starter': 0.105,  // 7% * 1.5 cycles
   'Standard': 0.12,  // 8% * 1.5 cycles
   'Premium': 0.135   // 9% * 1.5 cycles
+}
+
+function PayoutRequestModal({ isOpen, onClose, onSubmit, investor, requesting }) {
+  const [method, setMethod] = useState('GCash')
+  const [details, setDetails] = useState('')
+  const [amount, setAmount] = useState(investor?.total_capital || '')
+
+  if (!isOpen) return null
+
+  return (
+    <div className="modal-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+      <div className="card" style={{ maxWidth: 460, width: '100%', padding: 32, background: 'linear-gradient(135deg,#141B2D,#0E1320)', border: '1px solid rgba(255,255,255,0.1)', position: 'relative' }}>
+        <button onClick={onClose} style={{ position: 'absolute', top: 20, right: 20, background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
+          <XCircle size={24} />
+        </button>
+
+        <h3 style={{ fontFamily: 'Syne', fontSize: 24, fontWeight: 800, margin: '0 0 8px', color: 'var(--text-primary)' }}>Request Payout</h3>
+        <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 24 }}>Select your preferred method for receiving your capital.</p>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <div style={{ display: 'flex', gap: 10 }}>
+            {['GCash', 'Bank Transfer'].map(m => (
+              <button 
+                key={m}
+                onClick={() => setMethod(m)}
+                style={{ flex: 1, padding: '12px', borderRadius: 12, border: '1px solid', borderColor: method === m ? '#3B82F6' : 'rgba(255,255,255,0.05)', background: method === m ? 'rgba(59,130,246,0.1)' : 'rgba(255,255,255,0.02)', color: method === m ? '#3B82F6' : 'var(--text-muted)', fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                {m === 'GCash' ? <Smartphone size={16} /> : <Building2 size={16} />} {m}
+              </button>
+            ))}
+          </div>
+
+          <div>
+            <label style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 8, display: 'block' }}>Account Details</label>
+            <textarea 
+              placeholder={method === 'GCash' ? 'Enter GCash Number and Full Name' : 'Enter Bank Name, Account Number, and Full Name'}
+              value={details}
+              onChange={(e) => setDetails(e.target.value)}
+              style={{ width: '100%', height: 80, padding: 12, borderRadius: 12, background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', fontSize: 14, outline: 'none' }}
+            />
+          </div>
+
+          <div style={{ padding: 16, background: 'rgba(59,130,246,0.05)', border: '1px solid rgba(59,130,246,0.1)', borderRadius: 12 }}>
+            <div style={{ fontSize: 11, color: '#3B82F6', fontWeight: 700, marginBottom: 4 }}>⭐ PREMIUM SERVICE</div>
+            <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0, lineHeight: 1.5 }}>
+              Since you are a <strong>{investor?.tier} member</strong> and we take care of our investors, we will handle any transaction fees necessary in transferring the funds.
+            </p>
+          </div>
+
+          <button 
+            className="btn-primary"
+            disabled={!details || requesting}
+            onClick={() => onSubmit({ method, details, amount })}
+            style={{ width: '100%', height: 48, marginTop: 10 }}>
+            {requesting ? 'Processing...' : 'Submit Payout Request'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function AgreementModal({ isOpen, onClose, investor }) {
+  if (!isOpen || !investor) return null
+  return (
+    <div className="modal-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+      <div className="card" style={{ maxWidth: 800, width: '100%', maxHeight: '85vh', overflowY: 'auto', padding: 40, background: '#fff', color: '#1a1a1a', position: 'relative', borderRadius: 24 }}>
+        <button onClick={onClose} style={{ position: 'fixed', top: 40, right: 40, background: '#f5f5f5', border: '1px solid #ddd', color: '#000', cursor: 'pointer', width: 40, height: 40, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1001 }}>
+          <XCircle size={24} />
+        </button>
+        
+        <div style={{ maxWidth: 600, margin: '0 auto' }}>
+          <h1 style={{ textAlign: 'center', color: '#0a1d43', fontSize: 24, fontWeight: 900, marginBottom: 40, borderBottom: '2px solid #0a1d43', paddingBottom: 20 }}>MEMORANDUM OF AGREEMENT</h1>
+          
+          <div style={{ fontSize: 13, lineHeight: 1.8, color: '#333' }}>
+            <p><strong>This MEMORANDUM OF AGREEMENT (the "Agreement") is entered into by:</strong></p>
+            <p><strong>MONEYFEST LENDING</strong>, represented herein by its authorized management, hereinafter referred to as the <strong>"Company"</strong>.</p>
+            <p style={{ textAlign: 'center', fontWeight: 800 }}>-- AND --</p>
+            <p><strong>{investor.full_name}</strong>, of legal age, resident of the Philippines, hereinafter referred to as the <strong>"Investment Partner"</strong>.</p>
+            
+            <h3 style={{ color: '#0a1d43', borderBottom: '1px solid #eee', marginTop: 30 }}>I. PURPOSE OF INVESTMENT</h3>
+            <p>The Investment Partner agrees to provide capital to the Company for the sole purpose of funding the Workplace Lending Program, which provides loans to verified employees with fixed repayment terms.</p>
+            
+            <h3 style={{ color: '#0a1d43', borderBottom: '1px solid #eee', marginTop: 30 }}>II. INVESTMENT TERMS</h3>
+            <ul style={{ listStyle: 'none', padding: 0 }}>
+              <li style={{ marginBottom: 8 }}>• <strong>Capital Amount:</strong> ₱{Number(investor.total_capital).toLocaleString()}</li>
+              <li style={{ marginBottom: 8 }}>• <strong>Partner Tier:</strong> {investor.tier}</li>
+              <li style={{ marginBottom: 8 }}>• <strong>Agreed Yield:</strong> {investor.tier === 'Premium' ? '13.5%' : investor.tier === 'Standard' ? '12.0%' : '10.5%'} per Quarter</li>
+              <li style={{ marginBottom: 8 }}>• <strong>Lock-in Period:</strong> 3 Months (Standard Payout Cycle)</li>
+            </ul>
+
+            <h3 style={{ color: '#0a1d43', borderBottom: '1px solid #eee', marginTop: 30 }}>III. COMPANY OBLIGATION</h3>
+            <p>The Company assumes full responsibility for the collection and management of the workplace loans. The Company guarantees the safety of the Investment Partner's capital as it is strictly deployed only to verified, salary-deducted borrowers.</p>
+
+            <div style={{ marginTop: 60, padding: 20, borderTop: '1px solid #eee', textAlign: 'center' }}>
+              <p style={{ fontSize: 11, color: '#777', fontStyle: 'italic' }}>This is a legally binding digital document. Signed via Secure Portal Access.</p>
+              <p style={{ fontWeight: 800, marginTop: 10 }}>ELECTRONIC SIGNATURE: {investor.access_code}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 function StatCard({ title, value, subtitle, icon: Icon, trend, color = 'blue' }) {
@@ -60,7 +163,12 @@ export default function InvestorDashboard() {
   const [loans, setLoans] = useState([])
   const [loading, setLoading] = useState(true)
   const [requestingPayout, setRequestingPayout] = useState(false)
+  const [showPayoutModal, setShowPayoutModal] = useState(false)
+  const [showAgreementModal, setShowAgreementModal] = useState(false)
+  const [autoReinvest, setAutoReinvest] = useState(true)
   const [forecastData, setForecastData] = useState([])
+  const [dailyData, setDailyData] = useState([])
+  const [liveAccrual, setLiveAccrual] = useState(0)
   const { toast } = useToast()
 
   const fetchData = useCallback(async () => {
@@ -82,6 +190,7 @@ export default function InvestorDashboard() {
     }
 
     setInvestor(inv)
+    setAutoReinvest(inv.auto_reinvest !== false)
 
     // Fetch loans funded by this investor
     const { data: lData } = await supabase
@@ -96,9 +205,13 @@ export default function InvestorDashboard() {
     const rate = TIER_RATES[inv.tier] || 0.12
     const capital = Number(inv.total_capital || 0)
     const months = Array.from({ length: 13 }, (_, i) => {
-      // Compounding happens every 3 months (payout reinvestment)
-      const quarters = Math.floor(i / 3)
-      const projected = capital * Math.pow(1 + rate, quarters)
+      let projected
+      if (inv.auto_reinvest !== false) {
+        const quarters = Math.floor(i / 3)
+        projected = capital * Math.pow(1 + rate, quarters)
+      } else {
+        projected = capital + (capital * rate * (i / 3))
+      }
       return {
         month: i === 0 ? 'Now' : `Month ${i}`,
         value: Math.round(projected),
@@ -107,32 +220,59 @@ export default function InvestorDashboard() {
     })
     setForecastData(months)
 
+    // Generate Daily Market View (Last 30 days)
+    const dailyRate = inv.tier === 'Premium' ? 0.0015 : inv.tier === 'Standard' ? 0.00133 : 0.00116
+    const days = Array.from({ length: 30 }, (_, i) => {
+      const dayIndex = i + 1
+      const accrual = capital * (dailyRate * dayIndex)
+      return {
+        day: `Day ${dayIndex}`,
+        accrual: Math.round(accrual)
+      }
+    })
+    setDailyData(days)
+
     setLoading(false)
   }, [])
 
-  const handleRequestPayout = async () => {
+  const handleToggleAutoReinvest = async () => {
+    const nextValue = !autoReinvest
+    setAutoReinvest(nextValue)
+    if (investor) {
+      await supabase
+        .from('investors')
+        .update({ auto_reinvest: nextValue })
+        .eq('id', investor.id)
+    }
+    // Refresh forecast logic
+    fetchData()
+  }
+
+  const handleRequestPayout = async (payoutData) => {
     if (!investor) return
     setRequestingPayout(true)
     try {
-      // 1. Insert request into DB
       const { error } = await supabase
         .from('investor_payout_requests')
         .insert({
           investor_id: investor.id,
-          amount: investor.total_capital,
+          requested_amount: Number(payoutData.amount),
+          payout_method: payoutData.method,
+          account_details: payoutData.details,
           status: 'pending'
         })
 
       if (error) throw error
 
-      // 2. Send admin notification email
       await sendPayoutRequestedAdminEmail({
         investorName: investor.full_name,
-        amount: investor.total_capital,
-        tier: investor.tier
+        amount: payoutData.amount,
+        tier: investor.tier,
+        method: payoutData.method
       })
 
       toast('Payout request submitted successfully!', 'success')
+      setShowPayoutModal(false)
     } catch (err) {
       console.error('Payout request failed:', err)
       toast('Failed to submit payout request. Please try again.', 'error')
@@ -140,6 +280,27 @@ export default function InvestorDashboard() {
       setRequestingPayout(false)
     }
   }
+
+  // Live Accrual Simulation (Updates every 5s)
+  useEffect(() => {
+    if (!investor) return
+    const dailyRate = investor.tier === 'Premium' ? 0.0015 : investor.tier === 'Standard' ? 0.00133 : 0.00116
+    const capital = Number(investor.total_capital || 0)
+    const dailyProfit = capital * dailyRate
+    
+    // Simulate current day's progress based on time
+    const now = new Date()
+    const secondsInDay = (now.getHours() * 3600) + (now.getMinutes() * 60) + now.getSeconds()
+    const dayProgress = secondsInDay / 86400
+    
+    setLiveAccrual(dailyProfit * dayProgress)
+
+    const interval = setInterval(() => {
+      setLiveAccrual(prev => prev + (dailyProfit / (86400 / 5)))
+    }, 5000)
+
+    return () => clearInterval(interval)
+  }, [investor])
 
   useEffect(() => {
     fetchData()
@@ -178,6 +339,12 @@ export default function InvestorDashboard() {
           </h1>
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
+          <button className="btn-secondary" onClick={() => setShowAgreementModal(true)} style={{ padding: '8px 14px' }}>
+            <Info size={14} /> View Agreement
+          </button>
+          <button className="btn-secondary" onClick={() => window.print()} style={{ padding: '8px 14px' }}>
+            <CreditCard size={14} /> Export Report
+          </button>
           <button className="btn-secondary" onClick={fetchData} style={{ padding: '8px 14px' }}>
             <RefreshCw size={14} /> Refresh
           </button>
@@ -194,132 +361,134 @@ export default function InvestorDashboard() {
         </div>
       </header>
 
-      {/* Stats Grid */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 24, marginBottom: 32 }}>
-        <StatCard 
-          title="Total Capital" 
-          value={formatCurrency(investor.total_capital)} 
-          subtitle="Total investment pool" 
-          icon={Wallet} 
-          color="purple" 
-        />
-        <StatCard 
-          title="Active Deployment" 
-          value={formatCurrency(activeCapital)} 
-          subtitle={`${((activeCapital / investor.total_capital) * 100).toFixed(1)}% utilization`}
-          icon={TrendingUp} 
-          color="blue" 
-          trend={1}
-        />
-        <StatCard 
-          title="Accumulated Returns" 
-          value={formatCurrency(totalEarned)} 
-          subtitle={`Net profit to date`}
-          icon={ArrowUpRight} 
-          color="green" 
-          trend={1}
-        />
-        <StatCard 
-          title="Yield Forecast (90d)" 
-          value={((TIER_RATES[investor.tier] || 0.08) * 100).toFixed(0) + '%'} 
-          subtitle="Fixed return per cycle" 
-          icon={BarChart3} 
-          color="gold" 
-        />
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 24, alignItems: 'start' }}>
+        <StatCard title="Total Capital" value={formatCurrency(investor.total_capital)} subtitle="Active Working Fund" icon={Wallet} color="blue" />
+        <StatCard title="Active Capital" value={formatCurrency(activeCapital)} subtitle={`${loans.filter(l => l.status === 'Active').length} Borrowers Active`} icon={TrendingUp} color="purple" trend={1} />
+        <StatCard title="Accumulated Returns" value={formatCurrency(totalEarned)} subtitle={`+${(TIER_RATES[investor.tier]*100).toFixed(1)}% Yield to Date`} icon={BarChart3} color="green" trend={1} />
         
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-          
-          <div className="card" style={{ padding: 24 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-              <div>
-                <h3 style={{ fontFamily: 'Space Grotesk', fontWeight: 800, margin: 0 }}>Earnings Forecast</h3>
-                <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: '4px 0 0' }}>12-month compounded growth projection (assuming reinvestment)</p>
-              </div>
-              <div style={{ textAlign: 'right' }}>
-                <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Year 1 Target</div>
-                <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--green)' }}>
-                  {formatCurrency(forecastData[12]?.value || 0)}
-                </div>
-              </div>
-            </div>
-            
-            <div style={{ height: 300, width: '100%', marginTop: 20 }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={forecastData}>
-                  <defs>
-                    <linearGradient id="colorVal" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-                  <XAxis dataKey="month" stroke="var(--text-muted)" fontSize={11} tickLine={false} axisLine={false} />
-                  <YAxis stroke="var(--text-muted)" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v) => `₱${v/1000}k`} />
-                  <Tooltip 
-                    contentStyle={{ background: '#111827', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12 }}
-                    itemStyle={{ color: '#F0F4FF' }}
-                    formatter={(val) => [`₱${val.toLocaleString()}`, 'Projected Capital']}
-                  />
-                  <Area type="monotone" dataKey="value" stroke="#8B5CF6" strokeWidth={3} fillOpacity={1} fill="url(#colorVal)" />
-                </AreaChart>
-              </ResponsiveContainer>
+        {/* Market Tracker Card */}
+        <div className="card" style={{ padding: '20px 24px', background: 'rgba(59,130,246,0.05)', border: '1px solid rgba(139,92,246,0.2)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Today's Accrual</div>
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--green)', boxShadow: '0 0 10px var(--green)' }} />
+          </div>
+          <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 24, color: 'var(--text-primary)', marginBottom: 4 }}>
+            +{formatCurrency(liveAccrual)}
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 }}>
+            <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Auto-Reinvest</span>
+            <div 
+              onClick={handleToggleAutoReinvest}
+              style={{ width: 44, height: 22, background: autoReinvest ? 'var(--green)' : '#334155', borderRadius: 20, cursor: 'pointer', position: 'relative', transition: '0.3s' }}>
+              <div style={{ position: 'absolute', top: 3, left: autoReinvest ? 25 : 3, width: 16, height: 16, background: '#fff', borderRadius: '50%', transition: '0.3s' }} />
             </div>
           </div>
+        </div>
+      </div>
 
-          <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-            <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--card-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ fontFamily: 'Space Grotesk', fontWeight: 800, margin: 0 }}>Deployed Capital</h3>
-              <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{loans.length} active borrower assignments</div>
+      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 32, marginBottom: 32 }}>
+        <div className="card" style={{ padding: 32 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
+            <div>
+              <h3 style={{ fontFamily: 'Syne', fontWeight: 800, margin: '0 0 6px', fontSize: 18 }}>12-Month Performance</h3>
+              <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0 }}>Compounding Forecast (Policy: {autoReinvest ? 'REINVESTMENT' : 'CASH PAYOUT'})</p>
             </div>
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr style={{ textAlign: 'left', borderBottom: '1px solid var(--card-border)' }}>
-                    <th style={{ padding: '14px 24px', fontSize: 11, color: 'var(--text-label)', textTransform: 'uppercase' }}>Borrower</th>
-                    <th style={{ padding: '14px 24px', fontSize: 11, color: 'var(--text-label)', textTransform: 'uppercase' }}>Building</th>
-                    <th style={{ padding: '14px 24px', fontSize: 11, color: 'var(--text-label)', textTransform: 'uppercase' }}>Capital Lent</th>
-                    <th style={{ padding: '14px 24px', fontSize: 11, color: 'var(--text-label)', textTransform: 'uppercase' }}>Your Share</th>
-                    <th style={{ padding: '14px 24px', fontSize: 11, color: 'var(--text-label)', textTransform: 'uppercase' }}>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {loans.length === 0 ? (
-                    <tr>
-                      <td colSpan="5" style={{ padding: 40, textAlign: 'center', color: 'var(--text-muted)' }}>No capital deployed yet. Your funds are in the standing pool.</td>
+            <div style={{ background: 'rgba(59,130,246,0.1)', padding: '6px 12px', borderRadius: 8, fontSize: 11, color: '#3B82F6', fontWeight: 700 }}>{investor.tier} Tier Tracking</div>
+          </div>
+          <div style={{ height: 300, width: '100%', marginLeft: -20 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={forecastData}>
+                <defs>
+                  <linearGradient id="colorVal" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
+                <XAxis dataKey="month" stroke="var(--text-muted)" fontSize={11} tickLine={false} axisLine={false} />
+                <YAxis stroke="var(--text-muted)" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(val) => `₱${val/1000}k`} />
+                <Tooltip 
+                  contentStyle={{ background: '#141B2D', border: '1px solid var(--card-border)', borderRadius: 12 }}
+                  itemStyle={{ color: '#fff', fontSize: 12, fontWeight: 700 }}
+                  labelStyle={{ color: 'var(--text-muted)', fontSize: 11, marginBottom: 4 }}
+                />
+                <Area type="monotone" dataKey="value" stroke="#8B5CF6" strokeWidth={3} fillOpacity={1} fill="url(#colorVal)" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className="card" style={{ padding: 32 }}>
+          <div>
+            <h3 style={{ fontFamily: 'Syne', fontWeight: 800, margin: '0 0 6px', fontSize: 18 }}>Market View</h3>
+            <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0 }}>30rd-Day Accumulation (Accruing Now)</p>
+          </div>
+          <div style={{ height: 300, width: '100%', marginLeft: -20, marginTop: 24 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={dailyData}>
+                <defs>
+                  <linearGradient id="colorGreen" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="var(--green)" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="var(--green)" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <XAxis dataKey="day" hide />
+                <YAxis hide domain={['dataMin', 'dataMax']} />
+                <Tooltip 
+                  contentStyle={{ background: '#141B2D', border: '1px solid var(--card-border)', borderRadius: 12 }}
+                  labelStyle={{ color: 'var(--text-muted)', marginBottom: 4 }}
+                />
+                <Area type="stepAfter" dataKey="accrual" stroke="var(--green)" strokeWidth={2} fillOpacity={1} fill="url(#colorGreen)" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '2.5fr 1fr', gap: 32 }}>
+        <div className="card">
+          <div style={{ padding: '24px 32px', borderBottom: '1px solid var(--card-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h3 style={{ fontFamily: 'Syne', fontWeight: 800, margin: 0, fontSize: 18 }}>Capital Deployment</h3>
+            <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Portfolio Diversification: High</div>
+          </div>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid var(--card-border)' }}>
+                  <th style={{ textAlign: 'left', padding: '16px 32px', fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Borrower</th>
+                  <th style={{ textAlign: 'left', padding: '16px 24px', fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Building</th>
+                  <th style={{ textAlign: 'left', padding: '16px 24px', fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Lent</th>
+                  <th style={{ textAlign: 'left', padding: '16px 24px', fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Your Share</th>
+                  <th style={{ textAlign: 'left', padding: '16px 24px', fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {loans.map((loan, i) => {
+                  const rate = TIER_RATES[investor.tier] || 0.12
+                  const share = Number(loan.loan_amount) * rate
+                  return (
+                    <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', transition: 'background 0.2s' }}>
+                      <td style={{ padding: '16px 32px' }}>
+                        <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{loan.borrowers?.full_name}</div>
+                        <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{loan.borrowers?.department}</div>
+                      </td>
+                      <td style={{ padding: '16px 24px', fontSize: 13 }}>{loan.borrowers?.building}</td>
+                      <td style={{ padding: '16px 24px', fontSize: 13, fontWeight: 500 }}>
+                        {formatCurrency(loan.loan_amount)}
+                      </td>
+                      <td style={{ padding: '16px 24px', fontWeight: 700, color: 'var(--green)' }}>
+                        +{formatCurrency(share)}
+                      </td>
+                      <td style={{ padding: '16px 24px' }}>
+                        <span style={{ fontSize: 12, color: loan.status === 'Paid' ? 'var(--green)' : 'var(--blue)' }}>
+                          {loan.status}
+                        </span>
+                      </td>
                     </tr>
-                  ) : loans.map((loan, i) => {
-                    const share = Number(loan.loan_amount) * (TIER_RATES[investor.tier] || 0.12)
-                    return (
-                      <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)', fontSize: 14 }}>
-                        <td style={{ padding: '16px 24px' }}>
-                          <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{loan.borrowers?.full_name}</div>
-                          <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{loan.borrowers?.department}</div>
-                        </td>
-                        <td style={{ padding: '16px 24px' }}>
-                          <span style={{ padding: '3px 8px', borderRadius: 4, background: 'rgba(59,130,246,0.1)', color: '#60A5FA', fontSize: 11, fontWeight: 700 }}>
-                            {loan.borrowers?.building || 'Main'}
-                          </span>
-                        </td>
-                        <td style={{ padding: '16px 24px', fontWeight: 700, color: 'var(--text-primary)' }}>
-                          {formatCurrency(loan.loan_amount)}
-                        </td>
-                        <td style={{ padding: '16px 24px', fontWeight: 700, color: 'var(--green)' }}>
-                          +{formatCurrency(share)}
-                        </td>
-                        <td style={{ padding: '16px 24px' }}>
-                          <span style={{ fontSize: 12, color: loan.status === 'Paid' ? 'var(--green)' : 'var(--blue)' }}>
-                            {loan.status}
-                          </span>
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
+                  )
+                })}
+              </tbody>
+            </table>
           </div>
         </div>
 
@@ -344,16 +513,15 @@ export default function InvestorDashboard() {
               <div style={{ padding: '12px 14px', background: 'rgba(255,255,255,0.03)', borderRadius: 12, border: '1px solid rgba(255,255,255,0.06)' }}>
                 <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>Partner Tier</div>
                 <div style={{ fontSize: 14, fontWeight: 800, color: '#F59E0B' }}>
-                  {investor.tier} Benefits Active
+                  {investor?.tier} Benefits Active
                 </div>
               </div>
             </div>
             <button 
               className="btn-primary" 
-              onClick={handleRequestPayout}
-              disabled={requestingPayout}
+              onClick={() => setShowPayoutModal(true)}
               style={{ width: '100%', marginTop: 24, fontSize: 13, height: 42 }}>
-              {requestingPayout ? 'Submitting...' : 'Request Capital Payout'}
+              Request Capital Payout
             </button>
           </div>
 
@@ -364,8 +532,21 @@ export default function InvestorDashboard() {
             </p>
           </div>
         </div>
-
       </div>
+
+      <PayoutRequestModal 
+        isOpen={showPayoutModal} 
+        onClose={() => setShowPayoutModal(false)}
+        onSubmit={handleRequestPayout}
+        investor={investor}
+        requesting={requestingPayout}
+      />
+
+      <AgreementModal 
+        isOpen={showAgreementModal}
+        onClose={() => setShowAgreementModal(false)}
+        investor={investor}
+      />
     </div>
   )
 }
