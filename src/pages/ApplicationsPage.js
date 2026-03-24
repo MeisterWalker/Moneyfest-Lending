@@ -125,6 +125,7 @@ function ApplicationCard({ app, onApprove, onReject }) {
                   { icon: <Mail size={13} />, label: app.email },
                   { icon: <Users size={13} />, label: (app.tenure_years || 0) + ' Year' + (app.tenure_years > 1 ? 's' : '') + ' Tenure' },
                   { icon: <MapPin size={13} />, label: app.address || 'Not provided' },
+                  { icon: <ClipboardList size={13} />, label: `Assigned Building: ${app.building || 'Not specified'}` },
                 ].map((item, i) => (
                   <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#CBD5F0' }}>
                     <span style={{ color: '#4B5580' }}>{item.icon}</span>
@@ -500,6 +501,7 @@ export default function ApplicationsPage() {
           loyalty_badge: 'New',
           at_risk: false,
           access_code: finalCode,
+          building: app.building || '',
           admin_notes: 'Applied via loan application form.'
         }).select('id').single()
         if (bErr) { toast('Failed to create borrower: ' + bErr.message, 'error'); return }

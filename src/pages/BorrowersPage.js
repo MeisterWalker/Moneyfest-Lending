@@ -84,6 +84,11 @@ function BorrowerCard({ borrower, departments, onEdit, onDelete }) {
               <Calendar size={12} /> {borrower.tenure_years} yrs tenure
             </div>
           )}
+          {borrower.building && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: 'var(--text-label)' }}>
+              <MapPin size={12} /> Building: {borrower.building}
+            </div>
+          )}
           <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: 'var(--text-label)' }}>
             <CreditCard size={12} /> Limit: ₱{borrower.loan_limit?.toLocaleString()} (Lvl {borrower.loan_limit_level})
           </div>
@@ -199,6 +204,7 @@ export default function BorrowersPage() {
         email: form.email,
         admin_notes: form.admin_notes,
         photo_url: form.photo_url || null,
+        building: form.building || '',
         updated_at: new Date().toISOString()
         // credit_score and risk_score are intentionally excluded
       }).eq('id', editingBorrower.id)
@@ -229,6 +235,7 @@ export default function BorrowersPage() {
         email: form.email,
         admin_notes: form.admin_notes,
         photo_url: form.photo_url || null,
+        building: form.building || '',
         credit_score: 750,
         risk_score: 'Low',
         loyalty_badge: 'New',

@@ -8,7 +8,8 @@ export default function BorrowerModal({ isOpen, onClose, onSave, borrower, depar
   const [form, setForm] = useState({
     full_name: '', department: '', tenure_years: '',
     address: '', phone: '', email: '',
-    admin_notes: '', photo_url: ''
+    admin_notes: '', photo_url: '',
+    building: ''
   })
   const [saving, setSaving] = useState(false)
 
@@ -23,13 +24,14 @@ export default function BorrowerModal({ isOpen, onClose, onSave, borrower, depar
         phone: borrower.phone || '',
         email: borrower.email || '',
         admin_notes: borrower.admin_notes || '',
-        photo_url: borrower.photo_url || ''
+        photo_url: borrower.photo_url || '',
+        building: borrower.building || ''
       })
     } else {
       setForm({
         full_name: '', department_id: departments[0]?.id || '',
         tenure_years: '', address: '', phone: '', email: '',
-            admin_notes: '', photo_url: ''
+            admin_notes: '', photo_url: '', building: ''
       })
     }
   }, [borrower, departments, isOpen])
@@ -91,8 +93,22 @@ export default function BorrowerModal({ isOpen, onClose, onSave, borrower, depar
               </select>
             </div>
             <div className="form-group">
-              <label className="form-label">Employment Tenure (years)</label>
+              <label className="form-label">Assigned Building *</label>
+              <select value={form.building} onChange={e => set('building', e.target.value)}>
+                <option value="">Select Building...</option>
+                <option value="Ng Khai">Ng Khai</option>
+                <option value="Epic">Epic</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="form-grid">
+            <div className="form-group">
+              <label className="form-label">Employment Tenure (years) *</label>
               <input type="number" step="0.1" min="0" placeholder="e.g. 2.5" value={form.tenure_years} onChange={e => set('tenure_years', e.target.value)} />
+            </div>
+            <div className="form-group">
+              {/* Spacer or additional field can go here */}
             </div>
           </div>
 

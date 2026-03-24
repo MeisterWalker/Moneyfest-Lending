@@ -221,7 +221,11 @@ export default function PublicApplyPage() {
   const [form, setForm] = useState({
     full_name: '', department: '', tenure_years: '', phone: '', email: '', address: '',
     loan_type: 'regular',
-    loan_amount: '', loan_purpose: '', release_method: '', loan_term: 2,
+    loan_amount: 5000,
+    loan_purpose: '',
+    loan_term: 2,
+    release_method: '',
+    building: '',
     gcash_number: '', gcash_name: '', bank_account_number: '', bank_account_confirm: '', bank_account_holder: '', bank_name: '',
     agreed: false
   })
@@ -321,6 +325,7 @@ export default function PublicApplyPage() {
       loan_purpose: form.loan_purpose.trim(),
       loan_term: form.loan_type === 'quickloan' ? null : (form.loan_term || 2),
       release_method: form.release_method,
+      building: form.building,
       gcash_number: form.gcash_number.trim() || null,
       gcash_name: form.gcash_name.trim() || null,
       bank_account_number: form.bank_account_number.trim() || null,
@@ -568,9 +573,20 @@ export default function PublicApplyPage() {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                     <div><label style={lbl}>Full Name *</label><input className="apply-inp" value={form.full_name} onChange={e => set('full_name', e.target.value)} placeholder="Enter your full legal name" style={inp} /></div>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                      <div><label style={lbl}>Department *</label><input className="apply-inp" value={form.department} onChange={e => set('department', e.target.value)} placeholder="e.g. Minto Money, Greyhound..." style={{ ...inp }} /></div>
-                      <div><label style={lbl}>Years of Tenure *</label><input className="apply-inp" value={form.tenure_years} onChange={e => set('tenure_years', e.target.value)} placeholder="e.g. 2.5" type="number" min="0" step="0.5" style={inp} /></div>
+                      <div>
+                        <label style={lbl}>Department *</label>
+                        <input className="apply-inp" value={form.department} onChange={e => set('department', e.target.value)} placeholder="e.g. Minto Money, Greyhound..." style={{ ...inp }} />
+                      </div>
+                      <div>
+                        <label style={lbl}>Assigned Building *</label>
+                        <select className="apply-inp" value={form.building} onChange={e => set('building', e.target.value)} style={{ ...inp, appearance: 'none', cursor: 'pointer' }}>
+                          <option value="">Select Building...</option>
+                          <option value="Ng Khai">Ng Khai</option>
+                          <option value="Epic">Epic</option>
+                        </select>
+                      </div>
                     </div>
+                    <div><label style={lbl}>Years of Tenure *</label><input className="apply-inp" value={form.tenure_years} onChange={e => set('tenure_years', e.target.value)} placeholder="e.g. 2.5" type="number" min="0" step="0.5" style={inp} /></div>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                       <div><label style={lbl}>Phone Number *</label><input className="apply-inp" value={form.phone} onChange={e => set('phone', e.target.value)} placeholder="09XX XXX XXXX" style={inp} /></div>
                       <div>
