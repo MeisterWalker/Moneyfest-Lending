@@ -56,24 +56,59 @@ export default function InvestorMoa({ investor, onSign, isAdmin = false, current
         }
 
         @media print {
-          body * { visibility: hidden; }
-          .moa-outer-container, .moa-outer-container * { visibility: visible; }
+          /* Reset whole body for print */
+          @page {
+            size: A4;
+            margin: 15mm;
+          }
+          body {
+            background: #fff !important;
+            color: #000 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            height: auto !important;
+          }
+          /* Hide everything first */
+          body * { 
+            visibility: hidden; 
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+          /* Show ONLY the MOA container */
+          .moa-outer-container, 
+          .moa-outer-container *,
+          .moa-container,
+          .moa-container * { 
+            visibility: visible !important; 
+          }
+          /* Force it to start at the top and take full width */
           .moa-outer-container { 
-            position: absolute; 
-            left: 0; 
-            top: 0; 
-            width: 100%; 
-            padding: 0;
-            margin: 0;
+            display: block !important;
+            position: absolute !important; 
+            left: 0 !important; 
+            top: 0 !important; 
+            width: 100% !important; 
+            margin: 0 !important;
+            padding: 0 !important;
+            background: #fff !important;
           }
           .moa-container { 
+            display: block !important;
             box-shadow: none !important; 
-            padding: 20px 40px !important;
+            padding: 0 !important;
             margin: 0 !important;
             width: 100% !important;
-            max-width: 100% !important;
+            max-width: none !important;
+            border: none !important;
+            overflow: visible !important;
           }
           .no-print-actions { display: none !important; }
+          /* Ensure text sizes are readable on paper */
+          .moa-clause { font-size: 14pt !important; line-height: 1.6 !important; }
+          .moa-header h1 { font-size: 20pt !important; margin-bottom: 5mm !important; }
+          .moa-header p { font-size: 10pt !important; }
+          .moa-term-value { font-size: 14pt !important; }
+          .moa-signatures { margin-top: 15mm !important; }
         }
       `}</style>
 
