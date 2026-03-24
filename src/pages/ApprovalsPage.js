@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { useToast } from '../components/Toast'
 import { logAudit } from '../lib/helpers'
 import { sendPaymentConfirmedEmail } from '../lib/emailService'
-import { ExternalLink, Image, CheckCircle, XCircle } from 'lucide-react'
+import { ExternalLink, Image, CheckCircle, XCircle, Banknote } from 'lucide-react'
 
 // ── Notify borrower helper ────────────────────────────────────
 async function notifyBorrower({ borrower_id, type, title, message }) {
@@ -250,6 +250,122 @@ function WithdrawalsPanel({ user }) {
   )
 }
 
+// ── Investor Payout Requests Panel ──────────────────────────
+function InvestorPayoutsPanel({ user }) {
+  const [requests, setRequests] = useState([])
+  const [loading, setLoading] = useState(true)
+  const { toast } = useToast()
+
+  const fetchRequests = async () => {
+    setLoading(true)
+    const { data } = await supabase
+      .from('investor_payout_requests')
+      .select('*, investors(full_name, tier)')
+      .eq('status', 'pending')
+      .order('created_at', { ascending: false })
+    setRequests(data || [])
+    setLoading(false)
+  }
+
+  useEffect(() => { fetchRequests() }, [])
+
+  const handleApprove = async (req) => {
+    try {
+      await supabase.from('investor_payout_requests').update({
+        status: 'approved', reviewed_by: user?.email, reviewed_at: new Date().toISOString()
+      }).eq('id', req.id)
+      
+      await logAudit({ 
+        action_type: 'INVESTOR_PAYOUT_APPROVED', 
+        module: 'Approvals', 
+        description: `Payout request approved for ${req.investors?.full_name} — Amount: ₱${req.amount}`, 
+        changed_by: user?.email 
+      })
+      
+      toast(`Payout request approved for ${req.investors?.full_name}`, 'success')
+      fetchRequests()
+    } catch (err) {
+      toast('Failed to approve payout', 'error')
+    }
+  }
+
+  const handleReject = async (req) => {
+    try {
+      await supabase.from('investor_payout_requests').update({
+        status: 'rejected', reviewed_by: user?.email, reviewed_at: new Date().toISOString()
+      }).eq('id', req.id)
+
+      await logAudit({ 
+        action_type: 'INVESTOR_PAYOUT_REJECTED', 
+        module: 'Approvals', 
+        description: `Payout request rejected for ${req.investors?.full_name}`, 
+        changed_by: user?.email 
+      })
+
+      toast('Payout request rejected', 'info')
+      fetchRequests()
+    } catch (err) {
+      toast('Failed to reject payout', 'error')
+    }
+  }
+
+  return (
+    <div className="card" style={{ padding: 0, overflow: 'hidden', marginBottom: 28 }}>
+      <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--card-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ width: 38, height: 38, borderRadius: 10, background: 'rgba(59,130,246,0.15)', border: '1px solid rgba(59,130,246,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Banknote size={18} color="#3B82F6" />
+          </div>
+          <div>
+            <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 15, color: 'var(--text-primary)' }}>Investor Payouts</div>
+            <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Review capital payout requests from partners</div>
+          </div>
+        </div>
+        {requests.length > 0 && (
+          <span style={{ background: '#3B82F6', color: '#fff', fontSize: 11, fontWeight: 800, borderRadius: 20, padding: '3px 12px' }}>
+            {requests.length} pending
+          </span>
+        )}
+      </div>
+
+      <div style={{ padding: '20px 24px' }}>
+        {loading ? (
+          <div style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)', fontSize: 13 }}>Loading...</div>
+        ) : requests.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '40px 20px' }}>
+            <CheckCircle size={36} color="var(--green)" style={{ marginBottom: 12, opacity: 0.5 }} />
+            <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 15, color: 'var(--text-primary)', marginBottom: 6 }}>All caught up!</div>
+            <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>No investor payout requests pending review.</div>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {requests.map(req => (
+              <div key={req.id} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--card-border)', borderRadius: 12, padding: '16px 18px', display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+                <div style={{ flex: 1, minWidth: 200 }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 3 }}>{req.investors?.full_name}</div>
+                  <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{req.investors?.tier} Partner · Capital Payout Request</div>
+                  <div style={{ fontSize: 11, color: '#4B5580', marginTop: 4 }}>Requested {new Date(req.created_at).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
+                </div>
+                <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 22, color: 'var(--text-primary)' }}>₱{Number(req.amount).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</div>
+                <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+                  <button onClick={() => handleApprove(req)}
+                    style={{ padding: '8px 16px', borderRadius: 8, border: '1px solid rgba(34,197,94,0.3)', background: 'rgba(34,197,94,0.1)', color: '#22C55E', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                    ✓ Approve
+                  </button>
+                  <button onClick={() => handleReject(req)}
+                    style={{ padding: '8px 16px', borderRadius: 8, border: '1px solid rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.08)', color: '#EF4444', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                    ✗ Reject
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 // ── Main ApprovalsPage ────────────────────────────────────────
 export default function ApprovalsPage() {
   const { user } = useAuth()
@@ -263,6 +379,7 @@ export default function ApprovalsPage() {
         </div>
       </div>
 
+      <InvestorPayoutsPanel user={user} />
       <PaymentProofsPanel user={user} />
       <WithdrawalsPanel user={user} />
     </div>

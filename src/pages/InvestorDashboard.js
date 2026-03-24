@@ -9,6 +9,8 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, 
   Tooltip, ResponsiveContainer
 } from 'recharts'
+import { useToast } from '../components/Toast'
+import { sendPayoutRequestedAdminEmail } from '../lib/emailService'
 
 const TIER_RATES = {
   'Starter': 0.105,  // 7% * 1.5 cycles
@@ -57,7 +59,9 @@ export default function InvestorDashboard() {
   const [investor, setInvestor] = useState(null)
   const [loans, setLoans] = useState([])
   const [loading, setLoading] = useState(true)
+  const [requestingPayout, setRequestingPayout] = useState(false)
   const [forecastData, setForecastData] = useState([])
+  const { toast } = useToast()
 
   const fetchData = useCallback(async () => {
     const partnerCode = localStorage.getItem('lm_partner_code')
@@ -105,6 +109,37 @@ export default function InvestorDashboard() {
 
     setLoading(false)
   }, [])
+
+  const handleRequestPayout = async () => {
+    if (!investor) return
+    setRequestingPayout(true)
+    try {
+      // 1. Insert request into DB
+      const { error } = await supabase
+        .from('investor_payout_requests')
+        .insert({
+          investor_id: investor.id,
+          amount: investor.total_capital,
+          status: 'pending'
+        })
+
+      if (error) throw error
+
+      // 2. Send admin notification email
+      await sendPayoutRequestedAdminEmail({
+        investorName: investor.full_name,
+        amount: investor.total_capital,
+        tier: investor.tier
+      })
+
+      toast('Payout request submitted successfully!', 'success')
+    } catch (err) {
+      console.error('Payout request failed:', err)
+      toast('Failed to submit payout request. Please try again.', 'error')
+    } finally {
+      setRequestingPayout(false)
+    }
+  }
 
   useEffect(() => {
     fetchData()
@@ -313,8 +348,12 @@ export default function InvestorDashboard() {
                 </div>
               </div>
             </div>
-            <button className="btn-primary" style={{ width: '100%', marginTop: 24, fontSize: 13, height: 42 }}>
-              Request Capital Payout
+            <button 
+              className="btn-primary" 
+              onClick={handleRequestPayout}
+              disabled={requestingPayout}
+              style={{ width: '100%', marginTop: 24, fontSize: 13, height: 42 }}>
+              {requestingPayout ? 'Submitting...' : 'Request Capital Payout'}
             </button>
           </div>
 

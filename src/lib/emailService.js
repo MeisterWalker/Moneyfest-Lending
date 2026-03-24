@@ -51,13 +51,56 @@ export async function sendLoanAgreementSignedAdminEmail({ borrowerName, loanAmou
   })
 }
 
+export async function sendPayoutRequestedAdminEmail({ investorName, amount, tier }) {
+  const subject = `💸 Payout Requested: ${investorName}`
+  
+  const html = `
+    <div style="font-family:sans-serif;background:#0B0F1A;padding:32px;border-radius:16px;color:#F0F4FF;max-width:600px;margin:0 auto;">
+      <div style="background:linear-gradient(135deg,#141B2D,#1a1040);border-radius:16px;padding:24px;margin-bottom:20px;border:1px solid rgba(245,158,11,0.3);text-align:center;">
+        <div style="font-size:24px;font-weight:900;margin-bottom:4px;">Moneyfest<span style="color:#8B5CF6;">Lending</span></div>
+        <div style="font-size:12px;color:#4B5580;text-transform:uppercase;letter-spacing:0.1em;">Admin Notification</div>
+      </div>
+
+      <div style="background:#141B2D;border-radius:16px;padding:28px;margin-bottom:16px;border:1px solid rgba(255,255,255,0.05);">
+        <h2 style="margin:0 0 16px;font-size:18px;color:#F0F4FF;text-align:center;">Payout Requested! 💸</h2>
+        <p style="color:#8892B0;font-size:14px;line-height:1.7;margin:0;text-align:center;">
+          Investment Partner <strong>${investorName}</strong> has requested a capital payout.
+        </p>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+        <div style="background:rgba(255,255,255,0.03);padding:16px;border-radius:12px;border:1px solid rgba(255,255,255,0.05);text-align:center;">
+          <div style="font-size:11px;color:#4B5580;text-transform:uppercase;margin-bottom:4px;">Partner Tier</div>
+          <div style="font-size:16px;font-weight:700;color:#F59E0B;">${tier}</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.03);padding:16px;border-radius:12px;border:1px solid rgba(255,255,255,0.05);text-align:center;">
+          <div style="font-size:11px;color:#4B5580;text-transform:uppercase;margin-bottom:4px;">Requested Payout</div>
+          <div style="font-size:16px;font-weight:700;color:#22C55E;">₱${Number(amount).toLocaleString()}</div>
+        </div>
+      </div>
+
+      <a href="https://moneyfestlending.loan/admin/approvals" style="display:block;background:linear-gradient(135deg,#6366F1,#8B5CF6);color:#fff;text-decoration:none;padding:14px;border-radius:12px;text-align:center;font-weight:700;font-size:14px;">Review in Admin Dashboard →</a>
+
+      <div style="text-align:center;margin-top:24px;border-top:1px solid rgba(255,255,255,0.05);padding-top:16px;">
+        <div style="font-size:11px;color:#4B5580;">This is an automated system notification.</div>
+      </div>
+    </div>
+  `
+
+  return sendEmail({
+    to: 'administrator@moneyfestlending.loan',
+    subject,
+    html
+  })
+}
+
 // --- Reminders ---
 
 // ────────────────────────────────────────────────────────────────────────
 
 const SUPABASE_URL = 'https://swwedyfgbqhtavxmbmhv.supabase.co'
 const PORTAL_URL = process.env.REACT_APP_PORTAL_URL || 'https://moneyfestlending.loan/portal'
-const FROM_NAME = 'MoneyfestLending'
+const FROM_NAME = 'Moneyfest Lending'
 
 // ── Core sender ──────────────────────────────────────────────────────────
 async function sendEmail({ to, subject, html }) {
@@ -100,7 +143,7 @@ function emailShell({ accentColor = '#3B82F6', badgeText = '', badgeEmoji = '', 
             <td>
               <div style="display:inline-block;width:42px;height:42px;background:linear-gradient(135deg,#3B82F6,#8B5CF6);border-radius:10px;text-align:center;line-height:42px;font-size:20px;margin-bottom:12px;">💼</div>
               <div style="font-size:26px;font-weight:900;color:#F0F4FF;letter-spacing:-1px;margin-bottom:2px;">
-                Moneyfest<span style="background:linear-gradient(90deg,#60a5fa,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Lending</span>
+                Moneyfest<span style="background:linear-gradient(90deg,#60a5fa,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;"> Lending</span>
               </div>
               <div style="font-size:12px;color:#4B5580;letter-spacing:0.08em;text-transform:uppercase;">Workplace Lending Program</div>
             </td>
@@ -117,7 +160,7 @@ function emailShell({ accentColor = '#3B82F6', badgeText = '', badgeEmoji = '', 
 
         <!-- FOOTER -->
         <tr><td style="background:#0d1226;border-top:1px solid #1E2640;border-radius:0 0 16px 16px;padding:24px 36px;text-align:center;">
-          <p style="font-size:13px;color:#CBD5F0;margin:0 0 4px;font-weight:600;">MoneyfestLending Workplace Lending Program</p>
+          <p style="font-size:13px;color:#CBD5F0;margin:0 0 4px;font-weight:600;">Moneyfest Lending Workplace Lending Program</p>
           <p style="font-size:11px;color:#4B5580;margin:0;">This is an automated notification. Please do not reply to this email.</p>
           <div style="width:40px;height:2px;background:linear-gradient(90deg,#3B82F6,#8B5CF6);margin:12px auto 0;border-radius:2px;"></div>
         </td></tr>
