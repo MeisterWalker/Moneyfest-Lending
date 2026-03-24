@@ -468,7 +468,7 @@ function AgreementModal({ isOpen, onClose, investor, onSign }) {
               {investor.admin_signature_data ? (
                 <img src={investor.admin_signature_data} alt="Admin Signature" style={{ maxHeight: 80, maxWidth: '100%' }} />
               ) : (
-                <div style={{ fontFamily: 'Syne', fontSize: 24, fontWeight: 800, opacity: 0.8, color: '#1a1d43', transform: 'rotate(-5deg)' }}>ML_ADMIN_AUTH</div>
+                <div style={{ minHeight: 80 }}></div>
               )}
             </div>
             <div className="moa-sig-line">JOHN PAUL LACARON & CHARLOU JUNE RAMIL</div>
