@@ -11,9 +11,9 @@ import {
 } from 'recharts'
 
 const TIER_RATES = {
-  'Starter': 0.07,
-  'Standard': 0.08,
-  'Premium': 0.09
+  'Starter': 0.105,  // 7% * 1.5 cycles
+  'Standard': 0.12,  // 8% * 1.5 cycles
+  'Premium': 0.135   // 9% * 1.5 cycles
 }
 
 function StatCard({ title, value, subtitle, icon: Icon, trend, color = 'blue' }) {
@@ -88,12 +88,13 @@ export default function InvestorDashboard() {
 
     setLoans(lData || [])
 
-    // Generate forecast (12 months compounding)
-    const rate = TIER_RATES[inv.tier] || 0.08
+    // Generate forecast (12 months compounding quarterly)
+    const rate = TIER_RATES[inv.tier] || 0.12
     const capital = Number(inv.total_capital || 0)
     const months = Array.from({ length: 13 }, (_, i) => {
-      const cycles = Math.floor(i / 3)
-      const projected = capital * Math.pow(1 + rate, cycles)
+      // Compounding happens every 3 months (payout reinvestment)
+      const quarters = Math.floor(i / 3)
+      const projected = capital * Math.pow(1 + rate, quarters)
       return {
         month: i === 0 ? 'Now' : `Month ${i}`,
         value: Math.round(projected),
@@ -125,7 +126,7 @@ export default function InvestorDashboard() {
 
   const totalEarned = loans
     .filter(l => l.status === 'Paid')
-    .reduce((sum, l) => sum + (Number(l.loan_amount) * (TIER_RATES[investor.tier] || 0.08)), 0)
+    .reduce((sum, l) => sum + (Number(l.loan_amount) * (TIER_RATES[investor.tier] || 0.12)), 0)
 
   return (
     <div className="page-container" style={{ padding: '24px 32px' }}>
@@ -255,7 +256,7 @@ export default function InvestorDashboard() {
                       <td colSpan="5" style={{ padding: 40, textAlign: 'center', color: 'var(--text-muted)' }}>No capital deployed yet. Your funds are in the standing pool.</td>
                     </tr>
                   ) : loans.map((loan, i) => {
-                    const share = Number(loan.loan_amount) * (TIER_RATES[investor.tier] || 0.08)
+                    const share = Number(loan.loan_amount) * (TIER_RATES[investor.tier] || 0.12)
                     return (
                       <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)', fontSize: 14 }}>
                         <td style={{ padding: '16px 24px' }}>
