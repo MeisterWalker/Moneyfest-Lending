@@ -14,7 +14,7 @@ import {
   Building2, 
   CreditCard, 
   Printer, 
-  Signature,
+  PenTool,
   FileText
 } from 'lucide-react'
 import { SignaturePad } from '../components/SignaturePad'
@@ -479,7 +479,7 @@ function InvestorAgreementsPanel({ user }) {
                   
                   <button onClick={() => { setSelectedInvestor(inv); setShowModal(true) }}
                     style={{ padding: '8px 16px', borderRadius: 8, border: '1px solid rgba(139,92,246,0.3)', background: 'rgba(139,92,246,0.1)', color: '#a78bfa', fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <Signature size={14} /> {inv.admin_signed_at ? 'View MOA' : 'Review & Sign'}
+                    <PenTool size={14} /> {inv.admin_signed_at ? 'View MOA' : 'Review & Sign'}
                   </button>
                 </div>
               </div>

@@ -13,7 +13,7 @@ import {
   ChevronRight, 
   HelpCircle,
   FileText,
-  Signature
+  PenTool
 } from 'lucide-react'
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, 
