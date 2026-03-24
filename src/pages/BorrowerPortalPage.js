@@ -1780,6 +1780,41 @@ export default function BorrowerPortalPage() {
                 </div>
               </div>
 
+              {/* Smart Rebate Calculator */}
+              <div className="pc" style={{ background: 'linear-gradient(135deg,#0E1320,#081c10)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 16, padding: 18 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+                  <div style={{ width: 28, height: 28, borderRadius: 8, background: 'rgba(34,197,94,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#22C55E' }}>
+                    <CreditCard size={14} />
+                  </div>
+                  <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 13, color: '#F0F4FF', letterSpacing: '0.01em' }}>Rebate Calculator</div>
+                </div>
+                <div style={{ fontSize: 11, color: '#7A8AAA', marginBottom: 14, lineHeight: 1.5 }}>
+                  Pay off your full balance early to earn a **1% rebate** on your principal!
+                </div>
+                {(() => {
+                  const principal = Number(loan.loan_amount)
+                  const rebate = principal * 0.01
+                  const totalRepay = Number(loan.total_repayment) || (principal * 1.14) // default if missing
+                  const savings = rebate // For now just the rebate, interest savings would be separate
+                  return (
+                    <div style={{ padding: '12px', background: 'rgba(0,0,0,0.2)', borderRadius: 12, border: '1px solid rgba(255,255,255,0.04)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
+                        <span style={{ fontSize: 11, color: '#4B5580' }}>Potential Rebate</span>
+                        <span style={{ fontSize: 14, fontWeight: 900, color: '#22C55E', fontFamily: 'Syne, sans-serif' }}>+₱{rebate.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+                      </div>
+                      <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '8px 0' }} />
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8 }}>
+                        <span style={{ fontSize: 11, color: '#4B5580' }}>Est. Total Savings</span>
+                        <span style={{ fontSize: 14, fontWeight: 900, color: '#60A5FA', fontFamily: 'Syne, sans-serif' }}>₱{rebate.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+                      </div>
+                      <button onClick={() => setPage('payment-methods')} style={{ width: '100%', marginTop: 14, padding: '9px', borderRadius: 10, border: '1px solid rgba(34,197,94,0.3)', background: 'rgba(34,197,94,0.06)', color: '#22C55E', fontSize: 12, fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s' }}>
+                        Pay Early Now →
+                      </button>
+                    </div>
+                  )
+                })()}
+              </div>
+
               {/* Need Help */}
               <div className="pc" style={{ background: '#0E1320', border: '1px solid rgba(59,130,246,0.12)', borderRadius: 16, padding: 14 }}>
                 <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 12, color: '#F0F4FF', marginBottom: 10 }}>❓ Need Help?</div>
