@@ -1416,9 +1416,45 @@ export default function BorrowerPortalPage() {
         .inst-row:hover { background: rgba(255,255,255,0.04) !important; }
         .upload-btn { transition: all 0.2s ease; }
         .upload-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(34,197,94,0.25) !important; }
+        .stats-grid { transition: all 0.3s ease; }
         @media (max-width: 860px) { .portal-grid { grid-template-columns: 1fr !important; } .portal-sidebar { display: none !important; } }
         @media (max-width: 640px) { .stats-grid { grid-template-columns: 1fr !important; } }
         @media (max-width: 520px) { .loan-meta-grid { grid-template-columns: 1fr 1fr !important; } }
+
+        .ribbon-btn { transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1); position: relative; }
+        .ribbon-btn:hover { 
+          transform: translateY(-2px) scale(1.06); 
+          background: rgba(255,255,255,0.06) !important; 
+          border-color: rgba(255,255,255,0.12) !important;
+          box-shadow: 0 8px 20px -6px rgba(0,0,0,0.4);
+        }
+        .ribbon-btn::after {
+          content: attr(data-label);
+          position: absolute;
+          bottom: 100%;
+          left: 50%;
+          transform: translateX(-50%) translateY(4px);
+          background: rgba(15, 23, 42, 0.95);
+          color: #fff;
+          padding: 5px 10px;
+          border-radius: 8px;
+          font-size: 10px;
+          font-weight: 700;
+          opacity: 0;
+          visibility: hidden;
+          pointer-events: none;
+          transition: all 0.2s ease;
+          white-space: nowrap;
+          border: 1px solid rgba(255,255,255,0.08);
+          box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+          margin-bottom: 8px;
+          font-family: 'Syne, sans-serif';
+        }
+        .ribbon-btn:hover::after {
+          opacity: 1;
+          visibility: visible;
+          transform: translateX(-50%) translateY(0);
+        }
       `}</style>
 
       <PortalHeader borrower={borrower} notifications={notifications} showNotifs={showNotifs} setShowNotifs={setShowNotifs} markAllRead={markAllRead} onSignOut={() => { setBorrower(null); setLoan(null); setAllLoans([]); setCode(''); setInputCode(''); localStorage.removeItem('lm_portal_code') }} />
@@ -1861,22 +1897,22 @@ export default function BorrowerPortalPage() {
                   </div>
                 </div>
 
-                {/* Quick Action Ribbon */}
+                {/* Quick Action Ribbon with Tooltips */}
                 <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
                   {[
-                    { icon: <Clock size={15} />, page: 'payment-history', label: 'History', color: '#22C55E' },
-                    { icon: <User size={15} />, page: 'profile', label: 'Profile', color: '#8B5CF6' },
-                    { icon: <Wallet size={15} />, page: 'wallet', label: 'Wallet', color: '#F59E0B' },
-                    { icon: <CreditCard size={15} />, page: 'payment-methods', label: 'Pay', color: '#60A5FA' },
+                    { icon: <Clock size={16} />, page: 'payment-history', label: 'History', color: '#22C55E' },
+                    { icon: <User size={16} />, page: 'profile', label: 'My Profile', color: '#3B82F6' },
+                    { icon: <Wallet size={16} />, page: 'wallet', label: 'Wallet', color: '#F59E0B' },
+                    { icon: <CreditCard size={16} />, page: 'payment-methods', label: 'Repay Now', color: '#8B5CF6' },
                   ].map((item, i) => (
-                    <button key={i} onClick={() => setPage(item.page)} className="nav-btn" title={item.label}
+                    <button key={i} onClick={() => setPage(item.page)} className="ribbon-btn" data-label={item.label}
                       style={{ 
-                        flex: 1, height: 38, borderRadius: 10, border: '1px solid rgba(255,255,255,0.06)', 
-                        background: 'rgba(255,255,255,0.03)', display: 'flex', alignItems: 'center', justifyContent: 'center', 
-                        color: item.color, cursor: 'pointer', transition: 'all 0.2s', position: 'relative', overflow: 'hidden'
+                        flex: 1, height: 42, borderRadius: 12, border: '1px solid rgba(255,255,255,0.06)', 
+                        background: 'rgba(255,255,255,0.02)', display: 'flex', alignItems: 'center', justifyContent: 'center', 
+                        color: item.color, cursor: 'pointer', outline: 'none'
                       }}>
                       {item.icon}
-                      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 2, background: item.color, opacity: 0.3 }} />
+                      <div style={{ position: 'absolute', bottom: 0, left: '20%', right: '20%', height: 2, background: item.color, opacity: 0.4, borderRadius: '2px 2px 0 0' }} />
                     </button>
                   ))}
                 </div>
