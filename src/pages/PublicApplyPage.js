@@ -221,7 +221,7 @@ export default function PublicApplyPage() {
   const [form, setForm] = useState({
     full_name: '', department: '', tenure_years: '', phone: '', email: '', address: '',
     loan_type: 'regular',
-    loan_amount: 5000,
+    loan_amount: '',
     loan_purpose: '',
     loan_term: 2,
     release_method: '',
@@ -910,7 +910,7 @@ export default function PublicApplyPage() {
           <div className="apply-sidebar" style={{ position: 'sticky', top: 72 }}>
             <SidebarInfo step={step} />
             <SidebarTiers />
-            <SidebarCalc interestRate={interestRate} selectedAmount={form.loan_amount} loanTerm={form.loan_term} loanType={form.loan_type} />
+            {step > 1 && <SidebarCalc interestRate={interestRate} selectedAmount={form.loan_amount} loanTerm={form.loan_term} loanType={form.loan_type} />}
           </div>
 
         </div>
