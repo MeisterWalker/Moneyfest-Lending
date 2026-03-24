@@ -1,10 +1,10 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { formatCurrency } from '../lib/helpers'
 import { 
   TrendingUp, Wallet, ArrowUpRight, 
   BarChart3, RefreshCw, LayoutDashboard, Info, LogOut,
-  XCircle, Smartphone, Building2, CreditCard, ChevronRight, Printer
+  XCircle, Smartphone, Building2, CreditCard, ChevronRight, Printer, PenTool, CheckCircle2, Eraser
 } from 'lucide-react'
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, 
@@ -19,6 +19,100 @@ const TIER_RATES = {
   'Premium': 0.135   // 9% * 1.5 cycles
 }
 
+// --- Signature Pad Component ---
+function SignaturePad({ onSave, onCancel }) {
+  const canvasRef = useRef(null)
+  const [isDrawing, setIsDrawing] = useState(false)
+  const [hasContent, setHasContent] = useState(false)
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    const ctx = canvas.getContext('2d')
+    ctx.strokeStyle = '#000'
+    ctx.lineWidth = 2
+    ctx.lineCap = 'round'
+    ctx.lineJoin = 'round'
+  }, [])
+
+  const startDrawing = (e) => {
+    const canvas = canvasRef.current
+    const rect = canvas.getBoundingClientRect()
+    const x = (e.clientX || e.touches[0].clientX) - rect.left
+    const y = (e.clientY || e.touches[0].clientY) - rect.top
+    
+    const ctx = canvas.getContext('2d')
+    ctx.beginPath()
+    ctx.moveTo(x, y)
+    setIsDrawing(true)
+  }
+
+  const draw = (e) => {
+    if (!isDrawing) return
+    const canvas = canvasRef.current
+    const rect = canvas.getBoundingClientRect()
+    const x = (e.clientX || e.touches[0].clientX) - rect.left
+    const y = (e.clientY || e.touches[0].clientY) - rect.top
+    
+    const ctx = canvas.getContext('2d')
+    ctx.lineTo(x, y)
+    ctx.stroke()
+    setHasContent(true)
+  }
+
+  const stopDrawing = () => {
+    setIsDrawing(false)
+  }
+
+  const clear = () => {
+    const canvas = canvasRef.current
+    const ctx = canvas.getContext('2d')
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    setHasContent(false)
+  }
+
+  const handleSave = () => {
+    const canvas = canvasRef.current
+    const dataUrl = canvas.toDataURL('image/png')
+    onSave(dataUrl)
+  }
+
+  return (
+    <div style={{ background: '#fff', padding: 24, borderRadius: 16, border: '1px solid #ddd', boxShadow: '0 10px 30px rgba(0,0,0,0.2)', width: '100%', maxWidth: 500 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <h4 style={{ margin: 0, fontFamily: 'Inter', fontSize: 14, fontWeight: 700, color: '#1a1a1a', textTransform: 'uppercase' }}>Digital Signature Pad</h4>
+        <button onClick={onCancel} style={{ background: 'none', border: 'none', color: '#666', cursor: 'pointer' }}><XCircle size={20} /></button>
+      </div>
+      
+      <canvas 
+        ref={canvasRef}
+        width={450}
+        height={200}
+        onMouseDown={startDrawing}
+        onMouseMove={draw}
+        onMouseUp={stopDrawing}
+        onMouseOut={stopDrawing}
+        onTouchStart={startDrawing}
+        onTouchMove={draw}
+        onTouchEnd={stopDrawing}
+        style={{ border: '2px dashed #ccc', borderRadius: 8, cursor: 'crosshair', width: '100%', touchAction: 'none' }}
+      />
+
+      <div style={{ display: 'flex', gap: 12, marginTop: 20 }}>
+        <button onClick={clear} style={{ flex: 1, padding: '10px', borderRadius: 8, border: '1px solid #ddd', background: '#f5f5f5', color: '#1a1a1a', fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+          <Eraser size={16} /> Clear
+        </button>
+        <button 
+          onClick={handleSave} 
+          disabled={!hasContent}
+          style={{ flex: 2, padding: '10px', borderRadius: 8, border: 'none', background: hasContent ? '#000' : '#ccc', color: '#fff', fontSize: 13, fontWeight: 700, cursor: hasContent ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+          <CheckCircle2 size={16} /> Adopt Signature
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// --- Payout Modal ---
 function PayoutRequestModal({ isOpen, onClose, onSubmit, investor, requesting }) {
   const [method, setMethod] = useState('GCash')
   const [accountName, setAccountName] = useState('')
@@ -110,11 +204,20 @@ function PayoutRequestModal({ isOpen, onClose, onSubmit, investor, requesting })
   )
 }
 
-function AgreementModal({ isOpen, onClose, investor }) {
+// --- Agreement Modal ---
+function AgreementModal({ isOpen, onClose, investor, onSign }) {
+  const [showPad, setShowPad] = useState(false)
+  const isSigned = !!investor?.signed_at
+
   if (!isOpen || !investor) return null
   
   const handlePrint = () => {
     window.print()
+  }
+
+  const handleSignatureSave = (signatureData) => {
+    onSign(signatureData)
+    setShowPad(false)
   }
 
   return (
@@ -312,15 +415,29 @@ function AgreementModal({ isOpen, onClose, investor }) {
           transform: translateY(-2px);
           box-shadow: 0 15px 40px rgba(0,0,0,0.6);
         }
+
+        .signature-overlay {
+          position: fixed;
+          inset: 0;
+          background: rgba(0,0,0,0.8);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 2000;
+        }
       `}</style>
+      
+      {isSigned && (
+        <button className="moa-close-btn no-print" onClick={onClose}>
+          <XCircle size={24} />
+        </button>
+      )}
 
-      <button className="moa-close-btn no-print" onClick={onClose}>
-        <XCircle size={24} />
-      </button>
-
-      <button className="moa-print-fab no-print" onClick={handlePrint}>
-        <Printer size={18} /> Print Agreement
-      </button>
+      {isSigned && (
+        <button className="moa-print-fab no-print" onClick={handlePrint}>
+          <Printer size={18} /> Print Agreement
+        </button>
+      )}
       
       <div className="moa-container">
         <div className="moa-header">
@@ -331,6 +448,19 @@ function AgreementModal({ isOpen, onClose, investor }) {
         <div className="moa-witness">
           Known to all men by these presents:
         </div>
+
+        {!isSigned && (
+          <div style={{ background: '#FFF7ED', border: '1px solid #FED7AA', padding: 20, borderRadius: 12, marginBottom: 30, textAlign: 'center' }} className="no-print">
+            <p style={{ fontFamily: 'Inter', fontSize: 13, color: '#9A3412', margin: '0 0 12px' }}>
+              <strong>Signature Required:</strong> Please sign this legal agreement with your official digital pen before proceeding to the dashboard.
+            </p>
+            <button 
+              onClick={() => setShowPad(true)}
+              style={{ background: '#EA580C', color: '#fff', border: 'none', padding: '10px 24px', borderRadius: 8, fontFamily: 'Inter', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10, margin: '0 auto' }}>
+              <PenTool size={18} /> Sign Document Officially
+            </button>
+          </div>
+        )}
 
         <div className="moa-clause">
           This Agreement is made and entered into this <strong>{new Date().getDate()}</strong> day of <strong>{new Date().toLocaleString('default', { month: 'long' })}</strong>, 2026, by and between:
@@ -396,19 +526,38 @@ function AgreementModal({ isOpen, onClose, investor }) {
 
         <div className="moa-signatures">
           <div className="moa-sig-block">
-            <div style={{ fontFamily: 'Syne', fontSize: 18, fontWeight: 800, marginBottom: -35, opacity: 0.8 }}>{investor.access_code}</div>
+            <div style={{ minHeight: 80, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {investor.signature_data ? (
+                <img src={investor.signature_data} alt="Signature" style={{ maxHeight: 80, maxWidth: '100%' }} />
+              ) : (
+                <div style={{ fontStyle: 'italic', color: '#ccc', fontSize: 24, opacity: 0.5 }}>PENDING SIGNATURE</div>
+              )}
+            </div>
             <div className="moa-sig-line">{investor.full_name}</div>
             <div className="moa-sig-sub">PARTNER / INVESTOR SIGNATURE</div>
-            <div style={{ fontSize: 9, color: '#999', marginTop: 4 }}>Electronically Signed · ID: {investor.access_code}</div>
+            <div style={{ fontSize: 9, color: '#999', marginTop: 4 }}>
+              {isSigned ? `Signed Digitally · Timestamp: ${new Date(investor.signed_at).toLocaleString()}` : `Secure Token: ${investor.access_code}`}
+            </div>
           </div>
           <div className="moa-sig-block">
-            <div style={{ fontFamily: 'Syne', fontSize: 18, fontWeight: 800, marginBottom: -35, opacity: 0.8 }}>ADMIN_AUTH_01</div>
+            <div style={{ minHeight: 80, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ fontFamily: 'Syne', fontSize: 24, fontWeight: 800, opacity: 0.8, color: '#1a1d43', transform: 'rotate(-5deg)' }}>ML_ADMIN_AUTH</div>
+            </div>
             <div className="moa-sig-line">MONEYFEST LENDING ADMIN</div>
             <div className="moa-sig-sub">AUTHORIZED REPRESENTATIVE</div>
             <div style={{ fontSize: 9, color: '#999', marginTop: 4 }}>Company Serial: ML-2026-AUTH</div>
           </div>
         </div>
       </div>
+
+      {showPad && (
+        <div className="signature-overlay no-print">
+          <SignaturePad 
+            onSave={handleSignatureSave}
+            onCancel={() => setShowPad(false)}
+          />
+        </div>
+      )}
     </div>
   )
 }
@@ -483,6 +632,11 @@ export default function InvestorDashboard() {
 
     setInvestor(inv)
     setAutoReinvest(inv.auto_reinvest !== false)
+    
+    // Auto-show MOA if not signed
+    if (!inv.signed_at) {
+      setShowAgreementModal(true)
+    }
 
     // Fetch loans funded by this investor
     const { data: lData } = await supabase
@@ -493,21 +647,26 @@ export default function InvestorDashboard() {
 
     setLoans(lData || [])
 
+    // Calculate active capital (sum of Active, Partially Paid, Overdue)
+    const activeCapital = (lData || [])
+      .filter(l => ['Active', 'Partially Paid', 'Overdue'].includes(l.status))
+      .reduce((sum, l) => sum + Number(l.loan_amount), 0)
+
     // Generate forecast (12 months compounding quarterly)
     const rate = TIER_RATES[inv.tier] || 0.12
-    const capital = Number(inv.total_capital || 0)
+    const totalCapital = Number(inv.total_capital || 0)
     const months = Array.from({ length: 13 }, (_, i) => {
       let projected
       if (inv.auto_reinvest !== false) {
         const quarters = Math.floor(i / 3)
-        projected = capital * Math.pow(1 + rate, quarters)
+        projected = totalCapital * Math.pow(1 + rate, quarters)
       } else {
-        projected = capital + (capital * rate * (i / 3))
+        projected = totalCapital + (totalCapital * rate * (i / 3))
       }
       return {
         month: i === 0 ? 'Now' : `Month ${i}`,
         value: Math.round(projected),
-        earnings: Math.round(projected - capital)
+        earnings: Math.round(projected - totalCapital)
       }
     })
     setForecastData(months)
@@ -516,7 +675,7 @@ export default function InvestorDashboard() {
     const dailyRate = inv.tier === 'Premium' ? 0.0015 : inv.tier === 'Standard' ? 0.00133 : 0.00116
     const days = Array.from({ length: 30 }, (_, i) => {
       const dayIndex = i + 1
-      const accrual = capital * (dailyRate * dayIndex)
+      const accrual = activeCapital * (dailyRate * dayIndex)
       return {
         day: `Day ${dayIndex}`,
         accrual: Math.round(accrual)
@@ -538,6 +697,30 @@ export default function InvestorDashboard() {
     }
     // Refresh forecast logic
     fetchData()
+  }
+
+  const handleSignMoa = async (signatureData) => {
+    if (!investor) return
+    try {
+      const now = new Date().toISOString()
+      const { error } = await supabase
+        .from('investors')
+        .update({
+          signed_at: now,
+          signature_data: signatureData
+        })
+        .eq('id', investor.id)
+
+      if (error) throw error
+      
+      setInvestor({ ...investor, signed_at: now, signature_data: signatureData })
+      toast('MOA Signed Successfully! Welcome to the Dashboard.', 'success')
+      // Modal remains open but close button will appear, or we can close it automatically
+      // setShowAgreementModal(false) 
+    } catch (err) {
+      console.error('Signing failed:', err)
+      toast('Failed to save signature. Please try again.', 'error')
+    }
   }
 
   const handleRequestPayout = async (payoutData) => {
@@ -578,10 +761,23 @@ export default function InvestorDashboard() {
 
   // Live Accrual Simulation (Updates every 5s)
   useEffect(() => {
-    if (!investor) return
+    if (!investor || !loans.length) {
+      setLiveAccrual(0)
+      return
+    }
+    
+    // Calculate active capital (sum of Active, Partially Paid, Overdue)
+    const activeCapital = loans
+      .filter(l => ['Active', 'Partially Paid', 'Overdue'].includes(l.status))
+      .reduce((sum, l) => sum + Number(l.loan_amount), 0)
+
+    if (activeCapital <= 0) {
+      setLiveAccrual(0)
+      return
+    }
+
     const dailyRate = investor.tier === 'Premium' ? 0.0015 : investor.tier === 'Standard' ? 0.00133 : 0.00116
-    const capital = Number(investor.total_capital || 0)
-    const dailyProfit = capital * dailyRate
+    const dailyProfit = activeCapital * dailyRate
     
     // Simulate current day's progress based on time
     const now = new Date()
@@ -595,7 +791,7 @@ export default function InvestorDashboard() {
     }, 5000)
 
     return () => clearInterval(interval)
-  }, [investor])
+  }, [investor, loans])
 
   useEffect(() => {
     fetchData()
@@ -841,6 +1037,7 @@ export default function InvestorDashboard() {
         isOpen={showAgreementModal}
         onClose={() => setShowAgreementModal(false)}
         investor={investor}
+        onSign={handleSignMoa}
       />
     </div>
   )
