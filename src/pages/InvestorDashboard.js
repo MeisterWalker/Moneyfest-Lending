@@ -141,13 +141,18 @@ export default function InvestorDashboard() {
             Welcome back, <span style={{ background: 'linear-gradient(90deg,#3B82F6,#8B5CF6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{investor.full_name.split(' ')[0]}</span>
           </h1>
         </div>
-        <div style={{ display: 'flex', gap: 12 }}>
-          <button className="btn-secondary" onClick={fetchData} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
-            <RefreshCw size={14} /> Refresh Data
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button className="btn-secondary" onClick={fetchData} style={{ padding: '8px 14px' }}>
+            <RefreshCw size={14} /> Refresh
           </button>
           <button className="btn-secondary" 
             onClick={() => { localStorage.removeItem('lm_partner_code'); window.location.href = '/portal' }} 
-            style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, borderColor: 'rgba(239,68,68,0.2)', color: '#EF4444' }}>
+            style={{ 
+              padding: '8px 14px',
+              background: 'rgba(239,68,68,0.08)',
+              borderColor: 'rgba(239,68,68,0.15)',
+              color: '#EF4444'
+            }}>
             <LogOut size={14} /> Sign Out
           </button>
         </div>
@@ -315,7 +320,7 @@ export default function InvestorDashboard() {
           <div className="card" style={{ padding: 20, borderStyle: 'dashed' }}>
             <h5 style={{ margin: '0 0 8px', fontSize: 13 }}>💡 Partner Support</h5>
             <p style={{ fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.6, margin: 0 }}>
-              Need to increase your capital or change your payout methods? Contact JPCalc admin directly through the portal info.
+              Need to increase your capital or change your payout methods? Contact Moneyfest Lending admin directly through the portal info.
             </p>
           </div>
         </div>
