@@ -137,6 +137,54 @@ export async function sendMoaSignedAdminEmail({ investorName, tier, accessCode }
   })
 }
 
+export async function sendApplicationReceivedAdminEmail({ borrowerName, loanAmount, accessCode, loanType = 'Installment Loan' }) {
+  const subject = `📥 New Application: ${borrowerName}`
+  
+  const html = `
+    <div style="font-family:sans-serif;background:#0B0F1A;padding:32px;border-radius:16px;color:#F0F4FF;max-width:600px;margin:0 auto;">
+      <div style="background:linear-gradient(135deg,#141B2D,#1a1040);border-radius:16px;padding:24px;margin-bottom:20px;border:1px solid rgba(59,130,246,0.3);text-align:center;">
+        <div style="font-size:24px;font-weight:900;margin-bottom:4px;">Moneyfest<span style="color:#8B5CF6;">Lending</span></div>
+        <div style="font-size:12px;color:#4B5580;text-transform:uppercase;letter-spacing:0.1em;">Admin Notification</div>
+      </div>
+
+      <div style="background:#141B2D;border-radius:16px;padding:28px;margin-bottom:16px;border:1px solid rgba(255,255,255,0.05);">
+        <h2 style="margin:0 0 16px;font-size:18px;color:#F0F4FF;text-align:center;">New Application Received! 📥</h2>
+        <p style="color:#8892B0;font-size:14px;line-height:1.7;margin:0;text-align:center;">
+          Borrower <strong>${borrowerName}</strong> has submitted a new loan application for review.
+        </p>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+        <div style="background:rgba(255,255,255,0.03);padding:16px;border-radius:12px;border:1px solid rgba(255,255,255,0.05);text-align:center;">
+          <div style="font-size:11px;color:#4B5580;text-transform:uppercase;margin-bottom:4px;">Loan Type</div>
+          <div style="font-size:16px;font-weight:700;color:#60A5FA;">${loanType}</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.03);padding:16px;border-radius:12px;border:1px solid rgba(255,255,255,0.05);text-align:center;">
+          <div style="font-size:11px;color:#4B5580;text-transform:uppercase;margin-bottom:4px;">Requested Amount</div>
+          <div style="font-size:16px;font-weight:700;color:#22C55E;">₱${Number(loanAmount).toLocaleString()}</div>
+        </div>
+      </div>
+
+      <div style="background:rgba(99,102,241,0.06);border:1px solid rgba(99,102,241,0.2);border-radius:16px;padding:20px;text-align:center;margin-bottom:24px;">
+        <div style="font-size:11px;color:#4B5580;text-transform:uppercase;margin-bottom:6px;">Internal Access Code</div>
+        <div style="font-size:20px;font-weight:800;color:#F0F4FF;letter-spacing:0.1em;">${accessCode}</div>
+      </div>
+
+      <a href="https://moneyfestlending.loan/admin/applications" style="display:block;background:linear-gradient(135deg,#6366F1,#8B5CF6);color:#fff;text-decoration:none;padding:14px;border-radius:12px;text-align:center;font-weight:700;font-size:14px;">Review Application →</a>
+
+      <div style="text-align:center;margin-top:24px;border-top:1px solid rgba(255,255,255,0.05);padding-top:16px;">
+        <div style="font-size:11px;color:#4B5580;">This is an automated system notification.</div>
+      </div>
+    </div>
+  `
+
+  return sendEmail({
+    to: 'administrator@moneyfestlending.loan',
+    subject,
+    html
+  })
+}
+
 // --- Reminders ---
 
 // ────────────────────────────────────────────────────────────────────────

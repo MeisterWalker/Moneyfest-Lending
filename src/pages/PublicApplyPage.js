@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { calcSecurityHold, CREDIT_CONFIG } from '../lib/creditSystem'
 import { supabase } from '../lib/supabase'
-import { sendPendingEmail } from '../lib/emailService'
+import { sendPendingEmail, sendApplicationReceivedAdminEmail } from '../lib/emailService'
 import { usePageVisit } from '../hooks/usePageVisit'
 
 const DEPARTMENTS = ['Minto Money', 'Greyhound']
@@ -337,7 +337,10 @@ export default function PublicApplyPage() {
       status: 'Pending',
     })
     if (dbErr) { setError('Submission failed. Please try again.'); setLoading(false); return }
-    if (form.email.trim()) sendPendingEmail({ to: form.email.trim(), borrowerName: form.full_name.trim(), accessCode: code, loanAmount: parseFloat(form.loan_amount) }).catch(() => {})
+    if (form.email.trim()) {
+      sendPendingEmail({ to: form.email.trim(), borrowerName: form.full_name.trim(), accessCode: code, loanAmount: parseFloat(form.loan_amount) }).catch(() => {})
+      sendApplicationReceivedAdminEmail({ borrowerName: form.full_name.trim(), loanAmount: parseFloat(form.loan_amount), accessCode: code, loanType: form.loan_type === 'quickloan' ? '⚡ QuickLoan' : '📅 Installment' }).catch(() => {})
+    }
     setAccessCode(code); setSubmitted(true); setLoading(false)
   }
 

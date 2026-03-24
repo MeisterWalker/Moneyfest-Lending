@@ -648,11 +648,12 @@ export default function InvestorDashboard() {
       
       setInvestor({ ...investor, signed_at: now, signature_data: signatureData })
       
-      await sendMoaSignedAdminEmail({
+      // Notify admin (non-blocking)
+      sendMoaSignedAdminEmail({
         investorName: investor.full_name,
         tier: investor.tier,
         accessCode: investor.access_code
-      })
+      }).catch(err => console.error('Admin alert failed:', err))
 
       toast('MOA Signed Successfully! Welcome to the Dashboard.', 'success')
       // Modal remains open but close button will appear, or we can close it automatically
