@@ -1475,6 +1475,59 @@ export default function BorrowerPortalPage() {
 
             {/* ── LEFT COLUMN ── */}
             <div>
+              {/* Dashboard Highlights Row (Mini-Stats) */}
+              <div className="pc" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 16 }}>
+                {[
+                  { 
+                    label: 'Next Payday', 
+                    value: (() => {
+                      const dates = getDueDates(loan.release_date, loan.payments_made, loan.num_installments)
+                      const next = dates.find(d => !d.paid)
+                      if (!next) return 'No pending'
+                      const now = new Date()
+                      const diff = Math.ceil((new Date(next.date) - now) / (1000 * 60 * 60 * 24))
+                      return diff > 0 ? `${diff} Days Left` : 'Due Today'
+                    })(),
+                    sub: (() => {
+                      const dates = getDueDates(loan.release_date, loan.payments_made, loan.num_installments)
+                      const next = dates.find(d => !d.paid)
+                      return next ? formatDate(next.dateStr) : 'Fully Paid'
+                    })(),
+                    icon: <Calendar size={14} />,
+                    color: '#8B5CF6',
+                    bg: 'rgba(139,92,246,0.08)',
+                    border: 'rgba(139,92,246,0.2)'
+                  },
+                  { 
+                    label: 'Available Rebates', 
+                    value: '₱' + (rebateCredits?.balance || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 }),
+                    sub: 'Wallet Balance',
+                    icon: <CreditCard size={14} />,
+                    color: '#22C55E',
+                    bg: 'rgba(34,197,94,0.08)',
+                    border: 'rgba(34,197,94,0.2)'
+                  },
+                  { 
+                    label: 'Credit Health', 
+                    value: getBadgeConfig(borrower.loyalty_badge).label,
+                    sub: `${borrower.credit_score || 750} Points`,
+                    icon: <CheckCircle size={14} />,
+                    color: '#3B82F6',
+                    bg: 'rgba(59,130,246,0.08)',
+                    border: 'rgba(59,130,246,0.2)'
+                  }
+                ].map((stat, i) => (
+                  <div key={i} style={{ background: '#0E1320', border: `1px solid ${stat.border}`, borderRadius: 16, padding: '14px 16px', position: 'relative', overflow: 'hidden' }}>
+                    <div style={{ position: 'absolute', top: -10, right: -10, width: 40, height: 40, borderRadius: '50%', background: stat.bg, filter: 'blur(10px)', pointerEvents: 'none' }} />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+                      <div style={{ color: stat.color }}>{stat.icon}</div>
+                      <span style={{ fontSize: 10, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 800 }}>{stat.label}</span>
+                    </div>
+                    <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 15, color: '#F0F4FF' }}>{stat.value}</div>
+                    <div style={{ fontSize: 10, color: '#7A8AAA', marginTop: 2 }}>{stat.sub}</div>
+                  </div>
+                ))}
+              </div>
 
               {/* Loan Hero Card */}
               <div className="pc" style={{ background: 'linear-gradient(135deg,#0d1425,#160e30)', border: '1px solid rgba(99,102,241,0.2)', borderRadius: 20, padding: 24, marginBottom: 16, position: 'relative', overflow: 'hidden' }}>
@@ -1790,59 +1843,6 @@ export default function BorrowerPortalPage() {
                 )
               })()}
 
-              <div className="pc" style={{ background: '#0E1320', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 18, overflow: 'hidden', marginBottom: 16 }}>
-                <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.01)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <Calendar size={14} style={{ color: '#4B5580' }} />
-                      <span style={{ fontSize: 11, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700 }}>Payment Schedule Visual</span>
-                    </div>
-                    <span style={{ fontSize: 10, color: '#7A8AAA', background: 'rgba(255,255,255,0.05)', padding: '2px 8px', borderRadius: 6 }}>{new Date().toLocaleDateString('en-PH', { month: 'long' })}</span>
-                  </div>
-                  
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4 }}>
-                    {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(d => (
-                      <div key={d} style={{ textAlign: 'center', fontSize: 10, color: '#4B5580', fontWeight: 800, paddingBottom: 6 }}>{d}</div>
-                    ))}
-                    {(() => {
-                      const now = new Date()
-                      const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).getDay()
-                      const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
-                      const items = []
-                      
-                      for (let i = 0; i < firstDay; i++) items.push(<div key={`p-${i}`} />)
-                      
-                      for (let d = 1; d <= daysInMonth; d++) {
-                        const isPayDay = d === 5 || d === 20
-                        const isToday = d === now.getDate()
-                        items.push(
-                          <div key={d} style={{ 
-                            aspectRatio: '1', 
-                            display: 'flex', alignItems: 'center', justifyContent: 'center', 
-                            fontSize: 11, borderRadius: 8,
-                            background: isPayDay ? (isToday ? '#22C55E' : 'rgba(99,102,241,0.15)') : isToday ? 'rgba(255,255,255,0.08)' : 'transparent',
-                            border: isPayDay ? `1px solid ${isToday ? '#22C55E' : 'rgba(99,102,241,0.3)'}` : 'none',
-                            color: isPayDay ? '#F0F4FF' : isToday ? '#F0F4FF' : '#4B5580',
-                            fontWeight: isPayDay || isToday ? 800 : 400,
-                            position: 'relative'
-                          }}>
-                            {d}
-                            {isPayDay && <div style={{ position: 'absolute', bottom: 2, width: 3, height: 3, borderRadius: '50%', background: '#8B5CF6' }} />}
-                          </div>
-                        )
-                      }
-                      return items
-                    })()}
-                  </div>
-                  <div style={{ marginTop: 12, display: 'flex', gap: 12, alignItems: 'center' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                      <div style={{ width: 8, height: 8, borderRadius: 2, background: 'rgba(99,102,241,0.3)', border: '1px solid rgba(99,102,241,0.5)' }} />
-                      <span style={{ fontSize: 10, color: '#7A8AAA' }}>Payday (5th & 20th)</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
             </div>{/* end left */}
 
             {/* ── RIGHT SIDEBAR ── */}
@@ -1910,6 +1910,52 @@ export default function BorrowerPortalPage() {
                     </div>
                   )
                 })()}
+              </div>
+
+              {/* Visual Payment Calendar (Sidebar) */}
+              <div className="pc" style={{ background: '#0E1320', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 18, overflow: 'hidden' }}>
+                <div style={{ padding: '14px 16px', borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.01)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <Calendar size={13} style={{ color: '#4B5580' }} />
+                      <span style={{ fontSize: 10, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 800 }}>Payment Schedule</span>
+                    </div>
+                    <span style={{ fontSize: 9, color: '#7A8AAA', background: 'rgba(255,255,255,0.05)', padding: '1px 6px', borderRadius: 4 }}>{new Date().toLocaleDateString('en-PH', { month: 'short' })}</span>
+                  </div>
+                  
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 3 }}>
+                    {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(d => (
+                      <div key={d} style={{ textAlign: 'center', fontSize: 9, color: '#4B5580', fontWeight: 800, paddingBottom: 4 }}>{d}</div>
+                    ))}
+                    {(() => {
+                      const now = new Date()
+                      const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).getDay()
+                      const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
+                      const items = []
+                      for (let i = 0; i < firstDay; i++) items.push(<div key={`p-${i}`} />)
+                      for (let d = 1; d <= daysInMonth; d++) {
+                        const isPayDay = d === 5 || d === 20
+                        const isToday = d === now.getDate()
+                        items.push(
+                          <div key={d} style={{ 
+                            aspectRatio: '1', 
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', 
+                            fontSize: 10, borderRadius: 6,
+                            background: isPayDay ? (isToday ? '#22C55E' : 'rgba(99,102,241,0.12)') : isToday ? 'rgba(255,255,255,0.06)' : 'transparent',
+                            border: isPayDay ? `1px solid ${isToday ? '#22C55E' : 'rgba(99,102,241,0.25)'}` : 'none',
+                            color: isPayDay ? '#F0F4FF' : isToday ? '#F0F4FF' : '#4B5580',
+                            fontWeight: isPayDay || isToday ? 800 : 400,
+                            position: 'relative'
+                          }}>
+                            {d}
+                            {isPayDay && <div style={{ position: 'absolute', bottom: 1, width: 2, height: 2, borderRadius: '50%', background: '#8B5CF6' }} />}
+                          </div>
+                        )
+                      }
+                      return items
+                    })()}
+                  </div>
+                </div>
               </div>
 
               {/* Quick Actions */}
