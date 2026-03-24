@@ -13,7 +13,14 @@ import {
   ChevronRight, 
   HelpCircle,
   FileText,
-  PenTool
+  PenTool,
+  XCircle,
+  Info,
+  LogOut,
+  RefreshCw,
+  BarChart3,
+  LayoutDashboard,
+  Printer
 } from 'lucide-react'
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, 
