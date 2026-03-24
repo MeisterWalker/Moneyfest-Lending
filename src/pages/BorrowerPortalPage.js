@@ -405,6 +405,10 @@ export default function BorrowerPortalPage() {
   const [copiedKey, setCopiedKey] = useState(null)
   const [renewing, setRenewing] = useState(false)
   const [renewalSent, setRenewalSent] = useState(false)
+  const [loginType, setLoginType] = useState('borrower') // 'borrower' or 'partner'
+  const [partnerInputCode, setPartnerInputCode] = useState('')
+  const [partnerError, setPartnerError] = useState('')
+  const [partnerLoading, setPartnerLoading] = useState(false)
 
   const handleCopy = (text, key) => {
     navigator.clipboard.writeText(text)
@@ -488,12 +492,45 @@ export default function BorrowerPortalPage() {
   useEffect(() => {
     const saved = localStorage.getItem('lm_portal_code')
     if (saved) { setCode(saved); setInputCode(saved); fetchPortalData(saved) }
+    
+    const savedPartner = localStorage.getItem('lm_partner_code')
+    if (savedPartner) {
+      // If we have a saved partner code, we might want to redirect to investor dashboard
+      // but let's keep the user on the portal if they just opened it.
+      // Or we can auto-redirect if they are on the "partner" tab.
+    }
   }, [fetchPortalData])
 
   const handleLogin = async () => {
     if (!inputCode.trim()) { setError('Please enter your access code'); return }
     setCode(inputCode); localStorage.setItem('lm_portal_code', inputCode.toUpperCase().trim())
     await fetchPortalData(inputCode)
+  }
+
+  const handlePartnerLogin = async () => {
+    if (!partnerInputCode.trim()) { setPartnerError('Please enter your partner access code'); return }
+    setPartnerLoading(true); setPartnerError('')
+    
+    try {
+      const { data, error } = await supabase
+        .from('investors')
+        .select('id, access_code')
+        .eq('access_code', partnerInputCode.toUpperCase().trim())
+        .single()
+
+      if (error || !data) {
+        setPartnerError('Invalid partner access code.')
+        setPartnerLoading(false)
+        return
+      }
+
+      localStorage.setItem('lm_partner_code', data.access_code)
+      window.location.href = '/investor/dashboard'
+    } catch (err) {
+      setPartnerError('Login failed. Please try again.')
+    } finally {
+      setPartnerLoading(false)
+    }
   }
   const handleUploaded = () => { setUploadModal(null); setUploadSuccess(true); fetchPortalData(code); setTimeout(() => setUploadSuccess(false), 5000) }
   const handleSaveSignature = async ({ typedName, signatureImage, signedAt }) => {
@@ -857,16 +894,15 @@ export default function BorrowerPortalPage() {
     </div>
   )
 
-  // ── LOGIN SCREEN ─────────────────────────────────────────────
   if (!borrower) return (
     <div style={{ minHeight: '100dvh', background: '#080B14', fontFamily: 'DM Sans, sans-serif', display: 'flex', flexDirection: 'column', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
       <style>{`
-        
         .portal-login-input:focus { border-color: rgba(99,102,241,0.5) !important; box-shadow: 0 0 0 3px rgba(99,102,241,0.1) !important; }
         .portal-login-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(99,102,241,0.3) !important; }
         @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
         @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
         .login-card { animation: fadeUp 0.5s ease forwards; }
+        .type-btn { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
       `}</style>
 
       {/* Header */}
@@ -878,43 +914,103 @@ export default function BorrowerPortalPage() {
           </div>
         </a>
         <div style={{ display: 'flex', gap: 8 }}>
-          <a href="/apply" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 14px', borderRadius: 8, background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', color: '#22C55E', fontSize: 12, fontWeight: 700, textDecoration: 'none' }}>Apply</a>
-          <a href="/faq" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 14px', borderRadius: 8, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', color: '#7A8AAA', fontSize: 12, fontWeight: 600, textDecoration: 'none' }}>FAQ</a>
+          <a href="/portal" onClick={(e) => { e.preventDefault(); setLoginType(loginType === 'borrower' ? 'partner' : 'borrower') }} 
+             style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 14px', borderRadius: 8, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', color: '#7A8AAA', fontSize: 12, fontWeight: 600, textDecoration: 'none' }}>
+            Switch to {loginType === 'borrower' ? 'Partner' : 'Borrower'}
+          </a>
         </div>
       </header>
 
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', padding: '20px 20px 40px' }}>
-        <div style={{ width: '100%', maxWidth: 380 }} className="login-card">
-          {/* Icon */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+        <div style={{ width: '100%', maxWidth: 420 }} className="login-card">
+          
+          {/* Logo/Icon */}
           <div style={{ textAlign: 'center', marginBottom: 32 }}>
-            <div style={{ width: 64, height: 64, borderRadius: 18, background: 'linear-gradient(135deg,rgba(99,102,241,0.2),rgba(139,92,246,0.2))', border: '1px solid rgba(99,102,241,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', animation: 'float 3s ease-in-out infinite' }}>
-              <img src="/padlock.png" alt="access" style={{ width: 28, height: 28, objectFit: 'contain' }} />
+            <div style={{ width: 72, height: 72, borderRadius: 22, background: loginType === 'borrower' ? 'linear-gradient(135deg,rgba(99,102,241,0.2),rgba(139,92,246,0.2))' : 'linear-gradient(135deg,rgba(139,92,246,0.2),rgba(245,158,11,0.2))', border: `1px solid ${loginType === 'borrower' ? 'rgba(99,102,241,0.3)' : 'rgba(245,158,11,0.3)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', animation: 'float 3s ease-in-out infinite', boxShadow: '0 20px 40px rgba(0,0,0,0.3)' }}>
+              <img src={loginType === 'borrower' ? "/padlock.png" : "/handshake.png"} alt="icon" style={{ width: 32, height: 32, objectFit: 'contain' }} />
             </div>
-            <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 900, fontSize: 26, color: '#F0F4FF', letterSpacing: -0.5, marginBottom: 6 }}>Borrower Portal</div>
-            <div style={{ fontSize: 13, color: '#4B5580' }}>Enter your access code to view your loan</div>
+            <h1 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 900, fontSize: 28, color: '#F0F4FF', letterSpacing: -0.5, marginBottom: 8 }}>
+              {loginType === 'borrower' ? 'Borrower Portal' : 'Partner Portal'}
+            </h1>
+            <p style={{ fontSize: 14, color: '#4B5580', margin: 0 }}>
+              {loginType === 'borrower' ? 'Access your loan details and repayment plan' : 'Track your capital, ROI, and active deployments'}
+            </p>
           </div>
 
-          <div style={{ background: '#0E1320', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 18, padding: 24 }}>
-            <input
-              value={inputCode}
-              onChange={e => setInputCode(e.target.value.toUpperCase())}
-              onKeyDown={e => e.key === 'Enter' && handleLogin()}
-              placeholder="LM-XXXX"
-              maxLength={7}
-              className="portal-login-input"
-              style={{ width: '100%', boxSizing: 'border-box', padding: '14px 16px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, color: '#F0F4FF', fontSize: 22, fontWeight: 800, fontFamily: 'monospace', letterSpacing: 8, textAlign: 'center', marginBottom: 14, outline: 'none', transition: 'all 0.2s' }}
-            />
-            {error && (
-              <div style={{ fontSize: 13, color: '#EF4444', marginBottom: 14, padding: '10px 14px', background: 'rgba(239,68,68,0.08)', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
-                <AlertCircle size={14} /> {error}
+          <div style={{ background: '#0E1320', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 24, padding: '32px 28px', boxShadow: '0 40px 80px rgba(0,0,0,0.5)' }}>
+            
+            {/* Toggle Segment */}
+            <div style={{ display: 'flex', background: 'rgba(0,0,0,0.2)', padding: 4, borderRadius: 14, marginBottom: 28, border: '1px solid rgba(255,255,255,0.04)' }}>
+              <button 
+                onClick={() => setLoginType('borrower')}
+                className="type-btn"
+                style={{ flex: 1, padding: '10px', borderRadius: 11, border: 'none', background: loginType === 'borrower' ? 'rgba(255,255,255,0.06)' : 'transparent', color: loginType === 'borrower' ? '#F0F4FF' : '#4B5580', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
+              >
+                Borrower
+              </button>
+              <button 
+                onClick={() => setLoginType('partner')}
+                className="type-btn"
+                style={{ flex: 1, padding: '10px', borderRadius: 11, border: 'none', background: loginType === 'partner' ? 'rgba(255,255,255,0.06)' : 'transparent', color: loginType === 'partner' ? '#F0F4FF' : '#4B5580', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
+              >
+                Partner
+              </button>
+            </div>
+
+            {loginType === 'borrower' ? (
+              /* Borrower Form */
+              <div>
+                <div style={{ fontSize: 11, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 800, marginBottom: 10, marginLeft: 4 }}>Access Code</div>
+                <input
+                  value={inputCode}
+                  onChange={e => setInputCode(e.target.value.toUpperCase())}
+                  onKeyDown={e => e.key === 'Enter' && handleLogin()}
+                  placeholder="LM-XXXX"
+                  maxLength={7}
+                  className="portal-login-input"
+                  style={{ width: '100%', boxSizing: 'border-box', padding: '16px 16px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, color: '#F0F4FF', fontSize: 24, fontWeight: 800, fontFamily: 'monospace', letterSpacing: 8, textAlign: 'center', marginBottom: 16, outline: 'none', transition: 'all 0.2s' }}
+                />
+                {error && (
+                  <div style={{ fontSize: 13, color: '#EF4444', marginBottom: 16, padding: '12px 16px', background: 'rgba(239,68,68,0.08)', borderRadius: 10, display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <AlertCircle size={14} /> {error}
+                  </div>
+                )}
+                <button onClick={handleLogin} disabled={loading} className="portal-login-btn"
+                  style={{ width: '100%', height: 52, borderRadius: 14, border: 'none', background: loading ? 'rgba(99,102,241,0.3)' : 'linear-gradient(135deg,#6366F1,#8B5CF6)', color: '#fff', fontSize: 15, fontWeight: 800, cursor: loading ? 'not-allowed' : 'pointer', fontFamily: 'Syne, sans-serif', transition: 'all 0.2s', boxShadow: '0 4px 15px rgba(99,102,241,0.2)' }}>
+                  {loading ? 'Verifying...' : 'Access My Loan →'}
+                </button>
+              </div>
+            ) : (
+              /* Partner Form */
+              <div>
+                <div style={{ fontSize: 11, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 800, marginBottom: 10, marginLeft: 4 }}>Partner Access Code</div>
+                <input
+                  value={partnerInputCode}
+                  onChange={e => setPartnerInputCode(e.target.value.toUpperCase())}
+                  onKeyDown={e => e.key === 'Enter' && handlePartnerLogin()}
+                  placeholder="MF-XXXX"
+                  maxLength={7}
+                  className="portal-login-input"
+                  style={{ width: '100%', boxSizing: 'border-box', padding: '16px 16px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, color: '#F59E0B', fontSize: 24, fontWeight: 800, fontFamily: 'monospace', letterSpacing: 8, textAlign: 'center', marginBottom: 16, outline: 'none', transition: 'all 0.2s' }}
+                />
+                {partnerError && (
+                  <div style={{ fontSize: 13, color: '#EF4444', marginBottom: 16, padding: '12px 16px', background: 'rgba(239,68,68,0.08)', borderRadius: 10, display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <AlertCircle size={14} /> {partnerError}
+                  </div>
+                )}
+                <button onClick={handlePartnerLogin} disabled={partnerLoading} className="portal-login-btn"
+                  style={{ width: '100%', height: 52, borderRadius: 14, border: 'none', background: partnerLoading ? 'rgba(245,158,11,0.3)' : 'linear-gradient(135deg,#F59E0B,#D97706)', color: '#000', fontSize: 15, fontWeight: 800, cursor: partnerLoading ? 'not-allowed' : 'pointer', fontFamily: 'Syne, sans-serif', transition: 'all 0.2s', boxShadow: '0 4px 15px rgba(245,158,11,0.2)' }}>
+                  {partnerLoading ? 'Authenticating...' : 'Enter Partner Hub →'}
+                </button>
               </div>
             )}
-            <button onClick={handleLogin} disabled={loading} className="portal-login-btn"
-              style={{ width: '100%', padding: '13px', borderRadius: 12, border: 'none', background: loading ? 'rgba(99,102,241,0.3)' : 'linear-gradient(135deg,#6366F1,#8B5CF6)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', fontFamily: 'Syne, sans-serif', transition: 'all 0.2s', letterSpacing: 0.3 }}>
-              {loading ? 'Checking...' : 'Access My Loan →'}
-            </button>
-            <div style={{ marginTop: 16, padding: '12px 14px', background: 'rgba(99,102,241,0.06)', borderRadius: 10, fontSize: 12, color: '#4B5580', lineHeight: 1.7, textAlign: 'center' }}>
-              💡 Your code was sent when your loan was approved.<br />Need help? <a href="/contact" style={{ color: '#7A8AAA', fontWeight: 700, textDecoration: 'none' }}>Contact us here →</a>
+
+            <div style={{ marginTop: 24, padding: '16px', background: 'rgba(255,255,255,0.02)', borderRadius: 14, fontSize: 12, color: '#4B5580', lineHeight: 1.6, textAlign: 'center', border: '1px solid rgba(255,255,255,0.04)' }}>
+              {loginType === 'borrower' ? (
+                <>💡 Your LM code is found in your approval email.<br />Need a loan? <a href="/apply" style={{ color: '#7A8AAA', fontWeight: 700, textDecoration: 'none' }}>Apply here →</a></>
+              ) : (
+                <>Interested in becoming a funding partner?<br /><a href="/admin/investor-pitch" style={{ color: '#F59E0B', fontWeight: 700, textDecoration: 'none' }}>View our Investor Pitch →</a></>
+              )}
             </div>
           </div>
         </div>

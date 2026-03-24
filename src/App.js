@@ -23,6 +23,7 @@ import InvestorPitchPage from './pages/InvestorPitchPage'
 import TermsPage from './pages/TermsPage'
 import ContactPage from './pages/ContactPage'
 import PartnersPage from './pages/PartnersPage'
+import InvestorDashboard from './pages/InvestorDashboard'
 import NotificationBell from './components/NotificationBell'
 import { useAutoLogout } from './hooks/useAutoLogout'
 import { useEffect, useState } from 'react'
@@ -66,6 +67,7 @@ function AppRoutes() {
       <Route path="/apply"         element={<PublicApplyPage />} />
       <Route path="/portal"        element={<BorrowerPortalPage />} />
       <Route path="/faq"           element={<FAQPage />} />
+      <Route path="/investor/dashboard" element={<InvestorDashboard />} />
 
       {/* ── Admin auth ── */}
       <Route path="/admin"         element={user ? <Navigate to="/admin/dashboard" replace /> : <LoginPage />} />
