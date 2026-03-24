@@ -4,7 +4,7 @@ import { formatCurrency } from '../lib/helpers'
 import { 
   TrendingUp, Wallet, ArrowUpRight, 
   BarChart3, RefreshCw, LayoutDashboard, Info, LogOut,
-  XCircle, Smartphone, Building2, CreditCard, ChevronRight
+  XCircle, Smartphone, Building2, CreditCard, ChevronRight, Printer
 } from 'lucide-react'
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, 
@@ -21,10 +21,15 @@ const TIER_RATES = {
 
 function PayoutRequestModal({ isOpen, onClose, onSubmit, investor, requesting }) {
   const [method, setMethod] = useState('GCash')
-  const [details, setDetails] = useState('')
+  const [accountName, setAccountName] = useState('')
+  const [accountNumber, setAccountNumber] = useState('')
+  const [confirmAccountNumber, setConfirmAccountNumber] = useState('')
   const [amount, setAmount] = useState(investor?.total_capital || '')
 
   if (!isOpen) return null
+
+  const isMatching = accountNumber === confirmAccountNumber
+  const isComplete = accountName && accountNumber && confirmAccountNumber && isMatching
 
   return (
     <div className="modal-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
@@ -48,14 +53,41 @@ function PayoutRequestModal({ isOpen, onClose, onSubmit, investor, requesting })
             ))}
           </div>
 
-          <div>
-            <label style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 8, display: 'block' }}>Account Details</label>
-            <textarea 
-              placeholder={method === 'GCash' ? 'Enter GCash Number and Full Name' : 'Enter Bank Name, Account Number, and Full Name'}
-              value={details}
-              onChange={(e) => setDetails(e.target.value)}
-              style={{ width: '100%', height: 80, padding: 12, borderRadius: 12, background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', fontSize: 14, outline: 'none' }}
-            />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div>
+              <label style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 6, display: 'block' }}>Account Holder's Name</label>
+              <input 
+                type="text"
+                placeholder="Full Legal Name"
+                value={accountName}
+                onChange={(e) => setAccountName(e.target.value)}
+                style={{ width: '100%', padding: '12px 14px', borderRadius: 12, background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', fontSize: 14, outline: 'none' }}
+              />
+            </div>
+            
+            <div>
+              <label style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 6, display: 'block' }}>Account Number</label>
+              <input 
+                type="text"
+                placeholder={method === 'GCash' ? '0917 XXX XXXX' : 'XXXX-XXXX-XX'}
+                value={accountNumber}
+                onChange={(e) => setAccountNumber(e.target.value)}
+                style={{ width: '100%', padding: '12px 14px', borderRadius: 12, background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', fontSize: 14, outline: 'none' }}
+              />
+            </div>
+
+            <div>
+              <label style={{ fontSize: 11, color: isMatching ? 'var(--text-muted)' : '#EF4444', textTransform: 'uppercase', marginBottom: 6, display: 'block' }}>
+                Confirm Account Number {!isMatching && confirmAccountNumber && '— Mismatch!'}
+              </label>
+              <input 
+                type="text"
+                placeholder="Repeat Account Number"
+                value={confirmAccountNumber}
+                onChange={(e) => setConfirmAccountNumber(e.target.value)}
+                style={{ width: '100%', padding: '12px 14px', borderRadius: 12, background: 'rgba(0,0,0,0.2)', border: `1px solid ${!isMatching && confirmAccountNumber ? '#EF4444' : 'rgba(255,255,255,0.1)'}`, color: '#fff', fontSize: 14, outline: 'none' }}
+              />
+            </div>
           </div>
 
           <div style={{ padding: 16, background: 'rgba(59,130,246,0.05)', border: '1px solid rgba(59,130,246,0.1)', borderRadius: 12 }}>
@@ -67,9 +99,9 @@ function PayoutRequestModal({ isOpen, onClose, onSubmit, investor, requesting })
 
           <button 
             className="btn-primary"
-            disabled={!details || requesting}
-            onClick={() => onSubmit({ method, details, amount })}
-            style={{ width: '100%', height: 48, marginTop: 10 }}>
+            disabled={!isComplete || requesting}
+            onClick={() => onSubmit({ method, accountName, accountNumber, amount })}
+            style={{ width: '100%', height: 48, marginTop: 10, opacity: isComplete ? 1 : 0.5 }}>
             {requesting ? 'Processing...' : 'Submit Payout Request'}
           </button>
         </div>
@@ -80,40 +112,300 @@ function PayoutRequestModal({ isOpen, onClose, onSubmit, investor, requesting })
 
 function AgreementModal({ isOpen, onClose, investor }) {
   if (!isOpen || !investor) return null
+  
+  const handlePrint = () => {
+    window.print()
+  }
+
   return (
-    <div className="modal-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-      <div className="card" style={{ maxWidth: 800, width: '100%', maxHeight: '85vh', overflowY: 'auto', padding: 40, background: '#fff', color: '#1a1a1a', position: 'relative', borderRadius: 24 }}>
-        <button onClick={onClose} style={{ position: 'fixed', top: 40, right: 40, background: '#f5f5f5', border: '1px solid #ddd', color: '#000', cursor: 'pointer', width: 40, height: 40, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1001 }}>
-          <XCircle size={24} />
-        </button>
+    <div className="modal-overlay agreement-modal-root" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.92)', backdropFilter: 'blur(12px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px 0' }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Inter:wght@300;400;700&display=swap');
         
-        <div style={{ maxWidth: 600, margin: '0 auto' }}>
-          <h1 style={{ textAlign: 'center', color: '#0a1d43', fontSize: 24, fontWeight: 900, marginBottom: 40, borderBottom: '2px solid #0a1d43', paddingBottom: 20 }}>MEMORANDUM OF AGREEMENT</h1>
+        .moa-container {
+          background: white;
+          width: 100%;
+          max-width: 850px;
+          max-height: 90vh;
+          margin: 0 auto;
+          padding: 60px 80px;
+          box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+          position: relative;
+          font-family: 'Cormorant Garamond', serif;
+          color: #1a1a1a;
+          line-height: 1.6;
+          overflow-y: auto;
+          border-radius: 4px;
+        }
+
+        .moa-header {
+          text-align: center;
+          margin-bottom: 40px;
+          border-bottom: 2px solid #333;
+          padding-bottom: 20px;
+        }
+
+        .moa-header h1 {
+          margin: 0;
+          font-size: 32px;
+          text-transform: uppercase;
+          letter-spacing: 3px;
+          font-weight: 700;
+          color: #111;
+        }
+
+        .moa-header p {
+          margin: 8px 0 0;
+          font-family: 'Inter', sans-serif;
+          font-size: 12px;
+          color: #666;
+          text-transform: uppercase;
+          letter-spacing: 2px;
+        }
+
+        .moa-witness {
+          text-align: center;
+          font-weight: 700;
+          margin: 30px 0;
+          font-size: 18px;
+          text-transform: uppercase;
+          font-style: italic;
+        }
+
+        .moa-section-title {
+          font-size: 20px;
+          text-transform: uppercase;
+          border-bottom: 1px solid #eee;
+          padding-bottom: 8px;
+          margin-top: 35px;
+          margin-bottom: 15px;
+          font-weight: 700;
+          color: #000;
+        }
+
+        .moa-clause {
+          margin-bottom: 20px;
+          font-size: 18px;
+          text-align: justify;
+        }
+
+        .moa-terms-grid {
+          margin: 25px 0;
+          border: 1px solid #ddd;
+          padding: 25px;
+          background: #fafafa;
+        }
+
+        .moa-term-row {
+          display: flex;
+          justify-content: space-between;
+          margin-bottom: 12px;
+          border-bottom: 1px dotted #bbb;
+          padding-bottom: 6px;
+        }
+
+        .moa-term-label {
+          font-weight: 700;
+          font-family: 'Inter', sans-serif;
+          font-size: 13px;
+          color: #555;
+          text-transform: uppercase;
+        }
+
+        .moa-term-value {
+          font-weight: 700;
+          font-size: 18px;
+          color: #000;
+        }
+
+        .moa-signatures {
+          margin-top: 60px;
+          display: flex;
+          justify-content: space-between;
+          gap: 60px;
+        }
+
+        .moa-sig-block {
+          flex: 1;
+          text-align: center;
+        }
+
+        .moa-sig-line {
+          border-top: 1px solid #000;
+          margin-top: 40px;
+          padding-top: 12px;
+          font-family: 'Inter', sans-serif;
+          font-size: 13px;
+          font-weight: 700;
+          text-transform: uppercase;
+        }
+
+        .moa-sig-sub {
+          font-family: 'Inter', sans-serif;
+          font-size: 11px;
+          color: #777;
+          margin-top: 4px;
+        }
+
+        @media print {
+          body * { visibility: hidden; }
+          .moa-container, .moa-container * { visibility: visible; }
+          .moa-container { 
+            position: absolute; 
+            left: 0; 
+            top: 0; 
+            width: 100%; 
+            max-height: none; 
+            box-shadow: none; 
+            padding: 20px;
+          }
+          .no-print { display: none !important; }
+        }
+
+        .moa-close-btn {
+          position: fixed;
+          top: 30px;
+          right: 30px;
+          background: rgba(255,255,255,0.1);
+          border: 1px solid rgba(255,255,255,0.2);
+          color: white;
+          width: 44px;
+          height: 44px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: 0.2s;
+          z-index: 1002;
+        }
+
+        .moa-close-btn:hover {
+          background: rgba(239, 68, 68, 0.2);
+          border-color: #EF4444;
+          color: #EF4444;
+        }
+
+        .moa-print-fab {
+          position: fixed;
+          bottom: 40px;
+          right: 40px;
+          background: #1a1a1a;
+          color: white;
+          padding: 14px 28px;
+          border-radius: 50px;
+          font-family: 'Inter', sans-serif;
+          font-weight: 700;
+          font-size: 14px;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          border: 1px solid #444;
+          cursor: pointer;
+          box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+          transition: 0.2s;
+          z-index: 1002;
+        }
+
+        .moa-print-fab:hover {
+          background: #000;
+          transform: translateY(-2px);
+          box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+        }
+      `}</style>
+
+      <button className="moa-close-btn no-print" onClick={onClose}>
+        <XCircle size={24} />
+      </button>
+
+      <button className="moa-print-fab no-print" onClick={handlePrint}>
+        <Printer size={18} /> Print Agreement
+      </button>
+      
+      <div className="moa-container">
+        <div className="moa-header">
+          <h1>Memorandum of Agreement</h1>
+          <p>Investment Partnership · Moneyfest Lending</p>
+        </div>
+
+        <div className="moa-witness">
+          Known to all men by these presents:
+        </div>
+
+        <div className="moa-clause">
+          This Agreement is made and entered into this <strong>{new Date().getDate()}</strong> day of <strong>{new Date().toLocaleString('default', { month: 'long' })}</strong>, 2026, by and between:
           
-          <div style={{ fontSize: 13, lineHeight: 1.8, color: '#333' }}>
-            <p><strong>This MEMORANDUM OF AGREEMENT (the "Agreement") is entered into by:</strong></p>
-            <p><strong>MONEYFEST LENDING</strong>, represented herein by its authorized management, hereinafter referred to as the <strong>"Company"</strong>.</p>
-            <p style={{ textAlign: 'center', fontWeight: 800 }}>-- AND --</p>
-            <p><strong>{investor.full_name}</strong>, of legal age, resident of the Philippines, hereinafter referred to as the <strong>"Investment Partner"</strong>.</p>
-            
-            <h3 style={{ color: '#0a1d43', borderBottom: '1px solid #eee', marginTop: 30 }}>I. PURPOSE OF INVESTMENT</h3>
-            <p>The Investment Partner agrees to provide capital to the Company for the sole purpose of funding the Workplace Lending Program, which provides loans to verified employees with fixed repayment terms.</p>
-            
-            <h3 style={{ color: '#0a1d43', borderBottom: '1px solid #eee', marginTop: 30 }}>II. INVESTMENT TERMS</h3>
-            <ul style={{ listStyle: 'none', padding: 0 }}>
-              <li style={{ marginBottom: 8 }}>• <strong>Capital Amount:</strong> ₱{Number(investor.total_capital).toLocaleString()}</li>
-              <li style={{ marginBottom: 8 }}>• <strong>Partner Tier:</strong> {investor.tier}</li>
-              <li style={{ marginBottom: 8 }}>• <strong>Agreed Yield:</strong> {investor.tier === 'Premium' ? '13.5%' : investor.tier === 'Standard' ? '12.0%' : '10.5%'} per Quarter</li>
-              <li style={{ marginBottom: 8 }}>• <strong>Lock-in Period:</strong> 3 Months (Standard Payout Cycle)</li>
-            </ul>
+          <div style={{ marginTop: 20, paddingLeft: 20, borderLeft: '3px solid #eee' }}>
+            <p><strong>MONEYFEST LENDING</strong>, a workplace-integrated lending program represented by <strong>JOHN PAUL LACARON</strong> and/or <strong>CHARLOU JUNE RAMIL</strong>, hereinafter referred to as the <strong>"PLATFORM"</strong>;</p>
+            <p style={{ textAlign: 'center', margin: '15px 0', fontSize: 14, fontWeight: 700 }}>- and -</p>
+            <p><strong>{investor.full_name.toUpperCase()}</strong>, of legal age, residing at ________________________________________, hereinafter referred to as the <strong>"PARTNER"</strong>.</p>
+          </div>
+        </div>
 
-            <h3 style={{ color: '#0a1d43', borderBottom: '1px solid #eee', marginTop: 30 }}>III. COMPANY OBLIGATION</h3>
-            <p>The Company assumes full responsibility for the collection and management of the workplace loans. The Company guarantees the safety of the Investment Partner's capital as it is strictly deployed only to verified, salary-deducted borrowers.</p>
+        <div className="moa-section-title">Section 1: Purpose of Agreement</div>
+        <div className="moa-clause">
+          The PARTNER desires to provide investment capital to be deployed as short-term liquidity loans to pre-verified employees through the Platform’s automated lending system. The Platform agrees to manage the deployment, collection, and risk mitigation of said capital in exchange for the agreed operational spread.
+        </div>
 
-            <div style={{ marginTop: 60, padding: 20, borderTop: '1px solid #eee', textAlign: 'center' }}>
-              <p style={{ fontSize: 11, color: '#777', fontStyle: 'italic' }}>This is a legally binding digital document. Signed via Secure Portal Access.</p>
-              <p style={{ fontWeight: 800, marginTop: 10 }}>ELECTRONIC SIGNATURE: {investor.access_code}</p>
-            </div>
+        <div className="moa-section-title">Section 2: Investment Terms</div>
+        <div className="moa-terms-grid">
+          <div className="moa-term-row">
+            <span className="moa-term-label">TOTAL INVESTMENT AMOUNT</span>
+            <span className="moa-term-value">₱ {Number(investor.total_capital).toLocaleString()}</span>
+          </div>
+          <div className="moa-term-row">
+            <span className="moa-term-label">COMMENCEMENT DATE</span>
+            <span className="moa-term-value">{new Date().toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
+          </div>
+          <div className="moa-term-row">
+            <span className="moa-term-label">INVESTMENT DURATION</span>
+            <span className="moa-term-value">90 Calendar Days of Active Deployment</span>
+          </div>
+          <div className="moa-term-row">
+            <span className="moa-term-label">AGREED RETURN RATE (PER CYCLE)</span>
+            <span className="moa-term-value" style={{ color: '#22C55E' }}>{(TIER_RATES[investor.tier]*100).toFixed(1)}%</span>
+          </div>
+        </div>
+
+        <div className="moa-section-title">Section 3: Use of Capital & Deployment</div>
+        <div className="moa-clause">
+          <strong>Platform Prowess and Management:</strong> The Platform shall utilize its proprietary automation system to select eligible borrowers, verify IDs, and process loan disbursements. Each 90-day cycle consists of approximately 1.5 lending intervals (2-month loans).
+        </div>
+
+        <div className="moa-section-title">Section 4: Deployment-Based Accrual</div>
+        <div className="moa-clause">
+          The PARTNER acknowledges that interest does <strong>not</strong> begin accruing upon the date of capital transfer. Instead, the Accrual Period shall officially commence only upon the <strong>Actual Deployment Date</strong>—defined as the date when the Partner’s Principal is successfully released to a verified borrower.
+          <br /><br />
+          Principal held in the Platform’s Standing Pool awaiting a borrower assignment does not accrue interest. The Platform shall provide electronic notification to the PARTNER upon successful deployment.
+        </div>
+
+        <div className="moa-section-title">Section 5: The "Moneyfest" Spread</div>
+        <div className="moa-clause">
+          The Platform shall retain any interest collected from borrowers in excess of the Agreed Return Rate specified in Section 2. This spread covers operations, cloud infrastructure, SMS automation, and default risk pooling.
+        </div>
+
+        <div className="moa-section-title">Section 6: Risk Mitigation & Default</div>
+        <div className="moa-clause">
+          The Platform shall employ its standard "Tri-Layer Defense" to protect the Partner’s Principal, including 10-20% Security Holds from borrowers and strict Credit Score minimums (750+). In the event of a borrower default, the Platform shall utilize pooled administrative spreads to prioritize the restoration of the Partner’s Principal.
+        </div>
+
+        <div className="moa-section-title">Section 7: Confidentiality & Binding Effect</div>
+        <div className="moa-clause">
+          This agreement is strictly private and confidential. The PARTNER agrees not to disclose borrower identities or internal platform logic to third parties. This agreement shall be binding upon the parties, their heirs, and assigns.
+        </div>
+
+        <div className="moa-signatures">
+          <div className="moa-sig-block">
+            <div style={{ fontFamily: 'Syne', fontSize: 18, fontWeight: 800, marginBottom: -35, opacity: 0.8 }}>{investor.access_code}</div>
+            <div className="moa-sig-line">{investor.full_name}</div>
+            <div className="moa-sig-sub">PARTNER / INVESTOR SIGNATURE</div>
+            <div style={{ fontSize: 9, color: '#999', marginTop: 4 }}>Electronically Signed · ID: {investor.access_code}</div>
+          </div>
+          <div className="moa-sig-block">
+            <div style={{ fontFamily: 'Syne', fontSize: 18, fontWeight: 800, marginBottom: -35, opacity: 0.8 }}>ADMIN_AUTH_01</div>
+            <div className="moa-sig-line">MONEYFEST LENDING ADMIN</div>
+            <div className="moa-sig-sub">AUTHORIZED REPRESENTATIVE</div>
+            <div style={{ fontSize: 9, color: '#999', marginTop: 4 }}>Company Serial: ML-2026-AUTH</div>
           </div>
         </div>
       </div>
@@ -252,13 +544,16 @@ export default function InvestorDashboard() {
     if (!investor) return
     setRequestingPayout(true)
     try {
+      // Consolidate details for the database
+      const details = `Name: ${payoutData.accountName} | Account: ${payoutData.accountNumber}`
+
       const { error } = await supabase
         .from('investor_payout_requests')
         .insert({
           investor_id: investor.id,
           requested_amount: Number(payoutData.amount),
           payout_method: payoutData.method,
-          account_details: payoutData.details,
+          account_details: details,
           status: 'pending'
         })
 
