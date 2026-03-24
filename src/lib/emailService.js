@@ -94,6 +94,49 @@ export async function sendPayoutRequestedAdminEmail({ investorName, amount, tier
   })
 }
 
+export async function sendMoaSignedAdminEmail({ investorName, tier, accessCode }) {
+  const subject = `✍️ MOA Signed: ${investorName}`
+  
+  const html = `
+    <div style="font-family:sans-serif;background:#0B0F1A;padding:32px;border-radius:16px;color:#F0F4FF;max-width:600px;margin:0 auto;">
+      <div style="background:linear-gradient(135deg,#141B2D,#1a1040);border-radius:16px;padding:24px;margin-bottom:20px;border:1px solid rgba(139,92,246,0.3);text-align:center;">
+        <div style="font-size:24px;font-weight:900;margin-bottom:4px;">Moneyfest<span style="color:#8B5CF6;">Lending</span></div>
+        <div style="font-size:12px;color:#4B5580;text-transform:uppercase;letter-spacing:0.1em;">Admin Notification</div>
+      </div>
+
+      <div style="background:#141B2D;border-radius:16px;padding:28px;margin-bottom:16px;border:1px solid rgba(255,255,255,0.05);">
+        <h2 style="margin:0 0 16px;font-size:18px;color:#F0F4FF;text-align:center;">Memorandum Signed! ✍️</h2>
+        <p style="color:#8892B0;font-size:14px;line-height:1.7;margin:0;text-align:center;">
+          Investment Partner <strong>${investorName}</strong> has just signed their digital MOA. It is now awaiting your counter-signature.
+        </p>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+        <div style="background:rgba(255,255,255,0.03);padding:16px;border-radius:12px;border:1px solid rgba(255,255,255,0.05);text-align:center;">
+          <div style="font-size:11px;color:#4B5580;text-transform:uppercase;margin-bottom:4px;">Partner Tier</div>
+          <div style="font-size:16px;font-weight:700;color:#F59E0B;">${tier}</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.03);padding:16px;border-radius:12px;border:1px solid rgba(255,255,255,0.05);text-align:center;">
+          <div style="font-size:11px;color:#4B5580;text-transform:uppercase;margin-bottom:4px;">Access Code</div>
+          <div style="font-size:16px;font-weight:700;color:#60A5FA;">${accessCode}</div>
+        </div>
+      </div>
+
+      <a href="https://moneyfestlending.loan/admin/approvals" style="display:block;background:linear-gradient(135deg,#6366F1,#8B5CF6);color:#fff;text-decoration:none;padding:14px;border-radius:12px;text-align:center;font-weight:700;font-size:14px;">Review & Counter-Sign MOA →</a>
+
+      <div style="text-align:center;margin-top:24px;border-top:1px solid rgba(255,255,255,0.05);padding-top:16px;">
+        <div style="font-size:11px;color:#4B5580;">This is an automated system notification.</div>
+      </div>
+    </div>
+  `
+
+  return sendEmail({
+    to: 'administrator@moneyfestlending.loan',
+    subject,
+    html
+  })
+}
+
 // --- Reminders ---
 
 // ────────────────────────────────────────────────────────────────────────

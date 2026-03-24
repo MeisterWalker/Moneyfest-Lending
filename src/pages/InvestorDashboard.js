@@ -2,114 +2,31 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { formatCurrency } from '../lib/helpers'
 import { 
-  TrendingUp, Wallet, ArrowUpRight, 
-  BarChart3, RefreshCw, LayoutDashboard, Info, LogOut,
-  XCircle, Smartphone, Building2, CreditCard, ChevronRight, Printer, PenTool, CheckCircle2, Eraser
+  Building2, 
+  Smartphone, 
+  CreditCard, 
+  Wallet, 
+  TrendingUp, 
+  ShieldCheck, 
+  Clock, 
+  ArrowUpRight, 
+  ChevronRight, 
+  HelpCircle,
+  FileText,
+  Signature
 } from 'lucide-react'
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, 
   Tooltip, ResponsiveContainer
 } from 'recharts'
 import { useToast } from '../components/Toast'
-import { sendPayoutRequestedAdminEmail } from '../lib/emailService'
+import { SignaturePad } from '../components/SignaturePad'
+import { sendPayoutRequestedAdminEmail, sendMoaSignedAdminEmail } from '../lib/emailService'
 
 const TIER_RATES = {
   'Starter': 0.105,  // 7% * 1.5 cycles
   'Standard': 0.12,  // 8% * 1.5 cycles
   'Premium': 0.135   // 9% * 1.5 cycles
-}
-
-// --- Signature Pad Component ---
-function SignaturePad({ onSave, onCancel }) {
-  const canvasRef = useRef(null)
-  const [isDrawing, setIsDrawing] = useState(false)
-  const [hasContent, setHasContent] = useState(false)
-
-  useEffect(() => {
-    const canvas = canvasRef.current
-    const ctx = canvas.getContext('2d')
-    ctx.strokeStyle = '#000'
-    ctx.lineWidth = 2
-    ctx.lineCap = 'round'
-    ctx.lineJoin = 'round'
-  }, [])
-
-  const startDrawing = (e) => {
-    const canvas = canvasRef.current
-    const rect = canvas.getBoundingClientRect()
-    const x = (e.clientX || e.touches[0].clientX) - rect.left
-    const y = (e.clientY || e.touches[0].clientY) - rect.top
-    
-    const ctx = canvas.getContext('2d')
-    ctx.beginPath()
-    ctx.moveTo(x, y)
-    setIsDrawing(true)
-  }
-
-  const draw = (e) => {
-    if (!isDrawing) return
-    const canvas = canvasRef.current
-    const rect = canvas.getBoundingClientRect()
-    const x = (e.clientX || e.touches[0].clientX) - rect.left
-    const y = (e.clientY || e.touches[0].clientY) - rect.top
-    
-    const ctx = canvas.getContext('2d')
-    ctx.lineTo(x, y)
-    ctx.stroke()
-    setHasContent(true)
-  }
-
-  const stopDrawing = () => {
-    setIsDrawing(false)
-  }
-
-  const clear = () => {
-    const canvas = canvasRef.current
-    const ctx = canvas.getContext('2d')
-    ctx.clearRect(0, 0, canvas.width, canvas.height)
-    setHasContent(false)
-  }
-
-  const handleSave = () => {
-    const canvas = canvasRef.current
-    const dataUrl = canvas.toDataURL('image/png')
-    onSave(dataUrl)
-  }
-
-  return (
-    <div style={{ background: '#fff', padding: 24, borderRadius: 16, border: '1px solid #ddd', boxShadow: '0 10px 30px rgba(0,0,0,0.2)', width: '100%', maxWidth: 500 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <h4 style={{ margin: 0, fontFamily: 'Inter', fontSize: 14, fontWeight: 700, color: '#1a1a1a', textTransform: 'uppercase' }}>Digital Signature Pad</h4>
-        <button onClick={onCancel} style={{ background: 'none', border: 'none', color: '#666', cursor: 'pointer' }}><XCircle size={20} /></button>
-      </div>
-      
-      <canvas 
-        ref={canvasRef}
-        width={450}
-        height={200}
-        onMouseDown={startDrawing}
-        onMouseMove={draw}
-        onMouseUp={stopDrawing}
-        onMouseOut={stopDrawing}
-        onTouchStart={startDrawing}
-        onTouchMove={draw}
-        onTouchEnd={stopDrawing}
-        style={{ border: '2px dashed #ccc', borderRadius: 8, cursor: 'crosshair', width: '100%', touchAction: 'none' }}
-      />
-
-      <div style={{ display: 'flex', gap: 12, marginTop: 20 }}>
-        <button onClick={clear} style={{ flex: 1, padding: '10px', borderRadius: 8, border: '1px solid #ddd', background: '#f5f5f5', color: '#1a1a1a', fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-          <Eraser size={16} /> Clear
-        </button>
-        <button 
-          onClick={handleSave} 
-          disabled={!hasContent}
-          style={{ flex: 2, padding: '10px', borderRadius: 8, border: 'none', background: hasContent ? '#000' : '#ccc', color: '#fff', fontSize: 13, fontWeight: 700, cursor: hasContent ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-          <CheckCircle2 size={16} /> Adopt Signature
-        </button>
-      </div>
-    </div>
-  )
 }
 
 // --- Payout Modal ---
@@ -541,11 +458,20 @@ function AgreementModal({ isOpen, onClose, investor, onSign }) {
           </div>
           <div className="moa-sig-block">
             <div style={{ minHeight: 80, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <div style={{ fontFamily: 'Syne', fontSize: 24, fontWeight: 800, opacity: 0.8, color: '#1a1d43', transform: 'rotate(-5deg)' }}>ML_ADMIN_AUTH</div>
+              {investor.admin_signature_data ? (
+                <img src={investor.admin_signature_data} alt="Admin Signature" style={{ maxHeight: 80, maxWidth: '100%' }} />
+              ) : (
+                <div style={{ fontFamily: 'Syne', fontSize: 24, fontWeight: 800, opacity: 0.8, color: '#1a1d43', transform: 'rotate(-5deg)' }}>ML_ADMIN_AUTH</div>
+              )}
             </div>
-            <div className="moa-sig-line">MONEYFEST LENDING ADMIN</div>
-            <div className="moa-sig-sub">AUTHORIZED REPRESENTATIVE</div>
-            <div style={{ fontSize: 9, color: '#999', marginTop: 4 }}>Company Serial: ML-2026-AUTH</div>
+            <div className="moa-sig-line">JOHN PAUL LACARON & CHARLOU JUNE RAMIL</div>
+            <div className="moa-sig-sub">AUTHORIZED REPRESENTATIVES</div>
+            <div style={{ fontSize: 9, color: '#999', marginTop: 4 }}>
+              {investor.admin_signed_at 
+                ? `Counter-signed: ${new Date(investor.admin_signed_at).toLocaleDateString()}` 
+                : 'Company Serial: ML-2026-AUTH'
+              }
+            </div>
           </div>
         </div>
       </div>
@@ -714,6 +640,13 @@ export default function InvestorDashboard() {
       if (error) throw error
       
       setInvestor({ ...investor, signed_at: now, signature_data: signatureData })
+      
+      await sendMoaSignedAdminEmail({
+        investorName: investor.full_name,
+        tier: investor.tier,
+        accessCode: investor.access_code
+      })
+
       toast('MOA Signed Successfully! Welcome to the Dashboard.', 'success')
       // Modal remains open but close button will appear, or we can close it automatically
       // setShowAgreementModal(false) 
