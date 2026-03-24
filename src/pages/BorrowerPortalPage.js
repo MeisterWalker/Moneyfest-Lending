@@ -1734,30 +1734,68 @@ export default function BorrowerPortalPage() {
             {/* ── RIGHT SIDEBAR ── */}
             <div className="portal-sidebar" style={{ display: 'flex', flexDirection: 'column', gap: 14, position: 'sticky', top: 76 }}>
 
-              {/* Borrower card */}
-              <div className="pc" style={{ background: 'linear-gradient(135deg,#0E1320,#160e30)', border: '1px solid rgba(139,92,246,0.2)', borderRadius: 16, padding: 18 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-                  <div style={{ width: 40, height: 40, borderRadius: 12, background: 'linear-gradient(135deg,#3B82F6,#8B5CF6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, fontWeight: 900, color: '#fff', flexShrink: 0, fontFamily: 'Syne, sans-serif' }}>
+              {/* Borrower / Road to VIP card */}
+              <div className="pc" style={{ background: 'linear-gradient(135deg,#0E1320,#160e30)', border: '1px solid rgba(139,92,246,0.2)', borderRadius: 20, padding: 22, boxShadow: '0 10px 30px -10px rgba(0,0,0,0.5)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 18 }}>
+                  <div style={{ width: 44, height: 44, borderRadius: 14, background: 'linear-gradient(135deg,#3B82F6,#8B5CF6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 900, color: '#fff', flexShrink: 0, fontFamily: 'Syne, sans-serif', boxShadow: '0 4px 12px rgba(139,92,246,0.3)' }}>
                     {borrower.full_name?.charAt(0).toUpperCase()}
                   </div>
-                  <div>
-                    <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 13, color: '#F0F4FF' }}>{borrower.full_name}</div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 14, color: '#F0F4FF', letterSpacing: '-0.01em' }}>{borrower.full_name}</div>
                     <div style={{ fontSize: 11, color: '#4B5580', marginTop: 1 }}>{borrower.department}</div>
                   </div>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: 'rgba(139,92,246,0.06)', borderRadius: 10, border: '1px solid rgba(139,92,246,0.12)', marginBottom: 12 }}>
-                  <span style={{ fontSize: 16 }}>{getBadgeConfig(borrower.loyalty_badge || 'New').emoji}</span>
-                  <div>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: getBadgeConfig(borrower.loyalty_badge || 'New').color }}>{getBadgeConfig(borrower.loyalty_badge || 'New').label}</div>
-                    <div style={{ fontSize: 10, color: '#4B5580' }}>Score: {borrower.credit_score || 750} / 1,000</div>
-                  </div>
-                </div>
-                <div style={{ height: 4, background: 'rgba(255,255,255,0.06)', borderRadius: 2, overflow: 'hidden' }}>
-                  <div style={{ height: '100%', width: (((borrower.credit_score || 750) - 300) / 700 * 100) + '%', background: 'linear-gradient(90deg,#EF4444,#F59E0B,#22C55E,#8B5CF6)', borderRadius: 2, transition: 'width 1.2s ease' }} />
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9, color: '#4B5580', marginTop: 4 }}>
-                  <span>300</span><span>750</span><span>1000 VIP</span>
-                </div>
+
+                {(() => {
+                  const score = borrower.credit_score || 750
+                  const currentBadge = getBadgeConfig(borrower.loyalty_badge || 'New')
+                  const nextBadgeIdx = BADGE_TIERS.findIndex(b => b.id === currentBadge.id) + 1
+                  const nextBadge = BADGE_TIERS[nextBadgeIdx] || null
+                  
+                  const scorePct = ((score - 300) / 700) * 100
+
+                  return (
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: 'rgba(255,255,255,0.03)', borderRadius: 12, border: '1px solid rgba(255,255,255,0.06)', marginBottom: 16 }}>
+                        <span style={{ fontSize: 18 }}>{currentBadge.emoji}</span>
+                        <div>
+                          <div style={{ fontSize: 12, fontWeight: 800, color: currentBadge.color, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{currentBadge.label}</div>
+                          <div style={{ fontSize: 11, color: '#4B5580' }}>Current Status</div>
+                        </div>
+                      </div>
+
+                      {nextBadge ? (
+                        <div style={{ marginTop: 12 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                              <span style={{ fontSize: 13, fontWeight: 700, color: '#CBD5F0' }}>Road to {nextBadge.label}</span>
+                              <span style={{ fontSize: 12 }}>{nextBadge.emoji}</span>
+                            </div>
+                            <span style={{ fontSize: 11, fontWeight: 800, color: nextBadge.color }}>{nextBadge.minScore - score} pts left</span>
+                          </div>
+                          <div style={{ height: 6, background: 'rgba(255,255,255,0.06)', borderRadius: 3, overflow: 'hidden', marginBottom: 12 }}>
+                            <div style={{ 
+                              height: '100%', 
+                              width: Math.min(100, Math.max(5, ((score - currentBadge.minScore) / (nextBadge.minScore - currentBadge.minScore)) * 100)) + '%', 
+                              background: `linear-gradient(90deg, ${currentBadge.color}, ${nextBadge.color})`, 
+                              borderRadius: 3, 
+                              transition: 'width 1s ease' 
+                            }} />
+                          </div>
+                          <div style={{ padding: '10px', background: `${nextBadge.color}08`, border: `1px solid ${nextBadge.color}15`, borderRadius: 10 }}>
+                            <div style={{ fontSize: 9, color: nextBadge.color, textTransform: 'uppercase', fontWeight: 800, letterSpacing: '0.05em', marginBottom: 4 }}>Next Perk Unlocked</div>
+                            <div style={{ fontSize: 11, color: '#CBD5F0', lineHeight: 1.4 }}>{nextBadge.desc}</div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div style={{ padding: '12px', background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.2)', borderRadius: 12, textAlign: 'center' }}>
+                          <div style={{ fontSize: 14, fontWeight: 800, color: '#8B5CF6' }}>👑 Maximum Rank!</div>
+                          <div style={{ fontSize: 11, color: '#a78bfa', marginTop: 4 }}>You've earned all VIP benefits.</div>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })()}
               </div>
 
               {/* Quick Actions */}
