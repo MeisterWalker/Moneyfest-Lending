@@ -25,7 +25,7 @@ const RISK_CONFIG = {
   High: { cls: 'badge-high' },
 }
 
-function BorrowerCard({ borrower, departments, onEdit, onDelete }) {
+function BorrowerCard({ borrower, departments, onEdit, onDelete, onGenerateCode }) {
   const [expanded, setExpanded] = useState(false)
   const dept = { name: borrower.department }
   const badge = BADGE_CONFIG[borrower.loyalty_badge] || BADGE_CONFIG.New
@@ -107,6 +107,12 @@ function BorrowerCard({ borrower, departments, onEdit, onDelete }) {
               <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Member Since</div>
               <div style={{ fontSize: 13, color: 'var(--text-label)' }}>{formatDate(borrower.created_at)}</div>
             </div>
+            
+            <div style={{ gridColumn: '1 / -1' }}>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>🎯 Loan Purpose</div>
+              <div style={{ fontSize: 13, color: 'var(--text-label)', fontWeight: 600 }}>{borrower.loan_purpose || "Not specified"}</div>
+            </div>
+
             {borrower.admin_notes && (
               <div style={{ gridColumn: '1 / -1' }}>
                 <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: 4 }}>
@@ -117,10 +123,7 @@ function BorrowerCard({ borrower, departments, onEdit, onDelete }) {
                 </div>
               </div>
             )}
-            <div style={{ gridColumn: '1 / -1' }}>
-              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>🎯 Loan Purpose</div>
-              <div style={{ fontSize: 13, color: 'var(--text-label)', fontWeight: 600 }}>{borrower.loan_purpose || "Not specified"}</div>
-            </div>
+            
             <div style={{ gridColumn: '1 / -1' }}>
               <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: 5 }}><img src="/padlock.png" alt="access" style={{ width: 13, height: 13, objectFit: 'contain' }} />Portal Access Code</div>
               {borrower.access_code ? (
@@ -145,7 +148,15 @@ function BorrowerCard({ borrower, departments, onEdit, onDelete }) {
                   </a>
                 </div>
               ) : (
-                <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>No access code assigned</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>No access code assigned</div>
+                  <button
+                    onClick={() => onGenerateCode(borrower)}
+                    style={{ background: 'var(--purple)', border: 'none', borderRadius: 7, padding: '6px 12px', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
+                  >
+                    Generate Code
+                  </button>
+                </div>
               )}
             </div>
           </div>
@@ -234,6 +245,9 @@ export default function BorrowersPage() {
       await logAudit({ action_type: 'BORROWER_EDITED', module: 'Borrower', description: `Borrower profile updated: ${form.full_name}${changeDesc}`, changed_by: user?.email })
       toast(`${form.full_name} updated successfully`, 'success')
     } else {
+      // Generate a random 7-character alphanumeric access code
+      const access_code = Math.random().toString(36).substring(2, 9).toUpperCase()
+
       // New borrower: ALWAYS hardcode credit_score=750, risk_score="Low"
       const { error } = await supabase.from('borrowers').insert({
         full_name: form.full_name,
@@ -250,7 +264,8 @@ export default function BorrowersPage() {
         risk_score: 'Low',
         loyalty_badge: 'New',
         loan_limit: 5000,
-        loan_limit_level: 1
+        loan_limit_level: 1,
+        access_code
       })
       if (error) { 
         console.error('Add borrower error:', error)
@@ -258,7 +273,7 @@ export default function BorrowersPage() {
         return 
       }
       await logAudit({ action_type: 'BORROWER_ADDED', module: 'Borrower', description: `New borrower added: ${form.full_name}`, changed_by: user?.email })
-      toast(`${form.full_name} added successfully`, 'success')
+      toast(`${form.full_name} added successfully (Code: ${access_code})`, 'success')
     }
     setModalOpen(false)
     setEditingBorrower(null)
@@ -289,7 +304,17 @@ export default function BorrowersPage() {
   }
 
   const openAdd = () => { setEditingBorrower(null); setModalOpen(true) }
-  const openEdit = (b) => { setEditingBorrower(b); setModalOpen(true) }
+  const openEdit = (b) => { setEditingBorrower(b); setModalOpen(true); setDeleteTarget(null) }
+
+  const handleGenerateCode = async (borrower) => {
+    const code = Math.random().toString(36).substring(2, 9).toUpperCase()
+    const { error } = await supabase.from('borrowers').update({ access_code: code }).eq('id', borrower.id)
+    if (error) { toast('Failed to generate code', 'error'); return }
+
+    await logAudit({ action_type: 'BORROWER_EDITED', module: 'Borrower', description: `Access code generated for ${borrower.full_name}: ${code}`, changed_by: user?.email })
+    toast(`Code generated for ${borrower.full_name}: ${code}`, 'success')
+    fetchData()
+  }
 
   const filtered = borrowers.filter(b =>
     b.full_name?.toLowerCase().includes(search.toLowerCase()) ||
@@ -349,6 +374,7 @@ export default function BorrowersPage() {
               departments={departments}
               onEdit={openEdit}
               onDelete={setDeleteTarget}
+              onGenerateCode={handleGenerateCode}
             />
           ))}
         </div>
