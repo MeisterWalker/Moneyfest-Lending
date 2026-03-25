@@ -8,7 +8,7 @@ import BorrowerModal from '../components/BorrowerModal'
 import {
   UserPlus, Search, Users, Trash2, Edit2,
   ChevronDown, ChevronUp, Phone, Mail,
-  CreditCard, Calendar, StickyNote
+  CreditCard, Calendar, StickyNote, MapPin
 } from 'lucide-react'
 import BorrowerAvatar from '../components/BorrowerAvatar'
 
@@ -214,7 +214,11 @@ export default function BorrowersPage() {
         // credit_score and risk_score are intentionally excluded
       }).eq('id', editingBorrower.id)
 
-      if (error) { toast('Failed to update borrower', 'error'); return }
+      if (error) { 
+        console.error('Update borrower error:', error)
+        toast('Failed to update: ' + error.message, 'error')
+        return 
+      }
       const editChanges = []
       if (editingBorrower.full_name !== form.full_name) editChanges.push('name')
       if (editingBorrower.department !== form.department) editChanges.push('department')
@@ -248,7 +252,11 @@ export default function BorrowersPage() {
         loan_limit: 5000,
         loan_limit_level: 1
       })
-      if (error) { toast('Failed to add borrower', 'error'); return }
+      if (error) { 
+        console.error('Add borrower error:', error)
+        toast('Failed to add: ' + error.message, 'error')
+        return 
+      }
       await logAudit({ action_type: 'BORROWER_ADDED', module: 'Borrower', description: `New borrower added: ${form.full_name}`, changed_by: user?.email })
       toast(`${form.full_name} added successfully`, 'success')
     }

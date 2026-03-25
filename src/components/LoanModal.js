@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { X, DollarSign, Calendar, Zap } from 'lucide-react'
+import { X, DollarSign, Calendar, Zap, FileText } from 'lucide-react'
 import { getNextCutoffDate, formatCurrency, getInstallmentDates, formatDateValue, getNumInstallments, QUICKLOAN_CONFIG, calcQuickLoanAccruedInterest, getQuickLoanDueDates } from '../lib/helpers'
 
 function getNextTwoCutoffs() {
