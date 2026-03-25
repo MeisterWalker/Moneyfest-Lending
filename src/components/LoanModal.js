@@ -33,6 +33,7 @@ export default function LoanModal({ isOpen, onClose, onSave, loan, borrower, bor
     loan_term: 2,
     release_date: formatDateValue(nextCutoff),
     agreement_confirmed: false,
+    loan_purpose: '',
     notes: ''
   })
   const [saving, setSaving] = useState(false)
@@ -48,6 +49,7 @@ export default function LoanModal({ isOpen, onClose, onSave, loan, borrower, bor
         loan_term: loan.loan_term || 2,
         release_date: loan.release_date || formatDateValue(nextCutoff),
         agreement_confirmed: loan.agreement_confirmed || false,
+        loan_purpose: loan.loan_purpose || '',
         notes: loan.notes || ''
       })
     } else if (prefill) {
@@ -59,6 +61,7 @@ export default function LoanModal({ isOpen, onClose, onSave, loan, borrower, bor
         loan_term: prefill.loan_term || 2,
         release_date: formatDateValue(nextCutoff),
         agreement_confirmed: false,
+        loan_purpose: prefill.loan_purpose || '',
         notes: ''
       })
     } else {
@@ -70,6 +73,7 @@ export default function LoanModal({ isOpen, onClose, onSave, loan, borrower, bor
         loan_term: 2,
         release_date: formatDateValue(nextCutoff),
         agreement_confirmed: false,
+        loan_purpose: '',
         notes: ''
       })
     }
@@ -122,6 +126,7 @@ export default function LoanModal({ isOpen, onClose, onSave, loan, borrower, bor
         installment_amount: qlDay15Total,
         due_date: day15 ? formatDateValue(day15) : null,
         remaining_balance: amount,
+        loan_purpose: form.loan_purpose,
         extension_fee_charged: false,
         status: 'Pending'
       }, isEdit)
@@ -138,6 +143,7 @@ export default function LoanModal({ isOpen, onClose, onSave, loan, borrower, bor
         installment_amount: installmentAmount,
         due_date: dueDate ? formatDateValue(dueDate) : formatDateValue(new Date()),
         remaining_balance: adjustedTotal,
+        loan_purpose: form.loan_purpose,
         status: 'Pending'
       }, isEdit)
     }
@@ -321,10 +327,16 @@ export default function LoanModal({ isOpen, onClose, onSave, loan, borrower, bor
             </div>
           </div>
 
-          {/* Notes */}
-          <div className="form-group">
-            <label className="form-label">Notes (optional)</label>
-            <textarea rows={2} placeholder="Any additional remarks..." value={form.notes} onChange={e => set('notes', e.target.value)} style={{ resize: 'vertical' }} />
+          {/* Purpose & Notes */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+            <div className="form-group">
+              <label className="form-label">Loan Purpose *</label>
+              <textarea rows={2} placeholder="e.g. Hospitalization, Tuition, etc." value={form.loan_purpose} onChange={e => set('loan_purpose', e.target.value)} style={{ resize: 'vertical' }} />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Notes (optional)</label>
+              <textarea rows={2} placeholder="Any additional remarks..." value={form.notes} onChange={e => set('notes', e.target.value)} style={{ resize: 'vertical' }} />
+            </div>
           </div>
 
           {/* Agreement */}

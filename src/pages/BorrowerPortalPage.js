@@ -427,6 +427,7 @@ export default function BorrowerPortalPage() {
         contact_number: borrower.contact_number,
         facebook_account: borrower.facebook_account,
         requested_amount: borrower.loan_limit_level === 4 ? 10000 : borrower.loan_limit_level === 3 ? 9000 : borrower.loan_limit_level === 2 ? 7000 : 5000,
+        loan_purpose: loan?.loan_purpose || '', // Carry over previous purpose
         status: 'Pending',
         is_fast_track: true, // Tagging it for admin
         borrower_id: borrower.id
@@ -1711,7 +1712,7 @@ export default function BorrowerPortalPage() {
                 <div className="loan-meta-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 10 }}>
                   {[
                     { label: 'Approved Amount', value: '₱' + Number(loan.loan_amount).toLocaleString('en-PH'), color: '#F0F4FF' },
-                    { label: 'You Received', value: '₱' + Number(loan.funds_released || loan.loan_amount * 0.9).toLocaleString('en-PH'), color: '#22C55E' },
+                    { label: 'Loan Purpose', value: loan.loan_purpose || 'Not specified', color: '#8B5CF6' },
                     { label: 'Security Hold', value: loan.security_hold > 0 ? `🔒 ₱${Number(loan.security_hold).toLocaleString('en-PH')}` : '—', color: '#F59E0B' },
                     { label: 'Per Installment', value: '₱' + Math.ceil(Number(loan.installment_amount)).toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#a78bfa' },
                   ].map((m, i) => (

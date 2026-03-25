@@ -9,7 +9,8 @@ export default function BorrowerModal({ isOpen, onClose, onSave, borrower, depar
     full_name: '', department: '', tenure_years: '',
     address: '', phone: '', email: '',
     admin_notes: '', photo_url: '',
-    building: ''
+    building: '',
+    loan_purpose: ''
   })
   const [saving, setSaving] = useState(false)
 
@@ -25,13 +26,21 @@ export default function BorrowerModal({ isOpen, onClose, onSave, borrower, depar
         email: borrower.email || '',
         admin_notes: borrower.admin_notes || '',
         photo_url: borrower.photo_url || '',
-        building: borrower.building || ''
+        building: borrower.building || '',
+        loan_purpose: borrower.loan_purpose || ''
       })
     } else {
       setForm({
-        full_name: '', department_id: departments[0]?.id || '',
-        tenure_years: '', address: '', phone: '', email: '',
-            admin_notes: '', photo_url: '', building: ''
+        full_name: '', 
+        department: '',
+        tenure_years: '', 
+        address: '', 
+        phone: '', 
+        email: '',
+        admin_notes: '', 
+        photo_url: '', 
+        building: '',
+        loan_purpose: ''
       })
     }
   }, [borrower, departments, isOpen])
@@ -87,10 +96,11 @@ export default function BorrowerModal({ isOpen, onClose, onSave, borrower, depar
           <div className="form-grid">
             <div className="form-group">
               <label className="form-label">Department *</label>
-              <select value={form.department} onChange={e => set('department', e.target.value)}>
-                <option value="">Select department</option>
-                {departments.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
-              </select>
+              <input 
+                placeholder="e.g. Minto Money, Greyhound..." 
+                value={form.department} 
+                onChange={e => set('department', e.target.value)} 
+              />
             </div>
             <div className="form-group">
               <label className="form-label">Assigned Building *</label>
@@ -137,6 +147,18 @@ export default function BorrowerModal({ isOpen, onClose, onSave, borrower, depar
           </div>
 
           {/* Trustee */}
+
+          {/* Loan Purpose */}
+          <div className="form-group">
+            <label className="form-label">🎯 Loan Purpose</label>
+            <textarea
+              rows={2}
+              placeholder="Reason for loan (e.g. Emergency, Education)..."
+              value={form.loan_purpose}
+              onChange={e => set('loan_purpose', e.target.value)}
+              style={{ resize: 'vertical' }}
+            />
+          </div>
 
           {/* Admin Notes */}
           <div className="form-group">

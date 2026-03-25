@@ -562,6 +562,7 @@ export default function ApplicationsPage() {
           status: 'Pending',
           security_hold: holdAmt,
           funds_released: released,
+          loan_purpose: app.loan_purpose,
           security_hold_returned: false
         })
 

@@ -360,9 +360,12 @@ function LoanCard({ loan: rawLoan, borrowers, applications, onEdit, onDelete, on
               : <><AlertTriangle size={13} /><span>Loan Agreement <strong>not yet signed</strong> by borrower — remind them to sign via portal</span></>
             }
           </div>
+          <div style={{ marginTop: 12, padding: '8px 12px', background: 'rgba(255,255,255,0.02)', borderRadius: 8, fontSize: 13, color: 'var(--text-label)' }}>
+            🎯 Purpose: <strong>{loan.loan_purpose || 'Not specified'}</strong>
+          </div>
           {loan.notes && (
             <div style={{ marginTop: 12, padding: '8px 12px', background: 'rgba(255,255,255,0.02)', borderRadius: 8, fontSize: 13, color: 'var(--text-label)' }}>
-              📝 {loan.notes}
+              📝 Notes: {loan.notes}
             </div>
           )}
         </div>
@@ -525,6 +528,7 @@ export default function LoansPage() {
         interest_rate: form.interest_rate,
         total_repayment: form.total_repayment,
         installment_amount: form.installment_amount,
+        loan_purpose: form.loan_purpose,
         notes: form.notes,
         updated_at: new Date().toISOString()
       }).eq('id', editingLoan.id)
@@ -558,6 +562,7 @@ export default function LoansPage() {
         payments_made: 0,
         status: 'Pending',
         agreement_confirmed: form.agreement_confirmed,
+        loan_purpose: form.loan_purpose,
         notes: form.notes,
         security_hold: form.loan_type === 'quickloan' ? 0 : hold,
         funds_released: form.loan_type === 'quickloan' ? form.loan_amount : released,

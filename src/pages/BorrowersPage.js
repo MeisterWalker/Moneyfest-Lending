@@ -118,6 +118,10 @@ function BorrowerCard({ borrower, departments, onEdit, onDelete }) {
               </div>
             )}
             <div style={{ gridColumn: '1 / -1' }}>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>🎯 Loan Purpose</div>
+              <div style={{ fontSize: 13, color: 'var(--text-label)', fontWeight: 600 }}>{borrower.loan_purpose || "Not specified"}</div>
+            </div>
+            <div style={{ gridColumn: '1 / -1' }}>
               <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: 5 }}><img src="/padlock.png" alt="access" style={{ width: 13, height: 13, objectFit: 'contain' }} />Portal Access Code</div>
               {borrower.access_code ? (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -205,6 +209,7 @@ export default function BorrowersPage() {
         admin_notes: form.admin_notes,
         photo_url: form.photo_url || null,
         building: form.building || '',
+        loan_purpose: form.loan_purpose || '',
         updated_at: new Date().toISOString()
         // credit_score and risk_score are intentionally excluded
       }).eq('id', editingBorrower.id)
@@ -236,6 +241,7 @@ export default function BorrowersPage() {
         admin_notes: form.admin_notes,
         photo_url: form.photo_url || null,
         building: form.building || '',
+        loan_purpose: form.loan_purpose || '',
         credit_score: 750,
         risk_score: 'Low',
         loyalty_badge: 'New',
