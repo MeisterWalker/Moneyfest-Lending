@@ -295,11 +295,11 @@ export default function AssessmentForm() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <div style={{ fontFamily: 'Space Grotesk', fontWeight: 900, fontSize: 32, color: recColor.text }}>{score.pct}%</div>
           <div>
-            <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700 }}>Auto Score</div>
+            <div style={{ fontSize: 11, color: '#8B9CC7', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700 }}>Auto Score</div>
             <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 16, color: recColor.text }}>{score.recommendation}</div>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 24, fontSize: 12, color: 'var(--text-muted)' }}>
+        <div style={{ display: 'flex', gap: 24, fontSize: 12, color: '#8B9CC7' }}>
           <div><strong style={{ color: 'var(--text-primary)' }}>{Object.keys(answers).length}</strong> / {CATEGORIES.reduce((s, c) => s + c.questions.length, 0)} Questions</div>
           <div><strong style={{ color: '#EF4444' }}>{declineFlags.length}</strong> Decline Flags</div>
           <div><strong style={{ color: '#F59E0B' }}>{cautionFlags.length}</strong> Caution Flags</div>
@@ -346,7 +346,7 @@ export default function AssessmentForm() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
           {CATEGORIES.map(cat => (
             <div key={cat.id}>
-              <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 16 }}>
+              <div style={{ fontSize: 11, fontWeight: 800, color: '#8B9CC7', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 16 }}>
                 Category — {cat.title}
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -357,7 +357,7 @@ export default function AssessmentForm() {
                       <div style={{ padding: '3px 10px', borderRadius: 6, background: q.label === 'PHONE' ? 'rgba(34,197,94,0.15)' : 'rgba(99,102,241,0.15)', fontSize: 10, fontWeight: 800, color: q.label === 'PHONE' ? '#22C55E' : '#6366F1', display: 'flex', alignItems: 'center', gap: 4 }}>
                         {q.label === 'PHONE' ? <Phone size={10} /> : <MessageSquare size={10} />} {q.label}
                       </div>
-                      <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 700 }}>Q{qi + 1}</span>
+                      <span style={{ fontSize: 11, color: '#8B9CC7', fontWeight: 700 }}>Q{qi + 1}</span>
                     </div>
                     
                     {/* Question text */}
@@ -366,7 +366,7 @@ export default function AssessmentForm() {
                     </div>
                     
                     {/* Guide note */}
-                    <div style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.5, marginBottom: 16, fontStyle: 'italic', padding: '10px 14px', background: 'rgba(255,255,255,0.02)', borderRadius: 8, borderLeft: '3px solid rgba(99,102,241,0.3)' }}>
+                    <div style={{ fontSize: 12, color: '#9BAFD4', lineHeight: 1.5, marginBottom: 16, fontStyle: 'italic', padding: '10px 14px', background: 'rgba(99,102,241,0.06)', borderRadius: 8, borderLeft: '3px solid rgba(99,102,241,0.4)' }}>
                       {q.guide}
                     </div>
 
@@ -383,7 +383,7 @@ export default function AssessmentForm() {
                               flex: 1, minWidth: 180, padding: '10px 14px', borderRadius: 10,
                               border: `1.5px solid ${isSelected ? color : 'rgba(255,255,255,0.08)'}`,
                               background: isSelected ? `${color}15` : 'rgba(255,255,255,0.02)',
-                              color: isSelected ? color : 'var(--text-muted)',
+                              color: isSelected ? color : '#9BAFD4',
                               fontSize: 12, fontWeight: 700, cursor: 'pointer', transition: 'all 0.15s',
                               textAlign: 'left', display: 'flex', alignItems: 'center', gap: 8
                             }}
@@ -422,6 +422,7 @@ export default function AssessmentForm() {
             <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 16 }}>
               In-House Specific — Automatic Decline Flags
             </div>
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {AUTO_DECLINE_FLAGS.map(flag => {
                 const isChecked = declineFlags.includes(flag.id)
@@ -440,7 +441,7 @@ export default function AssessmentForm() {
                     </div>
                     <div style={{ flex: 1 }}>
                       <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 14, color: isChecked ? '#EF4444' : 'var(--text-primary)', marginBottom: 4 }}>{flag.title}</div>
-                      <div style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.5 }}>{flag.desc}</div>
+                      <div style={{ fontSize: 12, color: '#9BAFD4', lineHeight: 1.5 }}>{flag.desc}</div>
                     </div>
                     <div style={{ width: 22, height: 22, borderRadius: 6, border: `2px solid ${isChecked ? '#EF4444' : 'rgba(255,255,255,0.15)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2 }}>
                       {isChecked && <CheckCircle2 size={14} color="#EF4444" />}
@@ -456,6 +457,7 @@ export default function AssessmentForm() {
             <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 16 }}>
               Proceed with Caution
             </div>
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {CAUTION_FLAGS.map(flag => {
                 const isChecked = cautionFlags.includes(flag.id)
@@ -493,21 +495,21 @@ export default function AssessmentForm() {
           
           {/* Big Result Card */}
           <div style={{ background: 'linear-gradient(135deg, #141B2D, #0B0F1A)', border: `2px solid ${recColor.border}`, borderRadius: 24, padding: 40, textAlign: 'center' }}>
-            <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.15em', fontWeight: 700, marginBottom: 8 }}>Final Assessment Result</div>
+            <div style={{ fontSize: 11, color: '#8B9CC7', textTransform: 'uppercase', letterSpacing: '0.15em', fontWeight: 700, marginBottom: 8 }}>Final Assessment Result</div>
             <div style={{ fontFamily: 'Space Grotesk', fontWeight: 900, fontSize: 72, color: recColor.text, lineHeight: 1 }}>{score.pct}%</div>
             <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 24, color: recColor.text, marginTop: 8, marginBottom: 24 }}>{score.recommendation}</div>
             
             <div style={{ display: 'flex', justifyContent: 'center', gap: 40 }}>
               <div>
-                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>Raw Score</div>
+                <div style={{ fontSize: 11, color: '#8B9CC7', marginBottom: 4 }}>Raw Score</div>
                 <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 20, color: 'var(--text-primary)' }}>{score.total}/{score.max}</div>
               </div>
               <div>
-                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>Decline Flags</div>
+                <div style={{ fontSize: 11, color: '#8B9CC7', marginBottom: 4 }}>Decline Flags</div>
                 <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 20, color: declineFlags.length > 0 ? '#EF4444' : 'var(--text-primary)' }}>{declineFlags.length}</div>
               </div>
               <div>
-                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>Caution Flags</div>
+                <div style={{ fontSize: 11, color: '#8B9CC7', marginBottom: 4 }}>Caution Flags</div>
                 <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 20, color: cautionFlags.length > 0 ? '#F59E0B' : 'var(--text-primary)' }}>{cautionFlags.length}</div>
               </div>
             </div>
@@ -527,15 +529,15 @@ export default function AssessmentForm() {
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
                     <div style={{ width: 8, height: 8, borderRadius: '50%', background: r.color }} />
                     <span style={{ fontWeight: 800, fontSize: 13, color: r.color }}>{r.range}</span>
-                    <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>— {r.label}</span>
+                    <span style={{ fontSize: 12, color: '#9BAFD4' }}>— {r.label}</span>
                   </div>
-                  <div style={{ fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.4 }}>{r.desc}</div>
+                  <div style={{ fontSize: 11, color: '#9BAFD4', lineHeight: 1.4 }}>{r.desc}</div>
                 </div>
               ))}
             </div>
             
             <div style={{ marginTop: 16, padding: '12px 16px', borderRadius: 10, background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.5 }}>
-              <strong style={{ color: '#EF4444' }}>Auto-Decline Rule:</strong> If ANY "Automatic Decline Flag" is checked, the recommendation is automatically set to <strong>Rejected</strong> regardless of the interview score.
+              <strong style={{ color: '#EF4444' }}>Auto-Decline Rule:</strong> <span style={{ color: '#9BAFD4' }}>If ANY "Automatic Decline Flag" is checked, the recommendation is automatically set to</span> <strong>Rejected</strong> <span style={{ color: '#9BAFD4' }}>regardless of the interview score.</span>
             </div>
           </div>
 
