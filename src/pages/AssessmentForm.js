@@ -325,30 +325,18 @@ export default function AssessmentForm() {
       {activeTab === 'script' && (
         <div style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)', borderRadius: 20, padding: 32 }}>
           <Section title="Phone Opening">
-            <ScriptBlock label="CALL OPENER">
-              "Hi <b>[Name]</b>! This is <b>[Your Name]</b> from Moneyfest Lending. I'm calling about your loan application — do you have about 5 to 10 minutes to chat?"
-            </ScriptBlock>
-            <ScriptBlock label="IF THEY SEEM NERVOUS">
-              "Don't worry — this is just a quick friendly check-in, not an interrogation! We just want to make sure we get you the right loan setup. Everything is confidential and separate from your employment record."
-            </ScriptBlock>
-            <ScriptBlock label="TRANSITION INTO QUESTIONS">
-              "Great! So I just have a few quick questions — nothing too formal. It helps us process your application faster and make sure the terms work for you. Ready to go?"
-            </ScriptBlock>
+            <ScriptBlock label="CALL OPENER" html={`"Hi <b>[Name]</b>! This is <b>[Your Name]</b> from Moneyfest Lending. I'm calling about your loan application — do you have about 5 to 10 minutes to chat?"`} />
+            <ScriptBlock label="IF THEY SEEM NERVOUS" html={`"Don't worry — this is just a quick friendly check-in, not an interrogation! We just want to make sure we get you the right loan setup. Everything is confidential and separate from your employment record."`} />
+            <ScriptBlock label="TRANSITION INTO QUESTIONS" html={`"Great! So I just have a few quick questions — nothing too formal. It helps us process your application faster and make sure the terms work for you. Ready to go?"`} />
           </Section>
 
           <Section title="Chat / Messenger Opening">
-            <ScriptBlock label="FIRST MESSAGE">
-              "Hi <b>[Name]</b>! This is <b>[Your Name]</b> from Moneyfest Lending. We received your loan application — just need to ask a few quick questions before we proceed. Is now a good time?"
-            </ScriptBlock>
-            <ScriptBlock label="NO RESPONSE AFTER 24 HOURS">
-              "Hi <b>[Name]</b>, just following up on your Moneyfest loan application. We'd love to move it forward — let us know when you're free to answer a few quick questions. No rush!"
-            </ScriptBlock>
+            <ScriptBlock label="FIRST MESSAGE" html={`"Hi <b>[Name]</b>! This is <b>[Your Name]</b> from Moneyfest Lending. We received your loan application — just need to ask a few quick questions before we proceed. Is now a good time?"`} />
+            <ScriptBlock label="NO RESPONSE AFTER 24 HOURS" html={`"Hi <b>[Name]</b>, just following up on your Moneyfest loan application. We'd love to move it forward — let us know when you're free to answer a few quick questions. No rush!"`} />
           </Section>
 
           <Section title="Closing the Call / Chat">
-            <ScriptBlock label="CLOSING">
-              "Thanks so much, <b>[Name]</b>! That's everything we need. We'll review your application and get back to you within <b>[X business days]</b>. If you have any questions in the meantime, feel free to reach out anytime."
-            </ScriptBlock>
+            <ScriptBlock label="CLOSING" html={`"Thanks so much, <b>[Name]</b>! That's everything we need. We'll review your application and get back to you within <b>[X business days]</b>. If you have any questions in the meantime, feel free to reach out anytime."`} />
           </Section>
         </div>
       )}
@@ -587,13 +575,11 @@ function Section({ title, children }) {
   )
 }
 
-function ScriptBlock({ label, children }) {
+function ScriptBlock({ label, html }) {
   return (
     <div style={{ padding: '14px 18px', borderRadius: 12, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
       <div style={{ fontSize: 10, fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>{label}</div>
-      <div style={{ fontSize: 14, color: 'var(--text-primary)', lineHeight: 1.6 }} dangerouslySetInnerHTML={{ __html: typeof children === 'string' ? children : '' }}>
-        {typeof children !== 'string' ? children : undefined}
-      </div>
+      <div style={{ fontSize: 14, color: 'var(--text-primary)', lineHeight: 1.6 }} dangerouslySetInnerHTML={{ __html: html }} />
     </div>
   )
 }
