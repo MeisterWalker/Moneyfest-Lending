@@ -114,7 +114,6 @@ export function BorrowerAvatar({ name = '', photoUrl = null, size = 46, editable
 
     if (error) {
       console.error('Storage upload error:', error)
-      alert('Upload failed: ' + error.message)
       // Fallback: use local object URL if storage not set up (will disappear on refresh)
       const localUrl = URL.createObjectURL(file)
       onPhotoChange && onPhotoChange(localUrl)

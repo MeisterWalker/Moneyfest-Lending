@@ -16,14 +16,10 @@ import PublicApplyPage from './pages/PublicApplyPage'
 import BorrowerPortalPage from './pages/BorrowerPortalPage'
 import FAQPage from './pages/FAQPage'
 import LoginLogsPage from './pages/LoginLogsPage'
-import ApprovalsPage from './pages/ApprovalsPage'
-import HomePage from './pages/HomePage'
-import PrivacyPage from './pages/PrivacyPage'
-import InvestorPitchPage from './pages/InvestorPitchPage'
-import TermsPage from './pages/TermsPage'
-import ContactPage from './pages/ContactPage'
 import PartnersPage from './pages/PartnersPage'
 import InvestorDashboard from './pages/InvestorDashboard'
+import AssessmentPage from './pages/AssessmentPage'
+import AssessmentForm from './pages/AssessmentForm'
 import NotificationBell from './components/NotificationBell'
 import { useAutoLogout } from './hooks/useAutoLogout'
 import { useEffect, useState } from 'react'
@@ -82,6 +78,8 @@ function AppRoutes() {
       <Route path="/admin/audit"        element={<ProtectedRoute><AppLayout><AuditPage /></AppLayout></ProtectedRoute>} />
       <Route path="/admin/settings"     element={<ProtectedRoute><AppLayout><SettingsPage /></AppLayout></ProtectedRoute>} />
       <Route path="/admin/applications" element={<ProtectedRoute><AppLayout><ApplicationsPage /></AppLayout></ProtectedRoute>} />
+      <Route path="/admin/assessments"  element={<ProtectedRoute><AppLayout><AssessmentPage /></AppLayout></ProtectedRoute>} />
+      <Route path="/admin/assessment/:id" element={<ProtectedRoute><AppLayout><AssessmentForm /></AppLayout></ProtectedRoute>} />
       <Route path="/admin/login-logs"    element={<ProtectedRoute><AppLayout><LoginLogsPage /></AppLayout></ProtectedRoute>} />
       <Route path="/admin/approvals"     element={<ProtectedRoute><AppLayout><ApprovalsPage /></AppLayout></ProtectedRoute>} />
       <Route path="/privacy"           element={<PrivacyPage />} />

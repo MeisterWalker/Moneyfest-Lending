@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext'
 import { useToast } from '../components/Toast'
 import { logAudit } from '../lib/helpers'
 import { sendApplicationApprovedEmail, sendApplicationRejectedEmail } from '../lib/emailService'
-import { ClipboardList, Check, X, Clock, ChevronDown, ChevronUp, User, Phone, Mail, MapPin, Users, DollarSign, ExternalLink, Image } from 'lucide-react'
+import { ClipboardList, Check, X, Clock, ChevronDown, ChevronUp, User, Phone, Mail, MapPin, Users, DollarSign, ExternalLink, Image, Brain } from 'lucide-react'
 
 const STATUS_COLORS = {
   Pending: { bg: 'rgba(245,158,11,0.1)', border: 'rgba(245,158,11,0.3)', text: '#F59E0B' },
@@ -109,6 +109,11 @@ function ApplicationCard({ app, onApprove, onReject }) {
         <div style={{ padding: '4px 12px', borderRadius: 20, background: s.bg, border: `1px solid ${s.border}`, fontSize: 12, fontWeight: 700, color: s.text, flexShrink: 0 }}>
           {app.status}
         </div>
+        {app.assessment_recommendation && (
+          <div style={{ padding: '4px 12px', borderRadius: 20, background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.3)', fontSize: 11, fontWeight: 800, color: 'var(--blue)', flexShrink: 0 }}>
+            ★ {app.assessment_recommendation}
+          </div>
+        )}
         {expanded ? <ChevronUp size={16} color="#4B5580" /> : <ChevronDown size={16} color="#4B5580" />}
       </div>
 
@@ -217,7 +222,13 @@ function ApplicationCard({ app, onApprove, onReject }) {
 
           {/* Actions for pending */}
           {app.status === 'Pending' && (
-            <div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={{ display: 'flex', gap: 10 }}>
+                <a href={`/admin/assessment/${app.id}`} style={{ flex: 1, padding: '11px', borderRadius: 10, border: '1px solid rgba(139,92,246,0.3)', background: 'rgba(139,92,246,0.08)', color: '#a78bfa', fontSize: 14, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, textDecoration: 'none' }}>
+                  <Brain size={15} /> {app.assessment_id ? 'Review Assessment' : 'Start Character Check'}
+                </a>
+              </div>
+              
               {!showRejectInput ? (
                 <div style={{ display: 'flex', gap: 10 }}>
                   <button onClick={handleApprove} disabled={loading} style={{ flex: 1, padding: '11px', borderRadius: 10, border: 'none', background: 'rgba(34,197,94,0.15)', color: '#22C55E', fontSize: 14, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, border: '1px solid rgba(34,197,94,0.3)' }}>
@@ -464,7 +475,7 @@ export default function ApplicationsPage() {
   const { toast } = useToast()
 
   const fetchData = useCallback(async () => {
-    const { data } = await supabase.from('applications').select('*').order('created_at', { ascending: false })
+    const { data } = await supabase.from('application_with_assessment').select('*').order('created_at', { ascending: false })
     setApplications(data || [])
     setLoading(false)
   }, [])
