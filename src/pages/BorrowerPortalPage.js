@@ -1685,10 +1685,43 @@ export default function BorrowerPortalPage() {
                 <div style={{ position: 'absolute', top: -60, right: -60, width: 240, height: 240, borderRadius: '50%', background: 'radial-gradient(circle,rgba(99,102,241,0.06),transparent)', pointerEvents: 'none' }} />
 
                 <div style={{ marginBottom: 20 }}>
-                  <div style={{ fontSize: 11, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 6, fontWeight: 700 }}>Remaining Balance</div>
-                  <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 44, color: loan.status === 'Paid' ? '#22C55E' : '#F0F4FF', lineHeight: 1, letterSpacing: -2, marginBottom: 10 }}>
-                    ₱{Number(loan.remaining_balance).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
-                  </div>
+                  {(() => {
+                    const isQL = loan.loan_type === 'quickloan'
+                    if (isQL) {
+                      const principal = Number(loan.loan_amount)
+                      const releaseDate = loan.release_date ? (() => { const [y,m,d] = loan.release_date.split('-').map(Number); return new Date(y,m-1,d) })() : null
+                      const daysElapsed = releaseDate && loan.status !== 'Pending' ? Math.max(0, Math.floor((new Date() - releaseDate) / 86400000)) : 0
+                      const dailyInterest = parseFloat((principal * 0.1 / 30).toFixed(2))
+                      const accrued = parseFloat((dailyInterest * daysElapsed).toFixed(2))
+                      const extensionFee = loan.extension_fee_charged ? 100 : 0
+                      const penaltyDays = Math.max(0, daysElapsed - 30)
+                      const penalty = penaltyDays * 25
+                      const liveTotal = loan.status === 'Paid' ? 0 : parseFloat((principal + accrued + extensionFee + penalty).toFixed(2))
+                      const phase = daysElapsed > 30 ? 'penalty' : daysElapsed > 15 ? 'extended' : 'active'
+                      const balColor = loan.status === 'Paid' ? '#22C55E' : phase === 'penalty' ? '#EF4444' : phase === 'extended' ? '#F59E0B' : '#F0F4FF'
+                      return (
+                        <>
+                          <div style={{ fontSize: 11, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 6, fontWeight: 700 }}>
+                            {loan.status === 'Pending' ? 'Loan Amount' : 'Total Owed Today'}
+                          </div>
+                          <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 44, color: balColor, lineHeight: 1, letterSpacing: -2, marginBottom: 10 }}>
+                            ₱{(loan.status === 'Pending' ? principal : liveTotal).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
+                          </div>
+                          {loan.status !== 'Pending' && daysElapsed > 0 && (
+                            <div style={{ fontSize: 11, color: '#7A8AAA', marginBottom: 8 }}>₱{principal.toLocaleString('en-PH')} principal + ₱{accrued.toFixed(2)} interest ({daysElapsed}d)</div>
+                          )}
+                        </>
+                      )
+                    }
+                    return (
+                      <>
+                        <div style={{ fontSize: 11, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 6, fontWeight: 700 }}>Remaining Balance</div>
+                        <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 44, color: loan.status === 'Paid' ? '#22C55E' : '#F0F4FF', lineHeight: 1, letterSpacing: -2, marginBottom: 10 }}>
+                          ₱{Number(loan.remaining_balance).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
+                        </div>
+                      </>
+                    )
+                  })()}
                   <StatusBadge status={loan.status} />
                 </div>
 
