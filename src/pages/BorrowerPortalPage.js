@@ -47,11 +47,19 @@ function StatusBadge({ status }) {
   )
 }
 
-function UploadModal({ installmentNum, loan, borrower, onClose, onUploaded }) {
+function UploadModal({ installmentNum, loan, borrower, onClose, onUploaded, qlPaymentType }) {
   const [file, setFile] = useState(null)
-  const [notes, setNotes] = useState('')
+  const defaultNote = qlPaymentType === 'interest_only'
+    ? '[INTEREST ONLY — Day 15] Paying accrued 15-day interest + ₱100 extension fee. Principal rolls to Day 30.'
+    : qlPaymentType === 'full_payoff'
+    ? '[FULL PAY-OFF] Settling full outstanding balance (principal + all accrued interest).'
+    : ''
+  const [notes, setNotes] = useState(defaultNote)
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState('')
+
+  const isQL = !!qlPaymentType
+  const accentColor = qlPaymentType === 'full_payoff' ? '#22C55E' : qlPaymentType === 'interest_only' ? '#F59E0B' : '#22C55E'
 
   const handleUpload = async () => {
     if (!file) { setError('Please select a file'); return }
@@ -73,31 +81,48 @@ function UploadModal({ installmentNum, loan, borrower, onClose, onUploaded }) {
     await supabase.from('portal_notifications').insert({
       borrower_id: borrower.id, type: 'payment_submitted',
       title: '✅ Proof Submitted',
-      message: `Your payment proof for installment ${installmentNum} has been submitted and is awaiting admin review.`
+      message: isQL
+        ? (qlPaymentType === 'interest_only'
+            ? 'Your Day 15 interest payment proof has been submitted and is awaiting admin review.'
+            : 'Your QuickLoan full pay-off proof has been submitted and is awaiting admin review.')
+        : `Your payment proof for installment ${installmentNum} has been submitted and is awaiting admin review.`
     })
     setUploading(false)
     onUploaded()
   }
 
+  const typeLabel = qlPaymentType === 'full_payoff'
+    ? '⚡ Full Pay-Off'
+    : qlPaymentType === 'interest_only'
+    ? '📅 Interest Only (Day 15)'
+    : `Installment ${installmentNum}`
+
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20 }}>
-      <div style={{ width: '100%', maxWidth: 440, background: '#0E1320', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 20, overflow: 'hidden', boxShadow: '0 40px 80px rgba(0,0,0,0.6)' }}>
+      <div style={{ width: '100%', maxWidth: 440, background: '#0E1320', border: `1px solid ${accentColor}30`, borderRadius: 20, overflow: 'hidden', boxShadow: '0 40px 80px rgba(0,0,0,0.6)' }}>
         <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
             <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 16, color: '#F0F4FF' }}>Upload Payment Proof</div>
-            <div style={{ fontSize: 12, color: '#4B5580', marginTop: 2 }}>Installment {installmentNum}</div>
+            <div style={{ fontSize: 12, color: accentColor, marginTop: 2, fontWeight: 700 }}>{typeLabel}</div>
           </div>
           <button onClick={onClose} style={{ width: 32, height: 32, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: '#7A8AAA', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
         </div>
         <div style={{ padding: 24 }}>
+          {isQL && (
+            <div style={{ marginBottom: 14, padding: '10px 14px', background: qlPaymentType === 'full_payoff' ? 'rgba(34,197,94,0.06)' : 'rgba(245,158,11,0.06)', border: `1px solid ${accentColor}30`, borderRadius: 10, fontSize: 12, color: accentColor, lineHeight: 1.6 }}>
+              {qlPaymentType === 'full_payoff'
+                ? '💚 Upload proof of your full balance payment (principal + all accrued interest). Admin will mark your loan as fully paid.'
+                : '⚠️ Upload proof of your 15-day interest + ₱100 extension fee payment. Your principal rolls over to Day 30.'}
+            </div>
+          )}
           <label style={{
-            display: 'block', border: `2px dashed ${file ? '#22C55E' : 'rgba(255,255,255,0.1)'}`,
+            display: 'block', border: `2px dashed ${file ? accentColor : 'rgba(255,255,255,0.1)'}`,
             borderRadius: 14, padding: '28px 20px', textAlign: 'center', cursor: 'pointer',
-            background: file ? 'rgba(34,197,94,0.05)' : 'rgba(255,255,255,0.02)', marginBottom: 14, transition: 'all 0.2s'
+            background: file ? `${accentColor}08` : 'rgba(255,255,255,0.02)', marginBottom: 14, transition: 'all 0.2s'
           }}>
             <input type="file" accept="image/*,.pdf" onChange={e => setFile(e.target.files[0])} style={{ display: 'none' }} />
             <div style={{ fontSize: 28, marginBottom: 8 }}>{file ? '✅' : '📎'}</div>
-            <div style={{ fontSize: 13, color: file ? '#22C55E' : '#7A8AAA', fontWeight: 600 }}>
+            <div style={{ fontSize: 13, color: file ? accentColor : '#7A8AAA', fontWeight: 600 }}>
               {file ? file.name : 'Click to select screenshot or PDF'}
             </div>
             <div style={{ fontSize: 11, color: '#4B5580', marginTop: 4 }}>JPG, PNG, PDF · Max 5MB</div>
@@ -108,7 +133,7 @@ function UploadModal({ installmentNum, loan, borrower, onClose, onUploaded }) {
           <div style={{ display: 'flex', gap: 10 }}>
             <button onClick={onClose} style={{ flex: 1, padding: '12px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.08)', background: 'transparent', color: '#7A8AAA', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
             <button onClick={handleUpload} disabled={uploading || !file}
-              style={{ flex: 2, padding: '12px', borderRadius: 10, border: 'none', background: uploading ? 'rgba(34,197,94,0.3)' : 'linear-gradient(135deg,#22C55E,#16a34a)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: uploading ? 'not-allowed' : 'pointer', fontFamily: 'Syne, sans-serif' }}>
+              style={{ flex: 2, padding: '12px', borderRadius: 10, border: 'none', background: uploading ? `${accentColor}50` : `linear-gradient(135deg,${accentColor},${accentColor}CC)`, color: qlPaymentType === 'interest_only' ? '#000' : '#fff', fontSize: 13, fontWeight: 700, cursor: uploading ? 'not-allowed' : 'pointer', fontFamily: 'Syne, sans-serif' }}>
               {uploading ? 'Uploading...' : '⬆ Submit Proof'}
             </button>
           </div>
@@ -389,6 +414,7 @@ export default function BorrowerPortalPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [uploadModal, setUploadModal] = useState(null)
+  const [qlPaymentType, setQlPaymentType] = useState(null) // 'interest_only' | 'full_payoff'
   const [showSignModal, setShowSignModal] = useState(false)
   const [signatureData, setSignatureData] = useState(null)
   const [typedName, setTypedName] = useState('')
@@ -1900,10 +1926,20 @@ export default function BorrowerPortalPage() {
                         {(loan.status === 'Active' || loan.status === 'Partially Paid') && (
                           hasProof
                             ? <div style={{ padding: '10px 14px', borderRadius: 10, background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.2)', fontSize: 12, color: '#F59E0B', fontWeight: 600, textAlign: 'center' }}>⏳ Payment proof pending admin review</div>
-                            : <button onClick={() => setUploadModal(1)} className="upload-btn"
-                                style={{ width: '100%', padding: '11px', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#22C55E,#16a34a)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Syne, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-                                ⬆ Upload Pay-Off Proof
-                              </button>
+                            : <div style={{ display: 'flex', gap: 10 }}>
+                                {/* Pay Interest Only — only shows before Day 30, when extension NOT yet charged */}
+                                {!loan.extension_fee_charged && (
+                                  <button onClick={() => { setQlPaymentType('interest_only'); setUploadModal(1) }}
+                                    style={{ flex: 1, padding: '10px 8px', borderRadius: 10, border: '1px solid rgba(245,158,11,0.35)', background: 'rgba(245,158,11,0.08)', color: '#F59E0B', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'Syne, sans-serif' }}>
+                                    📅 Pay Interest<br/><span style={{ fontSize: 10, fontWeight: 500, opacity: 0.8 }}>Day 15 only</span>
+                                  </button>
+                                )}
+                                {/* Full Pay-Off */}
+                                <button onClick={() => { setQlPaymentType('full_payoff'); setUploadModal(1) }} className="upload-btn"
+                                  style={{ flex: loan.extension_fee_charged ? 1 : 1, padding: '10px 8px', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#22C55E,#16a34a)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'Syne, sans-serif' }}>
+                                  ⚡ Full Pay-Off<br/><span style={{ fontSize: 10, fontWeight: 500, opacity: 0.85 }}>Settle everything</span>
+                                </button>
+                              </div>
                         )}
                       </div>
                     </div>
@@ -2316,7 +2352,7 @@ export default function BorrowerPortalPage() {
         <SignatureModal borrower={borrower} loan={loan} onSave={handleSaveSignature} onClose={() => setShowSignModal(false)} />
       )}
       {uploadModal && (
-        <UploadModal installmentNum={uploadModal} loan={loan} borrower={borrower} onClose={() => setUploadModal(null)} onUploaded={handleUploaded} />
+        <UploadModal installmentNum={uploadModal} loan={loan} borrower={borrower} qlPaymentType={qlPaymentType} onClose={() => { setUploadModal(null); setQlPaymentType(null) }} onUploaded={handleUploaded} />
       )}
     </div>
   )
