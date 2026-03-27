@@ -353,9 +353,9 @@ export default function DashboardPage() {
 
   // ── Computed stats ──────────────────────────────────────────
   const capital = settings?.starting_capital || 30000
-  const activeLoans = loans.filter(l => ['Active', 'Partially Paid'].includes(l.status))
+  const activeLoans = loans.filter(l => ['Active', 'Partially Paid'].includes(l.status) && l.loan_type !== 'quickloan')
   const amountLentOut = activeLoans.reduce((sum, l) => sum + (l.loan_amount || 0), 0)
-  const paidLoans = loans.filter(l => l.status === 'Paid')
+  const paidLoans = loans.filter(l => l.status === 'Paid' && l.loan_type !== 'quickloan')
 
   // Total profit = fully paid loans interest + interest earned so far on active loans
   const paidProfit = paidLoans.reduce((sum, l) => sum + ((l.total_repayment || 0) - (l.loan_amount || 0)), 0)
@@ -391,7 +391,7 @@ export default function DashboardPage() {
     return days > 30
   }).length
 
-  const defaultedLoans = loans.filter(l => l.status === 'Defaulted')
+  const defaultedLoans = loans.filter(l => l.status === 'Defaulted' && l.loan_type !== 'quickloan')
   const defaultRate = loans.length > 0 ? (defaultedLoans.length / loans.length) * 100 : 0
   const availableLiquidity = capital - amountLentOut
   const roi = capital > 0 ? (totalProfit / capital) * 100 : 0
@@ -478,8 +478,8 @@ export default function DashboardPage() {
   const donutData = [
     { name: 'Active', value: activeLoans.length, color: 'var(--blue)' },
     { name: 'Paid', value: paidLoans.length, color: 'var(--green)' },
-    { name: 'Pending', value: loans.filter(l => l.status === 'Pending').length, color: 'var(--gray)' },
-    { name: 'Overdue', value: loans.filter(l => l.status === 'Overdue').length, color: 'var(--gold)' },
+    { name: 'Pending', value: loans.filter(l => l.status === 'Pending' && l.loan_type !== 'quickloan').length, color: 'var(--gray)' },
+    { name: 'Overdue', value: loans.filter(l => l.status === 'Overdue' && l.loan_type !== 'quickloan').length, color: 'var(--gold)' },
     { name: 'Defaulted', value: defaultedLoans.length, color: 'var(--red)' },
   ].filter(d => d.value > 0)
 
@@ -534,10 +534,10 @@ export default function DashboardPage() {
       )}
 
       {/* Countdown Widget */}
-      <CountdownWidget loans={loans} borrowers={borrowers} />
+      <CountdownWidget loans={loans.filter(l => l.loan_type !== 'quickloan')} borrowers={borrowers} />
 
       {/* Overdue Escalation Alerts */}
-      {loans.filter(l => l.status === 'Overdue').map(loan => {
+      {loans.filter(l => l.status === 'Overdue' && l.loan_type !== 'quickloan').map(loan => {
         const b = borrowers.find(x => x.id === loan.borrower_id)
         return (
           <div key={loan.id} style={{
