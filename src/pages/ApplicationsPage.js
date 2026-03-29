@@ -525,64 +525,86 @@ export default function ApplicationsPage() {
         .in('status', ['Pending', 'Active', 'Partially Paid']).maybeSingle()
 
       if (!existingLoan) {
-        // 4. Calculate release date
-        const today = new Date()
-        const day = today.getDate()
-        let releaseDate
-        if (day <= 5) releaseDate = new Date(today.getFullYear(), today.getMonth(), 5)
-        else if (day <= 20) releaseDate = new Date(today.getFullYear(), today.getMonth(), 20)
-        else releaseDate = new Date(today.getFullYear(), today.getMonth() + 1, 5)
-        const releaseDateStr = releaseDate.getFullYear() + '-' + String(releaseDate.getMonth()+1).padStart(2,'0') + '-' + String(releaseDate.getDate()).padStart(2,'0')
-
-        // 5. Create loan — use only confirmed existing columns
         const loanAmount = Number(app.loan_amount) || 5000
-        const loanTerm = Number(app.loan_term) || 2
-        const numInstallments = loanTerm * 2
-        // Interest rate stored as monthly rate (e.g. 0.07 = 7% per month).
-        // Total interest = rate × loan_term months
-        const { data: rateSettings } = await supabase.from('settings').select('interest_rate').eq('id', 1).single()
-        const monthlyRate = Number(rateSettings?.interest_rate) || 0.07
-        const rate = monthlyRate
-        const total = loanAmount * (1 + monthlyRate * loanTerm)
-        const installment = Math.ceil(total / numInstallments)
-        const adjustedTotal = installment * numInstallments
+        const isQuickLoan = app.loan_type === 'quickloan'
+        const today = new Date()
+        const todayStr = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0')
 
-        // Security hold rate based on borrower's credit score
-        const { data: borrowerData } = await supabase.from('borrowers').select('credit_score').eq('id', borrowerId).single()
-        const creditScore = borrowerData?.credit_score || 750
-        const holdRate = creditScore >= 1000 ? 0.05
-          : creditScore >= 920 ? 0.06
-          : creditScore >= 835 ? 0.08
-          : creditScore >= 750 ? 0.10
-          : creditScore >= 500 ? 0.15
-          : 0.20
-        const holdAmt = parseFloat((loanAmount * holdRate).toFixed(2))
-        const released = loanAmount - holdAmt
+        if (isQuickLoan) {
+          // ── QuickLoan: daily interest, no installments, no security hold ──
+          // Release date = today (QuickLoan starts immediately)
+          const { error: lErr } = await supabase.from('loans').insert({
+            borrower_id: borrowerId,
+            loan_type: 'quickloan',
+            loan_amount: loanAmount,
+            interest_rate: 0.10,       // 10% per month flat rate
+            loan_term: null,
+            num_installments: null,
+            installment_amount: null,
+            total_repayment: null,
+            remaining_balance: loanAmount,
+            payments_made: 0,
+            release_date: todayStr,
+            status: 'Pending',
+            security_hold: 0,
+            funds_released: loanAmount,
+            loan_purpose: app.loan_purpose,
+            security_hold_returned: false,
+            extension_fee_charged: false,
+          })
+          if (lErr) {
+            toast('Loan creation failed: ' + lErr.message, 'error')
+            console.error('QUICKLOAN CREATE ERROR:', lErr)
+          }
+        } else {
+          // ── Installment loan: semi-monthly cutoff schedule ──
+          // 4. Calculate release date (next 5th or 20th)
+          const day = today.getDate()
+          let releaseDate
+          if (day <= 5) releaseDate = new Date(today.getFullYear(), today.getMonth(), 5)
+          else if (day <= 20) releaseDate = new Date(today.getFullYear(), today.getMonth(), 20)
+          else releaseDate = new Date(today.getFullYear(), today.getMonth() + 1, 5)
+          const releaseDateStr = releaseDate.getFullYear() + '-' + String(releaseDate.getMonth()+1).padStart(2,'0') + '-' + String(releaseDate.getDate()).padStart(2,'0')
 
-        const { error: lErr } = await supabase.from('loans').insert({
-          borrower_id: borrowerId,
-          loan_amount: loanAmount,
-          interest_rate: rate,
-          loan_term: loanTerm,
-          num_installments: numInstallments,
-          total_repayment: adjustedTotal,
-          installment_amount: installment,
-          remaining_balance: adjustedTotal,
-          payments_made: 0,
-          release_date: releaseDateStr,
-          status: 'Pending',
-          security_hold: holdAmt,
-          funds_released: released,
-          loan_purpose: app.loan_purpose,
-          security_hold_returned: false
-        })
+          const loanTerm = Number(app.loan_term) || 2
+          const numInstallments = loanTerm * 2
+          const { data: rateSettings } = await supabase.from('settings').select('interest_rate').eq('id', 1).single()
+          const monthlyRate = Number(rateSettings?.interest_rate) || 0.07
+          const total = loanAmount * (1 + monthlyRate * loanTerm)
+          const installment = Math.ceil(total / numInstallments)
+          const adjustedTotal = installment * numInstallments
 
-        if (lErr) {
-          toast('Loan creation failed: ' + lErr.message, 'error')
-          console.error('LOAN ERROR:', lErr)
-          // Still update application status even if loan failed
+          const { data: borrowerData } = await supabase.from('borrowers').select('credit_score').eq('id', borrowerId).single()
+          const creditScore = borrowerData?.credit_score || 750
+          const holdRate = creditScore >= 1000 ? 0.05 : creditScore >= 920 ? 0.06 : creditScore >= 835 ? 0.08 : creditScore >= 750 ? 0.10 : creditScore >= 500 ? 0.15 : 0.20
+          const holdAmt = parseFloat((loanAmount * holdRate).toFixed(2))
+          const released = loanAmount - holdAmt
+
+          const { error: lErr } = await supabase.from('loans').insert({
+            borrower_id: borrowerId,
+            loan_type: 'regular',
+            loan_amount: loanAmount,
+            interest_rate: monthlyRate,
+            loan_term: loanTerm,
+            num_installments: numInstallments,
+            total_repayment: adjustedTotal,
+            installment_amount: installment,
+            remaining_balance: adjustedTotal,
+            payments_made: 0,
+            release_date: releaseDateStr,
+            status: 'Pending',
+            security_hold: holdAmt,
+            funds_released: released,
+            loan_purpose: app.loan_purpose,
+            security_hold_returned: false
+          })
+          if (lErr) {
+            toast('Loan creation failed: ' + lErr.message, 'error')
+            console.error('INSTALLMENT CREATE ERROR:', lErr)
+          }
         }
       }
+
 
       // 6. Update application status — always runs
       await supabase.from('applications').update({ status: 'Approved' }).eq('id', app.id)
