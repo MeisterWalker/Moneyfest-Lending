@@ -532,16 +532,17 @@ export default function ApplicationsPage() {
 
         if (isQuickLoan) {
           // ── QuickLoan: daily interest, no installments, no security hold ──
-          // Release date = today (QuickLoan starts immediately)
+          // total_repayment = principal (interest accrues daily, calculated live)
+          // loan_term / num_installments / installment_amount = 0 (not applicable)
           const { error: lErr } = await supabase.from('loans').insert({
             borrower_id: borrowerId,
             loan_type: 'quickloan',
             loan_amount: loanAmount,
-            interest_rate: 0.10,       // 10% per month flat rate
-            loan_term: null,
-            num_installments: null,
-            installment_amount: null,
-            total_repayment: null,
+            interest_rate: 0.10,
+            loan_term: 0,
+            num_installments: 0,
+            installment_amount: 0,
+            total_repayment: loanAmount,
             remaining_balance: loanAmount,
             payments_made: 0,
             release_date: todayStr,

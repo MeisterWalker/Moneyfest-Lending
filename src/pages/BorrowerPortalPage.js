@@ -6,7 +6,7 @@ import { getInstallmentDates, formatDateValue, logAudit } from '../lib/helpers'
 import { sendLoanAgreementSignedAdminEmail } from '../lib/emailService'
 import {
   Lock, CheckCircle, Clock, AlertCircle, Upload,
-  FileText, Calendar, CreditCard, User, Wallet, ChevronDown, ChevronUp, X
+  FileText, Calendar, CreditCard, User, Wallet, ChevronDown, ChevronUp, X, Home
 } from 'lucide-react'
 
 function formatDate(str) {
@@ -298,7 +298,7 @@ function PortalHeader({ borrower, notifications, showNotifs, setShowNotifs, mark
               <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'linear-gradient(135deg,#3B82F6,#8B5CF6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, color: '#fff', flexShrink: 0 }}>
                 {borrower.full_name?.charAt(0).toUpperCase()}
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <div className="header-user-info" style={{ display: 'flex', flexDirection: 'column' }}>
                 <div style={{ fontSize: 12, fontWeight: 600, color: '#F0F4FF', lineHeight: 1.2 }}>{borrower.full_name}</div>
                 <div style={{ fontSize: 10, color: '#4B5580' }}>{borrower.department}</div>
               </div>
@@ -1545,9 +1545,54 @@ export default function BorrowerPortalPage() {
         .upload-btn { transition: all 0.2s ease; }
         .upload-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(34,197,94,0.25) !important; }
         .stats-grid { transition: all 0.3s ease; }
-        @media (max-width: 860px) { .portal-grid { grid-template-columns: 1fr !important; } .portal-sidebar { display: none !important; } }
-        @media (max-width: 640px) { .stats-grid { grid-template-columns: 1fr !important; } }
+        @media (max-width: 860px) { 
+          .portal-grid { grid-template-columns: 1fr !important; } 
+          .portal-sidebar { display: none !important; } 
+          .bottom-nav { display: flex !important; }
+          .main-content-area { padding-bottom: 80px !important; }
+        }
+        @media (max-width: 640px) { .stats-grid { grid-template-columns: repeat(2, 1fr) !important; } }
+        @media (max-width: 500px) { 
+          .header-user-info { display: none !important; } 
+          .stats-grid { grid-template-columns: 1fr !important; }
+        }
         @media (max-width: 520px) { .loan-meta-grid { grid-template-columns: 1fr 1fr !important; } }
+        @media (max-width: 400px) { .ql-pay-btns { flex-direction: column !important; } }
+        
+        .bottom-nav {
+          display: none;
+          position: fixed;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          height: 64px;
+          background: rgba(8, 11, 20, 0.95);
+          backdrop-filter: blur(20px);
+          border-top: 1px solid rgba(255, 255, 255, 0.08);
+          align-items: center;
+          justify-content: space-around;
+          padding: 0 10px;
+          z-index: 1000;
+          box-shadow: 0 -10px 30px rgba(0,0,0,0.5);
+        }
+        .bn-item {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 4px;
+          background: none;
+          border: none;
+          color: #4B5580;
+          cursor: pointer;
+          transition: all 0.2s;
+          padding: 8px;
+          border-radius: 12px;
+          flex: 1;
+        }
+        .bn-item.active { color: #8B5CF6; }
+        .bn-item:active { transform: scale(0.92); background: rgba(255,255,255,0.04); }
+        .bn-label { fontSize: 10px; fontWeight: 700; text-transform: uppercase; letter-spacing: 0.02em; }
+
 
         .ribbon-btn { transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1); position: relative; }
         .ribbon-btn:hover { 
@@ -1587,7 +1632,7 @@ export default function BorrowerPortalPage() {
 
       <PortalHeader borrower={borrower} notifications={notifications} showNotifs={showNotifs} setShowNotifs={setShowNotifs} markAllRead={markAllRead} onSignOut={() => { setBorrower(null); setLoan(null); setAllLoans([]); setCode(''); setInputCode(''); localStorage.removeItem('lm_portal_code') }} />
 
-      <div style={{ maxWidth: 1000, margin: '0 auto', padding: '28px 20px 48px' }}>
+      <div className="main-content-area" style={{ maxWidth: 1000, margin: '0 auto', padding: '28px 20px 48px' }}>
 
         {uploadSuccess && (
           <div style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.25)', borderRadius: 12, padding: '12px 18px', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: '#22C55E', fontWeight: 600 }}>
@@ -1926,7 +1971,7 @@ export default function BorrowerPortalPage() {
                         {(loan.status === 'Active' || loan.status === 'Partially Paid') && (
                           hasProof
                             ? <div style={{ padding: '10px 14px', borderRadius: 10, background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.2)', fontSize: 12, color: '#F59E0B', fontWeight: 600, textAlign: 'center' }}>⏳ Payment proof pending admin review</div>
-                            : <div style={{ display: 'flex', gap: 10 }}>
+                            : <div className="ql-pay-btns" style={{ display: 'flex', gap: 10 }}>
                                 {/* Pay Interest Only — only shows before Day 30, when extension NOT yet charged */}
                                 {!loan.extension_fee_charged && (
                                   <button onClick={() => { setQlPaymentType('interest_only'); setUploadModal(1) }}
@@ -2354,6 +2399,30 @@ export default function BorrowerPortalPage() {
       {uploadModal && (
         <UploadModal installmentNum={uploadModal} loan={loan} borrower={borrower} qlPaymentType={qlPaymentType} onClose={() => { setUploadModal(null); setQlPaymentType(null) }} onUploaded={handleUploaded} />
       )}
+
+      {/* Mobile Bottom Navigation */}
+      <nav className="bottom-nav">
+        <button onClick={() => setPage('home')} className={`bn-item ${page === 'home' ? 'active' : ''}`}>
+          <Home size={20} />
+          <span className="bn-label">Home</span>
+        </button>
+        <button onClick={() => setPage('payment-history')} className={`bn-item ${page === 'payment-history' ? 'active' : ''}`}>
+          <Clock size={20} />
+          <span className="bn-label">History</span>
+        </button>
+        <button onClick={() => setPage('wallet')} className={`bn-item ${page === 'wallet' ? 'active' : ''}`}>
+          <Wallet size={20} />
+          <span className="bn-label">Wallet</span>
+        </button>
+        <button onClick={() => setPage('payment-methods')} className={`bn-item ${page === 'payment-methods' ? 'active' : ''}`}>
+          <CreditCard size={20} />
+          <span className="bn-label">Repay</span>
+        </button>
+        <button onClick={() => setPage('profile')} className={`bn-item ${page === 'profile' ? 'active' : ''}`}>
+          <User size={20} />
+          <span className="bn-label">Profile</span>
+        </button>
+      </nav>
     </div>
   )
 }
