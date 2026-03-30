@@ -509,12 +509,20 @@ export default function BorrowerPortalPage() {
           break
         }
       }
-      setNotifications(notifs || [])
-      const { data: creditsData } = await supabase.from('wallets').select('*').eq('borrower_id', b.id).single()
-      const { data: txnData } = await supabase.from('wallet_transactions').select('*').eq('borrower_id', b.id).order('created_at', { ascending: false }).limit(20)
-      setRebateCredits(creditsData || null); setCreditTxns(txnData || [])
+      // 3. Fetch latest application by borrower_id OR access_code
+      const { data: latestApp } = await supabase
+        .from('applications')
+        .select('*')
+        .or(`borrower_id.eq.${b.id},access_code.eq.${cleanCode}`)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single()
+      
+      setPendingApp(latestApp || null)
       setLoading(false); return
     }
+    
+    // 4. If no borrower found, check if it's a first-time applicant
     const { data: app } = await supabase.from('applications').select('*').eq('access_code', cleanCode).single()
     if (app) { setPendingApp(app); setLoading(false); return }
     setError('Invalid access code. Please check and try again.')
@@ -1634,58 +1642,62 @@ export default function BorrowerPortalPage() {
 
       <div className="main-content-area" style={{ maxWidth: 1000, margin: '0 auto', padding: '28px 20px 48px' }}>
 
-        {uploadSuccess && (
-          <div style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.25)', borderRadius: 12, padding: '12px 18px', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: '#22C55E', fontWeight: 600 }}>
-            ✅ Payment proof submitted successfully! Your admin will review it shortly.
-          </div>
-        )}
-
-        {/* No loan state */}
-        {!loan ? (
-          <div style={{ maxWidth: 500, margin: '0 auto', padding: '40px 0' }}>
-            <div style={{ textAlign: 'center', padding: '40px 20px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 24 }}>
-              <div style={{ fontSize: 52, marginBottom: 16 }}>🏦</div>
-              <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 24, color: '#F0F4FF', marginBottom: 8 }}>No Active Loan</div>
-              <div style={{ fontSize: 14, color: '#7A8AAA', marginBottom: 24 }}>You don't have an active loan yet.</div>
-              <a href="/apply" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '12px 24px', borderRadius: 12, background: 'linear-gradient(135deg,#3B82F6,#2563EB)', color: '#fff', fontSize: 14, fontWeight: 700, textDecoration: 'none', fontFamily: 'Syne, sans-serif' }}>New Application →</a>
-            </div>
-
-            {/* Fast-Track Renewal for Trusted/VIPs */}
-            {(borrower.loyalty_badge !== 'New' && !renewalSent) && (
-              <div className="pc" style={{ marginTop: 24, background: 'linear-gradient(135deg,#0E1320,#1a1040)', border: '1px solid rgba(139,92,246,0.3)', borderRadius: 24, padding: 24, position: 'relative', overflow: 'hidden' }}>
-                <div style={{ position: 'absolute', top: -40, right: -40, width: 140, height: 140, borderRadius: '50%', background: 'radial-gradient(circle,rgba(139,92,246,0.1),transparent)', pointerEvents: 'none' }} />
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-                  <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(139,92,246,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#a78bfa' }}>
-                    <Lock size={18} />
+        {/* Main Portal View */}
+        <div className="portal-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 20, alignItems: 'start' }}>
+          
+          {/* ── LEFT COLUMN ── */}
+          <div>
+            {/* Reloan Banner (Shows if latest loan is paid and no pending app) */}
+            {borrower && (!loan || loan.status === 'Paid') && (!pendingApp || (pendingApp.status !== 'Pending' && pendingApp.status !== 'Approved')) && !renewalSent && (
+              <div className="pc" style={{ 
+                background: 'linear-gradient(135deg, #1e1b4b, #312e81)', 
+                border: '1px solid rgba(139,92,246,0.3)', 
+                borderRadius: 24, padding: 28, position: 'relative', overflow: 'hidden',
+                boxShadow: '0 20px 40px -10px rgba(0,0,0,0.4)'
+              }}>
+                <div style={{ position: 'absolute', top: -30, right: -30, width: 140, height: 140, borderRadius: '50%', background: 'radial-gradient(circle, rgba(139,92,246,0.15), transparent)', pointerEvents: 'none' }} />
+                <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 18 }}>
+                  <div style={{ width: 48, height: 48, borderRadius: 12, background: 'rgba(139,92,246,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#a78bfa', fontSize: 24 }}>🚀</div>
+                  <div>
+                    <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 18, color: '#F0F4FF' }}>Quick Reloan Available</div>
+                    <div style={{ fontSize: 13, color: '#7A8AAA' }}>You have no active loans. Apply for a new one instantly!</div>
                   </div>
-                  <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 16, color: '#F0F4FF' }}>Fast-Track Renewal Available</div>
                 </div>
-                <p style={{ fontSize: 13, color: '#7A8AAA', lineHeight: 1.6, marginBottom: 20 }}>
-                  As a **{getBadgeConfig(borrower.loyalty_badge).label}**, you can renew your loan with one click. We'll reuse your existing profile for instant processing.
-                </p>
                 <button 
                   onClick={handleFastTrackRenewal}
                   disabled={renewing}
-                  style={{ width: '100%', padding: '13px', borderRadius: 12, border: 'none', background: renewing ? 'rgba(139,92,246,0.3)' : 'linear-gradient(135deg,#6366F1,#8B5CF6)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: renewing ? 'not-allowed' : 'pointer', fontFamily: 'Syne, sans-serif', transition: 'all 0.2s' }}>
-                  {renewing ? 'Submitting...' : '🚀 Renew Loan in One-Click'}
+                  style={{ width: '100%', padding: '14px', borderRadius: 14, border: 'none', background: renewing ? 'rgba(139,92,246,0.3)' : 'linear-gradient(135deg,#6366F1,#8B5CF6)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: renewing ? 'not-allowed' : 'pointer', fontFamily: 'Syne, sans-serif', transition: 'all 0.2s', boxShadow: '0 8px 20px rgba(99,102,241,0.3)' }}>
+                  {renewing ? 'Submitting...' : '✨ Apply for a New Loan'}
                 </button>
               </div>
             )}
 
-            {renewalSent && (
-              <div className="pc" style={{ marginTop: 24, background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 20, padding: 24, textAlign: 'center' }}>
-                <div style={{ fontSize: 32, marginBottom: 12 }}>🚀</div>
-                <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 18, color: '#22C55E', marginBottom: 6 }}>Renewal Submitted!</div>
-                <p style={{ fontSize: 13, color: '#7A8AAA', lineHeight: 1.6 }}>Our admin team has received your fast-track renewal request. We'll notify you once it's approved.</p>
+            {/* Application Pending State */}
+            {borrower && pendingApp && (pendingApp.status === 'Pending' || pendingApp.status === 'Approved') && (!loan || loan.status === 'Paid') && (
+              <div className="pc" style={{ background: 'rgba(59,130,246,0.06)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: 24, padding: 32, textAlign: 'center' }}>
+                <div style={{ fontSize: 40, marginBottom: 16 }}>⏳</div>
+                <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 20, color: '#60A5FA', marginBottom: 8 }}>Application Under Review</div>
+                <p style={{ fontSize: 14, color: '#7A8AAA', lineHeight: 1.6, maxWidth: 340, margin: '0 auto' }}>
+                  Your reloan application for **₱{Number(pendingApp.requested_amount).toLocaleString()}** has been received and is currently being reviewed by our team.
+                </p>
+                <div style={{ marginTop: 24, display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 16px', background: 'rgba(59,130,246,0.1)', borderRadius: 20, color: '#60A5FA', fontSize: 12, fontWeight: 700 }}>
+                  <Clock size={14} /> Status: {pendingApp.status}
+                </div>
               </div>
             )}
-          </div>
-        ) : (
-          <div className="portal-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 20, alignItems: 'start' }}>
 
-            {/* ── LEFT COLUMN ── */}
-            <div>
-              {/* Dashboard Highlights Row (Mini-Stats) */}
+            {renewalSent && (
+              <div className="pc" style={{ background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 24, padding: 32, textAlign: 'center' }}>
+                <div style={{ fontSize: 40, marginBottom: 16 }}>🎯</div>
+                <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 20, color: '#22C55E' }}>Success!</div>
+                <p style={{ fontSize: 14, color: '#7A8AAA', marginTop: 8 }}>Your reloan application has been submitted successfully.</p>
+              </div>
+            )}
+
+            {/* Conditional Display for Active Loan or No Active Loan Placeholder */}
+            {loan && loan.status !== 'Paid' ? (
+              <>
+                {/* Dashboard Highlights Row (Mini-Stats) */}
               <div className="pc stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 16 }}>
                 {[
                   (() => {
@@ -1907,302 +1919,23 @@ export default function BorrowerPortalPage() {
                 </div>
               )}
 
-              {/* Payment Schedule / QuickLoan Payoff Card */}
-              {loan.loan_type === 'quickloan' ? (
-                // ── QuickLoan: single payoff card ──
-                (() => {
-                  const principal = Number(loan.loan_amount)
-                  const dailyInterest = parseFloat((principal * 0.1 / 30).toFixed(2))
-                  const releaseDate = loan.release_date ? (() => { const [y,m,d] = loan.release_date.split('-').map(Number); return new Date(y,m-1,d) })() : null
-                  const daysElapsed = releaseDate ? Math.max(0, Math.floor((new Date() - releaseDate) / 86400000)) : 0
-                  const accruedNow = parseFloat((dailyInterest * daysElapsed).toFixed(2))
-                  const extensionFee = loan.extension_fee_charged ? 100 : 0
-                  const penaltyDays = Math.max(0, daysElapsed - 30)
-                  const penalty = penaltyDays * 25
-                  const totalOwedNow = parseFloat((principal + accruedNow + extensionFee + penalty).toFixed(2))
-                  const day15Interest = parseFloat((dailyInterest * 15).toFixed(2))
-                  const day15Total = parseFloat((principal + day15Interest).toFixed(2))
-                  const day15Date = releaseDate ? new Date(releaseDate.getTime() + 15 * 86400000) : null
-                  const day30Date = releaseDate ? new Date(releaseDate.getTime() + 30 * 86400000) : null
-                  const fmt = d => d.toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })
-                  const hasProof = proofs.some(p => p.loan_id === loan.id && p.status === 'Pending')
-                  const phase = daysElapsed > 30 ? 'penalty' : daysElapsed > 15 ? 'extended' : 'active'
-                  const phaseColor = phase === 'penalty' ? '#EF4444' : phase === 'extended' ? '#F59E0B' : '#22C55E'
-                  return (
-                    <div className="pc" style={{ background: '#0E1320', border: `1px solid ${phase === 'penalty' ? 'rgba(239,68,68,0.3)' : phase === 'extended' ? 'rgba(245,158,11,0.25)' : 'rgba(34,197,94,0.2)'}`, borderRadius: 18, overflow: 'hidden', marginBottom: 16 }}>
-                      <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                          <div style={{ width: 32, height: 32, borderRadius: 9, background: `${phaseColor}18`, border: `1px solid ${phaseColor}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }}>⚡</div>
-                          <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 15, color: '#F0F4FF' }}>QuickLoan Pay-Off</div>
-                        </div>
-                        <div style={{ fontSize: 11, fontWeight: 700, color: phaseColor, background: `${phaseColor}15`, padding: '3px 10px', borderRadius: 20, border: `1px solid ${phaseColor}30` }}>
-                          Day {daysElapsed}
-                        </div>
-                      </div>
-                      <div style={{ padding: '16px 20px' }}>
-                        {/* Two pay-off options */}
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 14 }}>
-                          <div style={{ padding: '12px 14px', borderRadius: 12, background: daysElapsed <= 15 ? 'rgba(34,197,94,0.06)' : 'rgba(239,68,68,0.06)', border: `1px solid ${daysElapsed <= 15 ? 'rgba(34,197,94,0.2)' : 'rgba(239,68,68,0.2)'}` }}>
-                            <div style={{ fontSize: 10, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 4 }}>Early Pay-off (by Day 15)</div>
-                            <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 18, color: daysElapsed <= 15 ? '#22C55E' : '#EF4444' }}>₱{day15Total.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</div>
-                            <div style={{ fontSize: 10, color: '#4B5580', marginTop: 2 }}>{day15Date ? fmt(day15Date) : '—'} · No extension fee</div>
-                          </div>
-                          <div style={{ padding: '12px 14px', borderRadius: 12, background: daysElapsed <= 30 ? 'rgba(245,158,11,0.06)' : 'rgba(239,68,68,0.08)', border: `1px solid ${daysElapsed <= 30 ? 'rgba(245,158,11,0.2)' : 'rgba(239,68,68,0.3)'}` }}>
-                            <div style={{ fontSize: 10, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 4 }}>Max Term (by Day 30)</div>
-                            <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 18, color: '#F59E0B' }}>₱{(principal + dailyInterest * 30 + extensionFee).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</div>
-                            <div style={{ fontSize: 10, color: '#4B5580', marginTop: 2 }}>{day30Date ? fmt(day30Date) : '—'} + ₱100 ext. fee</div>
-                          </div>
-                        </div>
-                        {/* Live balance */}
-                        <div style={{ padding: '12px 14px', borderRadius: 10, background: `${phaseColor}08`, border: `1px solid ${phaseColor}25`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-                          <div>
-                            <div style={{ fontSize: 11, color: '#4B5580', marginBottom: 2 }}>Total Owed Right Now</div>
-                            <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 22, color: phaseColor }}>₱{totalOwedNow.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</div>
-                          </div>
-                          <div style={{ textAlign: 'right' }}>
-                            <div style={{ fontSize: 10, color: '#4B5580' }}>Principal</div>
-                            <div style={{ fontSize: 12, fontWeight: 700, color: '#F0F4FF' }}>₱{principal.toLocaleString('en-PH')}</div>
-                            <div style={{ fontSize: 10, color: '#4B5580', marginTop: 2 }}>+ ₱{accruedNow.toFixed(2)} interest</div>
-                            {extensionFee > 0 && <div style={{ fontSize: 10, color: '#F59E0B' }}>+ ₱100 ext. fee</div>}
-                            {penalty > 0 && <div style={{ fontSize: 10, color: '#EF4444' }}>+ ₱{penalty} penalty</div>}
-                          </div>
-                        </div>
-                        {/* Upload proof button */}
-                        {(loan.status === 'Active' || loan.status === 'Partially Paid') && (
-                          hasProof
-                            ? <div style={{ padding: '10px 14px', borderRadius: 10, background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.2)', fontSize: 12, color: '#F59E0B', fontWeight: 600, textAlign: 'center' }}>⏳ Payment proof pending admin review</div>
-                            : <div className="ql-pay-btns" style={{ display: 'flex', gap: 10 }}>
-                                {/* Pay Interest Only — only shows before Day 30, when extension NOT yet charged */}
-                                {!loan.extension_fee_charged && (
-                                  <button onClick={() => { setQlPaymentType('interest_only'); setUploadModal(1) }}
-                                    style={{ flex: 1, padding: '10px 8px', borderRadius: 10, border: '1px solid rgba(245,158,11,0.35)', background: 'rgba(245,158,11,0.08)', color: '#F59E0B', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'Syne, sans-serif' }}>
-                                    📅 Pay Interest<br/><span style={{ fontSize: 10, fontWeight: 500, opacity: 0.8 }}>Day 15 only</span>
-                                  </button>
-                                )}
-                                {/* Full Pay-Off */}
-                                <button onClick={() => { setQlPaymentType('full_payoff'); setUploadModal(1) }} className="upload-btn"
-                                  style={{ flex: loan.extension_fee_charged ? 1 : 1, padding: '10px 8px', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#22C55E,#16a34a)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'Syne, sans-serif' }}>
-                                  ⚡ Full Pay-Off<br/><span style={{ fontSize: 10, fontWeight: 500, opacity: 0.85 }}>Settle everything</span>
-                                </button>
-                              </div>
-                        )}
-                      </div>
-                    </div>
-                  )
-                })()
-              ) : (
-                // ── Installment: regular schedule ──
-                <div className="pc" style={{ background: '#0E1320', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 18, overflow: 'hidden', marginBottom: 16 }}>
-                  <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <div style={{ width: 32, height: 32, borderRadius: 9, background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }}>📅</div>
-                    <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 15, color: '#F0F4FF' }}>Payment Schedule</div>
-                  </div>
-                  <div style={{ padding: '8px 0' }}>
-                    {(() => {
-                      const numInst = loan.num_installments || 4
-                      const dueDates = getDueDates(loan.release_date, loan.payments_made || 0, numInst)
-                      return dueDates.map((due, i) => {
-                        const isPaid = due.paid
-                        const isCurrent = due.current
-                        const hasProof = proofs.some(p => p.loan_id === loan.id && p.installment_number === due.num && p.status === 'Pending')
-                        const instAmt = Math.ceil(Number(loan.installment_amount))
-                        return (
-                          <div key={i} className="inst-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 20px', borderBottom: i < dueDates.length - 1 ? '1px solid rgba(255,255,255,0.03)' : 'none', background: isCurrent ? 'rgba(99,102,241,0.04)' : 'transparent' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                              <div style={{ width: 32, height: 32, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: isPaid ? 14 : 12, fontWeight: 700, background: isPaid ? 'rgba(34,197,94,0.12)' : isCurrent ? 'rgba(99,102,241,0.12)' : 'rgba(255,255,255,0.04)', border: `1px solid ${isPaid ? 'rgba(34,197,94,0.25)' : isCurrent ? 'rgba(99,102,241,0.25)' : 'rgba(255,255,255,0.06)'}`, color: isPaid ? '#22C55E' : isCurrent ? '#a78bfa' : '#4B5580' }}>
-                                {isPaid ? '✓' : due.num}
-                              </div>
-                              <div>
-                                <div style={{ fontSize: 13, fontWeight: 600, color: isPaid ? '#22C55E' : isCurrent ? '#F0F4FF' : '#7A8AAA' }}>Installment {due.num} — ₱{instAmt.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</div>
-                                <div style={{ fontSize: 11, color: isPaid ? 'rgba(34,197,94,0.6)' : '#4B5580', marginTop: 1 }}>Due: {due.date.toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
-                              </div>
-                            </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                              {hasProof && <span style={{ fontSize: 11, color: '#F59E0B', fontWeight: 600, background: 'rgba(245,158,11,0.1)', padding: '3px 8px', borderRadius: 6 }}>⏳ Pending</span>}
-                              {isCurrent && !hasProof && (loan.status === 'Active' || loan.status === 'Partially Paid') && (
-                                <button onClick={() => setUploadModal(due.num)} className="upload-btn"
-                                  style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 9, border: 'none', background: 'linear-gradient(135deg,#22C55E,#16a34a)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'Syne, sans-serif' }}>
-                                  ⬆ Upload Proof
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                        )
-                      })
-                    })()}
-                  </div>
-                </div>
-              )}
+                {/* Loan Disclosure */}
+                {/* ... (disclosure content) ... */}
 
-              <PenaltySection loanId={loan.id} supabase={supabase} />
-
-              {/* Loan Disclosure */}
-              {(() => {
-                const principal = Number(loan.loan_amount)
-                const isQL = loan.loan_type === 'quickloan'
-
-                if (isQL) {
-                  // ── QuickLoan disclosure ──
-                  const dailyInterest = parseFloat((principal * 0.1 / 30).toFixed(2))
-                  const daysElapsed = loan.release_date
-                    ? Math.max(0, Math.floor((new Date() - new Date(loan.release_date)) / (1000 * 60 * 60 * 24)))
-                    : 0
-                  const accruedNow = parseFloat((dailyInterest * daysElapsed).toFixed(2))
-                  const extensionFee = loan.extension_fee_charged ? 100 : 0
-                  const penaltyDays = Math.max(0, daysElapsed - 30)
-                  const penalty = penaltyDays * 25
-                  const totalOwedNow = parseFloat((principal + accruedNow + extensionFee + penalty).toFixed(2))
-                  const day15Interest = parseFloat((dailyInterest * 15).toFixed(2))
-                  const day15Total = parseFloat((principal + day15Interest).toFixed(2))
-                  const releaseDate = loan.release_date ? (() => { const [y, m, d] = loan.release_date.split('-').map(Number); return new Date(y, m - 1, d) })() : null
-                  const day15Date = releaseDate ? new Date(releaseDate.getTime() + 15 * 86400000) : null
-                  const day30Date = releaseDate ? new Date(releaseDate.getTime() + 30 * 86400000) : null
-                  const fmt = d => d.toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })
-                  const phase = daysElapsed > 30 ? 'penalty' : daysElapsed > 15 ? 'extended' : 'active'
-                  const phaseColor = phase === 'penalty' ? '#EF4444' : phase === 'extended' ? '#F59E0B' : '#22C55E'
-
-                  return (
-                    <div className="pc" style={{ background: '#0E1320', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 18, overflow: 'hidden', marginBottom: 16 }}>
-                      <div style={{ padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 14, color: '#F59E0B' }}>⚡ Loan Disclosure</div>
-                        <div style={{ fontSize: 10, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.07em' }}>RA 3765 — Truth in Lending Act</div>
-                      </div>
-                      <div style={{ padding: '14px 20px' }}>
-                        {[
-                          { label: 'Approved Loan Amount', value: '₱' + principal.toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#F0F4FF' },
-                          { label: 'Security Hold', value: 'None — full amount released', color: '#22C55E' },
-                          { label: 'Funds Released to You', value: '₱' + principal.toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#22C55E' },
-                          { label: 'Daily Interest Rate', value: `0.3333%/day  (₱${dailyInterest.toFixed(2)}/day)`, color: '#60A5FA' },
-                          { label: 'Monthly Interest Rate', value: '10% per month', color: '#60A5FA' },
-                          { label: 'Effective Rate (per annum)', value: '120% p.a. (RA 3765)', color: '#a78bfa' },
-                          { label: 'If paid on Day 15', value: '₱' + day15Total.toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#22C55E' },
-                          { label: 'Extension Fee (if Day 15 missed)', value: '₱100.00 one-time', color: '#F59E0B' },
-                          { label: 'Penalty after Day 30', value: '₱25.00/day (no cap)', color: '#EF4444' },
-                        ].map((row, i) => (
-                          <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 10px', background: i % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent', borderRadius: 8, gap: 12 }}>
-                            <span style={{ fontSize: 12, color: '#7A8AAA', flex: 1 }}>{row.label}</span>
-                            <span style={{ fontSize: 13, fontWeight: 700, color: row.color, textAlign: 'right' }}>{row.value}</span>
-                          </div>
-                        ))}
-
-                        {/* Live balance box */}
-                        <div style={{ marginTop: 12, padding: '12px 14px', background: phase === 'penalty' ? 'rgba(239,68,68,0.06)' : phase === 'extended' ? 'rgba(245,158,11,0.06)' : 'rgba(34,197,94,0.06)', border: `1px solid ${phase === 'penalty' ? 'rgba(239,68,68,0.2)' : phase === 'extended' ? 'rgba(245,158,11,0.2)' : 'rgba(34,197,94,0.2)'}`, borderRadius: 10 }}>
-                          <div style={{ fontSize: 10, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 8 }}>Live Balance Today (Day {daysElapsed})</div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                            <span style={{ fontSize: 12, color: '#7A8AAA' }}>Principal</span>
-                            <span style={{ fontSize: 12, fontWeight: 700, color: '#F0F4FF' }}>₱{principal.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
-                          </div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                            <span style={{ fontSize: 12, color: '#7A8AAA' }}>Accrued Interest ({daysElapsed} days)</span>
-                            <span style={{ fontSize: 12, fontWeight: 700, color: '#a78bfa' }}>₱{accruedNow.toFixed(2)}</span>
-                          </div>
-                          {extensionFee > 0 && (
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                              <span style={{ fontSize: 12, color: '#7A8AAA' }}>Extension Fee</span>
-                              <span style={{ fontSize: 12, fontWeight: 700, color: '#F59E0B' }}>₱100.00</span>
-                            </div>
-                          )}
-                          {penalty > 0 && (
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                              <span style={{ fontSize: 12, color: '#7A8AAA' }}>Penalty ({penaltyDays} days × ₱25)</span>
-                              <span style={{ fontSize: 12, fontWeight: 700, color: '#EF4444' }}>₱{penalty.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
-                            </div>
-                          )}
-                          <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: 8, borderTop: '1px solid rgba(255,255,255,0.06)', marginTop: 4 }}>
-                            <span style={{ fontSize: 13, fontWeight: 700, color: '#F0F4FF' }}>Total Owed Now</span>
-                            <span style={{ fontSize: 16, fontWeight: 800, color: phaseColor, fontFamily: 'Syne, sans-serif' }}>₱{totalOwedNow.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
-                          </div>
-                        </div>
-
-                        {/* Day 15 / Day 30 timeline */}
-                        {releaseDate && (
-                          <div style={{ marginTop: 10, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                            <div style={{ flex: 1, padding: '8px 10px', background: daysElapsed <= 15 ? 'rgba(34,197,94,0.06)' : 'rgba(239,68,68,0.06)', border: `1px solid ${daysElapsed <= 15 ? 'rgba(34,197,94,0.2)' : 'rgba(239,68,68,0.2)'}`, borderRadius: 8 }}>
-                              <div style={{ fontSize: 10, color: '#4B5580', marginBottom: 2 }}>Day 15 Target</div>
-                              <div style={{ fontSize: 12, fontWeight: 700, color: daysElapsed <= 15 ? '#22C55E' : '#EF4444' }}>{day15Date ? fmt(day15Date) : '—'}</div>
-                              <div style={{ fontSize: 10, color: '#4B5580', marginTop: 2 }}>{daysElapsed <= 15 ? `${15 - daysElapsed} day${15 - daysElapsed !== 1 ? 's' : ''} left` : 'Missed'}</div>
-                            </div>
-                            <div style={{ flex: 1, padding: '8px 10px', background: daysElapsed <= 30 ? 'rgba(245,158,11,0.06)' : 'rgba(239,68,68,0.08)', border: `1px solid ${daysElapsed <= 30 ? 'rgba(245,158,11,0.2)' : 'rgba(239,68,68,0.3)'}`, borderRadius: 8 }}>
-                              <div style={{ fontSize: 10, color: '#4B5580', marginBottom: 2 }}>Day 30 Deadline</div>
-                              <div style={{ fontSize: 12, fontWeight: 700, color: daysElapsed <= 30 ? '#F59E0B' : '#EF4444' }}>{day30Date ? fmt(day30Date) : '—'}</div>
-                              <div style={{ fontSize: 10, color: '#4B5580', marginTop: 2 }}>{daysElapsed <= 30 ? `${30 - daysElapsed} day${30 - daysElapsed !== 1 ? 's' : ''} left` : 'PAST DEADLINE'}</div>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                      <div style={{ padding: '12px 20px', borderTop: '1px solid rgba(255,255,255,0.04)', display: 'flex', gap: 10 }}>
-                        {!loan.e_signature_name ? (
-                          <button onClick={() => setShowSignModal(true)}
-                            style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '10px', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#F59E0B,#D97706)', color: '#000', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Syne, sans-serif' }}>
-                            ✍ Sign QuickLoan Agreement
-                          </button>
-                        ) : (
-                          <button onClick={() => generateQuickLoanAgreementPDF()}
-                            style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '10px', borderRadius: 10, border: '1px solid rgba(245,158,11,0.3)', background: 'rgba(245,158,11,0.06)', color: '#F59E0B', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
-                            ↓ Download QuickLoan Agreement
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  )
-                }
-
-                // ── Installment loan disclosure ──
-                const holdAmt = loan.security_hold ? Number(loan.security_hold) : principal * 0.10
-                const holdRate = principal > 0 ? ((holdAmt / principal) * 100).toFixed(0) : 10
-                const total = Number(loan.total_repayment)
-                const perInst = Math.ceil(Number(loan.installment_amount))
-                const numInstallments = loan.num_installments || 4
-                const flatRate = ((loan.interest_rate || 0.07) * 100).toFixed(0)
-                const effectiveAnnual = ((loan.interest_rate || 0.07) * 12 * 100).toFixed(0)
-                const released = loan.funds_released ? Number(loan.funds_released) : principal - holdAmt
-                return (
-                  <div className="pc" style={{ background: '#0E1320', border: '1px solid rgba(99,102,241,0.15)', borderRadius: 18, overflow: 'hidden', marginBottom: 16 }}>
-                    <div style={{ padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 14, color: '#F0F4FF' }}>Loan Disclosure</div>
-                      <div style={{ fontSize: 10, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.07em' }}>RA 3765 — Truth in Lending Act</div>
-                    </div>
-                    <div style={{ padding: '14px 20px' }}>
-                      {[
-                        { label: 'Approved Loan Amount', value: '₱' + principal.toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#F0F4FF' },
-                        { label: 'Security Hold (' + holdRate + '%)', value: '₱' + holdAmt.toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#F59E0B' },
-                        { label: 'Funds Released to You', value: '₱' + released.toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#22C55E' },
-                        { label: 'Finance Charge', value: '₱' + (total - principal).toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#F59E0B' },
-                        { label: 'Monthly Interest Rate', value: flatRate + '% per month × ' + (loan.loan_term || 2) + ' months', color: '#60A5FA' },
-                        { label: 'Effective Interest Rate (per annum)', value: effectiveAnnual + '% p.a.', color: '#a78bfa' },
-                        { label: 'Total Amount Payable', value: '₱' + total.toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#22C55E' },
-                        { label: 'Number of Installments', value: numInstallments + ' payments every 5th and 20th of the month', color: '#F0F4FF' },
-                        { label: 'Per Installment Amount', value: '₱' + perInst.toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#F0F4FF' },
-                      ].map((row, i) => (
-                        <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 10px', background: i % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent', borderRadius: 8, gap: 12 }}>
-                          <span style={{ fontSize: 12, color: '#7A8AAA', flex: 1 }}>{row.label}</span>
-                          <span style={{ fontSize: 13, fontWeight: 700, color: row.color, textAlign: 'right' }}>{row.value}</span>
-                        </div>
-                      ))}
-                      {loan.security_hold_returned && (
-                        <div style={{ marginTop: 10, display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 12px', background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 8, fontSize: 11, color: '#22C55E', fontWeight: 700 }}>
-                          ✅ Security Hold of ₱{Number(loan.security_hold).toLocaleString('en-PH', { minimumFractionDigits: 2 })} has been returned to your Rebate Credits
-                        </div>
-                      )}
-                    </div>
-                    <div style={{ padding: '12px 20px', borderTop: '1px solid rgba(255,255,255,0.04)', display: 'flex', gap: 10 }}>
-                      {!loan.e_signature_name ? (
-                        <button onClick={() => setShowSignModal(true)}
-                          style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '10px', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#6366F1,#8B5CF6)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Syne, sans-serif' }}>
-                          ✍ Sign Loan Agreement
-                        </button>
-                      ) : (
-                        <button onClick={() => generateLoanAgreementPDF()}
-                          style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '10px', borderRadius: 10, border: '1px solid rgba(99,102,241,0.25)', background: 'rgba(99,102,241,0.06)', color: '#a78bfa', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
-                          ↓ Download Loan Agreement
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                )
-              })()}
-
-            </div>{/* end left */}
+              </>
+            ) : (
+              <div style={{ textAlign: 'center', padding: '100px 20px', background: 'rgba(255,255,255,0.01)', border: '1px solid rgba(255,255,255,0.04)', borderRadius: 24 }}>
+                <div style={{ fontSize: 52, marginBottom: 16 }}>🏦</div>
+                <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 24, color: '#F0F4FF', marginBottom: 12 }}>No Active Loan</div>
+                <p style={{ fontSize: 14, color: '#7A8AAA', marginBottom: 24, maxWidth: 300, margin: '0 auto 24px' }}>
+                  You don't have an active loan at the moment. Explore our loan options or check back later!
+                </p>
+                <a href="/apply" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '12px 28px', borderRadius: 14, background: 'linear-gradient(135deg,#3B82F6,#2563EB)', color: '#fff', fontSize: 14, fontWeight: 700, textDecoration: 'none', fontFamily: 'Syne, sans-serif' }}>
+                  Apply for a Loan →
+                </a>
+              </div>
+            )}
+          </div>{/* end left column */}
 
             {/* ── RIGHT SIDEBAR ── */}
             <div className="portal-sidebar" style={{ display: 'flex', flexDirection: 'column', gap: 14, position: 'sticky', top: 76 }}>
@@ -2338,40 +2071,40 @@ export default function BorrowerPortalPage() {
               </div>
 
 
-              {/* Smart Rebate Calculator */}
-              <div className="pc" style={{ background: 'linear-gradient(135deg,#0E1320,#081c10)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 16, padding: 18 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-                  <div style={{ width: 28, height: 28, borderRadius: 8, background: 'rgba(34,197,94,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#22C55E' }}>
-                    <CreditCard size={14} />
-                  </div>
-                  <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 13, color: '#F0F4FF', letterSpacing: '0.01em' }}>Rebate Calculator</div>
-                </div>
-                <div style={{ fontSize: 11, color: '#7A8AAA', marginBottom: 14, lineHeight: 1.5 }}>
-                  Pay off your full balance early to earn a **1% rebate** on your principal!
-                </div>
-                {(() => {
-                  const principal = Number(loan.loan_amount)
-                  const rebate = principal * 0.01
-                  const totalRepay = Number(loan.total_repayment) || (principal * 1.14) // default if missing
-                  const savings = rebate // For now just the rebate, interest savings would be separate
-                  return (
-                    <div style={{ padding: '12px', background: 'rgba(0,0,0,0.2)', borderRadius: 12, border: '1px solid rgba(255,255,255,0.04)' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
-                        <span style={{ fontSize: 11, color: '#4B5580' }}>Potential Rebate</span>
-                        <span style={{ fontSize: 14, fontWeight: 900, color: '#22C55E', fontFamily: 'Syne, sans-serif' }}>+₱{rebate.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
-                      </div>
-                      <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '8px 0' }} />
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8 }}>
-                        <span style={{ fontSize: 11, color: '#4B5580' }}>Est. Total Savings</span>
-                        <span style={{ fontSize: 14, fontWeight: 900, color: '#60A5FA', fontFamily: 'Syne, sans-serif' }}>₱{rebate.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
-                      </div>
-                      <button onClick={() => setPage('payment-methods')} style={{ width: '100%', marginTop: 14, padding: '9px', borderRadius: 10, border: '1px solid rgba(34,197,94,0.3)', background: 'rgba(34,197,94,0.06)', color: '#22C55E', fontSize: 12, fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s' }}>
-                        Pay Early Now →
-                      </button>
+              {/* Smart Rebate Calculator (Only if active loan) */}
+              {loan && loan.status !== 'Paid' && (
+                <div className="pc" style={{ background: 'linear-gradient(135deg,#0E1320,#081c10)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 16, padding: 18 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+                    <div style={{ width: 28, height: 28, borderRadius: 8, background: 'rgba(34,197,94,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#22C55E' }}>
+                      <CreditCard size={14} />
                     </div>
-                  )
-                })()}
-              </div>
+                    <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 13, color: '#F0F4FF', letterSpacing: '0.01em' }}>Rebate Calculator</div>
+                  </div>
+                  <div style={{ fontSize: 11, color: '#7A8AAA', marginBottom: 14, lineHeight: 1.5 }}>
+                    Pay off your full balance early to earn a **1% rebate** on your principal!
+                  </div>
+                  {(() => {
+                    const principal = Number(loan.loan_amount)
+                    const rebate = principal * 0.01
+                    return (
+                      <div style={{ padding: '12px', background: 'rgba(0,0,0,0.2)', borderRadius: 12, border: '1px solid rgba(255,255,255,0.04)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
+                          <span style={{ fontSize: 11, color: '#4B5580' }}>Potential Rebate</span>
+                          <span style={{ fontSize: 14, fontWeight: 900, color: '#22C55E', fontFamily: 'Syne, sans-serif' }}>+₱{rebate.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+                        </div>
+                        <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '8px 0' }} />
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8 }}>
+                          <span style={{ fontSize: 11, color: '#4B5580' }}>Est. Total Savings</span>
+                          <span style={{ fontSize: 14, fontWeight: 900, color: '#60A5FA', fontFamily: 'Syne, sans-serif' }}>₱{rebate.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+                        </div>
+                        <button onClick={() => setPage('payment-methods')} style={{ width: '100%', marginTop: 14, padding: '9px', borderRadius: 10, border: '1px solid rgba(34,197,94,0.3)', background: 'rgba(34,197,94,0.06)', color: '#22C55E', fontSize: 12, fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s' }}>
+                          Pay Early Now →
+                        </button>
+                      </div>
+                    )
+                  })()}
+                </div>
+              )}
 
               {/* Need Help */}
               <div className="pc" style={{ background: '#0E1320', border: '1px solid rgba(59,130,246,0.12)', borderRadius: 16, padding: 14 }}>
@@ -2389,40 +2122,40 @@ export default function BorrowerPortalPage() {
               </a>
 
             </div>{/* end sidebar */}
-          </div>
+          </div>{/* end portal-grid */}
+        </div>{/* end main-content-area */}
+
+        {showSignModal && loan && (
+          <SignatureModal borrower={borrower} loan={loan} onSave={handleSaveSignature} onClose={() => setShowSignModal(false)} />
         )}
+        {uploadModal && (
+          <UploadModal installmentNum={uploadModal} loan={loan} borrower={borrower} qlPaymentType={qlPaymentType} onClose={() => { setUploadModal(null); setQlPaymentType(null) }} onUploaded={handleUploaded} />
+        )}
+
+        {/* Mobile Bottom Navigation */}
+        <nav className="bottom-nav">
+          <button onClick={() => setPage('home')} className={`bn-item ${page === 'home' ? 'active' : ''}`}>
+            <Home size={20} />
+            <span className="bn-label">Home</span>
+          </button>
+          <button onClick={() => setPage('payment-history')} className={`bn-item ${page === 'payment-history' ? 'active' : ''}`}>
+            <Clock size={20} />
+            <span className="bn-label">History</span>
+          </button>
+          <button onClick={() => setPage('wallet')} className={`bn-item ${page === 'wallet' ? 'active' : ''}`}>
+            <Wallet size={20} />
+            <span className="bn-label">Wallet</span>
+          </button>
+          <button onClick={() => setPage('payment-methods')} className={`bn-item ${page === 'payment-methods' ? 'active' : ''}`}>
+            <CreditCard size={20} />
+            <span className="bn-label">Repay</span>
+          </button>
+          <button onClick={() => setPage('profile')} className={`bn-item ${page === 'profile' ? 'active' : ''}`}>
+            <User size={20} />
+            <span className="bn-label">Profile</span>
+          </button>
+        </nav>
       </div>
-
-      {showSignModal && loan && (
-        <SignatureModal borrower={borrower} loan={loan} onSave={handleSaveSignature} onClose={() => setShowSignModal(false)} />
-      )}
-      {uploadModal && (
-        <UploadModal installmentNum={uploadModal} loan={loan} borrower={borrower} qlPaymentType={qlPaymentType} onClose={() => { setUploadModal(null); setQlPaymentType(null) }} onUploaded={handleUploaded} />
-      )}
-
-      {/* Mobile Bottom Navigation */}
-      <nav className="bottom-nav">
-        <button onClick={() => setPage('home')} className={`bn-item ${page === 'home' ? 'active' : ''}`}>
-          <Home size={20} />
-          <span className="bn-label">Home</span>
-        </button>
-        <button onClick={() => setPage('payment-history')} className={`bn-item ${page === 'payment-history' ? 'active' : ''}`}>
-          <Clock size={20} />
-          <span className="bn-label">History</span>
-        </button>
-        <button onClick={() => setPage('wallet')} className={`bn-item ${page === 'wallet' ? 'active' : ''}`}>
-          <Wallet size={20} />
-          <span className="bn-label">Wallet</span>
-        </button>
-        <button onClick={() => setPage('payment-methods')} className={`bn-item ${page === 'payment-methods' ? 'active' : ''}`}>
-          <CreditCard size={20} />
-          <span className="bn-label">Repay</span>
-        </button>
-        <button onClick={() => setPage('profile')} className={`bn-item ${page === 'profile' ? 'active' : ''}`}>
-          <User size={20} />
-          <span className="bn-label">Profile</span>
-        </button>
-      </nav>
-    </div>
-  )
+    )
 }
+
