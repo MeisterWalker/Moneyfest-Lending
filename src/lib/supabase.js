@@ -230,6 +230,7 @@ CREATE TABLE IF NOT EXISTS other_products (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   name TEXT NOT NULL,
   capital NUMERIC(10,2) DEFAULT 0,
+  unit_price NUMERIC(10,2) DEFAULT 0,
   description TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
@@ -243,4 +244,18 @@ ALTER TABLE loans ADD COLUMN IF NOT EXISTS security_hold_returned BOOLEAN DEFAUL
 ALTER TABLE borrowers ADD COLUMN IF NOT EXISTS department TEXT;
 ALTER TABLE borrowers ADD COLUMN IF NOT EXISTS access_code TEXT;
 ALTER TABLE borrowers ADD COLUMN IF NOT EXISTS photo_url TEXT;
+
+-- Product Logs table (daily sales/expenses tracking)
+CREATE TABLE IF NOT EXISTS product_logs (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  product_id UUID REFERENCES other_products(id) ON DELETE CASCADE,
+  sales_amount NUMERIC(15,2) DEFAULT 0,
+  expense_amount NUMERIC(15,2) DEFAULT 0,
+  items_sold INTEGER DEFAULT 0,
+  items_prepared INTEGER DEFAULT 0,
+  log_date DATE DEFAULT CURRENT_DATE,
+  notes TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
 `
