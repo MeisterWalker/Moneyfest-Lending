@@ -21,6 +21,17 @@
   --radius-btn: 10px;
 }
 
+[data-theme="light"] {
+  --bg: #F8FAFC;
+  --card: #FFFFFF;
+  --card-border: rgba(0,0,0,0.08);
+  --card-shadow: 0 4px 24px rgba(0,0,0,0.06);
+  --text-primary: #1E293B;
+  --text-label: #64748B;
+  --text-muted: #94A3B8;
+  --modal-overlay: rgba(0,0,0,0.4);
+}
+
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
@@ -56,7 +67,7 @@ h1, h2, h3, h4, h5, h6 {
 /* Inputs */
 input, textarea, select {
   background: var(--bg);
-  border: 1px solid rgba(255,255,255,0.1);
+  border: 1px solid var(--card-border);
   color: var(--text-primary);
   border-radius: var(--radius-sm);
   padding: 10px 14px;

@@ -277,15 +277,15 @@ function CustomTooltip({ active, payload, label, prefix = "₱" }) {
   if (!active || !payload?.length) return null
   return (
     <div style={{
-      background: '#1E2640',
-      border: '1px solid rgba(255,255,255,0.12)',
+      background: 'var(--card)',
+      border: '1px solid var(--card-border)',
       borderRadius: 10,
       padding: '10px 14px',
       fontSize: 13,
       fontFamily: 'DM Sans, sans-serif',
-      boxShadow: '0 8px 24px rgba(0,0,0,0.5)'
+      boxShadow: 'var(--card-shadow)'
     }}>
-      <div style={{ color: '#7A8AAA', marginBottom: 6, fontSize: 12 }}>{label}</div>
+      <div style={{ color: 'var(--text-label)', marginBottom: 6, fontSize: 12 }}>{label}</div>
       {payload.map((p, i) => (
         <div key={i} style={{ color: p.color, fontWeight: 700, fontSize: 14 }}>
           {prefix}{typeof p.value === 'number' ? p.value.toLocaleString('en-PH', { minimumFractionDigits: 2 }) : p.value}
@@ -631,7 +631,7 @@ export default function DashboardPage() {
           <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 15, marginBottom: 18 }}>📈 Capital Growth</div>
           <ResponsiveContainer width="100%" height={200}>
             <LineChart data={capitalGrowthData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--card-border)" />
               <XAxis dataKey="month" tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={v => `₱${(v/1000).toFixed(0)}k`} />
               <Tooltip content={<CustomTooltip />} />
@@ -645,7 +645,7 @@ export default function DashboardPage() {
           <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 15, marginBottom: 18 }}><div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><img src="/philippine-peso.png" alt="philippine-peso" style={{ width: 16, height: 16, objectFit: 'contain' }} />Monthly Profit</div></div>
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={monthlyData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--card-border)" />
               <XAxis dataKey="month" tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={v => `₱${v}`} />
               <Tooltip content={<CustomTooltip />} />
@@ -677,16 +677,16 @@ export default function DashboardPage() {
                   <Tooltip
                     formatter={(value, name) => [value, name]}
                     contentStyle={{
-                      background: '#1E2640',
-                      border: '1px solid rgba(255,255,255,0.12)',
+                      background: 'var(--card)',
+                      border: '1px solid var(--card-border)',
                       borderRadius: 10,
                       fontSize: 13,
                       fontFamily: 'DM Sans, sans-serif',
                       padding: '8px 14px',
-                      boxShadow: '0 8px 24px rgba(0,0,0,0.5)'
+                      boxShadow: 'var(--card-shadow)'
                     }}
-                    itemStyle={{ color: '#F0F4FF', fontWeight: 600 }}
-                    labelStyle={{ color: '#7A8AAA', fontSize: 12 }}
+                    itemStyle={{ color: 'var(--text-primary)', fontWeight: 600 }}
+                    labelStyle={{ color: 'var(--text-label)', fontSize: 12 }}
                   />
                 </PieChart>
               </ResponsiveContainer>

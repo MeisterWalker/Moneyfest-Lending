@@ -10,8 +10,16 @@ import { TrendingUp, RefreshCw, Info } from 'lucide-react'
 function CustomTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null
   return (
-    <div style={{ background: '#1E2640', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 10, padding: '10px 14px', fontSize: 13, fontFamily: 'DM Sans, sans-serif', boxShadow: '0 8px 24px rgba(0,0,0,0.5)' }}>
-      <div style={{ color: '#7A8AAA', marginBottom: 6, fontSize: 12 }}>{label}</div>
+    <div style={{
+      background: 'var(--card)',
+      border: '1px solid var(--card-border)',
+      borderRadius: 10,
+      padding: '10px 14px',
+      fontSize: 13,
+      fontFamily: 'DM Sans, sans-serif',
+      boxShadow: 'var(--card-shadow)'
+    }}>
+      <div style={{ color: 'var(--text-label)', marginBottom: 6, fontSize: 12 }}>{label}</div>
       {payload.map((p, i) => (
         <div key={i} style={{ color: p.color, fontWeight: 700, fontSize: 13 }}>
           {p.name}: {formatCurrency(p.value)}
@@ -285,7 +293,7 @@ export default function ForecastPage() {
             <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 15, marginBottom: 18 }}>📈 12-Month Growth Projection</div>
             <ResponsiveContainer width="100%" height={260}>
               <LineChart data={proj12}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--card-border)" />
                 <XAxis dataKey="month" tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={v => `₱${(v / 1000).toFixed(0)}k`} />
                 <Tooltip content={<CustomTooltip />} />
@@ -398,7 +406,7 @@ export default function ForecastPage() {
             <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 15, marginBottom: 18 }}>⚡ 12-Month QuickLoan Growth</div>
             <ResponsiveContainer width="100%" height={260}>
               <LineChart data={qlProj12}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--card-border)" />
                 <XAxis dataKey="month" tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={v => `₱${(v / 1000).toFixed(0)}k`} />
                 <Tooltip content={<CustomTooltip />} />

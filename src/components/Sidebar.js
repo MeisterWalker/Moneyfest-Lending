@@ -1,7 +1,7 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, Users, FileText, TrendingUp,
-  Calendar, History, Settings, LogOut, ClipboardList, Shield, CheckSquare, Briefcase, Brain
+  Calendar, History, Settings, LogOut, ClipboardList, Shield, CheckSquare, Briefcase, Brain, Moon, Sun
 } from 'lucide-react'
 
 function LedgerIcon({ size = 20 }) {
@@ -19,6 +19,7 @@ function LedgerIcon({ size = 20 }) {
   )
 }
 import { useAuth } from '../context/AuthContext'
+import { useTheme } from '../context/ThemeContext'
 import { useToast } from './Toast'
 
 const navItems = [
@@ -37,6 +38,7 @@ const navItems = [
 
 export default function Sidebar() {
   const { signOut, user } = useAuth()
+  const { theme, toggleTheme } = useTheme()
   const { toast } = useToast()
   const navigate = useNavigate()
 
@@ -118,6 +120,22 @@ export default function Sidebar() {
           Settings
         </NavLink>
 
+        <button
+          onClick={toggleTheme}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 10,
+            padding: '10px 12px', borderRadius: 10,
+            background: 'rgba(255,255,255,0.03)', border: '1px solid var(--card-border)', cursor: 'pointer',
+            color: 'var(--text-label)', fontSize: 13, fontWeight: 500,
+            width: '100%', transition: 'all 0.15s ease',
+            marginBottom: 12, justifyContent: 'center'
+          }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.color = 'var(--text-primary)' }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; e.currentTarget.style.color = 'var(--text-label)' }}
+        >
+          {theme === 'dark' ? <><Sun size={16} /> Light Mode</> : <><Moon size={16} /> Dark Mode</>}
+        </button>
+
         <div style={{ padding: '8px 12px', marginBottom: 8 }}>
           <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 2 }}>Signed in as</div>
           <div style={{ fontSize: 12, color: 'var(--text-label)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -137,7 +155,7 @@ export default function Sidebar() {
           onMouseEnter={e => { e.currentTarget.style.color = 'var(--red)'; e.currentTarget.style.background = 'rgba(239,68,68,0.08)' }}
           onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'none' }}
         >
-          <LogOut size={18} />
+          <LogOut size={14} />
           Sign Out
         </button>
       </div>
