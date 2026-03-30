@@ -149,6 +149,7 @@ function StatusBadge({ status }) {
 function LoanCard({ loan: rawLoan, borrowers, applications, onEdit, onDelete, onRecordPayment, onDefault, onRenew, onQuickLoanPayoff, onQuickLoanDay15Missed, onConfirmRelease }) {
   const [expanded, setExpanded] = useState(false)
   const [confirming, setConfirming] = useState(false)
+  const [confirmingExtension, setConfirmingExtension] = useState(false)
   // Normalize installment to whole peso — handles loans created before rounding was added
   const loan = {
     ...rawLoan,
@@ -392,6 +393,16 @@ function LoanCard({ loan: rawLoan, borrowers, applications, onEdit, onDelete, on
               </button>
             )}
 
+          {/* QuickLoan Record Extension button (Manual) */}
+          {isQuickLoan && !loan.extension_fee_charged && canPay && !confirming && !confirmingExtension && (
+            <button
+              onClick={() => setConfirmingExtension(true)}
+              style={{ fontSize: 12, padding: '6px 14px', borderRadius: 8, border: '1px solid rgba(245,158,11,0.35)', background: 'rgba(245,158,11,0.08)', color: '#F59E0B', cursor: 'pointer', fontWeight: 600 }}
+            >
+              ⚡ Record Extension
+            </button>
+          )}
+
             {/* Confirm Release button for Pending loans */}
             {loan.status === 'Pending' && (
               <button
@@ -447,15 +458,24 @@ function LoanCard({ loan: rawLoan, borrowers, applications, onEdit, onDelete, on
             )
           )}
 
-          {/* QuickLoan Day 15 missed button */}
-          {isQuickLoan && qlBalance?.phase !== 'active' && !loan.extension_fee_charged && canPay && !confirming && (
-            <button
-              onClick={() => onQuickLoanDay15Missed(loan)}
-              style={{ fontSize: 12, padding: '6px 14px', borderRadius: 8, border: '1px solid rgba(245,158,11,0.3)', background: 'rgba(245,158,11,0.08)', color: '#F59E0B', cursor: 'pointer', fontWeight: 600 }}
-            >
-              ⚠️ Day 15 Missed — Collect Fee
-            </button>
+          {/* QuickLoan Record Extension confirmation */}
+          {confirmingExtension && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.25)', borderRadius: 8, padding: '6px 12px', fontSize: 12 }}>
+              <span style={{ color: 'var(--text-label)' }}>
+                Record ₱{QUICKLOAN_CONFIG.EXTENSION_FEE + parseFloat((loan.loan_amount * QUICKLOAN_CONFIG.DAILY_RATE * QUICKLOAN_CONFIG.DAY15_THRESHOLD).toFixed(2))} (Fee + Day 15 Interest)?
+              </span>
+              <button onClick={() => { onQuickLoanDay15Missed(loan); setConfirmingExtension(false) }}
+                style={{ background: '#F59E0B', color: '#000', border: 'none', borderRadius: 6, padding: '4px 10px', cursor: 'pointer', fontSize: 12, fontWeight: 700 }}>
+                Yes
+              </button>
+              <button onClick={() => setConfirmingExtension(false)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 12 }}>
+                Cancel
+              </button>
+            </div>
           )}
+
+
 
           {/* Renew loan button (paid loans) */}
           {isPaid && (
@@ -982,7 +1002,7 @@ export default function LoansPage() {
 
     const { error } = await supabase.from('loans').update({
       extension_fee_charged: true,
-      status: 'Overdue',
+      status: 'Active',
       updated_at: new Date().toISOString()
     }).eq('id', loan.id)
 
