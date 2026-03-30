@@ -225,6 +225,16 @@ CREATE TABLE IF NOT EXISTS push_subscriptions (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Other Products table (non-loan business capital tracking)
+CREATE TABLE IF NOT EXISTS other_products (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name TEXT NOT NULL,
+  capital NUMERIC(10,2) DEFAULT 0,
+  description TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- Add missing columns to loans table
 ALTER TABLE loans ADD COLUMN IF NOT EXISTS security_hold NUMERIC(10,2) DEFAULT 0;
 ALTER TABLE loans ADD COLUMN IF NOT EXISTS security_hold_returned BOOLEAN DEFAULT FALSE;
