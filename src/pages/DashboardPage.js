@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { CREDIT_CONFIG, getBadgeFromScore } from '../lib/creditSystem'
-import { logAudit, formatCurrency, formatDate } from '../lib/helpers'
+import { logAudit, formatCurrency, formatDate, getInstallmentDates, formatDateValue } from '../lib/helpers'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../components/Toast'
@@ -75,12 +75,17 @@ function CutoffBanner({ loans, borrowers, onMarkPaid, onDismiss }) {
   const isCutoffDay = day === 5 || day === 20
   if (!isCutoffDay) return null
 
-  const todayStr = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0')
-  const due = loans.filter(l =>
-    ['Active', 'Partially Paid'].includes(l.status) &&
-    l.loan_type !== 'quickloan' &&
-    String(l.release_date).slice(0, 10) !== todayStr
-  )
+  const todayStr = formatDateValue(today)
+  const due = loans.filter(l => {
+    if (!['Active', 'Partially Paid'].includes(l.status)) return false
+    if (l.loan_type === 'quickloan') return false
+    
+    const dates = getInstallmentDates(l.release_date, l.num_installments || 4)
+    const nextIdx = l.payments_made || 0
+    if (nextIdx >= dates.length) return false
+    
+    return formatDateValue(dates[nextIdx]) === todayStr
+  })
 
   if (due.length === 0) return null
 
@@ -156,7 +161,17 @@ function CountdownWidget({ loans, borrowers }) {
   else nextCutoff = new Date(year, month + 1, 5)
 
   const daysLeft = Math.ceil((nextCutoff - today) / (1000 * 60 * 60 * 24))
-  const dueLoansList = loans.filter(l => ['Active', 'Partially Paid'].includes(l.status))
+  const nextCutoffStr = formatDateValue(nextCutoff)
+  const dueLoansList = loans.filter(l => {
+    if (!['Active', 'Partially Paid'].includes(l.status)) return false
+    if (l.loan_type === 'quickloan') return false
+    
+    const dates = getInstallmentDates(l.release_date, l.num_installments || 4)
+    const nextIdx = l.payments_made || 0
+    if (nextIdx >= dates.length) return false
+    
+    return formatDateValue(dates[nextIdx]) === nextCutoffStr
+  })
   const totalExpected = dueLoansList.reduce((sum, l) => sum + (l.installment_amount || 0), 0)
 
   return (
