@@ -42,7 +42,7 @@ export default function HomePage() {
     { value: `${(interestRate * 100).toFixed(0)}%`, label: 'Monthly interest rate', sub: 'No compounding' },
     { value: '₱10K', label: 'Maximum loan', sub: 'For trusted borrowers' },
     { value: '4–6', label: 'Easy installments', sub: 'Over 2 or 3 months' },
-    { value: '24-48hr', label: 'Avg. approval time', sub: 'Fast turnaround' },
+    { value: '48hrs', label: 'Avg. approval time', sub: 'Fast turnaround' },
   ]
 
   return (
