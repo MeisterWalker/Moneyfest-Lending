@@ -331,11 +331,12 @@ export default function DashboardPage() {
   const [addingProduct, setAddingProduct] = useState(false)
   const [addingLog, setAddingLog] = useState(false)
   const [logMode, setLogMode] = useState('sales') // 'sales' or 'stock'
+  const [investors, setInvestors] = useState([])
   const navigate = useNavigate()
 
   const fetchData = useCallback(async () => {
     try {
-      const [{ data: l }, { data: b }, { data: s }, { data: a }, { data: apps }, { data: visits }, { data: others }, { data: logs }] = await Promise.all([
+      const [{ data: l }, { data: b }, { data: s }, { data: a }, { data: apps }, { data: visits }, { data: others }, { data: logs }, { data: inv }] = await Promise.all([
         supabase.from('loans').select('*').order('created_at', { ascending: false }),
         supabase.from('borrowers').select('*'),
         supabase.from('settings').select('*').eq('id', 1).single(),
@@ -343,7 +344,8 @@ export default function DashboardPage() {
         supabase.from('applications').select('id').eq('status', 'Pending'),
         supabase.from('page_visits').select('page, visited_at'),
         supabase.from('other_products').select('*').order('created_at', { ascending: false }),
-        supabase.from('product_logs').select('*').order('log_date', { ascending: false })
+        supabase.from('product_logs').select('*').order('log_date', { ascending: false }),
+        supabase.from('investors').select('id,full_name,tier,total_capital,access_code')
       ])
       setLoans(l || [])
       setBorrowers(b || [])
@@ -352,6 +354,7 @@ export default function DashboardPage() {
       setAuditLogs(a || [])
       setOtherProducts(others || [])
       setProductLogs(logs || [])
+      setInvestors(inv || [])
 
       // Compute visitor stats
       const allVisits = visits || []

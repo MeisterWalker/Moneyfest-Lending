@@ -146,12 +146,13 @@ function StatusBadge({ status }) {
   )
 }
 
-function LoanCard({ loan: rawLoan, borrowers, applications, onEdit, onDelete, onRecordPayment, onDefault, onRenew, onQuickLoanPayoff, onQuickLoanDay15Missed, onConfirmRelease, onRecordPrincipalPayment }) {
+function LoanCard({ loan: rawLoan, borrowers, applications, investors, onEdit, onDelete, onRecordPayment, onDefault, onRenew, onQuickLoanPayoff, onQuickLoanDay15Missed, onConfirmRelease, onRecordPrincipalPayment, onAssignInvestor }) {
   const [expanded, setExpanded] = useState(false)
   const [confirming, setConfirming] = useState(false)
   const [confirmingExtension, setConfirmingExtension] = useState(false)
   const [confirmingPrincipal, setConfirmingPrincipal] = useState(false)
   const [principalInput, setPrincipalInput] = useState('')
+  const [showInvestorPicker, setShowInvestorPicker] = useState(false)
   // Normalize installment to whole peso — handles loans created before rounding was added
   const loan = {
     ...rawLoan,
@@ -204,6 +205,15 @@ function LoanCard({ loan: rawLoan, borrowers, applications, onEdit, onDelete, on
                   <AlertTriangle size={12} /> Overdue
                 </span>
               )}
+              {/* Investor assignment badge */}
+              {loan.investor_id && (() => {
+                const inv = (investors || []).find(i => i.id === loan.investor_id)
+                return inv ? (
+                  <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.3)', color: '#A78BFA', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                    👤 {inv.full_name} ({inv.tier})
+                  </span>
+                ) : null
+              })()}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--text-label)' }}>
               <User size={13} />
@@ -515,6 +525,50 @@ function LoanCard({ loan: rawLoan, borrowers, applications, onEdit, onDelete, on
             </div>
           )}
 
+          {/* Assign to Investor — only for installment loans without an investor */}
+          {!isQuickLoan && !loan.investor_id && (loan.status === 'Active' || loan.status === 'Partially Paid') && (
+            <div style={{ position: 'relative' }}>
+              <button
+                onClick={() => setShowInvestorPicker(p => !p)}
+                style={{ fontSize: 12, padding: '6px 14px', borderRadius: 8, border: '1px solid rgba(139,92,246,0.3)', background: 'rgba(139,92,246,0.1)', color: '#A78BFA', cursor: 'pointer', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 5 }}
+              >
+                👤 Assign Investor
+              </button>
+              {showInvestorPicker && (
+                <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: 4, zIndex: 50, background: 'var(--card-bg, #141B2D)', border: '1px solid rgba(139,92,246,0.3)', borderRadius: 10, padding: 8, minWidth: 220, boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', padding: '4px 8px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Select Investor</div>
+                  {(investors || []).length === 0 && (
+                    <div style={{ padding: '8px', fontSize: 12, color: 'var(--text-muted)' }}>No investors available</div>
+                  )}
+                  {(investors || []).map(inv => (
+                    <button key={inv.id} onClick={() => { onAssignInvestor(loan, inv.id); setShowInvestorPicker(false) }}
+                      style={{ width: '100%', padding: '8px 10px', borderRadius: 6, border: 'none', background: 'transparent', color: 'var(--text-primary, #F0F4FF)', cursor: 'pointer', fontSize: 13, fontWeight: 500, textAlign: 'left', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+                      onMouseEnter={e => e.currentTarget.style.background = 'rgba(139,92,246,0.12)'}
+                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                    >
+                      <span>{inv.full_name}</span>
+                      <span style={{ fontSize: 11, color: '#A78BFA', fontWeight: 700 }}>{inv.tier}</span>
+                    </button>
+                  ))}
+                  <button onClick={() => setShowInvestorPicker(false)}
+                    style={{ width: '100%', padding: '6px', borderRadius: 6, border: 'none', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 11, marginTop: 4 }}>
+                    Cancel
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Unassign investor button */}
+          {!isQuickLoan && loan.investor_id && (loan.status === 'Active' || loan.status === 'Partially Paid') && (
+            <button
+              onClick={() => onAssignInvestor(loan, null)}
+              style={{ fontSize: 12, padding: '6px 14px', borderRadius: 8, border: '1px solid rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.08)', color: '#FCA5A5', cursor: 'pointer', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 5 }}
+            >
+              ✕ Unassign Investor
+            </button>
+          )}
+
           {/* Renew loan button (paid loans) */}
           {isPaid && (
             <button onClick={() => onRenew(loan)} className="btn-primary" style={{ fontSize: 12, padding: '6px 14px', background: 'rgba(20,184,166,0.2)', color: 'var(--teal)' }}>
@@ -549,6 +603,7 @@ function LoanCard({ loan: rawLoan, borrowers, applications, onEdit, onDelete, on
 export default function LoansPage() {
   const [loans, setLoans] = useState([])
   const [borrowers, setBorrowers] = useState([])
+  const [investors, setInvestors] = useState([])
   const [settings, setSettings] = useState(null)
   const [applications, setApplications] = useState([])
   const [loading, setLoading] = useState(true)
@@ -565,14 +620,16 @@ export default function LoansPage() {
   const { toast } = useToast()
 
   const fetchData = useCallback(async () => {
-    const [{ data: l }, { data: b }, { data: s }, { data: apps }] = await Promise.all([
+    const [{ data: l }, { data: b }, { data: s }, { data: apps }, { data: inv }] = await Promise.all([
       supabase.from('loans').select('*').order('created_at', { ascending: false }),
       supabase.from('borrowers').select('*'),
       supabase.from('settings').select('*').eq('id', 1).single(),
-      supabase.from('applications').select('id,release_method,gcash_number,gcash_name,bank_account_number,bank_name,bank_account_holder,full_name,email').eq('status', 'Approved').order('created_at', { ascending: false })
+      supabase.from('applications').select('id,release_method,gcash_number,gcash_name,bank_account_number,bank_name,bank_account_holder,full_name,email').eq('status', 'Approved').order('created_at', { ascending: false }),
+      supabase.from('investors').select('id,full_name,tier,total_capital,access_code')
     ])
     setLoans(l || [])
     setBorrowers(b || [])
+    setInvestors(inv || [])
     setSettings(s)
     setApplications(apps || [])
     setLoading(false)
@@ -967,6 +1024,25 @@ export default function LoansPage() {
     setModalOpen(true)
   }
 
+  // ── Assign / Unassign Investor ──────────────────────────────
+  const handleAssignInvestor = async (loan, investorId) => {
+    const borrower = borrowers.find(b => b.id === loan.borrower_id)
+    const investor = investors.find(i => i.id === investorId)
+    const { error } = await supabase.from('loans').update({
+      investor_id: investorId,
+      updated_at: new Date().toISOString()
+    }).eq('id', loan.id)
+    if (error) { toast('Failed to assign investor: ' + error.message, 'error'); return }
+    if (investorId) {
+      await logAudit({ action_type: 'INVESTOR_ASSIGNED', module: 'Loan', description: `Loan for ${borrower?.full_name || 'Unknown'} (₱${loan.loan_amount?.toLocaleString()}) assigned to investor ${investor?.full_name || investorId}`, changed_by: user?.email })
+      toast(`Loan assigned to ${investor?.full_name}`, 'success')
+    } else {
+      await logAudit({ action_type: 'INVESTOR_UNASSIGNED', module: 'Loan', description: `Investor unassigned from loan for ${borrower?.full_name || 'Unknown'}`, changed_by: user?.email })
+      toast('Investor unassigned from loan', 'info')
+    }
+    fetchData()
+  }
+
   // ── QuickLoan full payoff ─────────────────────────────────────
   // Collects everything owed today: principal + accrued interest + extension fee + any penalty
   const handleConfirmRelease = async (loan) => {
@@ -1220,6 +1296,7 @@ export default function LoansPage() {
               loan={loan}
               borrowers={borrowers}
               applications={applications}
+              investors={investors}
               onEdit={l => { setEditingLoan(l); setPrefillLoan(null); setModalOpen(true) }}
               onDelete={setDeleteTarget}
               onDefault={setDefaultTarget}
@@ -1229,6 +1306,7 @@ export default function LoansPage() {
               onQuickLoanPayoff={handleQuickLoanPayoff}
               onQuickLoanDay15Missed={handleQuickLoanDay15Missed}
               onRecordPrincipalPayment={handleRecordPrincipalPayment}
+              onAssignInvestor={handleAssignInvestor}
             />
           ))}
         </div>

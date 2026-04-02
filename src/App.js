@@ -25,6 +25,7 @@ import TermsPage from './pages/TermsPage'
 import ContactPage from './pages/ContactPage'
 import PartnersPage from './pages/PartnersPage'
 import InvestorDashboard from './pages/InvestorDashboard'
+import InvestorsPage from './pages/InvestorsPage'
 import AssessmentPage from './pages/AssessmentPage'
 import AssessmentForm from './pages/AssessmentForm'
 import NotificationBell from './components/NotificationBell'
@@ -91,6 +92,7 @@ function AppRoutes() {
       <Route path="/admin/approvals"     element={<ProtectedRoute><AppLayout><ApprovalsPage /></AppLayout></ProtectedRoute>} />
       <Route path="/privacy"           element={<PrivacyPage />} />
       <Route path="/admin/investor-pitch" element={<ProtectedRoute><AppLayout><InvestorPitchPage /></AppLayout></ProtectedRoute>} />
+      <Route path="/admin/investors"      element={<ProtectedRoute><AppLayout><InvestorsPage /></AppLayout></ProtectedRoute>} />
       <Route path="/terms"            element={<TermsPage />} />
       <Route path="/contact"          element={<ContactPage />} />
       <Route path="/partners"         element={<PartnersPage />} />

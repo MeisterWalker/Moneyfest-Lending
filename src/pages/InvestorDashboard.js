@@ -15,9 +15,9 @@ import InvestorMoa from '../components/InvestorMoa'
 import { sendPayoutRequestedAdminEmail, sendMoaSignedAdminEmail } from '../lib/emailService'
 
 const TIER_RATES = {
-  'Starter':  0.105,
-  'Standard': 0.12,
-  'Premium':  0.135
+  'Starter':  0.07,
+  'Standard': 0.08,
+  'Premium':  0.09
 }
 
 // ─── Theme tokens ──────────────────────────────────────────────
@@ -209,7 +209,9 @@ export default function InvestorDashboard() {
       .reduce((s, l) => s + Number(l.loan_amount), 0)
     if (activeCapital <= 0) { setLiveAccrual(0); return }
 
-    const dailyRate = investor.tier === 'Premium' ? 0.0015 : investor.tier === 'Standard' ? 0.00133 : 0.00116
+    // Daily rate derived from tier quarterly rate: e.g. Premium 9%/90days = 0.001 per day
+    const quarterlyRate = TIER_RATES[investor.tier] || 0.08
+    const dailyRate = quarterlyRate / 90
     const dailyProfit = activeCapital * dailyRate
     const now = new Date()
     const secondsInDay = (now.getHours() * 3600) + (now.getMinutes() * 60) + now.getSeconds()
@@ -396,7 +398,7 @@ export default function InvestorDashboard() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20, marginBottom: 24 }}>
           {[
             { label: 'Total Invested', value: formatCurrency(totalInvested), valueColor: t.green, sub: `${investor.tier} Tier Capital Pool`, icon: <Wallet size={22} style={{ color: '#fff' }} /> },
-            { label: 'Current ROI', value: `${roi}%`, valueColor: '#F59E0B', sub: `Rate: ${(rate * 100).toFixed(1)}% per cycle`, icon: <TrendingUp size={22} style={{ color: '#fff' }} /> },
+            { label: 'Funds Deployed', value: formatCurrency(activeCapital), valueColor: '#F59E0B', sub: `${activeLoans.length} active loan${activeLoans.length !== 1 ? 's' : ''} · ${(rate * 100).toFixed(0)}% per cycle`, icon: <TrendingUp size={22} style={{ color: '#fff' }} /> },
             { label: 'Total Earnings', value: formatCurrency(totalEarnings), valueColor: t.green, sub: `Live accrual: +${formatCurrency(liveAccrual)} today`, icon: <CreditCard size={22} style={{ color: '#fff' }} /> },
           ].map(c => (
             <div key={c.label} style={{ ...card, padding: 0, overflow: 'hidden', boxShadow: isDark ? '0 4px 20px rgba(0,0,0,0.3)' : '0 4px 20px rgba(0,0,0,0.1)' }}>
