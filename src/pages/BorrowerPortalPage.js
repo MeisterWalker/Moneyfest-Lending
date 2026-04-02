@@ -2343,65 +2343,6 @@ export default function BorrowerPortalPage() {
                 </div>
               </div>
 
-
-              {/* QuickLoan Live Status widget (replaces rebate calculator for QL) */}
-              {loan && loan.status !== 'Paid' && loan.loan_type === 'quickloan' && loan.release_date && (() => {
-                const [y,m,d] = loan.release_date.split('-').map(Number)
-                const releaseD = new Date(y, m-1, d)
-                const today = new Date(); today.setHours(0,0,0,0)
-                const daysElapsed = Math.max(0, Math.floor((today - releaseD) / 86400000))
-                const day15Rem = Math.max(0, 15 - daysElapsed)
-                const day30Rem = Math.max(0, 30 - daysElapsed)
-                const phase = daysElapsed > 30 ? 'penalty' : daysElapsed > 15 ? 'extended' : 'active'
-                const phaseColor = phase === 'penalty' ? '#EF4444' : phase === 'extended' ? '#F59E0B' : '#22C55E'
-                const phaseLabel = phase === 'penalty' ? '⚠ Penalty Phase' : phase === 'extended' ? '⏳ Extended (Day 15–30)' : '✅ Active (Day 1–15)'
-                const principal = parseFloat(loan.current_principal ?? loan.loan_amount) || 0
-                const dailyInt = parseFloat((principal * 0.1 / 30).toFixed(2))
-                const baselineDate = loan.interest_baseline_date || loan.release_date
-                const [by,bm,bd] = baselineDate.split('-').map(Number)
-                const baseD = new Date(by,bm-1,bd)
-                const daysForInterest = Math.max(0, Math.floor((today - baseD) / 86400000))
-                const accrued = parseFloat((principal * 0.1 / 30 * daysForInterest).toFixed(2))
-                const progressPct = Math.min(100, (daysElapsed / 30) * 100)
-                return (
-                  <div className="pc" style={{ background: `linear-gradient(135deg,#0A0F1E,${phase === 'penalty' ? '#1a0a0a' : phase === 'extended' ? '#1a120a' : '#0a1a0e'})`, border: `1px solid ${phaseColor}25`, borderRadius: 16, padding: 16 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-                      <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 12, color: '#F0F4FF' }}>⚡ QuickLoan Status</div>
-                      <span style={{ fontSize: 10, fontWeight: 700, color: phaseColor, background: `${phaseColor}18`, border: `1px solid ${phaseColor}30`, borderRadius: 20, padding: '2px 8px' }}>{phaseLabel}</span>
-                    </div>
-                    {/* Progress bar */}
-                    <div style={{ marginBottom: 14 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: '#4B5580', marginBottom: 6 }}>
-                        <span>Day {daysElapsed}</span>
-                        <span>Day 30 Deadline</span>
-                      </div>
-                      <div style={{ height: 8, background: 'rgba(255,255,255,0.06)', borderRadius: 4, overflow: 'hidden' }}>
-                        <div style={{ height: '100%', width: `${progressPct}%`, background: `linear-gradient(90deg, #22C55E, ${phaseColor})`, borderRadius: 4, transition: 'width 0.8s ease' }} />
-                      </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9, color: '#4B5580', marginTop: 4 }}>
-                        <span style={{ color: '#22C55E' }}>Released</span>
-                        <span style={{ color: '#F59E0B' }}>Day 15</span>
-                        <span style={{ color: '#EF4444' }}>Day 30</span>
-                      </div>
-                    </div>
-                    {/* Stats */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                      {[
-                        { label: 'Days Elapsed', value: `${daysElapsed} days`, color: '#F0F4FF' },
-                        { label: phase === 'active' ? 'Days to Day 15' : 'Days to Day 30', value: phase === 'active' ? `${day15Rem}d left` : `${day30Rem}d left`, color: phaseColor },
-                        { label: 'Accrued Interest', value: `₱${accrued.toFixed(2)}`, color: '#F59E0B' },
-                        { label: 'Daily Interest', value: `₱${dailyInt.toFixed(2)}/day`, color: '#60A5FA' },
-                      ].map((s, i) => (
-                        <div key={i} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8, padding: '8px 10px' }}>
-                          <div style={{ fontSize: 9, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 3, fontWeight: 700 }}>{s.label}</div>
-                          <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 13, color: s.color }}>{s.value}</div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )
-              })()}
-
               {/* Smart Rebate Calculator (Only for installment loans) */}
               {loan && loan.status !== 'Paid' && loan.loan_type !== 'quickloan' && (
                 <div className="pc" style={{ background: 'linear-gradient(135deg,#0E1320,#081c10)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 16, padding: 18 }}>
