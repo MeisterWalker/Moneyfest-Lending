@@ -1440,40 +1440,52 @@ export default function BorrowerPortalPage() {
           <PortalHeader borrower={borrower} notifications={notifications} showNotifs={showNotifs} setShowNotifs={setShowNotifs} markAllRead={markAllRead} onBack={() => setPage('home')} subtitle="Rebate Credits" />
           <div style={{ maxWidth: 520, margin: '0 auto', padding: '32px 20px 40px' }}>
 
-            {/* Balance card */}
-            <div style={{ background: 'linear-gradient(135deg,#0E1320,#1a1040)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 20, padding: 28, marginBottom: 16, textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
-              <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 50% 120%, rgba(245,158,11,0.06), transparent)', pointerEvents: 'none' }} />
-              <div style={{ fontSize: 11, color: '#7A8AAA', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8, fontWeight: 700 }}>Rebate Credits Balance</div>
-              <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 900, fontSize: 48, color: '#F59E0B', marginBottom: 4, lineHeight: 1 }}>
-                ₱{(rebateCredits?.balance || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
-              </div>
-              {!canWithdraw && (
-                <div style={{ fontSize: 12, color: '#4B5580', marginBottom: 16 }}>₱{(500 - (rebateCredits?.balance || 0)).toLocaleString('en-PH', { minimumFractionDigits: 2 })} more needed to withdraw</div>
-              )}
-              {canWithdraw ? (
-                <button onClick={() => { setWithdrawMethod(''); setWithdrawDetails(''); setShowWithdrawModal(true) }}
-                  style={{ padding: '12px 28px', borderRadius: 12, border: 'none', background: 'linear-gradient(135deg,#F59E0B,#D97706)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'Syne, sans-serif' }}>
-                  💸 Request Withdrawal
-                </button>
-              ) : (
-                <div style={{ display: 'inline-block', padding: '10px 20px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.03)', fontSize: 12, color: '#4B5580' }}>🔒 Min. ₱500 required to withdraw</div>
-              )}
-            </div>
-
-            {/* How to earn */}
-            <div style={{ background: '#0E1320', border: '1px solid rgba(34,197,94,0.15)', borderRadius: 16, padding: 20, marginBottom: 16 }}>
-              <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 13, color: '#22C55E', marginBottom: 14 }}>🎁 How to earn rebates</div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 14px', background: 'rgba(34,197,94,0.05)', border: '1px solid rgba(34,197,94,0.1)', borderRadius: 10, marginBottom: 8 }}>
+            {/* Rebate content — installment only */}
+            {loan?.loan_type === 'quickloan' ? (
+              <div style={{ background: 'rgba(99,102,241,0.06)', border: '1px solid rgba(99,102,241,0.15)', borderRadius: 14, padding: '18px 20px', marginBottom: 16, display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                <div style={{ fontSize: 22, flexShrink: 0 }}>ℹ️</div>
                 <div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: '#F0F4FF' }}>Pay final installment at least 1–2 weeks early</div>
-                  <div style={{ fontSize: 11, color: '#4B5580', marginTop: 2 }}>₱50 rebate on a ₱5,000 loan</div>
+                  <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 13, color: '#F0F4FF', marginBottom: 4 }}>Rebate Credits — Installment Loans Only</div>
+                  <div style={{ fontSize: 11, color: '#7A8AAA', lineHeight: 1.6 }}>Rebate Credits and early-payoff rewards are exclusive to <strong style={{ color: '#a78bfa' }}>Installment Loan</strong> borrowers. Your QuickLoan does not earn rebates. Your transaction history is shown below.</div>
                 </div>
-                <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 900, fontSize: 22, color: '#22C55E' }}>1%</div>
               </div>
-              <div style={{ fontSize: 11, color: '#4B5580', lineHeight: 1.7 }}>Fixed 1% of your original loan amount — credited automatically when admin records your payment. Security Hold is also returned here after your final installment.</div>
-            </div>
+            ) : (
+              <div style={{ background: 'linear-gradient(135deg,#0E1320,#1a1040)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 20, padding: 28, marginBottom: 16, textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
+                <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 50% 120%, rgba(245,158,11,0.06), transparent)', pointerEvents: 'none' }} />
+                <div style={{ fontSize: 11, color: '#7A8AAA', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8, fontWeight: 700 }}>Rebate Credits Balance</div>
+                <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 900, fontSize: 48, color: '#F59E0B', marginBottom: 4, lineHeight: 1 }}>
+                  ₱{(rebateCredits?.balance || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
+                </div>
+                {!canWithdraw && (
+                  <div style={{ fontSize: 12, color: '#4B5580', marginBottom: 16 }}>₱{(500 - (rebateCredits?.balance || 0)).toLocaleString('en-PH', { minimumFractionDigits: 2 })} more needed to withdraw</div>
+                )}
+                {canWithdraw ? (
+                  <button onClick={() => { setWithdrawMethod(''); setWithdrawDetails(''); setShowWithdrawModal(true) }}
+                    style={{ padding: '12px 28px', borderRadius: 12, border: 'none', background: 'linear-gradient(135deg,#F59E0B,#D97706)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'Syne, sans-serif' }}>
+                    💸 Request Withdrawal
+                  </button>
+                ) : (
+                  <div style={{ display: 'inline-block', padding: '10px 20px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.03)', fontSize: 12, color: '#4B5580' }}>🔒 Min. ₱500 required to withdraw</div>
+                )}
+              </div>
+            )}
 
-            {/* Transaction history */}
+            {/* How to earn — installment only */}
+            {loan?.loan_type !== 'quickloan' && (
+              <div style={{ background: '#0E1320', border: '1px solid rgba(34,197,94,0.15)', borderRadius: 16, padding: 20, marginBottom: 16 }}>
+                <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 13, color: '#22C55E', marginBottom: 14 }}>🎁 How to earn rebates</div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 14px', background: 'rgba(34,197,94,0.05)', border: '1px solid rgba(34,197,94,0.1)', borderRadius: 10, marginBottom: 8 }}>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: '#F0F4FF' }}>Pay final installment at least 1–2 weeks early</div>
+                    <div style={{ fontSize: 11, color: '#4B5580', marginTop: 2 }}>₱50 rebate on a ₱5,000 loan</div>
+                  </div>
+                  <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 900, fontSize: 22, color: '#22C55E' }}>1%</div>
+                </div>
+                <div style={{ fontSize: 11, color: '#4B5580', lineHeight: 1.7 }}>Fixed 1% of your original loan amount — credited automatically when admin records your payment. Security Hold is also returned here after your final installment.</div>
+              </div>
+            )}
+
+
             <div style={{ background: '#0E1320', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 16, overflow: 'hidden' }}>
               <div style={{ padding: '14px 18px', borderBottom: '1px solid rgba(255,255,255,0.05)', fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 14, color: '#F0F4FF' }}>Transaction History</div>
               {creditTxns.length === 0 ? (
