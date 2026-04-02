@@ -2107,7 +2107,9 @@ export default function BorrowerPortalPage() {
                         onClick={() => setShowPrincipalModal(true)}
                         style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', borderRadius: 14, border: '1.5px solid rgba(99,102,241,0.35)', background: 'linear-gradient(135deg,rgba(99,102,241,0.08),rgba(139,92,246,0.06))', cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s', width: '100%' }}
                       >
-                        <div style={{ width: 42, height: 42, borderRadius: 12, background: 'linear-gradient(135deg,#6366F1,#8B5CF6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0, boxShadow: '0 4px 12px rgba(99,102,241,0.3)' }}>💳</div>
+                        <div style={{ width: 42, height: 42, borderRadius: 12, background: 'linear-gradient(135deg,#6366F1,#8B5CF6)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 4px 12px rgba(99,102,241,0.3)', overflow: 'hidden' }}>
+                          <img src="/philippine-peso.png" alt="principal" style={{ width: 26, height: 26, objectFit: 'contain', filter: 'brightness(0) invert(1)' }} />
+                        </div>
                         <div style={{ flex: 1 }}>
                           <div style={{ fontSize: 13, fontWeight: 800, color: '#F0F4FF', marginBottom: 2, fontFamily: 'Syne, sans-serif' }}>Pay Towards Principal</div>
                           <div style={{ fontSize: 11, color: '#7A8AAA', lineHeight: 1.5 }}>Clears accrued interest first, then reduces your principal. Lowers your daily interest going forward.</div>
@@ -2120,7 +2122,9 @@ export default function BorrowerPortalPage() {
                         onClick={() => { setQlPaymentType('full_payoff'); setUploadModal(1) }}
                         style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', borderRadius: 14, border: '1.5px solid rgba(34,197,94,0.3)', background: 'rgba(34,197,94,0.04)', cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s', width: '100%' }}
                       >
-                        <div style={{ width: 42, height: 42, borderRadius: 12, background: 'linear-gradient(135deg,#22C55E,#16A34A)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0, boxShadow: '0 4px 12px rgba(34,197,94,0.25)' }}>✅</div>
+                        <div style={{ width: 42, height: 42, borderRadius: 12, background: 'linear-gradient(135deg,#22C55E,#16A34A)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 4px 12px rgba(34,197,94,0.25)', overflow: 'hidden' }}>
+                          <img src="/verified.png" alt="payoff" style={{ width: 26, height: 26, objectFit: 'contain', filter: 'brightness(0) invert(1)' }} />
+                        </div>
                         <div style={{ flex: 1 }}>
                           <div style={{ fontSize: 13, fontWeight: 800, color: '#F0F4FF', marginBottom: 2, fontFamily: 'Syne, sans-serif' }}>Full Pay-Off</div>
                           <div style={{ fontSize: 11, color: '#7A8AAA', lineHeight: 1.5 }}>Settle full outstanding balance (principal + all accrued interest). Closes your loan.</div>
@@ -2134,7 +2138,9 @@ export default function BorrowerPortalPage() {
                           onClick={() => { setQlPaymentType('interest_only'); setUploadModal(1) }}
                           style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', borderRadius: 14, border: '1.5px solid rgba(245,158,11,0.3)', background: 'rgba(245,158,11,0.04)', cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s', width: '100%' }}
                         >
-                          <div style={{ width: 42, height: 42, borderRadius: 12, background: 'linear-gradient(135deg,#F59E0B,#D97706)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0, boxShadow: '0 4px 12px rgba(245,158,11,0.25)' }}>📅</div>
+                          <div style={{ width: 42, height: 42, borderRadius: 12, background: 'linear-gradient(135deg,#F59E0B,#D97706)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 4px 12px rgba(245,158,11,0.25)', overflow: 'hidden' }}>
+                            <img src="/calendar.png" alt="interest" style={{ width: 26, height: 26, objectFit: 'contain', filter: 'brightness(0) invert(1)' }} />
+                          </div>
                           <div style={{ flex: 1 }}>
                             <div style={{ fontSize: 13, fontWeight: 800, color: '#F0F4FF', marginBottom: 2, fontFamily: 'Syne, sans-serif' }}>Interest Only (Day 15)</div>
                             <div style={{ fontSize: 11, color: '#7A8AAA', lineHeight: 1.5 }}>Pay accrued 15-day interest + ₱100 extension fee. Rolls principal to Day 30.</div>
@@ -2145,6 +2151,119 @@ export default function BorrowerPortalPage() {
                     </div>
                   </div>
                 )}
+
+                {/* ── Truth in Lending Act Disclosure ── */}
+                {loan && loan.status !== 'Pending' && (() => {
+                  const isQL = loan.loan_type === 'quickloan'
+
+                  if (isQL) {
+                    // QuickLoan disclosure
+                    const principal = parseFloat(loan.current_principal ?? loan.loan_amount) || 0
+                    const dailyRate = 0.1 / 30
+                    const dailyAmt  = parseFloat((principal * dailyRate).toFixed(2))
+                    const day15Int  = parseFloat((dailyAmt * 15).toFixed(2))
+                    const day15Tot  = parseFloat((principal + day15Int + 100).toFixed(2))
+                    const day30Int  = parseFloat((dailyAmt * 30).toFixed(2))
+                    const day30Tot  = parseFloat((principal + day30Int).toFixed(2))
+                    const releaseDate = loan.release_date
+                    const day15Date = releaseDate ? (() => { const [y,m,d] = releaseDate.split('-').map(Number); const dt = new Date(y,m-1,d); dt.setDate(dt.getDate()+15); return dt.toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'}) })() : 'TBD'
+                    const day30Date = releaseDate ? (() => { const [y,m,d] = releaseDate.split('-').map(Number); const dt = new Date(y,m-1,d); dt.setDate(dt.getDate()+30); return dt.toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'}) })() : 'TBD'
+                    return (
+                      <div className="pc" style={{ background: 'linear-gradient(135deg,#0A0F1E,#0e1020)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 18, overflow: 'hidden', marginBottom: 16 }}>
+                        <div style={{ padding: '14px 18px', borderBottom: '1px solid rgba(245,158,11,0.12)', display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <img src="/id-logo.png" alt="disclosure" style={{ width: 22, height: 22, objectFit: 'contain', opacity: 0.8 }} />
+                          <div>
+                            <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 13, color: '#F0F4FF' }}>Truth in Lending Disclosure</div>
+                            <div style={{ fontSize: 10, color: '#F59E0B', fontWeight: 600, marginTop: 1 }}>RA 3765 — Republic Act No. 3765 (Philippines)</div>
+                          </div>
+                        </div>
+                        <div style={{ padding: '14px 18px' }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 14 }}>
+                            {[
+                              { label: 'Loan Principal', value: `₱${principal.toLocaleString('en-PH',{minimumFractionDigits:2})}`, color: '#F0F4FF' },
+                              { label: 'Daily Interest Rate', value: `0.33%/day`, color: '#F59E0B' },
+                              { label: 'Daily Interest Amt', value: `₱${dailyAmt.toFixed(2)}/day`, color: '#F59E0B' },
+                              { label: 'Effective Annual Rate', value: `120% p.a.`, color: '#a78bfa' },
+                            ].map((row, i) => (
+                              <div key={i} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, padding: '9px 11px' }}>
+                                <div style={{ fontSize: 9, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 4, fontWeight: 700 }}>{row.label}</div>
+                                <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 13, color: row.color }}>{row.value}</div>
+                              </div>
+                            ))}
+                          </div>
+                          <div style={{ fontSize: 11, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.07em', fontWeight: 800, marginBottom: 8 }}>Repayment Schedule</div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 14 }}>
+                            {[
+                              { label: `Day 15 Target (${day15Date})`, desc: `₱${day15Int.toFixed(2)} interest + ₱100 extension fee`, total: `₱${day15Tot.toFixed(2)}`, color: '#22C55E', tag: 'Early' },
+                              { label: `Day 30 Deadline (${day30Date})`, desc: `₱${day30Int.toFixed(2)} accrued interest`, total: `₱${day30Tot.toFixed(2)}`, color: '#F59E0B', tag: 'Full' },
+                              { label: 'After Day 30', desc: '₱25/day penalty accrues in addition to interest', total: 'Penalty Phase', color: '#EF4444', tag: '⚠' },
+                            ].map((row, i) => (
+                              <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: `${row.color}08`, border: `1px solid ${row.color}22`, borderRadius: 10, padding: '9px 12px', gap: 10 }}>
+                                <div style={{ flex: 1 }}>
+                                  <div style={{ fontSize: 12, fontWeight: 700, color: row.color, marginBottom: 2 }}>{row.label}</div>
+                                  <div style={{ fontSize: 11, color: '#7A8AAA' }}>{row.desc}</div>
+                                </div>
+                                <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                                  <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 12, color: row.color }}>{row.total}</div>
+                                  <div style={{ fontSize: 9, color: row.color, background: `${row.color}20`, borderRadius: 4, padding: '1px 5px', marginTop: 3 }}>{row.tag}</div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                          <div style={{ padding: '11px 13px', background: 'rgba(245,158,11,0.05)', border: '1px solid rgba(245,158,11,0.12)', borderRadius: 10, fontSize: 10, color: '#7A8AAA', lineHeight: 1.7 }}>
+                            <span style={{ color: '#F59E0B', fontWeight: 700 }}>RA 3765 Disclosure.</span> This statement discloses all finance charges applicable to your QuickLoan. The daily interest rate of <strong style={{ color: '#F0F4FF' }}>0.33%/day (10%/month)</strong> is charged on the outstanding principal. MoneyfestLending is a private colleague lending program and is not a BSP-supervised institution.
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  } else {
+                    // Installment loan disclosure
+                    const principal = parseFloat(loan.loan_amount) || 0
+                    const holdAmt = loan.security_hold ? parseFloat(loan.security_hold) : principal * 0.10
+                    const holdRate = principal > 0 ? ((holdAmt / principal) * 100).toFixed(0) : 10
+                    const released = loan.funds_released ? parseFloat(loan.funds_released) : principal - holdAmt
+                    const total = parseFloat(loan.total_repayment) || 0
+                    const financeCharge = total - principal
+                    const rate = ((loan.interest_rate || 0.07) * 100).toFixed(0)
+                    const earRate = ((loan.interest_rate || 0.07) * 12 * 100).toFixed(0)
+                    const perInst = Math.ceil(parseFloat(loan.installment_amount) || 0)
+                    const numInst = loan.num_installments || 4
+                    const loanTerm = loan.loan_term || 2
+                    return (
+                      <div className="pc" style={{ background: 'linear-gradient(135deg,#0A0F1E,#0e1020)', border: '1px solid rgba(99,102,241,0.2)', borderRadius: 18, overflow: 'hidden', marginBottom: 16 }}>
+                        <div style={{ padding: '14px 18px', borderBottom: '1px solid rgba(99,102,241,0.1)', display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <img src="/id-logo.png" alt="disclosure" style={{ width: 22, height: 22, objectFit: 'contain', opacity: 0.8 }} />
+                          <div>
+                            <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 13, color: '#F0F4FF' }}>Truth in Lending Disclosure</div>
+                            <div style={{ fontSize: 10, color: '#a78bfa', fontWeight: 600, marginTop: 1 }}>RA 3765 — Republic Act No. 3765 (Philippines)</div>
+                          </div>
+                        </div>
+                        <div style={{ padding: '14px 18px' }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 14 }}>
+                            {[
+                              { label: 'Approved Loan Amount', value: `₱${principal.toLocaleString('en-PH',{minimumFractionDigits:2})}`, color: '#F0F4FF' },
+                              { label: `Security Hold (${holdRate}%)`, value: `₱${holdAmt.toLocaleString('en-PH',{minimumFractionDigits:2})}`, color: '#F59E0B' },
+                              { label: 'Funds Released to You', value: `₱${released.toLocaleString('en-PH',{minimumFractionDigits:2})}`, color: '#22C55E' },
+                              { label: 'Finance Charge (Interest)', value: `₱${financeCharge.toLocaleString('en-PH',{minimumFractionDigits:2})}`, color: '#F59E0B' },
+                              { label: `Monthly Rate × ${loanTerm}mo`, value: `${rate}%/mo`, color: '#60A5FA' },
+                              { label: 'Effective Annual Rate', value: `${earRate}% p.a.`, color: '#a78bfa' },
+                              { label: 'Total Amount Payable', value: `₱${total.toLocaleString('en-PH',{minimumFractionDigits:2})}`, color: '#22C55E' },
+                              { label: `${numInst} Installments`, value: `₱${perInst.toLocaleString('en-PH',{minimumFractionDigits:2})}/ea`, color: '#F0F4FF' },
+                            ].map((row, i) => (
+                              <div key={i} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, padding: '9px 11px' }}>
+                                <div style={{ fontSize: 9, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4, fontWeight: 700 }}>{row.label}</div>
+                                <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 13, color: row.color }}>{row.value}</div>
+                              </div>
+                            ))}
+                          </div>
+                          <div style={{ padding: '11px 13px', background: 'rgba(99,102,241,0.05)', border: '1px solid rgba(99,102,241,0.12)', borderRadius: 10, fontSize: 10, color: '#7A8AAA', lineHeight: 1.7 }}>
+                            <span style={{ color: '#a78bfa', fontWeight: 700 }}>RA 3765 Disclosure.</span> Installments are collected on the <strong style={{ color: '#F0F4FF' }}>5th and 20th</strong> of each month. The Security Hold of <strong style={{ color: '#F0F4FF' }}>₱{holdAmt.toLocaleString('en-PH',{minimumFractionDigits:2})}</strong> is returned to your Rebate Credits upon full repayment. Late payments incur ₱20/day penalty per installment. MoneyfestLending is a private colleague lending program and is not a BSP-supervised institution.
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  }
+                })()}
 
               </>
             ) : (
@@ -2295,8 +2414,8 @@ export default function BorrowerPortalPage() {
               </div>
 
 
-              {/* Smart Rebate Calculator (Only if active loan) */}
-              {loan && loan.status !== 'Paid' && (
+              {/* Smart Rebate Calculator (Only for installment loans) */}
+              {loan && loan.status !== 'Paid' && loan.loan_type !== 'quickloan' && (
                 <div className="pc" style={{ background: 'linear-gradient(135deg,#0E1320,#081c10)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 16, padding: 18 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
                     <div style={{ width: 28, height: 28, borderRadius: 8, background: 'rgba(34,197,94,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#22C55E' }}>

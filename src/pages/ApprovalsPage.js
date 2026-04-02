@@ -34,15 +34,30 @@ function PrincipalPaymentsPanel({ user }) {
 
   const fetchPayments = async () => {
     setLoading(true)
-    const { data } = await supabase
+    // Step 1: fetch all pending principal payments (no joins — avoids FK alias issues)
+    const { data: pmtData, error: pmtErr } = await supabase
       .from('principal_payments')
-      .select('*, borrowers(full_name, access_code, email), loans(loan_amount, current_principal, release_date, interest_baseline_date, status)')
+      .select('*')
       .eq('status', 'Pending')
       .order('created_at', { ascending: false })
-    setPayments(data || [])
-    if (data && data.length > 0) {
+
+    if (pmtErr) { console.error('fetchPayments error:', pmtErr); setLoading(false); return }
+
+    // Step 2: enrich with borrower names via separate query
+    const enriched = pmtData || []
+    if (enriched.length > 0) {
+      const borrowerIds = [...new Set(enriched.map(p => p.borrower_id))]
+      const { data: bData } = await supabase
+        .from('borrowers')
+        .select('id, full_name, access_code')
+        .in('id', borrowerIds)
+      const borrowerMap = {}
+      ;(bData || []).forEach(b => { borrowerMap[b.id] = b })
+      enriched.forEach(p => { p.borrowers = borrowerMap[p.borrower_id] || null })
+
+      // Step 3: signed proof URLs
       const urls = {}
-      for (const p of data) {
+      for (const p of enriched) {
         if (p.file_path) {
           const { data: signed } = await supabase.storage.from('payment-proofs').createSignedUrl(p.file_path, 3600)
           if (signed?.signedUrl) urls[p.id] = signed.signedUrl
@@ -50,6 +65,8 @@ function PrincipalPaymentsPanel({ user }) {
       }
       setSignedUrls(urls)
     }
+
+    setPayments(enriched)
     setLoading(false)
   }
 
@@ -68,11 +85,10 @@ function PrincipalPaymentsPanel({ user }) {
         reviewed_at: new Date().toISOString()
       }).eq('id', pmt.id)
 
-      // 2. Update the loan — reduce principal, reset interest baseline
+      // 2. Update the loan — reduce principal, reset interest baseline (no updated_at, may not exist)
       const loanUpdate = {
         current_principal: Math.max(0, newPrincipal),
-        interest_baseline_date: today,
-        updated_at: new Date().toISOString()
+        interest_baseline_date: today
       }
       if (isFullyPaid) {
         loanUpdate.status = 'Paid'
