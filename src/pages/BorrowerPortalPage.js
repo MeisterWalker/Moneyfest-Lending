@@ -2137,20 +2137,54 @@ export default function BorrowerPortalPage() {
                           </div>
                         ))}
                       </div>
-                      {/* Repayment rows */}
-                      <div style={{ padding: '10px 18px', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+                      {/* Repayment schedule — full-width rows */}
+                      <div style={{ padding: '0 18px 12px', display: 'flex', flexDirection: 'column', gap: 6 }}>
                         {[
-                          { phase: `Day 15 — ${fmtD(rel,15)}`, detail: `₱${day15Int.toFixed(2)} int + ₱100 fee`, total: `₱${day15Tot.toFixed(2)}`, color: '#22C55E', tag: 'Early' },
-                          { phase: `Day 30 — ${fmtD(rel,30)}`, detail: `₱${day30Int.toFixed(2)} accrued interest`, total: `₱${day30Tot.toFixed(2)}`, color: '#F59E0B', tag: 'Deadline' },
-                          { phase: 'After Day 30', detail: '₱25/day penalty on top of interest', total: '+₱25/day', color: '#EF4444', tag: '⚠ Penalty' },
+                          {
+                            phase: 'Day 15',
+                            date: fmtD(rel, 15),
+                            detail: `₱${day15Int.toFixed(2)} interest + ₱100 extension fee`,
+                            total: `₱${day15Tot.toFixed(2)}`,
+                            color: '#22C55E',
+                            tag: 'Early Target',
+                          },
+                          {
+                            phase: 'Day 30',
+                            date: fmtD(rel, 30),
+                            detail: `₱${day30Int.toFixed(2)} accrued interest — full settlement`,
+                            total: `₱${day30Tot.toFixed(2)}`,
+                            color: '#F59E0B',
+                            tag: 'Deadline',
+                          },
+                          {
+                            phase: 'After Day 30',
+                            date: 'Ongoing',
+                            detail: '₱25/day penalty accrues on top of daily interest',
+                            total: '+₱25/day',
+                            color: '#EF4444',
+                            tag: '⚠ Penalty',
+                          },
                         ].map((row, i) => (
-                          <div key={i} style={{ background: `${row.color}08`, border: `1px solid ${row.color}22`, borderRadius: 10, padding: '9px 10px' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
-                              <div style={{ fontSize: 10, fontWeight: 800, color: row.color, fontFamily: 'Syne, sans-serif' }}>{row.phase}</div>
-                              <span style={{ fontSize: 8, color: row.color, background: `${row.color}20`, borderRadius: 4, padding: '1px 5px', fontWeight: 700 }}>{row.tag}</span>
+                          <div key={i} style={{
+                            display: 'flex', alignItems: 'center', gap: 12,
+                            background: `${row.color}07`, border: `1px solid ${row.color}20`,
+                            borderLeft: `3px solid ${row.color}`, borderRadius: 9,
+                            padding: '9px 14px',
+                          }}>
+                            {/* Phase */}
+                            <div style={{ minWidth: 72, flexShrink: 0 }}>
+                              <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 11, color: row.color }}>{row.phase}</div>
+                              <div style={{ fontSize: 9, color: '#4B5580', marginTop: 1 }}>{row.date}</div>
                             </div>
-                            <div style={{ fontSize: 9, color: '#7A8AAA', marginBottom: 5 }}>{row.detail}</div>
-                            <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 900, fontSize: 13, color: row.color }}>{row.total}</div>
+                            {/* Divider */}
+                            <div style={{ width: 1, height: 28, background: `${row.color}20`, flexShrink: 0 }} />
+                            {/* Detail */}
+                            <div style={{ flex: 1, fontSize: 10, color: '#7A8AAA', lineHeight: 1.5 }}>{row.detail}</div>
+                            {/* Total + badge */}
+                            <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                              <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 900, fontSize: 13, color: row.color }}>{row.total}</div>
+                              <span style={{ fontSize: 8, color: row.color, background: `${row.color}18`, borderRadius: 4, padding: '1px 6px', fontWeight: 700, marginTop: 2, display: 'inline-block' }}>{row.tag}</span>
+                            </div>
                           </div>
                         ))}
                       </div>
