@@ -33,13 +33,29 @@ export default function InvestorsPage() {
   const investorLoans = installmentLoans.filter(l => l.investor_id)
   const activeInvestorLoans = investorLoans.filter(l => ['Active', 'Partially Paid', 'Overdue'].includes(l.status))
   const paidInvestorLoans = investorLoans.filter(l => l.status === 'Paid')
+  
   const totalCapital = investors.reduce((s, i) => s + Number(i.total_capital || 0), 0)
   const totalDeployed = activeInvestorLoans.reduce((s, l) => s + Number(l.loan_amount || 0), 0)
-  const totalEarnings = paidInvestorLoans.reduce((s, l) => {
+  
+  // Calculate Live Accrual (matching InvestorDashboard logic)
+  const now = new Date()
+  const secondsInDay = (now.getHours() * 3600) + (now.getMinutes() * 60) + now.getSeconds()
+  const dayProgress = secondsInDay / 86400
+
+  const activeAccrual = activeInvestorLoans.reduce((s, l) => {
+    const inv = investors.find(i => i.id === l.investor_id)
+    const quarterlyRate = TIER_RATES[inv?.tier] || 0.08
+    const dailyRate = quarterlyRate / 90
+    return s + (Number(l.loan_amount || 0) * dailyRate * dayProgress)
+  }, 0)
+
+  const realizedEarnings = paidInvestorLoans.reduce((s, l) => {
     const inv = investors.find(i => i.id === l.investor_id)
     const rate = TIER_RATES[inv?.tier] || 0.08
     return s + Number(l.loan_amount || 0) * rate
   }, 0)
+
+  const totalEarnings = realizedEarnings + activeAccrual
   const deployedPct = totalCapital > 0 ? ((totalDeployed / totalCapital) * 100).toFixed(1) : '0.0'
 
   return (
@@ -96,7 +112,10 @@ export default function InvestorsPage() {
           const invPaid = invLoans.filter(l => l.status === 'Paid')
           const invDeployed = invActive.reduce((s, l) => s + Number(l.loan_amount || 0), 0)
           const rate = TIER_RATES[inv.tier] || 0.08
-          const invEarnings = invPaid.reduce((s, l) => s + Number(l.loan_amount || 0) * rate, 0)
+          
+          const invRealized = invPaid.reduce((s, l) => s + Number(l.loan_amount || 0) * rate, 0)
+          const invAccrual = invActive.reduce((s, l) => s + (Number(l.loan_amount || 0) * (rate/90) * dayProgress), 0)
+          const invEarnings = invRealized + invAccrual
           const tierColor = TIER_COLORS[inv.tier] || '#94A3B8'
           const invUtilPct = Number(inv.total_capital) > 0 ? ((invDeployed / Number(inv.total_capital)) * 100).toFixed(0) : '0'
 
