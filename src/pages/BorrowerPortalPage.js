@@ -2093,59 +2093,75 @@ export default function BorrowerPortalPage() {
                 </div>
               )}
 
-                {/* QuickLoan Payment Actions */}
-                {loan.loan_type === 'quickloan' && loan.status !== 'Pending' && (
-                  <div className="pc" style={{ background: '#0E1320', border: '1px solid rgba(99,102,241,0.18)', borderRadius: 16, overflow: 'hidden', marginBottom: 16 }}>
-                    <div style={{ padding: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <div style={{ width: 24, height: 24, borderRadius: 6, background: 'rgba(99,102,241,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <CreditCard size={13} color="#a78bfa" />
-                      </div>
-                      <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 12, color: '#F0F4FF', letterSpacing: '0.01em' }}>QuickLoan Payment Options</div>
-                    </div>
+                {/* QuickLoan Payment Actions — moved to sidebar */}
 
-                    {/* 3-up compact tile grid */}
-                    <div style={{ padding: '12px 14px', display: 'grid', gridTemplateColumns: '1fr 1fr' + (!loan.extension_fee_charged ? ' 1fr' : ''), gap: 10 }}>
-
-                      {/* Pay Towards Principal */}
-                      <button onClick={() => setShowPrincipalModal(true)}
-                        style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '14px 10px', borderRadius: 12, border: '1.5px solid rgba(99,102,241,0.3)', background: 'linear-gradient(135deg,rgba(99,102,241,0.1),rgba(139,92,246,0.07))', cursor: 'pointer', transition: 'all 0.2s', textAlign: 'center' }}>
-                        <div style={{ width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(135deg,#6366F1,#8B5CF6)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 3px 10px rgba(99,102,241,0.35)' }}>
-                          <CreditCard size={16} color="#fff" />
-                        </div>
-                        <div>
-                          <div style={{ fontSize: 11, fontWeight: 800, color: '#F0F4FF', fontFamily: 'Syne, sans-serif', lineHeight: 1.3 }}>Pay Principal</div>
-                          <div style={{ fontSize: 9, color: '#7A8AAA', marginTop: 2, lineHeight: 1.4 }}>Reduce balance</div>
-                        </div>
-                      </button>
-
-                      {/* Full Pay-Off */}
-                      <button onClick={() => { setQlPaymentType('full_payoff'); setUploadModal(1) }}
-                        style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '14px 10px', borderRadius: 12, border: '1.5px solid rgba(34,197,94,0.3)', background: 'rgba(34,197,94,0.06)', cursor: 'pointer', transition: 'all 0.2s', textAlign: 'center' }}>
-                        <div style={{ width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(135deg,#22C55E,#16A34A)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 3px 10px rgba(34,197,94,0.3)' }}>
-                          <CheckCircle size={16} color="#fff" />
-                        </div>
-                        <div>
-                          <div style={{ fontSize: 11, fontWeight: 800, color: '#F0F4FF', fontFamily: 'Syne, sans-serif', lineHeight: 1.3 }}>Full Pay-Off</div>
-                          <div style={{ fontSize: 9, color: '#7A8AAA', marginTop: 2, lineHeight: 1.4 }}>Close loan</div>
-                        </div>
-                      </button>
-
-                      {/* Interest Only - Day 15 */}
-                      {!loan.extension_fee_charged && (
-                        <button onClick={() => { setQlPaymentType('interest_only'); setUploadModal(1) }}
-                          style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '14px 10px', borderRadius: 12, border: '1.5px solid rgba(245,158,11,0.3)', background: 'rgba(245,158,11,0.05)', cursor: 'pointer', transition: 'all 0.2s', textAlign: 'center' }}>
-                          <div style={{ width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(135deg,#F59E0B,#D97706)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 3px 10px rgba(245,158,11,0.3)' }}>
-                            <Clock size={16} color="#fff" />
-                          </div>
+                {/* ── Truth in Lending Act Disclosure ── landscape card ── */}
+                {loan && loan.status !== 'Pending' && loan.loan_type === 'quickloan' && (() => {
+                  const principal = parseFloat(loan.current_principal ?? loan.loan_amount) || 0
+                  const dailyAmt = parseFloat((principal * 0.1 / 30).toFixed(2))
+                  const day15Int = parseFloat((dailyAmt * 15).toFixed(2))
+                  const day15Tot = parseFloat((principal + day15Int + 100).toFixed(2))
+                  const day30Int = parseFloat((dailyAmt * 30).toFixed(2))
+                  const day30Tot = parseFloat((principal + day30Int).toFixed(2))
+                  const rel = loan.release_date
+                  const fmtD = (rel, plus) => {
+                    if (!rel) return 'TBD'
+                    const [y,m,d] = rel.split('-').map(Number)
+                    const dt = new Date(y,m-1,d); dt.setDate(dt.getDate()+plus)
+                    return dt.toLocaleDateString('en-PH',{month:'short',day:'numeric'})
+                  }
+                  return (
+                    <div className="pc" style={{ background: 'linear-gradient(135deg,#0A0F1E,#0d0a00)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 16, overflow: 'hidden', marginBottom: 16 }}>
+                      {/* Header */}
+                      <div style={{ padding: '12px 18px', borderBottom: '1px solid rgba(245,158,11,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+                          <img src="/id-logo.png" alt="tila" style={{ width: 18, height: 18, objectFit: 'contain', opacity: 0.75 }} />
                           <div>
-                            <div style={{ fontSize: 11, fontWeight: 800, color: '#F0F4FF', fontFamily: 'Syne, sans-serif', lineHeight: 1.3 }}>Interest Only</div>
-                            <div style={{ fontSize: 9, color: '#7A8AAA', marginTop: 2, lineHeight: 1.4 }}>Day 15 extend</div>
+                            <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 12, color: '#F0F4FF' }}>Truth in Lending Disclosure</div>
+                            <div style={{ fontSize: 9, color: '#F59E0B', fontWeight: 600 }}>RA 3765 — Republic Act No. 3765 (Philippines)</div>
                           </div>
-                        </button>
-                      )}
+                        </div>
+                        <span style={{ fontSize: 9, color: '#F59E0B', background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 12, padding: '2px 8px', fontWeight: 700 }}>QuickLoan</span>
+                      </div>
+                      {/* Stats row — landscape */}
+                      <div style={{ padding: '12px 18px', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                        {[
+                          { label: 'Loan Principal', value: `₱${principal.toLocaleString('en-PH',{minimumFractionDigits:2})}`, color: '#F0F4FF' },
+                          { label: 'Daily Rate', value: '0.33% / day', color: '#F59E0B' },
+                          { label: 'Daily Interest', value: `₱${dailyAmt.toFixed(2)} / day`, color: '#F59E0B' },
+                          { label: 'Effective Annual', value: '120% p.a.', color: '#a78bfa' },
+                        ].map((col, i) => (
+                          <div key={i} style={{ textAlign: 'center', padding: '8px 4px', background: 'rgba(255,255,255,0.02)', borderRadius: 9, border: '1px solid rgba(255,255,255,0.05)' }}>
+                            <div style={{ fontSize: 8, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 5, fontWeight: 700 }}>{col.label}</div>
+                            <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 12, color: col.color }}>{col.value}</div>
+                          </div>
+                        ))}
+                      </div>
+                      {/* Repayment rows */}
+                      <div style={{ padding: '10px 18px', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+                        {[
+                          { phase: `Day 15 — ${fmtD(rel,15)}`, detail: `₱${day15Int.toFixed(2)} int + ₱100 fee`, total: `₱${day15Tot.toFixed(2)}`, color: '#22C55E', tag: 'Early' },
+                          { phase: `Day 30 — ${fmtD(rel,30)}`, detail: `₱${day30Int.toFixed(2)} accrued interest`, total: `₱${day30Tot.toFixed(2)}`, color: '#F59E0B', tag: 'Deadline' },
+                          { phase: 'After Day 30', detail: '₱25/day penalty on top of interest', total: '+₱25/day', color: '#EF4444', tag: '⚠ Penalty' },
+                        ].map((row, i) => (
+                          <div key={i} style={{ background: `${row.color}08`, border: `1px solid ${row.color}22`, borderRadius: 10, padding: '9px 10px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
+                              <div style={{ fontSize: 10, fontWeight: 800, color: row.color, fontFamily: 'Syne, sans-serif' }}>{row.phase}</div>
+                              <span style={{ fontSize: 8, color: row.color, background: `${row.color}20`, borderRadius: 4, padding: '1px 5px', fontWeight: 700 }}>{row.tag}</span>
+                            </div>
+                            <div style={{ fontSize: 9, color: '#7A8AAA', marginBottom: 5 }}>{row.detail}</div>
+                            <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 900, fontSize: 13, color: row.color }}>{row.total}</div>
+                          </div>
+                        ))}
+                      </div>
+                      {/* Footnote */}
+                      <div style={{ padding: '8px 18px 12px', fontSize: 9, color: '#4B5580', lineHeight: 1.7 }}>
+                        <span style={{ color: '#F59E0B', fontWeight: 700 }}>RA 3765 Disclosure. </span>
+                        Interest of <strong style={{ color: '#F0F4FF' }}>10%/month (0.33%/day)</strong> is charged on the outstanding principal. Daily interest resets after each approved principal payment. MoneyfestLending is a private colleague lending program and is not a BSP-supervised institution.
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )
+                })()}
 
                 {/* ── Truth in Lending Act Disclosure (installment only — QL version is in sidebar) ── */}
                 {loan && loan.status !== 'Pending' && loan.loan_type !== 'quickloan' && (() => {
@@ -2297,51 +2313,85 @@ export default function BorrowerPortalPage() {
                 })()}
               </div>
 
-              {/* Visual Payment Calendar (Sidebar) */}
-              <div className="pc" style={{ background: '#0E1320', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 18, overflow: 'hidden' }}>
-                <div style={{ padding: '14px 16px', borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.01)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <Calendar size={13} style={{ color: '#4B5580' }} />
-                      <span style={{ fontSize: 10, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 800 }}>Payment Schedule</span>
+
+              {/* Payment Options in sidebar (QuickLoan only) */}
+              {loan && loan.loan_type === 'quickloan' && loan.status !== 'Pending' && (
+                <div className="pc" style={{ background: '#0E1320', border: '1px solid rgba(99,102,241,0.18)', borderRadius: 16, overflow: 'hidden' }}>
+                  <div style={{ padding: '12px 14px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: 7 }}>
+                    <div style={{ width: 22, height: 22, borderRadius: 6, background: 'rgba(99,102,241,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <CreditCard size={12} color="#a78bfa" />
                     </div>
-                    <span style={{ fontSize: 9, color: '#7A8AAA', background: 'rgba(255,255,255,0.05)', padding: '1px 6px', borderRadius: 4 }}>{new Date().toLocaleDateString('en-PH', { month: 'short' })}</span>
+                    <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 11, color: '#F0F4FF', letterSpacing: '0.02em' }}>Payment Options</div>
                   </div>
-                  
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 3 }}>
-                    {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(d => (
-                      <div key={d} style={{ textAlign: 'center', fontSize: 9, color: '#4B5580', fontWeight: 800, paddingBottom: 4 }}>{d}</div>
-                    ))}
-                    {(() => {
-                      const now = new Date()
-                      const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).getDay()
-                      const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
-                      const items = []
-                      for (let i = 0; i < firstDay; i++) items.push(<div key={`p-${i}`} />)
-                      for (let d = 1; d <= daysInMonth; d++) {
-                        const isPayDay = d === 5 || d === 20
-                        const isToday = d === now.getDate()
-                        items.push(
-                          <div key={d} style={{ 
-                            aspectRatio: '1', 
-                            display: 'flex', alignItems: 'center', justifyContent: 'center', 
-                            fontSize: 10, borderRadius: 6,
-                            background: isPayDay ? (isToday ? '#22C55E' : 'rgba(99,102,241,0.12)') : isToday ? 'rgba(255,255,255,0.06)' : 'transparent',
-                            border: isPayDay ? `1px solid ${isToday ? '#22C55E' : 'rgba(99,102,241,0.25)'}` : 'none',
-                            color: isPayDay ? '#F0F4FF' : isToday ? '#F0F4FF' : '#4B5580',
-                            fontWeight: isPayDay || isToday ? 800 : 400,
-                            position: 'relative'
-                          }}>
-                            {d}
-                            {isPayDay && <div style={{ position: 'absolute', bottom: 1, width: 2, height: 2, borderRadius: '50%', background: '#8B5CF6' }} />}
+                  <div style={{ padding: '12px', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+                    <button onClick={() => setShowPrincipalModal(true)}
+                      style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 7, padding: '12px 6px', borderRadius: 11, border: '1.5px solid rgba(99,102,241,0.3)', background: 'linear-gradient(135deg,rgba(99,102,241,0.1),rgba(139,92,246,0.07))', cursor: 'pointer', textAlign: 'center', minHeight: 80 }}>
+                      <div style={{ width: 32, height: 32, borderRadius: 9, background: 'linear-gradient(135deg,#6366F1,#8B5CF6)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 3px 8px rgba(99,102,241,0.4)' }}>
+                        <CreditCard size={14} color="#fff" />
+                      </div>
+                      <div style={{ fontSize: 9.5, fontWeight: 800, color: '#F0F4FF', fontFamily: 'Syne, sans-serif', lineHeight: 1.3 }}>Pay{<br/>}Principal</div>
+                    </button>
+                    <button onClick={() => { setQlPaymentType('full_payoff'); setUploadModal(1) }}
+                      style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 7, padding: '12px 6px', borderRadius: 11, border: '1.5px solid rgba(34,197,94,0.3)', background: 'rgba(34,197,94,0.06)', cursor: 'pointer', textAlign: 'center', minHeight: 80 }}>
+                      <div style={{ width: 32, height: 32, borderRadius: 9, background: 'linear-gradient(135deg,#22C55E,#16A34A)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 3px 8px rgba(34,197,94,0.35)' }}>
+                        <CheckCircle size={14} color="#fff" />
+                      </div>
+                      <div style={{ fontSize: 9.5, fontWeight: 800, color: '#F0F4FF', fontFamily: 'Syne, sans-serif', lineHeight: 1.3 }}>Full{<br/>}Pay-Off</div>
+                    </button>
+                    {!loan.extension_fee_charged
+                      ? <button onClick={() => { setQlPaymentType('interest_only'); setUploadModal(1) }}
+                          style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 7, padding: '12px 6px', borderRadius: 11, border: '1.5px solid rgba(245,158,11,0.3)', background: 'rgba(245,158,11,0.05)', cursor: 'pointer', textAlign: 'center', minHeight: 80 }}>
+                          <div style={{ width: 32, height: 32, borderRadius: 9, background: 'linear-gradient(135deg,#F59E0B,#D97706)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 3px 8px rgba(245,158,11,0.35)' }}>
+                            <Clock size={14} color="#fff" />
                           </div>
-                        )
-                      }
-                      return items
-                    })()}
+                          <div style={{ fontSize: 9.5, fontWeight: 800, color: '#F0F4FF', fontFamily: 'Syne, sans-serif', lineHeight: 1.3 }}>Interest{<br/>}Only</div>
+                        </button>
+                      : <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '12px 6px', borderRadius: 11, border: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.02)', textAlign: 'center', minHeight: 80 }}>
+                          <div style={{ fontSize: 16 }}>✅</div>
+                          <div style={{ fontSize: 9, color: '#4B5580', lineHeight: 1.3 }}>Extended</div>
+                        </div>
+                    }
                   </div>
                 </div>
-              </div>
+              )}
+
+              {/* Calendar: keep for installment loans only */}
+              {(!loan || loan.loan_type !== 'quickloan') && (
+                <div className="pc" style={{ background: '#0E1320', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 18, overflow: 'hidden' }}>
+                  <div style={{ padding: '14px 16px', borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.01)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <Calendar size={13} style={{ color: '#4B5580' }} />
+                        <span style={{ fontSize: 10, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 800 }}>Payment Schedule</span>
+                      </div>
+                      <span style={{ fontSize: 9, color: '#7A8AAA', background: 'rgba(255,255,255,0.05)', padding: '1px 6px', borderRadius: 4 }}>{new Date().toLocaleDateString('en-PH', { month: 'short' })}</span>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 3 }}>
+                      {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(d => (
+                        <div key={d} style={{ textAlign: 'center', fontSize: 9, color: '#4B5580', fontWeight: 800, paddingBottom: 4 }}>{d}</div>
+                      ))}
+                      {(() => {
+                        const now = new Date()
+                        const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).getDay()
+                        const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
+                        const items = []
+                        for (let i = 0; i < firstDay; i++) items.push(<div key={`p-${i}`} />)
+                        for (let d = 1; d <= daysInMonth; d++) {
+                          const isPayDay = d === 5 || d === 20
+                          const isToday = d === now.getDate()
+                          items.push(
+                            <div key={d} style={{ aspectRatio: '1', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, borderRadius: 6, background: isPayDay ? (isToday ? '#22C55E' : 'rgba(99,102,241,0.12)') : isToday ? 'rgba(255,255,255,0.06)' : 'transparent', border: isPayDay ? `1px solid ${isToday ? '#22C55E' : 'rgba(99,102,241,0.25)'}` : 'none', color: isPayDay ? '#F0F4FF' : isToday ? '#F0F4FF' : '#4B5580', fontWeight: isPayDay || isToday ? 800 : 400, position: 'relative' }}>
+                              {d}
+                              {isPayDay && <div style={{ position: 'absolute', bottom: 1, width: 2, height: 2, borderRadius: '50%', background: '#8B5CF6' }} />}
+                            </div>
+                          )
+                        }
+                        return items
+                      })()}
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Smart Rebate Calculator (Only for installment loans) */}
               {loan && loan.status !== 'Paid' && loan.loan_type !== 'quickloan' && (
@@ -2378,67 +2428,6 @@ export default function BorrowerPortalPage() {
                 </div>
               )}
 
-              {/* TILA in sidebar (QuickLoan only) */}
-              {loan && loan.status !== 'Pending' && loan.loan_type === 'quickloan' && (() => {
-                const principal = parseFloat(loan.current_principal ?? loan.loan_amount) || 0
-                const dailyAmt = parseFloat((principal * 0.1 / 30).toFixed(2))
-                const day15Int = parseFloat((dailyAmt * 15).toFixed(2))
-                const day15Tot = parseFloat((principal + day15Int + 100).toFixed(2))
-                const day30Int = parseFloat((dailyAmt * 30).toFixed(2))
-                const day30Tot = parseFloat((principal + day30Int).toFixed(2))
-                const rel = loan.release_date
-                const fmtD = (rel, plusDays) => {
-                  if (!rel) return 'TBD'
-                  const [y,m,d] = rel.split('-').map(Number)
-                  const dt = new Date(y,m-1,d); dt.setDate(dt.getDate()+plusDays)
-                  return dt.toLocaleDateString('en-PH',{month:'short',day:'numeric'})
-                }
-                return (
-                  <div className="pc" style={{ background: 'linear-gradient(135deg,#0A0F1E,#110e00)', border: '1px solid rgba(245,158,11,0.18)', borderRadius: 16, overflow: 'hidden' }}>
-                    <div style={{ padding: '12px 14px', borderBottom: '1px solid rgba(245,158,11,0.1)', display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <img src="/id-logo.png" alt="tila" style={{ width: 18, height: 18, objectFit: 'contain', opacity: 0.75 }} />
-                      <div>
-                        <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 11, color: '#F0F4FF' }}>Truth in Lending (TILA)</div>
-                        <div style={{ fontSize: 9, color: '#F59E0B', fontWeight: 600 }}>RA 3765 — Republic Act No. 3765</div>
-                      </div>
-                    </div>
-                    <div style={{ padding: '12px 14px' }}>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginBottom: 10 }}>
-                        {[
-                          { label: 'Principal', value: `₱${principal.toLocaleString('en-PH',{minimumFractionDigits:2})}`, color: '#F0F4FF' },
-                          { label: 'Daily Rate', value: '0.33%/day', color: '#F59E0B' },
-                          { label: 'Daily Amount', value: `₱${dailyAmt.toFixed(2)}`, color: '#F59E0B' },
-                          { label: 'Annual Rate', value: '120% p.a.', color: '#a78bfa' },
-                        ].map((r,i) => (
-                          <div key={i} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 7, padding: '7px 9px' }}>
-                            <div style={{ fontSize: 8, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 3, fontWeight: 700 }}>{r.label}</div>
-                            <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 11, color: r.color }}>{r.value}</div>
-                          </div>
-                        ))}
-                      </div>
-                      <div style={{ fontSize: 9, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 800, marginBottom: 7 }}>Repayment Schedule</div>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-                        {[
-                          { d: `Day 15 (${fmtD(rel,15)})`, v: `₱${day15Tot.toFixed(2)}`, sub: `₱${day15Int.toFixed(2)} int + ₱100 fee`, c: '#22C55E' },
-                          { d: `Day 30 (${fmtD(rel,30)})`, v: `₱${day30Tot.toFixed(2)}`, sub: `₱${day30Int.toFixed(2)} interest`, c: '#F59E0B' },
-                          { d: 'After Day 30', v: '₱25/day', sub: 'Penalty accrues', c: '#EF4444' },
-                        ].map((r,i) => (
-                          <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: `${r.c}08`, border: `1px solid ${r.c}20`, borderRadius: 8, padding: '7px 10px' }}>
-                            <div>
-                              <div style={{ fontSize: 10, fontWeight: 700, color: r.c }}>{r.d}</div>
-                              <div style={{ fontSize: 9, color: '#7A8AAA' }}>{r.sub}</div>
-                            </div>
-                            <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 11, color: r.c }}>{r.v}</div>
-                          </div>
-                        ))}
-                      </div>
-                      <div style={{ marginTop: 10, padding: '8px 10px', background: 'rgba(245,158,11,0.04)', border: '1px solid rgba(245,158,11,0.1)', borderRadius: 7, fontSize: 9, color: '#7A8AAA', lineHeight: 1.6 }}>
-                        <span style={{ color: '#F59E0B', fontWeight: 700 }}>RA 3765.</span> Interest of <strong style={{ color: '#F0F4FF' }}>10%/month (0.33%/day)</strong> charged on outstanding principal. MoneyfestLending is a private colleague lending program.
-                      </div>
-                    </div>
-                  </div>
-                )
-              })()}
 
               {/* Need Help */}
               <div className="pc" style={{ background: '#0E1320', border: '1px solid rgba(59,130,246,0.12)', borderRadius: 16, padding: 14 }}>
