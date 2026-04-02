@@ -146,10 +146,12 @@ function StatusBadge({ status }) {
   )
 }
 
-function LoanCard({ loan: rawLoan, borrowers, applications, onEdit, onDelete, onRecordPayment, onDefault, onRenew, onQuickLoanPayoff, onQuickLoanDay15Missed, onConfirmRelease }) {
+function LoanCard({ loan: rawLoan, borrowers, applications, onEdit, onDelete, onRecordPayment, onDefault, onRenew, onQuickLoanPayoff, onQuickLoanDay15Missed, onConfirmRelease, onRecordPrincipalPayment }) {
   const [expanded, setExpanded] = useState(false)
   const [confirming, setConfirming] = useState(false)
   const [confirmingExtension, setConfirmingExtension] = useState(false)
+  const [confirmingPrincipal, setConfirmingPrincipal] = useState(false)
+  const [principalInput, setPrincipalInput] = useState('')
   // Normalize installment to whole peso — handles loans created before rounding was added
   const loan = {
     ...rawLoan,
@@ -394,12 +396,22 @@ function LoanCard({ loan: rawLoan, borrowers, applications, onEdit, onDelete, on
             )}
 
           {/* QuickLoan Record Extension button (Manual) */}
-          {isQuickLoan && !loan.extension_fee_charged && canPay && !confirming && !confirmingExtension && (
+          {isQuickLoan && !loan.extension_fee_charged && canPay && !confirming && !confirmingExtension && !confirmingPrincipal && (
             <button
               onClick={() => setConfirmingExtension(true)}
               style={{ fontSize: 12, padding: '6px 14px', borderRadius: 8, border: '1px solid rgba(245,158,11,0.35)', background: 'rgba(245,158,11,0.08)', color: '#F59E0B', cursor: 'pointer', fontWeight: 600 }}
             >
               ⚡ Record Extension
+            </button>
+          )}
+
+          {/* QuickLoan Record Principal Payment button */}
+          {isQuickLoan && canPay && !confirming && !confirmingExtension && !confirmingPrincipal && (
+            <button
+              onClick={() => { setConfirmingPrincipal(true); setPrincipalInput('') }}
+              style={{ fontSize: 12, padding: '6px 14px', borderRadius: 8, border: '1px solid rgba(99,102,241,0.4)', background: 'rgba(99,102,241,0.08)', color: '#a78bfa', cursor: 'pointer', fontWeight: 600 }}
+            >
+              💳 Record Principal Payment
             </button>
           )}
 
@@ -475,7 +487,33 @@ function LoanCard({ loan: rawLoan, borrowers, applications, onEdit, onDelete, on
             </div>
           )}
 
-
+          {/* QuickLoan Principal Payment inline form */}
+          {confirmingPrincipal && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.25)', borderRadius: 8, padding: '8px 12px', fontSize: 12, flexWrap: 'wrap' }}>
+              <span style={{ color: 'var(--text-label)', fontWeight: 600 }}>Principal reduction amount:</span>
+              <input
+                type="number"
+                min="1"
+                max={parseFloat(loan.current_principal ?? loan.loan_amount)}
+                placeholder="e.g. 500"
+                value={principalInput}
+                onChange={e => setPrincipalInput(e.target.value)}
+                style={{ width: 100, padding: '4px 8px', borderRadius: 6, border: '1px solid rgba(99,102,241,0.35)', background: 'rgba(0,0,0,0.3)', color: '#F0F4FF', fontSize: 12 }}
+              />
+              <button
+                disabled={!principalInput || parseFloat(principalInput) <= 0}
+                onClick={() => { onRecordPrincipalPayment(loan, parseFloat(principalInput)); setConfirmingPrincipal(false); setPrincipalInput('') }}
+                style={{ background: '#6366F1', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 12px', cursor: 'pointer', fontSize: 12, fontWeight: 700, opacity: (!principalInput || parseFloat(principalInput) <= 0) ? 0.5 : 1 }}
+              >
+                Confirm
+              </button>
+              <button onClick={() => { setConfirmingPrincipal(false); setPrincipalInput('') }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 12 }}
+              >
+                Cancel
+              </button>
+            </div>
+          )}
 
           {/* Renew loan button (paid loans) */}
           {isPaid && (
@@ -521,6 +559,7 @@ export default function LoansPage() {
   const [prefillLoan, setPrefillLoan] = useState(null)
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [defaultTarget, setDefaultTarget] = useState(null)
+  const [principalPayTarget, setPrincipalPayTarget] = useState(null)
   const [loanTypeTab, setLoanTypeTab] = useState('all')
   const { user } = useAuth()
   const { toast } = useToast()
@@ -602,6 +641,44 @@ export default function LoansPage() {
     setModalOpen(false)
     setEditingLoan(null)
     setPrefillLoan(null)
+    fetchData()
+  }
+
+  const handleRecordPrincipalPayment = async (loan, amount) => {
+    const borrower = borrowers.find(b => b.id === loan.borrower_id)
+    const today = new Date()
+    const todayStr = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0')
+    const currentPrincipal = parseFloat(loan.current_principal ?? loan.loan_amount)
+    const newPrincipal = Math.max(0, parseFloat((currentPrincipal - amount).toFixed(2)))
+
+    // Insert into principal_payments table
+    const { error: ppErr } = await supabase.from('principal_payments').insert({
+      loan_id: loan.id,
+      borrower_id: loan.borrower_id,
+      amount_paid: amount,
+      principal_before: currentPrincipal,
+      principal_after: newPrincipal,
+      status: 'approved',
+      paid_date: todayStr,
+      approved_at: today.toISOString(),
+      notes: `Admin-recorded principal reduction of ₱${amount.toLocaleString('en-PH', { minimumFractionDigits: 2 })}`
+    })
+    if (ppErr) { toast('Failed to insert principal payment: ' + ppErr.message, 'error'); return }
+
+    // Update loan: new current_principal + reset interest baseline
+    const { error: lErr } = await supabase.from('loans').update({
+      current_principal: newPrincipal,
+      interest_baseline_date: todayStr
+    }).eq('id', loan.id)
+    if (lErr) { toast('Failed to update loan principal: ' + lErr.message, 'error'); return }
+
+    await logAudit({
+      action_type: 'PRINCIPAL_PAYMENT_RECORDED',
+      module: 'Loan',
+      description: `Principal reduced by ₱${amount} for ${borrower?.full_name}. New principal: ₱${newPrincipal}`,
+      changed_by: user?.email
+    })
+    toast(`✅ Principal reduced by ₱${amount.toLocaleString('en-PH', { minimumFractionDigits: 2 })} for ${borrower?.full_name}`, 'success')
     fetchData()
   }
 
@@ -1151,6 +1228,7 @@ export default function LoansPage() {
               onConfirmRelease={handleConfirmRelease}
               onQuickLoanPayoff={handleQuickLoanPayoff}
               onQuickLoanDay15Missed={handleQuickLoanDay15Missed}
+              onRecordPrincipalPayment={handleRecordPrincipalPayment}
             />
           ))}
         </div>
