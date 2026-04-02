@@ -2437,6 +2437,68 @@ export default function BorrowerPortalPage() {
                 </div>
               )}
 
+              {/* TILA in sidebar (QuickLoan only) */}
+              {loan && loan.status !== 'Pending' && loan.loan_type === 'quickloan' && (() => {
+                const principal = parseFloat(loan.current_principal ?? loan.loan_amount) || 0
+                const dailyAmt = parseFloat((principal * 0.1 / 30).toFixed(2))
+                const day15Int = parseFloat((dailyAmt * 15).toFixed(2))
+                const day15Tot = parseFloat((principal + day15Int + 100).toFixed(2))
+                const day30Int = parseFloat((dailyAmt * 30).toFixed(2))
+                const day30Tot = parseFloat((principal + day30Int).toFixed(2))
+                const rel = loan.release_date
+                const fmtD = (rel, plusDays) => {
+                  if (!rel) return 'TBD'
+                  const [y,m,d] = rel.split('-').map(Number)
+                  const dt = new Date(y,m-1,d); dt.setDate(dt.getDate()+plusDays)
+                  return dt.toLocaleDateString('en-PH',{month:'short',day:'numeric'})
+                }
+                return (
+                  <div className="pc" style={{ background: 'linear-gradient(135deg,#0A0F1E,#110e00)', border: '1px solid rgba(245,158,11,0.18)', borderRadius: 16, overflow: 'hidden' }}>
+                    <div style={{ padding: '12px 14px', borderBottom: '1px solid rgba(245,158,11,0.1)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <img src="/id-logo.png" alt="tila" style={{ width: 18, height: 18, objectFit: 'contain', opacity: 0.75 }} />
+                      <div>
+                        <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 11, color: '#F0F4FF' }}>Truth in Lending (TILA)</div>
+                        <div style={{ fontSize: 9, color: '#F59E0B', fontWeight: 600 }}>RA 3765 — Republic Act No. 3765</div>
+                      </div>
+                    </div>
+                    <div style={{ padding: '12px 14px' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginBottom: 10 }}>
+                        {[
+                          { label: 'Principal', value: `₱${principal.toLocaleString('en-PH',{minimumFractionDigits:2})}`, color: '#F0F4FF' },
+                          { label: 'Daily Rate', value: '0.33%/day', color: '#F59E0B' },
+                          { label: 'Daily Amount', value: `₱${dailyAmt.toFixed(2)}`, color: '#F59E0B' },
+                          { label: 'Annual Rate', value: '120% p.a.', color: '#a78bfa' },
+                        ].map((r,i) => (
+                          <div key={i} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 7, padding: '7px 9px' }}>
+                            <div style={{ fontSize: 8, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 3, fontWeight: 700 }}>{r.label}</div>
+                            <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 11, color: r.color }}>{r.value}</div>
+                          </div>
+                        ))}
+                      </div>
+                      <div style={{ fontSize: 9, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 800, marginBottom: 7 }}>Repayment Schedule</div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                        {[
+                          { d: `Day 15 (${fmtD(rel,15)})`, v: `₱${day15Tot.toFixed(2)}`, sub: `₱${day15Int.toFixed(2)} int + ₱100 fee`, c: '#22C55E' },
+                          { d: `Day 30 (${fmtD(rel,30)})`, v: `₱${day30Tot.toFixed(2)}`, sub: `₱${day30Int.toFixed(2)} interest`, c: '#F59E0B' },
+                          { d: 'After Day 30', v: '₱25/day', sub: 'Penalty accrues', c: '#EF4444' },
+                        ].map((r,i) => (
+                          <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: `${r.c}08`, border: `1px solid ${r.c}20`, borderRadius: 8, padding: '7px 10px' }}>
+                            <div>
+                              <div style={{ fontSize: 10, fontWeight: 700, color: r.c }}>{r.d}</div>
+                              <div style={{ fontSize: 9, color: '#7A8AAA' }}>{r.sub}</div>
+                            </div>
+                            <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 11, color: r.c }}>{r.v}</div>
+                          </div>
+                        ))}
+                      </div>
+                      <div style={{ marginTop: 10, padding: '8px 10px', background: 'rgba(245,158,11,0.04)', border: '1px solid rgba(245,158,11,0.1)', borderRadius: 7, fontSize: 9, color: '#7A8AAA', lineHeight: 1.6 }}>
+                        <span style={{ color: '#F59E0B', fontWeight: 700 }}>RA 3765.</span> Interest of <strong style={{ color: '#F0F4FF' }}>10%/month (0.33%/day)</strong> charged on outstanding principal. MoneyfestLending is a private colleague lending program.
+                      </div>
+                    </div>
+                  </div>
+                )
+              })()}
+
               {/* Need Help */}
               <div className="pc" style={{ background: '#0E1320', border: '1px solid rgba(59,130,246,0.12)', borderRadius: 16, padding: 14 }}>
                 <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 12, color: '#F0F4FF', marginBottom: 10 }}>❓ Need Help?</div>
