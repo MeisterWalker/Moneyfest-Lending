@@ -42,7 +42,7 @@ export default function HomePage() {
     { value: `${(interestRate * 100).toFixed(0)}%`, label: 'Monthly interest rate', sub: 'No compounding' },
     { value: '₱10K', label: 'Maximum loan', sub: 'For trusted borrowers' },
     { value: '4–6', label: 'Easy installments', sub: 'Over 2 or 3 months' },
-    { value: '12hr', label: 'Avg. approval time', sub: 'Fast turnaround' },
+    { value: '24-48hr', label: 'Avg. approval time', sub: 'Fast turnaround' },
   ]
 
   return (
@@ -365,10 +365,10 @@ export default function HomePage() {
 
             <div className="rewards-tier-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16, position: 'relative', zIndex: 1 }}>
               {[
-                { badge: '🌱', tier: 'New',      hold: '10%', limit: '₱5,000', loans: 'Starting',     color: '#7A8AAA', bg: 'rgba(122,138,170,0.08)',  border: 'rgba(122,138,170,0.2)',  score: '750',   perks: ['Standard access', 'Apply immediately', '10% Security Hold'] },
-                { badge: '⭐', tier: 'Trusted',   hold: '8%',  limit: '₱7,000', loans: '1 clean loan', color: '#F59E0B', bg: 'rgba(245,158,11,0.08)',  border: 'rgba(245,158,11,0.3)',   score: '835+',  perks: ['Hold reduced to 8%', 'Limit raised to ₱7K', '1 clean loan needed'] },
-                { badge: '🤝', tier: 'Reliable',  hold: '6%',  limit: '₱9,000', loans: '2 clean loans', color: '#3B82F6', bg: 'rgba(59,130,246,0.08)', border: 'rgba(59,130,246,0.3)',   score: '920+',  perks: ['Hold reduced to 6%', 'Limit raised to ₱9K', 'Priority processing'] },
-                { badge: '👑', tier: 'VIP',       hold: '5%',  limit: '₱10,000', loans: '3 clean loans', color: '#8B5CF6', bg: 'rgba(139,92,246,0.1)', border: 'rgba(139,92,246,0.4)',  score: '1000',  perks: ['Lowest hold — just 5%', 'Max limit ₱10K', 'Top borrower status'] },
+                { badge: '🌱', tier: 'New', hold: '10%', limit: '₱5,000', loans: 'Starting', color: '#7A8AAA', bg: 'rgba(122,138,170,0.08)', border: 'rgba(122,138,170,0.2)', score: '750', perks: ['Standard access', 'Apply immediately', '10% Security Hold'] },
+                { badge: '⭐', tier: 'Trusted', hold: '8%', limit: '₱7,000', loans: '1 clean loan', color: '#F59E0B', bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.3)', score: '835+', perks: ['Hold reduced to 8%', 'Limit raised to ₱7K', '1 clean loan needed'] },
+                { badge: '🤝', tier: 'Reliable', hold: '6%', limit: '₱9,000', loans: '2 clean loans', color: '#3B82F6', bg: 'rgba(59,130,246,0.08)', border: 'rgba(59,130,246,0.3)', score: '920+', perks: ['Hold reduced to 6%', 'Limit raised to ₱9K', 'Priority processing'] },
+                { badge: '👑', tier: 'VIP', hold: '5%', limit: '₱10,000', loans: '3 clean loans', color: '#8B5CF6', bg: 'rgba(139,92,246,0.1)', border: 'rgba(139,92,246,0.4)', score: '1000', perks: ['Lowest hold — just 5%', 'Max limit ₱10K', 'Top borrower status'] },
               ].map((t, i) => (
                 <div key={i} style={{ background: t.bg, border: `1px solid ${t.border}`, borderRadius: 20, padding: '28px 20px', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
                   {/* Glow */}
@@ -412,9 +412,9 @@ export default function HomePage() {
           {/* Bottom callouts */}
           <div ref={ref('rewards-bottom')} className={`reveal rewards-bottom-grid ${visible['rewards-bottom'] ? 'visible' : ''}`} style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 14, marginBottom: 28 }}>
             {[
-              { icon: '/giftbox.png',         text: 'Security Hold drops from 10% down to just 5% as you level up',    color: '#F59E0B' },
-              { icon: '/philippine-peso.png', text: 'Loan limit grows from ₱5,000 all the way up to ₱10,000',          color: '#22C55E' },
-              { icon: '/verified.png',        text: 'Most borrowers reach ⭐ Trusted after just 1 clean loan',          color: '#3B82F6' },
+              { icon: '/giftbox.png', text: 'Security Hold drops from 10% down to just 5% as you level up', color: '#F59E0B' },
+              { icon: '/philippine-peso.png', text: 'Loan limit grows from ₱5,000 all the way up to ₱10,000', color: '#22C55E' },
+              { icon: '/verified.png', text: 'Most borrowers reach ⭐ Trusted after just 1 clean loan', color: '#3B82F6' },
             ].map((c, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '16px 20px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14 }}>
                 <img src={c.icon} alt="" style={{ width: 28, height: 28, objectFit: 'contain', flexShrink: 0 }} />
@@ -555,9 +555,11 @@ export default function HomePage() {
           <div style={{ fontSize: 12, color: '#4B5580' }}>"Borrow smart. Pay early. Get rewarded."</div>
           <div style={{ fontSize: 11, color: '#323a52', display: 'flex', alignItems: 'center', gap: 5 }}>
             <span>Designed & developed by</span>
-            <span style={{ fontFamily: 'Space Grotesk', fontWeight: 700, color: '#3d4766',
+            <span style={{
+              fontFamily: 'Space Grotesk', fontWeight: 700, color: '#3d4766',
               background: 'linear-gradient(90deg,#3B82F6,#8B5CF6)',
-              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'
+            }}>
               John Paul Lacaron
             </span>
           </div>
