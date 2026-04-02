@@ -25,6 +25,208 @@ async function notifyBorrower({ borrower_id, type, title, message }) {
   await supabase.from('portal_notifications').insert({ borrower_id, type, title, message })
 }
 
+// ── Principal Payments Panel ────────────────────────────────
+function PrincipalPaymentsPanel({ user }) {
+  const [payments, setPayments] = useState([])
+  const [signedUrls, setSignedUrls] = useState({})
+  const [loading, setLoading] = useState(true)
+  const { toast } = useToast()
+
+  const fetchPayments = async () => {
+    setLoading(true)
+    const { data } = await supabase
+      .from('principal_payments')
+      .select('*, borrowers(full_name, access_code, email), loans(loan_amount, current_principal, release_date, interest_baseline_date, status)')
+      .eq('status', 'Pending')
+      .order('created_at', { ascending: false })
+    setPayments(data || [])
+    if (data && data.length > 0) {
+      const urls = {}
+      for (const p of data) {
+        if (p.file_path) {
+          const { data: signed } = await supabase.storage.from('payment-proofs').createSignedUrl(p.file_path, 3600)
+          if (signed?.signedUrl) urls[p.id] = signed.signedUrl
+        }
+      }
+      setSignedUrls(urls)
+    }
+    setLoading(false)
+  }
+
+  useEffect(() => { fetchPayments() }, [])
+
+  const handleApprove = async (pmt) => {
+    try {
+      const today = new Date().toISOString().slice(0, 10) // YYYY-MM-DD
+      const newPrincipal = parseFloat(pmt.principal_after)
+      const isFullyPaid = newPrincipal <= 0
+
+      // 1. Confirm the principal_payment record
+      await supabase.from('principal_payments').update({
+        status: 'Confirmed',
+        reviewed_by: user?.email,
+        reviewed_at: new Date().toISOString()
+      }).eq('id', pmt.id)
+
+      // 2. Update the loan — reduce principal, reset interest baseline
+      const loanUpdate = {
+        current_principal: Math.max(0, newPrincipal),
+        interest_baseline_date: today,
+        updated_at: new Date().toISOString()
+      }
+      if (isFullyPaid) {
+        loanUpdate.status = 'Paid'
+        loanUpdate.remaining_balance = 0
+      }
+      await supabase.from('loans').update(loanUpdate).eq('id', pmt.loan_id)
+
+      // 3. Notify borrower
+      await notifyBorrower({
+        borrower_id: pmt.borrower_id,
+        type: 'principal_payment_confirmed',
+        title: isFullyPaid ? '🎉 Loan Fully Paid!' : '✅ Principal Payment Confirmed',
+        message: isFullyPaid
+          ? `Your payment of ₱${Number(pmt.payment_amount).toLocaleString('en-PH', { minimumFractionDigits: 2 })} has been confirmed. Your loan is now fully paid off! 🎉`
+          : `Your principal payment of ₱${Number(pmt.payment_amount).toLocaleString('en-PH', { minimumFractionDigits: 2 })} has been confirmed. ₱${Number(pmt.interest_portion).toLocaleString('en-PH', { minimumFractionDigits: 2 })} covered accrued interest and ₱${Number(pmt.principal_portion).toLocaleString('en-PH', { minimumFractionDigits: 2 })} reduced your principal. New principal: ₱${newPrincipal.toLocaleString('en-PH', { minimumFractionDigits: 2 })}. Daily interest resets from today.`
+      })
+
+      // 4. Audit log
+      await logAudit({
+        action_type: isFullyPaid ? 'QUICKLOAN_PAID_VIA_PRINCIPAL_PAYMENT' : 'PRINCIPAL_PAYMENT_CONFIRMED',
+        module: 'Approvals',
+        description: `Principal payment confirmed for ${pmt.borrowers?.full_name} — ₱${pmt.payment_amount} paid (₱${pmt.interest_portion} interest + ₱${pmt.principal_portion} principal reduction). New principal: ₱${newPrincipal}${isFullyPaid ? ' — LOAN FULLY PAID' : ''}`,
+        changed_by: user?.email
+      })
+
+      toast(isFullyPaid ? `🎉 Loan marked as Paid for ${pmt.borrowers?.full_name}` : 'Principal payment confirmed', 'success')
+      fetchPayments()
+    } catch (err) {
+      console.error(err)
+      toast('Failed to approve principal payment', 'error')
+    }
+  }
+
+  const handleReject = async (pmt) => {
+    await supabase.from('principal_payments').update({
+      status: 'Rejected',
+      reviewed_by: user?.email,
+      reviewed_at: new Date().toISOString()
+    }).eq('id', pmt.id)
+    await logAudit({
+      action_type: 'PRINCIPAL_PAYMENT_REJECTED',
+      module: 'Approvals',
+      description: `Principal payment rejected for ${pmt.borrowers?.full_name}`,
+      changed_by: user?.email
+    })
+    await notifyBorrower({
+      borrower_id: pmt.borrower_id,
+      type: 'principal_payment_rejected',
+      title: '❌ Principal Payment Rejected',
+      message: 'Your principal payment proof was rejected. Please re-upload a clear screenshot and try again.'
+    })
+    toast('Principal payment rejected', 'info')
+    fetchPayments()
+  }
+
+  return (
+    <div className="card" style={{ padding: 0, overflow: 'hidden', marginBottom: 28 }}>
+      {/* Header */}
+      <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--card-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ width: 38, height: 38, borderRadius: 10, background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <span style={{ fontSize: 18 }}>💳</span>
+          </div>
+          <div>
+            <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 15, color: 'var(--text-primary)' }}>Principal Payments</div>
+            <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Approve borrower payments that reduce QuickLoan principal</div>
+          </div>
+        </div>
+        {payments.length > 0 && (
+          <span style={{ background: '#6366F1', color: '#fff', fontSize: 11, fontWeight: 800, borderRadius: 20, padding: '3px 12px' }}>
+            {payments.length} pending
+          </span>
+        )}
+      </div>
+
+      {/* Content */}
+      <div style={{ padding: '20px 24px' }}>
+        {loading ? (
+          <div style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)', fontSize: 13 }}>Loading...</div>
+        ) : payments.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '40px 20px' }}>
+            <CheckCircle size={36} color="var(--green)" style={{ marginBottom: 12, opacity: 0.5 }} />
+            <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 15, color: 'var(--text-primary)', marginBottom: 6 }}>All caught up!</div>
+            <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>No principal payment requests pending review.</div>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            {payments.map(pmt => (
+              <div key={pmt.id} style={{ background: 'rgba(99,102,241,0.03)', border: '1px solid rgba(99,102,241,0.15)', borderRadius: 14, padding: '16px 18px' }}>
+                {/* Top row */}
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 14, flexWrap: 'wrap' }}>
+                  <div>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 3 }}>{pmt.borrowers?.full_name}</div>
+                    <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>QuickLoan Principal Payment</div>
+                    <div style={{ fontSize: 11, color: '#4B5580', marginTop: 4 }}>{new Date(pmt.created_at).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
+                    {pmt.notes && <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4, fontStyle: 'italic' }}>"{pmt.notes}"</div>}
+                  </div>
+                  <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                    <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 22, color: '#6366F1' }}>
+                      ₱{Number(pmt.payment_amount).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
+                    </div>
+                    <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Total payment</div>
+                  </div>
+                </div>
+
+                {/* Payment breakdown grid */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 10, marginBottom: 14 }}>
+                  {[
+                    { label: 'Interest Covered', value: `₱${Number(pmt.interest_portion).toLocaleString('en-PH', { minimumFractionDigits: 2 })}`, color: '#F59E0B' },
+                    { label: 'Principal Reduced', value: `₱${Number(pmt.principal_portion).toLocaleString('en-PH', { minimumFractionDigits: 2 })}`, color: '#22C55E' },
+                    { label: 'Principal Before', value: `₱${Number(pmt.principal_before).toLocaleString('en-PH', { minimumFractionDigits: 2 })}`, color: 'var(--text-label)' },
+                    { label: 'Principal After', value: `₱${Number(pmt.principal_after).toLocaleString('en-PH', { minimumFractionDigits: 2 })}`, color: pmt.principal_after <= 0 ? '#22C55E' : '#60A5FA' },
+                  ].map((item, i) => (
+                    <div key={i} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8, padding: '8px 10px' }}>
+                      <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>{item.label}</div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: item.color }}>{item.value}</div>
+                    </div>
+                  ))}
+                </div>
+
+                {pmt.principal_after <= 0 && (
+                  <div style={{ marginBottom: 12, padding: '8px 12px', background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.25)', borderRadius: 8, fontSize: 12, color: '#22C55E', fontWeight: 700 }}>
+                    🎉 Approving this will mark the loan as fully PAID
+                  </div>
+                )}
+
+                {/* Actions */}
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  {signedUrls[pmt.id] ? (
+                    <a href={signedUrls[pmt.id]} target="_blank" rel="noreferrer"
+                      style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '8px 14px', borderRadius: 8, background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.2)', color: '#3B82F6', fontSize: 12, fontWeight: 600, textDecoration: 'none' }}>
+                      <ExternalLink size={12} /> View Proof
+                    </a>
+                  ) : (
+                    <span style={{ padding: '8px 14px', borderRadius: 8, background: 'rgba(255,255,255,0.04)', color: '#4B5580', fontSize: 12 }}>No proof</span>
+                  )}
+                  <button onClick={() => handleApprove(pmt)}
+                    style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '8px 16px', borderRadius: 8, border: '1px solid rgba(34,197,94,0.3)', background: 'rgba(34,197,94,0.1)', color: '#22C55E', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                    ✓ Approve
+                  </button>
+                  <button onClick={() => handleReject(pmt)}
+                    style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '8px 14px', borderRadius: 8, border: '1px solid rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.08)', color: '#EF4444', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                    ✗ Reject
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 // ── Payment Proofs Panel ──────────────────────────────────────
 function PaymentProofsPanel({ user }) {
   const [proofs, setProofs] = useState([])
@@ -555,6 +757,7 @@ export default function ApprovalsPage() {
 
       <InvestorAgreementsPanel user={user} />
       <InvestorPayoutsPanel user={user} />
+      <PrincipalPaymentsPanel user={user} />
       <PaymentProofsPanel user={user} />
       <WithdrawalsPanel user={user} />
     </div>

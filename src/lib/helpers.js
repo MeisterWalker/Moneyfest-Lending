@@ -175,14 +175,24 @@ export function getQuickLoanDaysElapsed(releaseDateStr, asOfDateStr = null) {
 }
 
 // Calculate the full current balance owed on a QuickLoan
-// Returns: { principal, accruedInterest, extensionFee, penaltyAccrued, totalOwed, daysElapsed, phase }
+// Returns: { principal, originalPrincipal, accruedInterest, extensionFee, penaltyAccrued, totalOwed, daysElapsed, daysForInterest, phase }
 // phase: 'active' | 'extended' | 'penalty'
 export function calcQuickLoanBalance(loan, asOfDateStr = null) {
-  const principal = parseFloat(loan.loan_amount) || 0
+  // After a principal payment, current_principal is reduced and interest_baseline_date is reset.
+  // Falls back to loan_amount / release_date for loans with no principal payments yet.
+  const principal = parseFloat(loan.current_principal ?? loan.loan_amount) || 0
+  const originalPrincipal = parseFloat(loan.loan_amount) || 0
+
+  // daysElapsed always measured from release_date — used for phase detection (Day 15 / Day 30)
   const daysElapsed = getQuickLoanDaysElapsed(loan.release_date, asOfDateStr)
+
+  // daysForInterest measured from interest_baseline_date — resets after each principal payment
+  const baselineDate = loan.interest_baseline_date || loan.release_date
+  const daysForInterest = getQuickLoanDaysElapsed(baselineDate, asOfDateStr)
+
   const extensionFeeCharged = loan.extension_fee_charged || false
 
-  let accruedInterest = calcQuickLoanAccruedInterest(principal, daysElapsed)
+  let accruedInterest = calcQuickLoanAccruedInterest(principal, daysForInterest)
   let extensionFee = extensionFeeCharged ? QUICKLOAN_CONFIG.EXTENSION_FEE : 0
   let penaltyAccrued = 0
   let phase = 'active'
@@ -196,7 +206,7 @@ export function calcQuickLoanBalance(loan, asOfDateStr = null) {
   }
 
   const totalOwed = parseFloat((principal + accruedInterest + extensionFee + penaltyAccrued).toFixed(2))
-  return { principal, accruedInterest, extensionFee, penaltyAccrued, totalOwed, daysElapsed, phase }
+  return { principal, originalPrincipal, accruedInterest, extensionFee, penaltyAccrued, totalOwed, daysElapsed, daysForInterest, phase }
 }
 
 // What the admin collects on Day 15 miss: accrued interest + extension fee

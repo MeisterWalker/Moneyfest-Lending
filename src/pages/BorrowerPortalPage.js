@@ -143,6 +143,179 @@ function UploadModal({ installmentNum, loan, borrower, onClose, onUploaded, qlPa
   )
 }
 
+// ── Principal Payment Modal ────────────────────────────────────
+function PrincipalPaymentModal({ loan, borrower, onClose, onUploaded }) {
+  const [file, setFile] = useState(null)
+  const [paymentAmount, setPaymentAmount] = useState('')
+  const [notes, setNotes] = useState('')
+  const [uploading, setUploading] = useState(false)
+  const [error, setError] = useState('')
+
+  // Live calculations
+  const principal = parseFloat(loan.current_principal ?? loan.loan_amount) || 0
+  const baselineDate = loan.interest_baseline_date || loan.release_date
+  const daysForInterest = (() => {
+    if (!baselineDate) return 0
+    const [y, m, d] = baselineDate.split('-').map(Number)
+    const base = new Date(y, m - 1, d)
+    const today = new Date(); today.setHours(0, 0, 0, 0)
+    return Math.max(0, Math.floor((today - base) / 86400000))
+  })()
+  const dailyRate = 0.1 / 30
+  const accruedInterest = parseFloat((principal * dailyRate * daysForInterest).toFixed(2))
+  const dailyInterest = parseFloat((principal * dailyRate).toFixed(2))
+
+  const amount = parseFloat(paymentAmount) || 0
+  const interestPortion = Math.min(amount, accruedInterest)
+  const principalPortion = Math.max(0, amount - accruedInterest)
+  const principalAfter = Math.max(0, principal - principalPortion)
+  const isFullPayoff = principalAfter <= 0
+
+  const isValid = amount > accruedInterest && file
+
+  const handleSubmit = async () => {
+    if (!file) { setError('Please attach proof of payment'); return }
+    if (amount <= 0) { setError('Please enter a valid payment amount'); return }
+    if (amount <= accruedInterest) {
+      setError(`Payment must be more than ₱${accruedInterest.toFixed(2)} to cover accrued interest first`)
+      return
+    }
+    if (file.size > 5 * 1024 * 1024) { setError('File must be under 5MB'); return }
+
+    setUploading(true)
+    try {
+      const ext = file.name.split('.').pop()
+      const path = `principal-payments/${borrower.access_code}/${Date.now()}.${ext}`
+      const { error: upErr } = await supabase.storage.from('payment-proofs').upload(path, file, { upsert: false })
+      if (upErr) { setError('Upload failed: ' + upErr.message); setUploading(false); return }
+      const { data: { publicUrl } } = supabase.storage.from('payment-proofs').getPublicUrl(path)
+
+      const { error: dbErr } = await supabase.from('principal_payments').insert({
+        loan_id: loan.id,
+        borrower_id: borrower.id,
+        payment_amount: amount,
+        interest_portion: accruedInterest,
+        principal_portion: principalPortion,
+        principal_before: principal,
+        principal_after: principalAfter,
+        days_elapsed: daysForInterest,
+        accrued_interest: accruedInterest,
+        file_path: path,
+        file_url: publicUrl,
+        notes: notes.trim() || null,
+        status: 'Pending'
+      })
+      if (dbErr) { setError('Failed to save: ' + dbErr.message); setUploading(false); return }
+
+      await supabase.from('portal_notifications').insert({
+        borrower_id: borrower.id,
+        type: 'principal_payment_submitted',
+        title: '💳 Principal Payment Submitted',
+        message: `Your principal payment of ₱${amount.toLocaleString('en-PH', { minimumFractionDigits: 2 })} has been submitted for admin review. This covers ₱${accruedInterest.toFixed(2)} in accrued interest and reduces your principal by ₱${principalPortion.toFixed(2)}.`
+      })
+      onUploaded()
+    } catch (e) {
+      setError('Unexpected error: ' + e.message)
+      setUploading(false)
+    }
+  }
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.88)', backdropFilter: 'blur(14px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20 }}>
+      <div style={{ width: '100%', maxWidth: 480, background: '#0A0F1E', border: '1px solid rgba(99,102,241,0.3)', borderRadius: 22, overflow: 'hidden', boxShadow: '0 50px 100px rgba(0,0,0,0.7)' }}>
+
+        {/* Header */}
+        <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'linear-gradient(135deg,rgba(99,102,241,0.1),rgba(139,92,246,0.08))', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 16, color: '#F0F4FF' }}>💳 Pay Towards Principal</div>
+            <div style={{ fontSize: 12, color: '#a78bfa', marginTop: 2, fontWeight: 600 }}>Reduce your principal balance anytime</div>
+          </div>
+          <button onClick={onClose} style={{ width: 32, height: 32, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: '#7A8AAA', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+        </div>
+
+        <div style={{ padding: 24 }}>
+          {/* How it works */}
+          <div style={{ marginBottom: 18, padding: '12px 14px', background: 'rgba(99,102,241,0.06)', border: '1px solid rgba(99,102,241,0.2)', borderRadius: 12, fontSize: 12, color: '#a78bfa', lineHeight: 1.7 }}>
+            <strong style={{ color: '#F0F4FF', display: 'block', marginBottom: 4 }}>How this works</strong>
+            Your payment first covers <strong style={{ color: '#F59E0B' }}>accrued interest</strong> to date, then the remainder reduces your <strong style={{ color: '#22C55E' }}>principal</strong>. Daily interest recalculates on the lower principal going forward.
+          </div>
+
+          {/* Live balance snapshot */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 18 }}>
+            {[
+              { label: 'Current Principal', value: `₱${principal.toLocaleString('en-PH', { minimumFractionDigits: 2 })}`, color: '#F0F4FF' },
+              { label: `Accrued Interest (${daysForInterest}d)`, value: `₱${accruedInterest.toFixed(2)}`, color: '#F59E0B' },
+              { label: 'Daily Interest Rate', value: `₱${dailyInterest.toFixed(2)}/day`, color: '#60A5FA' },
+              { label: 'Min. Payment Required', value: `> ₱${accruedInterest.toFixed(2)}`, color: '#EF4444' },
+            ].map((item, i) => (
+              <div key={i} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 10, padding: '10px 12px' }}>
+                <div style={{ fontSize: 10, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 4, fontWeight: 700 }}>{item.label}</div>
+                <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 14, color: item.color }}>{item.value}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Amount Input */}
+          <div style={{ marginBottom: 14 }}>
+            <label style={{ display: 'block', fontSize: 11, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 6, fontWeight: 700 }}>Payment Amount (₱)</label>
+            <input
+              type="number"
+              value={paymentAmount}
+              onChange={e => setPaymentAmount(e.target.value)}
+              placeholder={`Enter amount (min ₱${(accruedInterest + 1).toFixed(2)})`}
+              style={{ width: '100%', boxSizing: 'border-box', padding: '12px 14px', background: 'rgba(255,255,255,0.05)', border: `1px solid ${amount > accruedInterest && amount > 0 ? 'rgba(34,197,94,0.4)' : amount > 0 && amount <= accruedInterest ? 'rgba(239,68,68,0.4)' : 'rgba(255,255,255,0.1)'}`, borderRadius: 10, color: '#F0F4FF', fontSize: 15, fontWeight: 700, outline: 'none', fontFamily: 'Syne, sans-serif' }}
+            />
+          </div>
+
+          {/* Live breakdown */}
+          {amount > 0 && (
+            <div style={{ marginBottom: 14, padding: '12px 14px', background: amount > accruedInterest ? 'rgba(34,197,94,0.05)' : 'rgba(239,68,68,0.05)', border: `1px solid ${amount > accruedInterest ? 'rgba(34,197,94,0.2)' : 'rgba(239,68,68,0.2)'}`, borderRadius: 10 }}>
+              {amount <= accruedInterest ? (
+                <div style={{ fontSize: 12, color: '#EF4444', fontWeight: 600 }}>⚠️ Amount must exceed ₱{accruedInterest.toFixed(2)} to cover interest first</div>
+              ) : (
+                <>
+                  <div style={{ fontSize: 11, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 10, fontWeight: 800 }}>Payment Breakdown</div>
+                  {[
+                    { label: '→ Covers accrued interest', value: `₱${accruedInterest.toFixed(2)}`, color: '#F59E0B' },
+                    { label: '→ Reduces principal by', value: `₱${principalPortion.toFixed(2)}`, color: '#22C55E' },
+                    { label: isFullPayoff ? '🎉 New principal (PAID OFF!)' : '→ New principal after', value: `₱${principalAfter.toFixed(2)}`, color: isFullPayoff ? '#22C55E' : '#60A5FA' },
+                  ].map((r, i) => (
+                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, padding: '4px 0', borderBottom: i < 2 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
+                      <span style={{ color: '#7A8AAA' }}>{r.label}</span>
+                      <span style={{ fontWeight: 800, color: r.color, fontFamily: 'Syne, sans-serif' }}>{r.value}</span>
+                    </div>
+                  ))}
+                </>
+              )}
+            </div>
+          )}
+
+          {/* File upload */}
+          <label style={{ display: 'block', border: `2px dashed ${file ? 'rgba(99,102,241,0.5)' : 'rgba(255,255,255,0.1)'}`, borderRadius: 12, padding: '20px', textAlign: 'center', cursor: 'pointer', background: file ? 'rgba(99,102,241,0.05)' : 'rgba(255,255,255,0.02)', marginBottom: 14, transition: 'all 0.2s' }}>
+            <input type="file" accept="image/*,.pdf" onChange={e => setFile(e.target.files[0])} style={{ display: 'none' }} />
+            <div style={{ fontSize: 24, marginBottom: 6 }}>{file ? '✅' : '📎'}</div>
+            <div style={{ fontSize: 12, color: file ? '#a78bfa' : '#7A8AAA', fontWeight: 600 }}>{file ? file.name : 'Upload proof of payment (screenshot)'}</div>
+            <div style={{ fontSize: 11, color: '#4B5580', marginTop: 2 }}>JPG, PNG, PDF · Max 5MB</div>
+          </label>
+
+          <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Optional note for admin..." rows={2}
+            style={{ width: '100%', boxSizing: 'border-box', padding: '10px 14px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, color: '#F0F4FF', fontSize: 13, resize: 'none', outline: 'none', fontFamily: 'DM Sans, sans-serif', marginBottom: 14 }} />
+
+          {error && <div style={{ padding: '10px 14px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, fontSize: 13, color: '#EF4444', marginBottom: 14 }}>{error}</div>}
+
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button onClick={onClose} style={{ flex: 1, padding: '12px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.08)', background: 'transparent', color: '#7A8AAA', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+            <button onClick={handleSubmit} disabled={uploading || !isValid}
+              style={{ flex: 2, padding: '12px', borderRadius: 10, border: 'none', background: !isValid ? 'rgba(255,255,255,0.06)' : 'linear-gradient(135deg,#6366F1,#8B5CF6)', color: !isValid ? '#4B5580' : '#fff', fontSize: 13, fontWeight: 700, cursor: !isValid ? 'not-allowed' : 'pointer', fontFamily: 'Syne, sans-serif' }}>
+              {uploading ? 'Submitting...' : '💳 Submit Principal Payment'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function PenaltySection({ loanId, supabase }) {
   const [penalties, setPenalties] = useState([])
   useEffect(() => {
@@ -415,6 +588,7 @@ export default function BorrowerPortalPage() {
   const [error, setError] = useState('')
   const [uploadModal, setUploadModal] = useState(null)
   const [qlPaymentType, setQlPaymentType] = useState(null) // 'interest_only' | 'full_payoff'
+  const [showPrincipalModal, setShowPrincipalModal] = useState(false)
   const [showSignModal, setShowSignModal] = useState(false)
   const [signatureData, setSignatureData] = useState(null)
   const [typedName, setTypedName] = useState('')
@@ -1919,8 +2093,58 @@ export default function BorrowerPortalPage() {
                 </div>
               )}
 
-                {/* Loan Disclosure */}
-                {/* ... (disclosure content) ... */}
+                {/* QuickLoan Payment Actions */}
+                {loan.loan_type === 'quickloan' && loan.status !== 'Pending' && (
+                  <div className="pc" style={{ background: '#0E1320', border: '1px solid rgba(99,102,241,0.2)', borderRadius: 18, overflow: 'hidden', marginBottom: 16 }}>
+                    <div style={{ padding: '14px 18px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <div style={{ width: 28, height: 28, borderRadius: 8, background: 'rgba(99,102,241,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }}>⚡</div>
+                      <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 13, color: '#F0F4FF' }}>QuickLoan Payment Options</div>
+                    </div>
+                    <div style={{ padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+
+                      {/* Principal Payment button */}
+                      <button
+                        onClick={() => setShowPrincipalModal(true)}
+                        style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', borderRadius: 14, border: '1.5px solid rgba(99,102,241,0.35)', background: 'linear-gradient(135deg,rgba(99,102,241,0.08),rgba(139,92,246,0.06))', cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s', width: '100%' }}
+                      >
+                        <div style={{ width: 42, height: 42, borderRadius: 12, background: 'linear-gradient(135deg,#6366F1,#8B5CF6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0, boxShadow: '0 4px 12px rgba(99,102,241,0.3)' }}>💳</div>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: 13, fontWeight: 800, color: '#F0F4FF', marginBottom: 2, fontFamily: 'Syne, sans-serif' }}>Pay Towards Principal</div>
+                          <div style={{ fontSize: 11, color: '#7A8AAA', lineHeight: 1.5 }}>Clears accrued interest first, then reduces your principal. Lowers your daily interest going forward.</div>
+                        </div>
+                        <span style={{ fontSize: 18, color: '#8B5CF6', flexShrink: 0 }}>›</span>
+                      </button>
+
+                      {/* Full Pay-Off button */}
+                      <button
+                        onClick={() => { setQlPaymentType('full_payoff'); setUploadModal(1) }}
+                        style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', borderRadius: 14, border: '1.5px solid rgba(34,197,94,0.3)', background: 'rgba(34,197,94,0.04)', cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s', width: '100%' }}
+                      >
+                        <div style={{ width: 42, height: 42, borderRadius: 12, background: 'linear-gradient(135deg,#22C55E,#16A34A)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0, boxShadow: '0 4px 12px rgba(34,197,94,0.25)' }}>✅</div>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: 13, fontWeight: 800, color: '#F0F4FF', marginBottom: 2, fontFamily: 'Syne, sans-serif' }}>Full Pay-Off</div>
+                          <div style={{ fontSize: 11, color: '#7A8AAA', lineHeight: 1.5 }}>Settle full outstanding balance (principal + all accrued interest). Closes your loan.</div>
+                        </div>
+                        <span style={{ fontSize: 18, color: '#22C55E', flexShrink: 0 }}>›</span>
+                      </button>
+
+                      {/* Interest Only (Day 15 extension) */}
+                      {!loan.extension_fee_charged && (
+                        <button
+                          onClick={() => { setQlPaymentType('interest_only'); setUploadModal(1) }}
+                          style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', borderRadius: 14, border: '1.5px solid rgba(245,158,11,0.3)', background: 'rgba(245,158,11,0.04)', cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s', width: '100%' }}
+                        >
+                          <div style={{ width: 42, height: 42, borderRadius: 12, background: 'linear-gradient(135deg,#F59E0B,#D97706)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0, boxShadow: '0 4px 12px rgba(245,158,11,0.25)' }}>📅</div>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontSize: 13, fontWeight: 800, color: '#F0F4FF', marginBottom: 2, fontFamily: 'Syne, sans-serif' }}>Interest Only (Day 15)</div>
+                            <div style={{ fontSize: 11, color: '#7A8AAA', lineHeight: 1.5 }}>Pay accrued 15-day interest + ₱100 extension fee. Rolls principal to Day 30.</div>
+                          </div>
+                          <span style={{ fontSize: 18, color: '#F59E0B', flexShrink: 0 }}>›</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
 
               </>
             ) : (
@@ -2130,6 +2354,9 @@ export default function BorrowerPortalPage() {
         )}
         {uploadModal && (
           <UploadModal installmentNum={uploadModal} loan={loan} borrower={borrower} qlPaymentType={qlPaymentType} onClose={() => { setUploadModal(null); setQlPaymentType(null) }} onUploaded={handleUploaded} />
+        )}
+        {showPrincipalModal && loan && borrower && (
+          <PrincipalPaymentModal loan={loan} borrower={borrower} onClose={() => setShowPrincipalModal(false)} onUploaded={() => { setShowPrincipalModal(false); handleUploaded() }} />
         )}
 
         {/* Mobile Bottom Navigation */}
