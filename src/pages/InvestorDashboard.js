@@ -4,7 +4,8 @@ import { formatCurrency } from '../lib/helpers'
 import {
   Building2, Smartphone, CreditCard, Wallet, TrendingUp,
   Info, LogOut, RefreshCw, PenTool, XCircle, Sun, Moon, Printer,
-  Shield, Star, Phone, Mail, MapPin, User
+  Shield, Star, Phone, Mail, MapPin, User,
+  ChevronDown, Filter, Download, ArrowUpDown, Clock, DollarSign, CheckCircle, ArrowRight
 } from 'lucide-react'
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid,
@@ -14,6 +15,7 @@ import { useToast } from '../components/Toast'
 import { SignaturePad } from '../components/SignaturePad'
 import InvestorMoa from '../components/InvestorMoa'
 import { sendPayoutRequestedAdminEmail, sendMoaSignedAdminEmail } from '../lib/emailService'
+import { getBadgeConfig } from '../lib/creditSystem'
 
 const TIER_RATES = {
   'Starter':  0.07,
@@ -168,7 +170,13 @@ export default function InvestorDashboard() {
   const [yesterdayAccrual, setYesterdayAccrual] = useState(0)
   const [overallAccrual, setOverallAccrual]     = useState(0)
   const [selectedBorrowerLoan, setSelectedBorrowerLoan] = useState(null)
-  const [isDark, setIsDark]             = useState(true)  // default dark
+  const [isDark, setIsDark]             = useState(() => {
+    const saved = localStorage.getItem('lm_investor_theme')
+    return saved ? saved === 'dark' : true
+  })
+  const [dashTab, setDashTab] = useState('overview')
+  const [installments, setInstallments] = useState([])
+  const [ledgerFilter, setLedgerFilter] = useState('all')
   const { toast } = useToast()
 
   const t = isDark ? DARK : LIGHT
@@ -190,6 +198,16 @@ export default function InvestorDashboard() {
       .eq('investor_id', inv.id).order('created_at', { ascending: false })
 
     setLoans(lData || [])
+
+    // Fetch installments for all investor loans
+    if (lData && lData.length > 0) {
+      const loanIds = lData.map(l => l.id)
+      const { data: instData } = await supabase
+        .from('installments').select('*')
+        .in('loan_id', loanIds)
+        .order('paid_at', { ascending: false })
+      setInstallments(instData || [])
+    }
 
     // Forecast (12 months)
     const rate = TIER_RATES[inv.tier] || 0.12
@@ -396,7 +414,11 @@ export default function InvestorDashboard() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {/* Light/Dark Toggle */}
           <button
-            onClick={() => setIsDark(d => !d)}
+            onClick={() => {
+              const next = !isDark
+              setIsDark(next)
+              localStorage.setItem('lm_investor_theme', next ? 'dark' : 'light')
+            }}
             title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
             style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '7px 14px', borderRadius: 20, border: '1px solid rgba(255,255,255,0.25)', background: 'rgba(255,255,255,0.1)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s' }}>
             {isDark ? <Sun size={14} /> : <Moon size={14} />}
@@ -445,6 +467,28 @@ export default function InvestorDashboard() {
             </div>
           ))}
         </div>
+
+        {/* ── TAB NAVIGATION ── */}
+        <div style={{ display: 'flex', gap: 4, marginBottom: 24, background: isDark ? 'rgba(255,255,255,0.03)' : '#F1F5F9', padding: 4, borderRadius: 12, border: `1px solid ${t.divider}` }}>
+          {[
+            { id: 'overview', label: '📊 Overview' },
+            { id: 'ledger', label: '📒 Transaction Ledger' },
+          ].map(tab => (
+            <button key={tab.id} onClick={() => setDashTab(tab.id)}
+              style={{
+                flex: 1, padding: '10px 16px', borderRadius: 10, border: 'none', cursor: 'pointer',
+                background: dashTab === tab.id ? `linear-gradient(135deg, ${t.accent}, ${t.accent2})` : 'transparent',
+                color: dashTab === tab.id ? '#fff' : t.textMuted,
+                fontSize: 13, fontWeight: 700, transition: 'all 0.2s',
+                fontFamily: 'Syne, sans-serif',
+              }}>
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* ── OVERVIEW TAB ── */}
+        {dashTab === 'overview' && (<>
 
         {/* ── ROW 2: Active Loans Table + Earnings Overview ── */}
         <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 1fr', gap: 20, marginBottom: 24 }}>
@@ -662,6 +706,229 @@ export default function InvestorDashboard() {
           </div>
         </div>
 
+        </>)}
+
+        {/* ── LEDGER TAB ── */}
+        {dashTab === 'ledger' && (() => {
+          // Build transaction ledger from loans + installments
+          const rate = TIER_RATES[investor.tier] || 0.08
+          const events = []
+
+          loans.forEach(loan => {
+            const bName = loan.borrowers?.full_name || 'Unknown'
+            // Disbursement event
+            events.push({
+              date: loan.release_date || loan.created_at,
+              type: 'disbursed',
+              label: `Capital deployed to ${bName}`,
+              borrower: bName,
+              amount: -Number(loan.loan_amount),
+              loanId: loan.id,
+            })
+
+            // Installment payments
+            const loanInstallments = installments.filter(inst => inst.loan_id === loan.id && inst.is_paid)
+            loanInstallments.forEach(inst => {
+              const interestPerInstallment = (Number(loan.loan_amount) * rate) / (loan.num_installments || 4)
+              const principalPerInstallment = Number(inst.amount_due) - interestPerInstallment
+              events.push({
+                date: inst.paid_at || inst.due_date,
+                type: 'payment',
+                label: `Payment #${inst.installment_number} from ${bName}`,
+                borrower: bName,
+                amount: Number(inst.amount_due),
+                interest: interestPerInstallment,
+                principal: principalPerInstallment > 0 ? principalPerInstallment : 0,
+                loanId: loan.id,
+              })
+            })
+
+            // If no installment records but payments_made > 0, derive events
+            if (loanInstallments.length === 0 && (loan.payments_made || 0) > 0) {
+              for (let p = 1; p <= loan.payments_made; p++) {
+                const interestPerInstallment = (Number(loan.loan_amount) * rate) / (loan.num_installments || 4)
+                events.push({
+                  date: loan.updated_at,
+                  type: 'payment',
+                  label: `Payment #${p} from ${bName}`,
+                  borrower: bName,
+                  amount: Number(loan.installment_amount || 0),
+                  interest: interestPerInstallment,
+                  loanId: loan.id,
+                })
+              }
+            }
+
+            // Loan completion event
+            if (loan.status === 'Paid') {
+              events.push({
+                date: loan.updated_at,
+                type: 'completed',
+                label: `${bName} loan fully repaid`,
+                borrower: bName,
+                amount: 0,
+                earned: Number(loan.loan_amount) * rate,
+                loanId: loan.id,
+              })
+            }
+          })
+
+          // Sort by date descending
+          events.sort((a, b) => new Date(b.date) - new Date(a.date))
+
+          // Filter
+          const filtered = ledgerFilter === 'all' ? events : events.filter(e => e.type === ledgerFilter)
+
+          // Running balance calc (chronological)
+          const chronological = [...filtered].reverse()
+          let runBal = Number(investor.total_capital || 0)
+          chronological.forEach(e => { runBal += e.amount; e.balance = runBal })
+
+          // Summary stats
+          const totalDisbursed = events.filter(e => e.type === 'disbursed').reduce((s, e) => s + Math.abs(e.amount), 0)
+          const totalReceived = events.filter(e => e.type === 'payment').reduce((s, e) => s + e.amount, 0)
+          const totalInterestEarned = events.filter(e => e.type === 'payment').reduce((s, e) => s + (e.interest || 0), 0)
+          const completedLoans = events.filter(e => e.type === 'completed').length
+
+          const TYPE_CONFIG = {
+            disbursed: { icon: <ArrowRight size={14} />, color: t.gold, label: 'Disbursed', bg: `${t.gold}15` },
+            payment: { icon: <DollarSign size={14} />, color: t.green, label: 'Payment', bg: `${t.green}15` },
+            completed: { icon: <CheckCircle size={14} />, color: '#8B5CF6', label: 'Completed', bg: 'rgba(139,92,246,0.1)' },
+          }
+
+          // CSV export
+          const exportCSV = () => {
+            const rows = [['Date', 'Event', 'Borrower', 'Amount', 'Interest', 'Balance']]
+            chronological.forEach(e => {
+              rows.push([
+                new Date(e.date).toLocaleDateString('en-PH'),
+                TYPE_CONFIG[e.type]?.label || e.type,
+                e.borrower,
+                e.amount >= 0 ? `+₱${e.amount.toFixed(2)}` : `-₱${Math.abs(e.amount).toFixed(2)}`,
+                e.interest ? `₱${e.interest.toFixed(2)}` : '',
+                `₱${e.balance?.toFixed(2) || ''}`,
+              ])
+            })
+            const csv = rows.map(r => r.join(',')).join('\n')
+            const blob = new Blob([csv], { type: 'text/csv' })
+            const url = URL.createObjectURL(blob)
+            const a = document.createElement('a')
+            a.href = url; a.download = `moneyfest_ledger_${investor.full_name.replace(/\s/g, '_')}.csv`
+            a.click(); URL.revokeObjectURL(url)
+          }
+
+          return (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+              {/* Ledger Summary Cards */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14 }}>
+                {[
+                  { label: 'Total Deployed', val: formatCurrency(totalDisbursed), col: t.gold, icon: '📤' },
+                  { label: 'Total Received', val: formatCurrency(totalReceived), col: t.green, icon: '📥' },
+                  { label: 'Interest Earned', val: formatCurrency(totalInterestEarned), col: t.accent, icon: '💰' },
+                  { label: 'Loans Completed', val: completedLoans, col: '#8B5CF6', icon: '✅' },
+                ].map((s, i) => (
+                  <div key={i} style={{ ...card, padding: '16px 18px', boxShadow: isDark ? '0 4px 20px rgba(0,0,0,0.3)' : '0 4px 20px rgba(0,0,0,0.08)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                      <span style={{ fontSize: 18 }}>{s.icon}</span>
+                      <span style={{ fontSize: 11, color: t.textMuted, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{s.label}</span>
+                    </div>
+                    <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 800, fontSize: 22, color: s.col }}>{s.val}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Ledger Table */}
+              <div style={{ ...card, overflow: 'hidden', boxShadow: isDark ? '0 4px 20px rgba(0,0,0,0.3)' : '0 4px 20px rgba(0,0,0,0.08)' }}>
+                {/* Ledger Header */}
+                <div style={{ padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `1px solid ${t.divider}` }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <span style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 16, color: t.text }}>📒 Transaction History</span>
+                    <span style={{ fontSize: 11, color: t.textMuted, background: isDark ? 'rgba(255,255,255,0.05)' : '#F1F5F9', padding: '3px 10px', borderRadius: 20, fontWeight: 600 }}>{filtered.length} events</span>
+                  </div>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    {/* Filter */}
+                    <select value={ledgerFilter} onChange={e => setLedgerFilter(e.target.value)}
+                      style={{ padding: '6px 12px', borderRadius: 8, border: `1px solid ${t.cardBorder}`, background: t.cardBg, color: t.text, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+                      <option value="all">All Events</option>
+                      <option value="disbursed">Disbursements</option>
+                      <option value="payment">Payments</option>
+                      <option value="completed">Completions</option>
+                    </select>
+                    {/* Export CSV */}
+                    <button onClick={exportCSV}
+                      style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 14px', borderRadius: 8, border: `1px solid ${t.cardBorder}`, background: isDark ? 'rgba(255,255,255,0.05)' : '#F8FAFF', color: t.text, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+                      <Download size={13} /> CSV
+                    </button>
+                  </div>
+                </div>
+
+                {/* Table */}
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 700 }}>
+                    <thead>
+                      <tr style={{ background: isDark ? 'rgba(255,255,255,0.02)' : '#F8FAFF', borderBottom: `1px solid ${t.divider}` }}>
+                        {['Date', 'Event', 'Borrower', 'Amount', 'Interest', 'Balance'].map(h => (
+                          <th key={h} style={{ textAlign: h === 'Amount' || h === 'Interest' || h === 'Balance' ? 'right' : 'left', padding: '10px 16px', fontSize: 10, fontWeight: 700, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filtered.length === 0 && (
+                        <tr><td colSpan={6} style={{ padding: '40px 20px', textAlign: 'center', color: t.textMuted, fontSize: 13 }}>No transactions yet.</td></tr>
+                      )}
+                      {filtered.map((e, i) => {
+                        const cfg = TYPE_CONFIG[e.type] || TYPE_CONFIG.payment
+                        return (
+                          <tr key={i} style={{ borderBottom: `1px solid ${t.divider}`, transition: 'background 0.15s' }}
+                            onMouseEnter={ev => ev.currentTarget.style.background = isDark ? 'rgba(255,255,255,0.02)' : '#F8FAFF'}
+                            onMouseLeave={ev => ev.currentTarget.style.background = 'transparent'}>
+                            <td style={{ padding: '12px 16px', fontSize: 12, color: t.textMuted, whiteSpace: 'nowrap' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <Clock size={12} style={{ opacity: 0.5 }} />
+                                {new Date(e.date).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}
+                              </div>
+                            </td>
+                            <td style={{ padding: '12px 16px' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <div style={{ width: 26, height: 26, borderRadius: 7, background: cfg.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: cfg.color, flexShrink: 0 }}>
+                                  {cfg.icon}
+                                </div>
+                                <div>
+                                  <div style={{ fontSize: 13, fontWeight: 600, color: t.text }}>{e.label}</div>
+                                  <div style={{ fontSize: 10, color: t.textMuted, fontWeight: 600 }}>{cfg.label}</div>
+                                </div>
+                              </div>
+                            </td>
+                            <td style={{ padding: '12px 16px', fontSize: 13, color: t.text, fontWeight: 500 }}>{e.borrower}</td>
+                            <td style={{ padding: '12px 16px', textAlign: 'right', fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: 13, color: e.amount >= 0 ? t.green : t.gold }}>
+                              {e.amount >= 0 ? '+' : ''}{formatCurrency(Math.abs(e.amount))}
+                            </td>
+                            <td style={{ padding: '12px 16px', textAlign: 'right', fontFamily: 'Space Grotesk, sans-serif', fontWeight: 600, fontSize: 12, color: e.interest ? t.accent : t.textMuted }}>
+                              {e.interest ? `+${formatCurrency(e.interest)}` : '—'}
+                            </td>
+                            <td style={{ padding: '12px 16px', textAlign: 'right', fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: 13, color: t.text }}>
+                              {e.balance !== undefined ? formatCurrency(e.balance) : '—'}
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Footer totals */}
+                <div style={{ padding: '12px 20px', borderTop: `1px solid ${t.divider}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: isDark ? 'rgba(255,255,255,0.02)' : '#F8FAFF' }}>
+                  <span style={{ fontSize: 12, color: t.textMuted }}>Showing {filtered.length} of {events.length} transactions</span>
+                  <div style={{ display: 'flex', gap: 16, fontSize: 12 }}>
+                    <span style={{ color: t.textMuted }}>Net Interest: <strong style={{ color: t.green }}>{formatCurrency(totalInterestEarned)}</strong></span>
+                    <span style={{ color: t.textMuted }}>Current Balance: <strong style={{ color: t.accent }}>{formatCurrency(runBal)}</strong></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )
+        })()}
+
       </div>
 
       <PayoutRequestModal isOpen={showPayoutModal} onClose={() => setShowPayoutModal(false)} onSubmit={handleRequestPayout} investor={investor} requesting={requestingPayout} t={t} />
@@ -672,7 +939,7 @@ export default function InvestorDashboard() {
         const loan = selectedBorrowerLoan
         const b = loan.borrowers
         if (!b) return null
-        const BADGE_ICONS = { New: '🆕', Trusted: '✅', Reliable: '⭐', VIP: '👑' }
+        const BADGE_ICONS = { New: '🌱', Trusted: '⭐', Reliable: '🤝', VIP: '👑' }
         const RISK_COLORS = { Low: t.green, Medium: t.gold, High: t.red }
         const scoreColor = b.credit_score >= 750 ? t.green : b.credit_score >= 600 ? t.gold : t.red
         const progressPct = loan.total_repayment > 0 ? (((loan.total_repayment - (loan.remaining_balance || 0)) / loan.total_repayment) * 100).toFixed(0) : 0
