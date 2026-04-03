@@ -2114,6 +2114,28 @@ export default function BorrowerPortalPage() {
                 </div>
               )}
 
+              {/* Payment Actions in sidebar (Installment Loans) */}
+              {loan && loan.loan_type !== 'quickloan' && loan.status !== 'Pending' && loan.status !== 'Paid' && (
+                <div className="pc" style={{ background: '#0E1320', border: '1px solid rgba(34,197,94,0.18)', borderRadius: 16, overflow: 'hidden' }}>
+                  <div style={{ padding: '12px 14px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: 7 }}>
+                    <div style={{ width: 22, height: 22, borderRadius: 6, background: 'rgba(34,197,94,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <CreditCard size={12} color="#22C55E" />
+                    </div>
+                    <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 11, color: '#F0F4FF', letterSpacing: '0.02em' }}>Next Installment</div>
+                  </div>
+                  <div style={{ padding: '14px', textAlign: 'center' }}>
+                    <div style={{ fontSize: 10, color: '#7A8AAA', marginBottom: 4, fontWeight: 600 }}>Installment {(loan.payments_made || 0) + 1} of {loan.num_installments || 4}</div>
+                    <div style={{ fontFamily: 'Syne, sans-serif', fontSize: 24, fontWeight: 800, color: '#22C55E', marginBottom: 12 }}>
+                       ₱{Math.ceil(loan.installment_amount || 0).toLocaleString('en-PH')}
+                    </div>
+                    <button onClick={() => setUploadModal((loan.payments_made || 0) + 1)} style={{ width: '100%', padding: '10px', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#22C55E,#16A34A)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'Syne, sans-serif', boxShadow: '0 4px 12px rgba(34,197,94,0.3)', transition: 'all 0.2s' }} className="upload-btn">
+                      Upload Payment Proof
+                    </button>
+                    <div style={{ marginTop: 10, fontSize: 9, color: '#4B5580', lineHeight: 1.4 }}>Submit your transfer receipt to update your payment status.</div>
+                  </div>
+                </div>
+              )}
+
               {/* Calendar: keep for installment loans only */}
               {(!loan || loan.loan_type !== 'quickloan') && (
                 <div className="pc" style={{ background: '#0E1320', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 18, overflow: 'hidden' }}>
