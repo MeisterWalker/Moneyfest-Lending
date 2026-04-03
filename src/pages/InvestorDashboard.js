@@ -16,6 +16,7 @@ import { SignaturePad } from '../components/SignaturePad'
 import InvestorMoa from '../components/InvestorMoa'
 import { sendPayoutRequestedAdminEmail, sendMoaSignedAdminEmail } from '../lib/emailService'
 import { getBadgeConfig } from '../lib/creditSystem'
+import { generateQuarterlyReport, generateMoaPDF } from '../lib/pdfGenerator'
 
 const TIER_RATES = {
   'Starter':  0.07,
@@ -130,7 +131,8 @@ function AgreementModal({ isOpen, onClose, investor, onSign }) {
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.92)', backdropFilter: 'blur(12px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px 0' }}>
       <div style={{ position: 'relative', width: '95%', maxWidth: 900, maxHeight: '95vh', overflowY: 'auto', background: '#fff', borderRadius: 12 }}>
-        <div style={{ position: 'sticky', top: 0, padding: 15, display: 'flex', justifyContent: 'flex-end', zIndex: 10, background: 'rgba(255,255,255,0.9)' }}>
+        <div style={{ position: 'sticky', top: 0, padding: 15, display: 'flex', justifyContent: 'flex-end', gap: 8, zIndex: 10, background: 'rgba(255,255,255,0.9)' }}>
+          <button onClick={() => generateMoaPDF(investor)} style={{ background: '#1E40AF', color: '#fff', border: 'none', borderRadius: 6, padding: '8px 16px', cursor: 'pointer', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>⬇ Download PDF</button>
           <button onClick={onClose} style={{ background: '#000', color: '#fff', border: 'none', borderRadius: 6, padding: '8px 16px', cursor: 'pointer', fontWeight: 600 }}>Close View</button>
         </div>
         {!investor.signed_at && (
@@ -428,9 +430,13 @@ export default function InvestorDashboard() {
             style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 20, border: '1px solid rgba(255,255,255,0.25)', background: 'rgba(255,255,255,0.1)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
             <Info size={14} /> Agreement
           </button>
-          <button onClick={() => window.print()}
+          <button onClick={() => generateQuarterlyReport(investor, loans, installments)}
             style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 20, border: '1px solid rgba(255,255,255,0.25)', background: 'rgba(255,255,255,0.1)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
-            <Printer size={14} /> Export
+            <Printer size={14} /> Report
+          </button>
+          <button onClick={() => generateMoaPDF(investor)}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 20, border: '1px solid rgba(255,255,255,0.25)', background: 'rgba(255,255,255,0.1)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+            <Download size={14} /> MOA PDF
           </button>
           <button onClick={fetchData}
             style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 20, border: '1px solid rgba(255,255,255,0.25)', background: 'rgba(255,255,255,0.1)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
@@ -787,7 +793,22 @@ export default function InvestorDashboard() {
           // Summary stats
           const totalDisbursed = events.filter(e => e.type === 'disbursed').reduce((s, e) => s + Math.abs(e.amount), 0)
           const totalReceived = events.filter(e => e.type === 'payment').reduce((s, e) => s + e.amount, 0)
-          const totalInterestEarned = events.filter(e => e.type === 'payment').reduce((s, e) => s + (e.interest || 0), 0)
+          // Use same daily accrual model as Overview for consistency
+          const dailyRate = rate / 90
+          const nowDate = new Date()
+          const todayStartDate = new Date(nowDate.getFullYear(), nowDate.getMonth(), nowDate.getDate())
+          let totalInterestEarned = 0
+          loans.forEach(l => {
+            if (!['Active', 'Partially Paid', 'Overdue', 'Paid'].includes(l.status)) return
+            const deployDate = l.release_date ? new Date(l.release_date) : new Date(l.created_at)
+            const endDate = l.status === 'Paid' ? new Date(l.updated_at) : todayStartDate
+            const daysActive = Math.max(0, Math.floor((endDate - deployDate) / 86400000))
+            totalInterestEarned += Number(l.loan_amount) * dailyRate * daysActive
+          })
+          // Add today's partial for active loans
+          const secondsToday = (nowDate.getHours() * 3600) + (nowDate.getMinutes() * 60) + nowDate.getSeconds()
+          const activeCapitalLedger = loans.filter(l => ['Active', 'Partially Paid', 'Overdue'].includes(l.status)).reduce((s, l) => s + Number(l.loan_amount), 0)
+          totalInterestEarned += activeCapitalLedger * dailyRate * (secondsToday / 86400)
           const completedLoans = events.filter(e => e.type === 'completed').length
 
           const TYPE_CONFIG = {
