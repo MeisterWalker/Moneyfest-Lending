@@ -184,6 +184,7 @@ export default function InvestorDashboard() {
   const [togglingReinvest, setTogglingReinvest] = useState(false)
   const [calcAmount, setCalcAmount] = useState(10000)
   const [calcMonths, setCalcMonths] = useState(3)
+  const [payouts, setPayouts] = useState([])
   const { toast } = useToast()
 
   const t = isDark ? DARK : LIGHT
@@ -215,6 +216,12 @@ export default function InvestorDashboard() {
         .order('paid_at', { ascending: false })
       setInstallments(instData || [])
     }
+
+    // Fetch payout requests
+    const { data: pData } = await supabase
+      .from('investor_payout_requests').select('*')
+      .eq('investor_id', inv.id).order('created_at', { ascending: false })
+    setPayouts(pData || [])
 
     // Forecast (12 months)
     const rate = TIER_RATES[inv.tier] || 0.12
@@ -308,6 +315,7 @@ export default function InvestorDashboard() {
       await sendPayoutRequestedAdminEmail({ investorName: investor.full_name, amount: payoutData.amount, tier: investor.tier, method: payoutData.method })
       toast('Payout request submitted!', 'success')
       setShowPayoutModal(false)
+      fetchData()
     } catch {
       toast('Failed to submit payout request.', 'error')
     } finally {
@@ -400,7 +408,7 @@ export default function InvestorDashboard() {
     <div style={{ minHeight: '100vh', background: t.bg, fontFamily: 'DM Sans, sans-serif', transition: 'background 0.3s' }}>
 
       {/* ── HEADER ── */}
-      <div style={{ background: t.headerBg, padding: '16px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `2px solid ${t.accent}` }}>
+      <div className="inv-header" style={{ background: t.headerBg, padding: '16px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `2px solid ${t.accent}` }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={{ width: 40, height: 40, borderRadius: 10, background: 'linear-gradient(135deg,#3B82F6,#8B5CF6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Syne, sans-serif', fontWeight: 900, fontSize: 16, color: '#fff' }}>M</div>
@@ -418,7 +426,7 @@ export default function InvestorDashboard() {
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div className="inv-header-actions" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {/* Notification Bell */}
           <div style={{ position: 'relative' }}>
             <button onClick={() => setShowNotifications(n => !n)}
@@ -551,6 +559,7 @@ export default function InvestorDashboard() {
             { id: 'overview', label: '📊 Overview' },
             { id: 'ledger', label: '📒 Transaction Ledger' },
             { id: 'tools', label: '🧮 Tools' },
+            { id: 'payouts', label: '💳 Payouts' },
           ].map(tab => (
             <button key={tab.id} onClick={() => setDashTab(tab.id)}
               style={{
@@ -569,7 +578,7 @@ export default function InvestorDashboard() {
         {dashTab === 'overview' && (<>
 
         {/* ── ROW 2: Active Loans Table + Earnings Overview ── */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 1fr', gap: 20, marginBottom: 24 }}>
+        <div className="inv-col-2" style={{ display: 'grid', gridTemplateColumns: '1.1fr 1fr', gap: 20, marginBottom: 24 }}>
 
           {/* My Active Loans */}
           <div style={{ ...card, overflow: 'hidden', boxShadow: isDark ? '0 4px 20px rgba(0,0,0,0.3)' : '0 4px 20px rgba(0,0,0,0.08)' }}>
@@ -807,7 +816,7 @@ export default function InvestorDashboard() {
             </div>
 
             {/* Portfolio Insights Row */}
-            <div style={{ borderTop: `1px solid ${t.divider}`, padding: '12px 16px', display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8 }}>
+            <div className="inv-col-3" style={{ borderTop: `1px solid ${t.divider}`, padding: '12px 16px', display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8 }}>
               {[
                 { label: 'Risk Level', val: 'Low (Secured)', col: t.green },
                 { label: 'Partner Tier', val: `${investor.tier}`, col: '#F59E0B' },
@@ -1081,7 +1090,7 @@ export default function InvestorDashboard() {
                     <p style={{ color: t.textMuted, fontSize: 14, margin: 0 }}>Project your wealth growth based on your <strong style={{ color: t.gold }}>{investor.tier}</strong> Partner rate ({(rate * 100).toFixed(1)}% per cycle).</p>
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: 'minmax(300px, 1fr) minmax(300px, 1fr)', gap: 40, alignItems: 'center' }}>
+                  <div className="inv-tools-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(300px, 1fr) minmax(300px, 1fr)', gap: 40, alignItems: 'center' }}>
                     {/* Controls */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
                       <div>
@@ -1125,7 +1134,7 @@ export default function InvestorDashboard() {
                         {formatCurrency(futureValue)}
                       </div>
 
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                      <div className="inv-tools-results" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                         <div style={{ background: t.cardBg, border: `1px solid ${t.cardBorder}`, borderRadius: 12, padding: 16 }}>
                           <div style={{ fontSize: 11, color: t.textMuted, marginBottom: 4 }}>Total Earned</div>
                           <div style={{ fontSize: 18, fontWeight: 800, color: t.green }}>+{formatCurrency(totalEarned)}</div>

@@ -3,6 +3,7 @@ import { CREDIT_CONFIG, BADGE_TIERS, SECURITY_HOLD_TIERS, getBadgeConfig, getBad
 import { supabase } from '../lib/supabase'
 import { usePageVisit } from '../hooks/usePageVisit'
 import { getInstallmentDates, formatDateValue, logAudit } from '../lib/helpers'
+import { generateBorrowerReceiptPDF, generateBorrowerLoanAgreementPDF, generateBorrowerQuickLoanPDF } from '../lib/pdfGenerator'
 import { sendLoanAgreementSignedAdminEmail } from '../lib/emailService'
 import {
   Lock, CheckCircle, Clock, AlertCircle, Upload,
@@ -521,61 +522,7 @@ function PortalHeader({ borrower, notifications, showNotifs, setShowNotifs, mark
 }
 
 // ── Receipt Generator ────────────────────────────────────────
-function generateReceiptHTML({ loan, borrower, installmentNum, amount, date }) {
-  const numInstallments = loan.num_installments || 4
-  const roundedAmount = Math.ceil(amount)
-  const totalPaid = installmentNum * roundedAmount
-  const remaining = Math.max(0, loan.total_repayment - totalPaid)
-  return `<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>Receipt</title>
-  <style>
-    
-    *{margin:0;padding:0;box-sizing:border-box;}body{font-family:'DM Sans',sans-serif;background:#fff;color:#1a1a2e;padding:40px;max-width:580px;margin:0 auto;}
-    .logo{font-family:'Syne',sans-serif;font-weight:800;font-size:20px;}.logo span{color:#6366F1;}
-    .badge{display:inline-block;padding:4px 12px;border-radius:20px;background:#e8f5e9;color:#16a34a;font-size:12px;font-weight:700;margin-bottom:8px;}
-    .title{font-family:'Syne',sans-serif;font-weight:800;font-size:26px;margin-bottom:4px;}
-    .amount-box{background:linear-gradient(135deg,#f0f4ff,#e8f5e9);border:1px solid #c8d8f0;border-radius:14px;padding:24px;text-align:center;margin:24px 0;}
-    .amount-val{font-family:'Syne',sans-serif;font-weight:800;font-size:36px;color:#22C55E;}
-    .steps{display:flex;justify-content:space-between;margin:16px 0;}
-    .step{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;}
-    .step.done{background:#22C55E;color:#fff;}.step.pending{background:#e8ecf5;color:#7A8AAA;}
-    .row{display:flex;justify-content:space-between;font-size:13px;padding:6px 0;border-bottom:1px solid #e8ecf5;}
-    .row:last-child{border:none;font-weight:700;font-size:14px;}
-    .footer{text-align:center;font-size:11px;color:#7A8AAA;border-top:1px solid #e8ecf5;padding-top:18px;margin-top:24px;}
-  </style></head><body>
-  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px;padding-bottom:18px;border-bottom:2px solid #e8ecf5;">
-    <div class="logo">Moneyfest<span>Lending</span></div>
-    <div style="text-align:right;font-size:12px;color:#7A8AAA;"><div style="font-weight:700;color:#1a1a2e;">LM-${Date.now().toString().slice(-8)}</div><div>${date}</div></div>
-  </div>
-  <div class="badge">✅ Payment Confirmed</div>
-  <div class="title">Payment Receipt</div>
-  <div style="font-size:14px;color:#7A8AAA;margin-bottom:20px;">Installment ${installmentNum} of ${numInstallments} — ${borrower?.full_name || 'Borrower'}</div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
-    <div><div style="font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#7A8AAA;margin-bottom:3px;">Borrower</div><div style="font-size:13px;font-weight:600;">${borrower?.full_name || '—'}</div></div>
-    <div><div style="font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#7A8AAA;margin-bottom:3px;">Department</div><div style="font-size:13px;font-weight:600;">${borrower?.department || '—'}</div></div>
-  </div>
-  <div class="amount-box"><div style="font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:#7A8AAA;margin-bottom:8px;">Amount Paid This Installment</div><div class="amount-val">₱${roundedAmount.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</div></div>
-  <div style="margin-bottom:20px;"><div style="font-size:12px;font-weight:600;margin-bottom:10px;">Repayment Progress — ${installmentNum} of ${numInstallments}</div>
-  <div style="height:8px;background:#e8ecf5;border-radius:4px;overflow:hidden;margin-bottom:10px;"><div style="height:100%;width:${(installmentNum / numInstallments) * 100}%;background:linear-gradient(90deg,#8B5CF6,#22C55E);border-radius:4px;"></div></div>
-  <div class="steps">${Array.from({ length: numInstallments }, (_, i) => i + 1).map(i => `<div class="step ${i <= installmentNum ? 'done' : 'pending'}">${i <= installmentNum ? '✓' : i}</div>`).join('')}</div></div>
-  <div style="background:#f8faff;border-radius:10px;padding:16px;">
-    <div class="row"><span>Loan Principal</span><span>₱${loan.loan_amount?.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span></div>
-    <div class="row"><span>Total Repayment</span><span>₱${loan.total_repayment?.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span></div>
-    <div class="row"><span>Paid to Date</span><span>₱${totalPaid.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span></div>
-    <div class="row" style="color:${remaining <= 0 ? '#22C55E' : '#1a1a2e'}"><span>${remaining <= 0 ? '🎉 Fully Paid!' : 'Remaining Balance'}</span><span>₱${remaining.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span></div>
-  </div>
-  <div class="footer"><p><strong>Moneyfest Lending</strong> · Private workplace lending</p><p style="margin-top:3px;">Official proof of payment — Installment ${installmentNum} of ${numInstallments}</p></div>
-  </body></html>`
-}
-
-function downloadReceipt({ loan, borrower, installmentNum, amount }) {
-  const date = new Date().toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' })
-  const html = generateReceiptHTML({ loan, borrower, installmentNum, amount, date })
-  const blob = new Blob([html], { type: 'text/html' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url; a.download = `Receipt_${borrower?.full_name?.replace(/\s+/g, '_')}_Inst${installmentNum}.html`
-  a.click(); URL.revokeObjectURL(url)
-}
+// Using pdfGenerator instead of raw HTML
 
 export default function BorrowerPortalPage() {
   usePageVisit('portal')
@@ -733,6 +680,7 @@ export default function BorrowerPortalPage() {
         .single()
 
       if (error || !data) {
+        console.error('Partner Login Error:', error)
         setPartnerError('Invalid partner access code.')
         setPartnerLoading(false)
         return
@@ -777,7 +725,7 @@ export default function BorrowerPortalPage() {
     setSignatureSaved(true); setShowSignModal(false)
 
     // 4. Generate PDF
-    setTimeout(() => loan.loan_type === 'quickloan' ? generateQuickLoanAgreementPDF() : generateLoanAgreementPDF(typedName, signatureImage, signedAt), 500)
+    setTimeout(() => loan.loan_type === 'quickloan' ? generateBorrowerQuickLoanPDF(loan, borrower, typedName, signatureImage, signedAt) : generateBorrowerLoanAgreementPDF(loan, borrower, typedName, signatureImage, signedAt), 500)
   }
 
   const markAllRead = async () => {
@@ -788,242 +736,7 @@ export default function BorrowerPortalPage() {
     setNotifications(prev => prev.map(n => ({ ...n, is_read: true })))
   }
 
-  const generateLoanAgreementPDF = (sigName, sigImage, sigDate) => {
-    const name = sigName || loan.e_signature_name || borrower.e_signature_name || borrower.full_name
-    const img = sigImage || loan.e_signature_image || borrower.e_signature_image
-    const date = sigDate || loan.e_signature_date || borrower.e_signature_date || new Date().toISOString()
-    const principal = Number(loan.loan_amount)
-    const holdAmt = loan.security_hold ? Number(loan.security_hold) : principal * 0.10
-    const holdRate = principal > 0 ? ((holdAmt / principal) * 100).toFixed(0) : 10
-    const released = loan.funds_released ? Number(loan.funds_released) : principal - holdAmt
-    const total = Number(loan.total_repayment)
-    const perInst = Math.ceil(Number(loan.installment_amount))
-    const rate = ((loan.interest_rate || 0.07) * 100).toFixed(0)
-    const signedDateStr = new Date(date).toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' })
-    const releaseDateStr = loan.release_date ? (() => { const [y, m, d] = loan.release_date.split('-').map(Number); return new Date(y, m - 1, d).toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' }) })() : 'TBD'
-    const numInstallments = loan.num_installments || 4
-    const loanTerm = loan.loan_term || 2
-    const dueDatesForPDF = getDueDates(loan.release_date, loan.payments_made || 0, numInstallments)
-    const maturityDate = dueDatesForPDF.length >= numInstallments ? dueDatesForPDF[numInstallments - 1].date.toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' }) : 'TBD'
-    const scheduleRows = dueDatesForPDF.map((due, i) => `<tr style="background:${due.paid ? '#f0fdf4' : i % 2 === 0 ? '#fafafa' : '#fff'}"><td style="padding:5px 8px;border:1px solid #e5e7eb;text-align:center;font-weight:600;">${due.num}</td><td style="padding:5px 8px;border:1px solid #e5e7eb;">${due.date.toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' })}</td><td style="padding:5px 8px;border:1px solid #e5e7eb;text-align:right;font-weight:600;">&#8369;${perInst.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</td><td style="padding:5px 8px;border:1px solid #e5e7eb;text-align:center;color:${due.paid ? '#16a34a' : '#9CA3AF'}">${due.paid ? '&#10003; Paid' : 'Pending'}</td></tr>`).join('')
-    const refId = `LM-${(borrower.id || '').slice(-6).toUpperCase()}`
-    const borrowerName = borrower.full_name || ''
-    const borrowerDept = borrower.department || 'N/A'
-    const borrowerCode = borrower.access_code || '—'
-    const imgTag = img ? `<img src="${img}" style="height:68px;max-width:240px;display:block;" />` : '<div style="height:68px;"></div>'
-    const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"/>
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Caveat:wght@600&display=swap');
-  *{margin:0;padding:0;box-sizing:border-box;}body{font-family:'EB Garamond',Georgia,serif;color:#111827;background:#fff;font-size:12px;line-height:1.6;}
-  @media print{@page{size:A4;margin:15mm 18mm;}.page-break{page-break-before:always;}}
-  .page{padding:36px 44px;}.page2{padding:36px 44px;}
-  .header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2.5px solid #1e1b4b;padding-bottom:14px;margin-bottom:20px;}
-  .logo{font-size:24px;font-weight:700;letter-spacing:-0.5px;}.logo span{color:#6366F1;}
-  .doc-meta{text-align:right;font-size:10.5px;color:#6B7280;line-height:1.7;}
-  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:18px;}
-  .section{margin-bottom:18px;}.section-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#4338CA;border-bottom:1.5px solid #E5E7EB;padding-bottom:5px;margin-bottom:10px;}
-  .row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid #F3F4F6;font-size:11.5px;}.row .lbl{color:#6B7280;}.row .val{font-weight:600;color:#111827;text-align:right;}
-  .schedule-table{width:100%;border-collapse:collapse;font-size:11.5px;margin-bottom:0;}
-  .schedule-table th{background:#1e1b4b;color:#fff;padding:7px 10px;text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:0.5px;}
-  .schedule-table td{padding:6px 10px;border:1px solid #E5E7EB;}
-  .tc-item{font-size:11.5px;color:#374151;margin-bottom:10px;line-height:1.65;}.tc-item strong{color:#111827;}
-  .sig-grid{display:grid;grid-template-columns:1fr 1fr;gap:48px;margin-top:32px;}
-  .sig-col{display:flex;flex-direction:column;}.sig-label{font-size:9.5px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:1.2px;margin-bottom:12px;}
-  .sig-image-box{height:72px;display:flex;align-items:flex-end;margin-bottom:0;}.sig-line{border-bottom:1.5px solid #374151;margin-bottom:6px;}
-  .sig-name{font-size:22px;font-style:italic;font-family:'Caveat',cursive;color:#111827;margin-bottom:4px;line-height:1.2;}.sig-sub{font-size:10px;color:#9CA3AF;line-height:1.5;}
-  .disclaimer{font-size:9.5px;color:#9CA3AF;margin-top:28px;padding-top:12px;border-top:1px solid #E5E7EB;line-height:1.6;}
-  .page2-header{display:flex;justify-content:space-between;align-items:center;border-bottom:1.5px solid #E5E7EB;padding-bottom:10px;margin-bottom:20px;font-size:10px;color:#9CA3AF;}
-</style></head><body>
-<div class="page">
-  <div class="header"><div><div class="logo">Moneyfest<span>Lending</span></div><div style="font-size:10.5px;color:#6B7280;margin-top:3px;">Private Lending Program — Loan Agreement</div></div>
-  <div class="doc-meta"><div><strong>Ref:</strong> ${refId}</div><div><strong>Date Signed:</strong> ${signedDateStr}</div><div><strong>Maturity Date:</strong> <span style="color:#D97706;font-weight:700;">${maturityDate}</span></div></div></div>
-  <div class="two-col">
-    <div class="section"><div class="section-title">Parties to this Agreement</div>
-      <div class="row"><span class="lbl">Borrower</span><span class="val">${borrowerName}</span></div>
-      <div class="row"><span class="lbl">Department</span><span class="val">${borrowerDept}</span></div>
-      <div class="row"><span class="lbl">Access Code</span><span class="val">${borrowerCode}</span></div>
-      <div class="row"><span class="lbl">Lender</span><span class="val">MoneyfestLending</span></div>
-      <div class="row"><span class="lbl">Release Date</span><span class="val">${releaseDateStr}</span></div>
-      <div class="row"><span class="lbl">Maturity Date</span><span class="val" style="color:#D97706;font-weight:700;">${maturityDate}</span></div>
-    </div>
-    <div class="section"><div class="section-title">RA 3765 — Truth in Lending Act Disclosure</div>
-      <div class="row"><span class="lbl">Approved Loan Amount</span><span class="val">&#8369;${principal.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span></div>
-      <div class="row"><span class="lbl">Security Hold (${holdRate}%)</span><span class="val">&#8369;${holdAmt.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span></div>
-      <div class="row"><span class="lbl">Funds Released to Borrower</span><span class="val">&#8369;${released.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span></div>
-      <div class="row"><span class="lbl">Finance Charge (Interest)</span><span class="val">&#8369;${(total - principal).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span></div>
-      <div class="row"><span class="lbl">Monthly Interest Rate</span><span class="val">${rate}% per month × ${loanTerm} months</span></div>
-      <div class="row"><span class="lbl">Effective Annual Rate</span><span class="val">${((loan.interest_rate || 0.07) * 12 * 100).toFixed(0)}% p.a. (RA 3765)</span></div>
-      <div class="row"><span class="lbl">Total Amount Payable</span><span class="val" style="font-weight:700;">&#8369;${total.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span></div>
-      <div class="row"><span class="lbl">Number of Installments</span><span class="val">${numInstallments} payments every 5th and 20th of the month</span></div>
-      <div class="row"><span class="lbl">Per Installment Amount</span><span class="val">&#8369;${perInst.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span></div>
-    </div>
-  </div>
-  <div class="section"><div class="section-title">Payment Schedule</div>
-    <table class="schedule-table"><thead><tr><th>#</th><th>Due Date</th><th>Amount Due</th><th>Status</th></tr></thead><tbody>${scheduleRows}</tbody></table>
-  </div>
-  ${loan.security_hold_returned ? '<div style="margin-top:8px;display:inline-flex;align-items:center;gap:6px;padding:4px 10px;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);border-radius:20px;font-size:11px;color:#16a34a;font-weight:700;">✅ Security Hold of ₱' + Number(loan.security_hold).toLocaleString('en-PH', { minimumFractionDigits: 2 }) + ' has been returned to your Rebate Credits</div>' : ''}
-</div>
-<div class="page-break"></div>
-<div class="page2">
-  <div class="page2-header"><span>Moneyfest<strong>Lending</strong> — Loan Agreement (Page 2)</span><span>Ref: ${refId} · ${borrowerName}</span></div>
 
-  <div class="section">
-    <div class="section-title">Loan Disclosure & Borrower Acknowledgements</div>
-    ${loan.e_signature_name ? `<div style="margin-bottom:12px;padding:8px 12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;font-size:11px;color:#16a34a;font-weight:600;">✅ Loan Agreement e-signed by ${loan.e_signature_name} on ${new Date(loan.e_signature_date || date).toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' })}</div>` : ''}
-  </div>
-
-  <div class="section">
-    <div class="section-title">Terms &amp; Conditions</div>
-    <p class="tc-item">1. <strong>Loan Term &amp; Interest</strong> — A monthly interest rate of ${rate}% is applied for each of the ${loanTerm} months of the loan term, resulting in a total finance charge of ${(Number(rate) * loanTerm).toFixed(0)}% of the principal. This charge is fixed and does not compound. It applies regardless of early settlement or prepayment of any installment.</p>
-    <p class="tc-item">2. <strong>Repayment Schedule &amp; Installment Rounding</strong> — The loan is repaid in ${numInstallments} equal installments, collected on the 5th and 20th of each month. Where the total repayment does not divide evenly, each installment is rounded up to the nearest whole peso (₱1.00), applied uniformly across all installments, and disclosed in this agreement.</p>
-    <p class="tc-item">3. <strong>Security Hold</strong> — ${holdRate}% of the approved loan amount is withheld upon fund release as a Security Hold. The rate is determined by credit score: VIP (1000) — 5%, Reliable (920+) — 6%, Trusted (835+) — 8%, Standard (750+) — 10%, Caution (500+) — 15%, High Risk (below 500) — 20%. Late payment penalties are automatically deducted from the Security Hold balance. The remaining balance is returned to the Borrower's Rebate Credits upon full payment of the final installment.</p>
-    <p class="tc-item">4. <strong>Late Payment Penalties</strong> — A penalty of &#8369;20.00 per calendar day is charged for each day an installment remains unpaid past its due date. The penalty accrues daily with no cap until settled. Each late payment results in a deduction of 10 points from the Borrower's credit score.</p>
-    <p class="tc-item">5. <strong>Default</strong> — Failure to pay two (2) or more consecutive installments constitutes a loan default. Upon default, the remaining balance becomes immediately due and payable in full. A credit score deduction of 150 points is applied. MoneyfestLending reserves the right to pursue all available legal remedies under Philippine law including filing a civil complaint and referral to barangay conciliation (RA 7160).</p>
-    <p class="tc-item">6. <strong>Credit Score System</strong> — Every Borrower starts with a score of 750 (max 1,000). +15 points per on-time installment. -10 points per late installment. +25 bonus points on full loan repayment. -150 points upon default.</p>
-    <p class="tc-item">7. <strong>Loan Limit &amp; Level System</strong> — Level 1 (first loan): ₱5,000. Level 2 (after 1 clean loan): ₱7,000. Level 3 (after 2 clean loans): ₱9,000. Level 4 (after 3 clean loans): ₱10,000 maximum.</p>
-    <p class="tc-item">8. <strong>Rebate Credits &amp; Early Payment Incentive</strong> — If the Borrower pays the final installment at least 7 to 14 days before its due date, a fixed rebate of 1% of the original loan amount is credited to their Rebate Credits balance.</p>
-    <p class="tc-item">9. <strong>Data Privacy</strong> — The Borrower's personal information is processed solely for loan administration in compliance with RA 10173 (Data Privacy Act of 2012).</p>
-    <p class="tc-item">10. <strong>Program Rules</strong> — Only one active loan is permitted per Borrower at a time. MoneyfestLending reserves the right to amend these terms with notice.</p>
-    <p class="tc-item">11. <strong>Governing Law</strong> — This agreement is governed by the laws of the Republic of the Philippines. Disputes shall first be referred to barangay conciliation under RA 7160 before court action.</p>
-  </div>
-
-  <div style="padding:10px 12px;background:rgba(99,102,241,0.06);border:1px solid rgba(99,102,241,0.15);border-radius:8px;font-size:11px;color:#4B5580;margin-bottom:24px;">
-    ${[
-        { label: 'Approved Loan Amount', value: '₱' + principal.toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#F0F4FF' },
-        { label: 'Security Hold (' + holdRate + '%)', value: '₱' + holdAmt.toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#F59E0B' },
-        { label: 'Funds Released to You', value: '₱' + (loan.funds_released ? Number(loan.funds_released).toLocaleString('en-PH', { minimumFractionDigits: 2 }) : (principal * 0.80).toLocaleString('en-PH', { minimumFractionDigits: 2 })), color: '#22C55E' },
-        { label: 'Finance Charge', value: '₱' + (total - principal).toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#F59E0B' },
-        { label: 'Monthly Interest Rate', value: rate + '% per month × ' + loanTerm + ' months', color: '#60A5FA' },
-        { label: 'Effective Interest Rate (per annum)', value: ((loan.interest_rate || 0.07) * 12 * 100).toFixed(0) + '% p.a.', color: '#a78bfa' },
-        { label: 'Total Amount Payable', value: '₱' + total.toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#22C55E' },
-        { label: 'Number of Installments', value: numInstallments + ' payments every 5th and 20th of the month', color: '#F0F4FF' },
-        { label: 'Per Installment Amount', value: '₱' + perInst.toLocaleString('en-PH', { minimumFractionDigits: 2 }), color: '#F0F4FF' },
-      ].map(row => `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.06);"><span style="color:#6B7280;">${row.label}</span><span style="font-weight:700;">${row.value}</span></div>`).join('')}
-  </div>
-  ${loan.security_hold_returned ? '<div style="margin-bottom:12px;display:inline-flex;align-items:center;gap:6px;padding:4px 10px;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);border-radius:20px;font-size:11px;color:#16a34a;font-weight:700;">✅ Security Hold of ₱' + Number(loan.security_hold).toLocaleString('en-PH', { minimumFractionDigits: 2 }) + ' has been returned to your Rebate Credits</div>' : ''}
-  <div style="padding:10px 12px;background:rgba(99,102,241,0.06);border:1px solid rgba(99,102,241,0.15);border-radius:8px;font-size:10px;color:#6B7280;line-height:1.7;margin-bottom:24px;">
-    <strong style="color:#818CF8;">RA 3765 — Truth in Lending Act Disclosure.</strong> This statement discloses all finance charges and terms applicable to your loan in compliance with Republic Act No. 3765 of the Philippines. The monthly interest rate is applied for each of the ${loanTerm} months of the loan term. The effective annual rate is the monthly rate multiplied by 12 months.
-  </div>
-  <div class="sig-grid">
-    <div class="sig-col"><div class="sig-label">Borrower E-Signature</div><div class="sig-image-box">${imgTag}</div><div class="sig-line"></div><div class="sig-name">${name}</div><div class="sig-sub">${borrowerName}</div><div class="sig-sub">Signed electronically on ${signedDateStr}</div><div class="sig-sub" style="margin-top:3px;">Pursuant to RA 8792 — E-Commerce Act of the Philippines</div></div>
-    <div class="sig-col"><div class="sig-label">Admin / Authorized Representative</div><div class="sig-image-box"><div style="height:68px;"></div></div><div class="sig-line"></div><div style="height:28px;margin-bottom:4px;"></div><div class="sig-sub">MoneyfestLending Administration</div><div class="sig-sub">Authorized Representative</div><div class="sig-sub" style="margin-top:3px;">Date: ___________________________</div></div>
-  </div>
-  <div class="disclaimer">This Loan Agreement is executed in compliance with Republic Act No. 3765 (Truth in Lending Act), Republic Act No. 10173 (Data Privacy Act of 2012), and Republic Act No. 8792 (Electronic Commerce Act of 2000). The electronic signature affixed herein constitutes a valid and binding signature under RA 8792 and has the same legal effect as a handwritten signature. This document is private and confidential. MoneyfestLending is a private colleague lending program and is not a bank, quasi-bank, or BSP-supervised financial institution.</div>
-</div></body></html>`
-    const blob = new Blob([html], { type: 'text/html;charset=utf-8' })
-    const url = URL.createObjectURL(blob)
-    const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '')
-    const safeName = (borrowerName || 'Borrower').replace(/\s+/g, '_')
-    const a = document.createElement('a'); a.href = url; a.download = `LoanAgreement_${safeName}_${dateStr}.html`
-    a.click(); URL.revokeObjectURL(url)
-  }
-
-  const generateQuickLoanAgreementPDF = () => {
-    const principal = Number(loan.loan_amount)
-    const dailyInterest = parseFloat((principal * 0.1 / 30).toFixed(2))
-    const day15Interest = parseFloat((dailyInterest * 15).toFixed(2))
-    const day15Total = parseFloat((principal + day15Interest).toFixed(2))
-    const releaseDate = loan.release_date ? (() => { const [y, m, d] = loan.release_date.split('-').map(Number); return new Date(y, m - 1, d) })() : new Date()
-    const day15Date = new Date(releaseDate); day15Date.setDate(day15Date.getDate() + 15)
-    const day30Date = new Date(releaseDate); day30Date.setDate(day30Date.getDate() + 30)
-    const fmt = d => d.toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' })
-    const releaseDateStr = fmt(releaseDate)
-    const day15Str = fmt(day15Date)
-    const day30Str = fmt(day30Date)
-    const signedDateStr = loan.e_signature_date ? fmt(new Date(loan.e_signature_date)) : fmt(new Date())
-    const name = loan.e_signature_name || borrower?.full_name || ''
-    const img = loan.e_signature_image || borrower?.e_signature_image
-    const imgTag = img ? `<img src="${img}" style="height:68px;max-width:240px;display:block;" />` : '<div style="height:68px;"></div>'
-    const refId = `QL-${(borrower?.id || '').slice(-6).toUpperCase()}`
-
-    const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"/>
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Caveat:wght@600&display=swap');
-  *{margin:0;padding:0;box-sizing:border-box;}body{font-family:'EB Garamond',Georgia,serif;color:#111827;background:#fff;font-size:12px;line-height:1.6;}
-  @media print{@page{size:A4;margin:15mm 18mm;}}
-  .page{padding:36px 44px;}
-  .header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2.5px solid #92400e;padding-bottom:14px;margin-bottom:20px;}
-  .logo{font-size:24px;font-weight:700;letter-spacing:-0.5px;color:#111;}.logo span{color:#D97706;}
-  .doc-meta{text-align:right;font-size:10.5px;color:#6B7280;line-height:1.7;}
-  .badge{display:inline-block;padding:4px 12px;border-radius:20px;background:#fffbeb;border:1px solid #D97706;color:#92400e;font-size:11px;font-weight:700;margin-bottom:16px;}
-  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:18px;}
-  .section{margin-bottom:18px;}.section-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#B45309;border-bottom:1.5px solid #FDE68A;padding-bottom:5px;margin-bottom:10px;}
-  .row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid #FEF3C7;font-size:11.5px;}.row .lbl{color:#6B7280;}.row .val{font-weight:600;color:#111827;text-align:right;}
-  .highlight-row{background:#fffbeb;padding:6px 10px;border-radius:6px;margin-bottom:6px;display:flex;justify-content:space-between;font-size:12px;}
-  .tc-item{font-size:11.5px;color:#374151;margin-bottom:10px;line-height:1.65;}.tc-item strong{color:#111827;}
-  .sig-grid{display:grid;grid-template-columns:1fr 1fr;gap:48px;margin-top:32px;}
-  .sig-col{display:flex;flex-direction:column;}.sig-label{font-size:9.5px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:1.2px;margin-bottom:12px;}
-  .sig-image-box{height:72px;display:flex;align-items:flex-end;margin-bottom:0;}.sig-line{border-bottom:1.5px solid #374151;margin-bottom:6px;}
-  .sig-name{font-size:22px;font-style:italic;font-family:'Caveat',cursive;color:#111827;margin-bottom:4px;line-height:1.2;}.sig-sub{font-size:10px;color:#9CA3AF;line-height:1.5;}
-  .disclaimer{font-size:9.5px;color:#9CA3AF;margin-top:28px;padding-top:12px;border-top:1px solid #E5E7EB;line-height:1.6;}
-  .warning-box{background:#fffbeb;border:1px solid #D97706;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:11px;color:#92400e;}
-</style></head><body>
-<div class="page">
-  <div class="header">
-    <div><div class="logo">Moneyfest<span>Lending</span></div><div style="font-size:10.5px;color:#6B7280;margin-top:3px;">⚡ QuickLoan Agreement</div></div>
-    <div class="doc-meta"><div><strong>Ref:</strong> ${refId}</div><div><strong>Release Date:</strong> ${releaseDateStr}</div><div><strong>Day 15 Target:</strong> <span style="color:#D97706;font-weight:700;">${day15Str}</span></div><div><strong>Day 30 Deadline:</strong> <span style="color:#DC2626;font-weight:700;">${day30Str}</span></div></div>
-  </div>
-
-  <div class="badge">⚡ QuickLoan — Short-Term Cash Loan</div>
-
-  <div class="two-col">
-    <div class="section"><div class="section-title">Parties to this Agreement</div>
-      <div class="row"><span class="lbl">Borrower</span><span class="val">${borrower?.full_name || ''}</span></div>
-      <div class="row"><span class="lbl">Department</span><span class="val">${borrower?.department || 'N/A'}</span></div>
-      <div class="row"><span class="lbl">Access Code</span><span class="val">${borrower?.access_code || '—'}</span></div>
-      <div class="row"><span class="lbl">Lender</span><span class="val">MoneyfestLending</span></div>
-      <div class="row"><span class="lbl">Release Date</span><span class="val">${releaseDateStr}</span></div>
-    </div>
-    <div class="section"><div class="section-title">RA 3765 — Truth in Lending Disclosure</div>
-      <div class="row"><span class="lbl">Loan Principal</span><span class="val">&#8369;${principal.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span></div>
-      <div class="row"><span class="lbl">Funds Released (no hold)</span><span class="val">&#8369;${principal.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span></div>
-      <div class="row"><span class="lbl">Monthly Interest Rate</span><span class="val">10% per month</span></div>
-      <div class="row"><span class="lbl">Daily Interest Rate</span><span class="val">0.3333%/day</span></div>
-      <div class="row"><span class="lbl">Daily Interest Amount</span><span class="val">&#8369;${dailyInterest.toFixed(2)}/day</span></div>
-      <div class="row"><span class="lbl">If paid on Day 15</span><span class="val" style="color:#16a34a;font-weight:700;">&#8369;${day15Total.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span></div>
-      <div class="row"><span class="lbl">Extension Fee (if missed)</span><span class="val">&#8369;100.00 (one-time)</span></div>
-      <div class="row"><span class="lbl">Penalty after Day 30</span><span class="val" style="color:#DC2626;">&#8369;25.00/day (uncapped)</span></div>
-    </div>
-  </div>
-
-  <div class="section">
-    <div class="section-title">Payment Timeline</div>
-    <div class="highlight-row"><span>Release Date</span><span style="font-weight:700;">${releaseDateStr}</span></div>
-    <div class="highlight-row" style="border-left:3px solid #16a34a;"><span>✅ Day 15 — Target Due Date</span><span style="font-weight:700;color:#16a34a;">${day15Str}</span></div>
-    <div class="highlight-row" style="background:#fff7ed;border-left:3px solid #D97706;"><span>⚠️ Day 15 Missed → ₱100 extension fee, principal rolls over</span><span style="font-weight:700;color:#D97706;">₱100 collected</span></div>
-    <div class="highlight-row" style="background:#fef2f2;border-left:3px solid #DC2626;"><span>🔴 Day 30 — Hard Deadline</span><span style="font-weight:700;color:#DC2626;">${day30Str}</span></div>
-    <div class="highlight-row" style="background:#fef2f2;"><span>After Day 30 → ₱25/day penalty + daily interest run simultaneously</span><span style="font-weight:700;color:#DC2626;">No cap</span></div>
-  </div>
-
-  <div class="section">
-    <div class="section-title">Terms & Conditions</div>
-    <p class="tc-item">1. <strong>Interest Accrual</strong> — Interest accrues daily at 0.3333% per day (10%/month) on the outstanding principal from the date of release. Interest does not compound.</p>
-    <p class="tc-item">2. <strong>Pay Anytime</strong> — The Borrower may settle the full outstanding balance at any time. Interest stops on the day payment is confirmed. No prepayment penalty applies.</p>
-    <p class="tc-item">3. <strong>Day 15 Target Due Date</strong> — The target due date is 15 calendar days from release (${day15Str}). If settled by Day 15, total payment = ₱${principal.toLocaleString('en-PH')} principal + ₱${day15Interest.toFixed(2)} interest = ₱${day15Total.toLocaleString('en-PH')}.</p>
-    <p class="tc-item">4. <strong>Extension Fee</strong> — If Day 15 is missed, a one-time extension fee of ₱100 is charged. The admin collects the accrued 15-day interest + ₱100 fee. The principal rolls over to Day 30.</p>
-    <p class="tc-item">5. <strong>Day 30 Hard Deadline & Penalty</strong> — Day 30 (${day30Str}) is the absolute deadline. After Day 30, a ₱25/day penalty accrues on top of the continuing daily interest, with no cap, until fully settled.</p>
-    <p class="tc-item">6. <strong>No Security Hold</strong> — QuickLoan carries no Security Hold deduction. The full approved amount is released to the Borrower.</p>
-    <p class="tc-item">7. <strong>Full Payoff Only</strong> — QuickLoan must be settled in a single full payment. Partial principal payments are not accepted.</p>
-    <p class="tc-item">8. <strong>One Active Loan</strong> — Only one active loan (of any type) is permitted per Borrower at a time.</p>
-    <p class="tc-item">9. <strong>Data Privacy (RA 10173)</strong> — Personal information is processed solely for loan administration purposes.</p>
-    <p class="tc-item">10. <strong>Governing Law</strong> — This agreement is governed by Philippine law including RA 3765, RA 10173, and RA 8792. Disputes shall first go to barangay conciliation under RA 7160.</p>
-  </div>
-
-  <div class="sig-grid">
-    <div class="sig-col"><div class="sig-label">Borrower E-Signature</div><div class="sig-image-box">${imgTag}</div><div class="sig-line"></div><div class="sig-name">${name}</div><div class="sig-sub">${borrower?.full_name || ''}</div><div class="sig-sub">Signed electronically on ${signedDateStr}</div><div class="sig-sub" style="margin-top:3px;">Pursuant to RA 8792 — E-Commerce Act</div></div>
-    <div class="sig-col"><div class="sig-label">Admin / Authorized Representative</div><div class="sig-image-box"><div style="height:68px;"></div></div><div class="sig-line"></div><div style="height:28px;margin-bottom:4px;"></div><div class="sig-sub">MoneyfestLending Administration</div><div class="sig-sub">Authorized Representative</div><div class="sig-sub" style="margin-top:3px;">Date: ___________________________</div></div>
-  </div>
-
-  <div class="disclaimer">This QuickLoan Agreement is executed in compliance with RA 3765 (Truth in Lending Act), RA 10173 (Data Privacy Act), and RA 8792 (E-Commerce Act). The electronic signature affixed herein has the same legal effect as a handwritten signature. MoneyfestLending is a private colleague lending program, not a BSP-regulated institution.</div>
-</div></body></html>`
-
-    const blob = new Blob([html], { type: 'text/html;charset=utf-8' })
-    const url = URL.createObjectURL(blob)
-    const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '')
-    const safeName = (borrower?.full_name || 'Borrower').replace(/\s+/g, '_')
-    const a = document.createElement('a'); a.href = url; a.download = `QuickLoanAgreement_${safeName}_${dateStr}.html`
-    a.click(); URL.revokeObjectURL(url)
-  }
 
   // ── PENDING APP SCREEN ───────────────────────────────────────
   if (pendingApp) return (
@@ -1410,7 +1123,7 @@ export default function BorrowerPortalPage() {
                                 <div style={{ fontSize: 13, fontWeight: 800, color: '#22C55E' }}>₱{instAmt.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</div>
                                 <div style={{ fontSize: 10, color: '#22C55E' }}>Confirmed</div>
                               </div>
-                              <button onClick={() => downloadReceipt({ loan: l, borrower, installmentNum: proof.installment_number, amount: instAmt })}
+                              <button onClick={() => generateBorrowerReceiptPDF({ loan: l, borrower, installmentNum: proof.installment_number, amount: instAmt })}
                                 style={{ padding: '5px 10px', borderRadius: 7, border: '1px solid rgba(59,130,246,0.3)', background: 'rgba(59,130,246,0.08)', color: '#60A5FA', fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
                                 ↓ Receipt
                               </button>
@@ -2101,7 +1814,7 @@ export default function BorrowerPortalPage() {
               {loan.agreement_confirmed && loan.e_signature_name && (
                 <div className="pc" style={{ background: 'rgba(34,197,94,0.05)', border: '1px solid rgba(34,197,94,0.15)', borderRadius: 14, padding: '12px 18px', marginBottom: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div style={{ fontSize: 12, color: '#22C55E', fontWeight: 600 }}>✅ Loan Agreement signed by {loan.e_signature_name} · {new Date(loan.e_signature_date || '').toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
-                  <button onClick={() => loan.loan_type === 'quickloan' ? generateQuickLoanAgreementPDF() : generateLoanAgreementPDF()} style={{ padding: '7px 14px', borderRadius: 8, border: '1px solid rgba(34,197,94,0.25)', background: 'rgba(34,197,94,0.08)', color: '#22C55E', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>↓ Download</button>
+                  <button onClick={() => loan.loan_type === 'quickloan' ? generateBorrowerQuickLoanPDF(loan, borrower) : generateBorrowerLoanAgreementPDF(loan, borrower)} style={{ padding: '7px 14px', borderRadius: 8, border: '1px solid rgba(34,197,94,0.25)', background: 'rgba(34,197,94,0.08)', color: '#22C55E', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>↓ Download</button>
                 </div>
               )}
 

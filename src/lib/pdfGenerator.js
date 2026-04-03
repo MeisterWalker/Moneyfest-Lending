@@ -1,6 +1,6 @@
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
-import { formatCurrency } from './helpers'
+import { formatCurrency, getInstallmentDates, getQuickLoanDueDates } from './helpers'
 
 // ── Shared branding constants ──
 const BRAND = {
@@ -564,4 +564,281 @@ export function generateMoaPDF(investor) {
   }
 
   doc.save(`Moneyfest_MOA_${investor.full_name.replace(/\s/g, '_')}.pdf`)
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// BORROWER PORTAL PDF EXPORTS
+// ─────────────────────────────────────────────────────────────────────────────
+
+export function generateBorrowerReceiptPDF({ loan, borrower, installmentNum, amount }) {
+  const doc = new jsPDF()
+  const numInst = loan.num_installments || 4
+  const roundedAmount = Math.ceil(amount)
+  const totalPaid = installmentNum * roundedAmount
+  const remaining = Math.max(0, loan.total_repayment - totalPaid)
+  const dateStr = new Date().toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' })
+  
+  drawHeader(doc, 'PAYMENT RECEIPT', `Installment ${installmentNum} of ${numInst}`)
+  let y = 60
+  
+  // Status badge
+  doc.setFillColor(220, 252, 231) // Green bg
+  doc.roundedRect(14, 45, 45, 6, 2, 2, 'F')
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(8)
+  doc.setTextColor(22, 163, 74) // Green text
+  doc.text('PAYMENT CONFIRMED', 17, 49)
+
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(10)
+  doc.setTextColor(...BRAND.muted)
+  doc.text(`Date completed: ${dateStr}`, 14, y)
+  
+  // Breakdown Grid
+  y += 10
+  autoTable(doc, {
+    startY: y,
+    theme: 'grid',
+    headStyles: { fillColor: BRAND.primary },
+    margin: { left: 14, right: 14 },
+    head: [['Borrower Information', 'Loan Breakdown']],
+    body: [
+      [
+        `Name: ${borrower?.full_name || '—'} \nDepartment: ${borrower?.department || '—'}\nAccess Code: ${borrower?.access_code || '—'}`,
+        `Loan Principal: ${formatCurrency(loan.loan_amount)}\nTotal Repayment: ${formatCurrency(loan.total_repayment)}\nRemaining Balance: ${formatCurrency(remaining)}`
+      ]
+    ],
+  })
+  y = doc.lastAutoTable.finalY + 15
+  
+  // Box for Amount Paid
+  doc.setFillColor(248, 250, 255)
+  doc.setDrawColor(200, 216, 240)
+  doc.roundedRect(14, y, 182, 25, 4, 4, 'FD')
+  doc.setFontSize(10)
+  doc.setTextColor(...BRAND.muted)
+  doc.text(`AMOUNT PAID (INSTALLMENT ${installmentNum})`, 105, y + 8, { align: 'center' })
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(22)
+  doc.setTextColor(34, 197, 94)
+  doc.text(formatCurrency(roundedAmount), 105, y + 20, { align: 'center' })
+
+  drawFooter(doc, 1, 1)
+  doc.save(`Receipt_${borrower?.full_name?.replace(/\s+/g, '_')}_Inst${installmentNum}.pdf`)
+}
+
+export function generateBorrowerLoanAgreementPDF(loan, borrower, sigName, sigImage, sigDate) {
+  const doc = new jsPDF()
+  const date = sigDate || loan.e_signature_date || borrower.e_signature_date || new Date().toISOString()
+  const name = sigName || loan.e_signature_name || borrower.e_signature_name || borrower.full_name
+  const img = sigImage || loan.e_signature_image || borrower.e_signature_image
+  
+  const principal = Number(loan.loan_amount)
+  const holdAmt = loan.security_hold ? Number(loan.security_hold) : principal * 0.10
+  const holdRate = principal > 0 ? ((holdAmt / principal) * 100).toFixed(0) : 10
+  const released = loan.funds_released ? Number(loan.funds_released) : principal - holdAmt
+  const total = Number(loan.total_repayment)
+  const perInst = Math.ceil(Number(loan.installment_amount))
+  const rate = ((loan.interest_rate || 0.07) * 100).toFixed(0)
+  const loanTerm = loan.loan_term || 2
+  const numInst = loan.num_installments || 4
+
+  const signedDateStr = new Date(date).toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' })
+  const releaseDateStr = loan.release_date ? (() => { const [y, m, d] = loan.release_date.split('-').map(Number); return new Date(y, m - 1, d).toLocaleDateString('en-PH') })() : 'TBD'
+  
+  const dates = getInstallmentDates(loan.release_date, numInst)
+  const maturityDate = dates.length ? dates[dates.length - 1].toLocaleDateString('en-PH') : 'TBD'
+  
+  drawHeader(doc, 'LOAN AGREEMENT', 'Private Lending Program Disclosure')
+  
+  let y = 45
+  autoTable(doc, {
+    startY: y,
+    theme: 'plain',
+    margin: { left: 14, right: 14 },
+    body: [
+      ['Document Reference:', `LM-${(borrower.id || '').slice(-6).toUpperCase()}`],
+      ['Date Signed:', signedDateStr],
+      ['Borrower Name:', borrower.full_name],
+      ['Department:', borrower.department || '—'],
+    ],
+    styles: { cellPadding: 1, fontSize: 10 }
+  })
+  
+  y = doc.lastAutoTable.finalY + 10
+  
+  doc.setFont('helvetica', 'bold')
+  doc.setTextColor(...BRAND.primary)
+  doc.text('RA 3765 — Truth in Lending Act Disclosure', 14, y)
+  
+  y += 5
+  autoTable(doc, {
+    startY: y,
+    theme: 'grid',
+    headStyles: { fillColor: BRAND.primary },
+    margin: { left: 14, right: 14 },
+    body: [
+      ['Approved Loan Amount', formatCurrency(principal)],
+      [`Security Hold (${holdRate}%)`, formatCurrency(holdAmt)],
+      ['Funds Released to Borrower', formatCurrency(released)],
+      ['Finance Charge (Interest)', formatCurrency(total - principal)],
+      ['Monthly Interest Rate', `${rate}% per month × ${loanTerm} months`],
+      ['Effective Annual Rate', `${((loan.interest_rate || 0.07) * 12 * 100).toFixed(0)}% p.a.`],
+      ['Total Amount Payable', formatCurrency(total)],
+      ['Installment Breakdown', `${numInst} payments of ${formatCurrency(perInst)}`]
+    ],
+  })
+
+  y = doc.lastAutoTable.finalY + 10
+  
+  doc.setFont('helvetica', 'bold')
+  doc.setTextColor(...BRAND.primary)
+  doc.text('Schedule of Payments', 14, y)
+  
+  y += 5
+  const paidCount = loan.payments_made || 0
+  const scheduleData = dates.map((due, idx) => {
+    const isPaid = (idx + 1) <= paidCount
+    return [
+      idx + 1,
+      due.toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' }),
+      formatCurrency(perInst),
+      isPaid ? 'Paid' : 'Pending'
+    ]
+  })
+
+  autoTable(doc, {
+    startY: y,
+    theme: 'grid',
+    headStyles: { fillColor: BRAND.dark },
+    margin: { left: 14, right: 14 },
+    head: [['Inst #', 'Due Date', 'Amount Due', 'Status']],
+    body: scheduleData
+  })
+
+  // TERMS
+  doc.addPage()
+  drawHeader(doc, 'LOAN AGREEMENT', 'Terms & Conditions')
+  y = 50
+  
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(9)
+  doc.setTextColor(...BRAND.text)
+  const terms = [
+    `1. Loan Term & Interest — A monthly interest rate of ${rate}% is applied for each of the ${loanTerm} months of the loan term, resulting in a total finance charge of ${(Number(rate) * loanTerm).toFixed(0)}% of the principal. This charge is fixed and does not compound. It applies regardless of early settlement.`,
+    `2. Repayment Schedule & Installment Rounding — The loan is repaid in ${numInst} equal installments, collected on the 5th and 20th of each month.`,
+    `3. Security Hold — ${holdRate}% of the approved loan amount is withheld upon fund release as a Security Hold. The remaining balance is returned to the Borrower's Rebate Credits upon full payment of the final installment.`,
+    `4. Late Payment Penalties — A penalty of ₱20.00 per calendar day is charged for each day an installment remains unpaid past its due date.`,
+    `5. Default — Failure to pay two (2) or more consecutive installments constitutes a loan default.`
+  ]
+  
+  terms.forEach(term => {
+    const lines = doc.splitTextToSize(term, 182)
+    doc.text(lines, 14, y)
+    y += (lines.length * 5) + 3
+  })
+  
+  y += 15
+  
+  // SIGNATURES
+  doc.setFont('helvetica', 'bold')
+  doc.text('BORROWER E-SIGNATURE', 14, y)
+  doc.text('AUTHORIZED LENDER', 120, y)
+  
+  doc.setFont('helvetica', 'normal')
+  doc.text(`Name: ${name}`, 14, y + 8)
+  doc.text(`Date: ${signedDateStr}`, 14, y + 13)
+  
+  if (img) {
+    try { doc.addImage(img, 'PNG', 14, y + 18, 45, 15) } catch(e) {}
+  }
+  
+  doc.line(14, y + 35, 70, y + 35)
+  doc.line(120, y + 35, 176, y + 35)
+  
+  doc.text(`Name: Moneyfest Administator`, 120, y + 8)
+  
+  drawFooter(doc, 1, 2)
+  drawFooter(doc, 2, 2)
+  const safeName = (borrower?.full_name || 'Borrower').replace(/\s+/g, '_')
+  doc.save(`LoanAgreement_${safeName}.pdf`)
+}
+
+export function generateBorrowerQuickLoanPDF(loan, borrower, sigName, sigImage, sigDate) {
+  const doc = new jsPDF()
+  const date = sigDate || loan.e_signature_date || borrower.e_signature_date || new Date().toISOString()
+  const name = sigName || loan.e_signature_name || borrower.e_signature_name || borrower.full_name
+  const img = sigImage || loan.e_signature_image || borrower.e_signature_image
+  
+  const principal = Number(loan.loan_amount)
+  const dailyInterest = (principal * 0.1 / 30).toFixed(2)
+  const day15Interest = (dailyInterest * 15).toFixed(2)
+  
+  const signedDateStr = new Date(date).toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' })
+  const { day15, day30 } = getQuickLoanDueDates(loan.release_date)
+  
+  drawHeader(doc, 'QUICKLOAN AGREEMENT', 'Daily Interest Disclosure')
+  
+  let y = 45
+  autoTable(doc, {
+    startY: y,
+    theme: 'plain',
+    margin: { left: 14, right: 14 },
+    body: [
+      ['Document Reference:', `QL-${(borrower.id || '').slice(-6).toUpperCase()}`],
+      ['Date Signed:', signedDateStr],
+      ['Borrower Name:', borrower.full_name],
+      ['Department:', borrower.department || '—'],
+    ],
+    styles: { cellPadding: 1, fontSize: 10 }
+  })
+  
+  y = doc.lastAutoTable.finalY + 10
+  
+  doc.setFont('helvetica', 'bold')
+  doc.setTextColor(...BRAND.primary)
+  doc.text('RA 3765 — Truth in Lending Act Disclosure', 14, y)
+  
+  y += 5
+  autoTable(doc, {
+    startY: y,
+    theme: 'grid',
+    headStyles: { fillColor: BRAND.gold }, // Gold for QuickLoan
+    margin: { left: 14, right: 14 },
+    body: [
+      ['Approved Loan Amount', formatCurrency(principal)],
+      ['Daily Interest Rate', `${formatCurrency(dailyInterest)} / day (10% monthly)`],
+      ['Early Target Due (Day 15)', day15 ? day15.toLocaleDateString('en-PH') : 'TBD'],
+      ['Hard Extension Due (Day 30)', day30 ? day30.toLocaleDateString('en-PH') : 'TBD'],
+      ['Extension Fee (If past Day 15)', formatCurrency(100)],
+      ['Daily Penalty (If past Day 30)', formatCurrency(25) + ' / day']
+    ],
+  })
+
+  y = doc.lastAutoTable.finalY + 15
+  
+  // SIGNATURES
+  doc.setFont('helvetica', 'bold')
+  doc.setTextColor(...BRAND.text)
+  doc.text('BORROWER E-SIGNATURE', 14, y)
+  doc.text('AUTHORIZED LENDER', 120, y)
+  
+  doc.setFont('helvetica', 'normal')
+  doc.text(`Name: ${name}`, 14, y + 8)
+  doc.text(`Date: ${signedDateStr}`, 14, y + 13)
+  
+  if (img) {
+    try { doc.addImage(img, 'PNG', 14, y + 18, 45, 15) } catch(e) {}
+  }
+  
+  doc.line(14, y + 35, 70, y + 35)
+  doc.line(120, y + 35, 176, y + 35)
+  
+  doc.text(`Name: Moneyfest Administator`, 120, y + 8)
+  
+  try {
+    drawFooter(doc, 1, 1)
+  } catch (e) {}
+  const safeName = (borrower?.full_name || 'Borrower').replace(/\s+/g, '_')
+  doc.save(`QuickLoanAgreement_${safeName}.pdf`)
 }

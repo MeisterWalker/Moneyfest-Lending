@@ -18,7 +18,8 @@ BEGIN
             'portal_notifications', 
             'wallets', 
             'wallet_transactions', 
-            'settings'
+            'settings',
+            'investors'
         )
     LOOP
         -- 1. Grant SELECT to anonymous users (needed to find record by access_code)

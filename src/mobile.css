@@ -185,3 +185,24 @@
     height: auto;
   }
 }
+
+/* ─────────────────────────────────────────────────────────────────────── */
+/* INVESTOR DASHBOARD MOBILE OPTIMIZATIONS                                  */
+/* ─────────────────────────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .inv-hero-grid { grid-template-columns: 1fr !important; gap: 16px !important; }
+  .inv-header { flex-direction: column !important; align-items: flex-start !important; gap: 16px !important; }
+  .inv-header-actions { width: 100%; justify-content: space-between; overflow-x: auto; padding-bottom: 8px; }
+  .inv-stats-4 { grid-template-columns: 1fr 1fr !important; }
+}
+
+@media (max-width: 768px) {
+  .inv-layout { flex-direction: column !important; }
+  .inv-sidebar { width: 100% !important; border-right: none !important; border-bottom: 1px solid rgba(255,255,255,0.1); }
+  .inv-col-2 { grid-template-columns: 1fr !important; }
+  .inv-col-3 { grid-template-columns: 1fr !important; }
+  .inv-stats-4 { grid-template-columns: 1fr !important; }
+  .inv-tools-grid { grid-template-columns: 1fr !important; }
+  .inv-tools-results { grid-template-columns: 1fr !important; }
+  .inv-table-wrap { overflow-x: auto; }
+}
