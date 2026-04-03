@@ -164,6 +164,8 @@ export default function InvestorDashboard() {
   const [showAgreementModal, setShowAgreementModal] = useState(false)
   const [forecastData, setForecastData] = useState([])
   const [liveAccrual, setLiveAccrual]   = useState(0)
+  const [yesterdayAccrual, setYesterdayAccrual] = useState(0)
+  const [overallAccrual, setOverallAccrual]     = useState(0)
   const [isDark, setIsDark]             = useState(true)  // default dark
   const { toast } = useToast()
 
@@ -201,24 +203,47 @@ export default function InvestorDashboard() {
     setLoading(false)
   }, [])
 
-  // Live accrual ticker
+  // Live accrual ticker + yesterday & overall
   useEffect(() => {
-    if (!investor || !loans.length) { setLiveAccrual(0); return }
-    const activeCapital = loans
-      .filter(l => ['Active', 'Partially Paid', 'Overdue'].includes(l.status))
-      .reduce((s, l) => s + Number(l.loan_amount), 0)
-    if (activeCapital <= 0) { setLiveAccrual(0); return }
+    if (!investor || !loans.length) { setLiveAccrual(0); setYesterdayAccrual(0); setOverallAccrual(0); return }
+    const activeLoansFiltered = loans.filter(l => ['Active', 'Partially Paid', 'Overdue'].includes(l.status))
+    const activeCapital = activeLoansFiltered.reduce((s, l) => s + Number(l.loan_amount), 0)
+    if (activeCapital <= 0) { setLiveAccrual(0); setYesterdayAccrual(0); setOverallAccrual(0); return }
 
     // Daily rate derived from tier quarterly rate: e.g. Premium 9%/90days = 0.001 per day
     const quarterlyRate = TIER_RATES[investor.tier] || 0.08
     const dailyRate = quarterlyRate / 90
     const dailyProfit = activeCapital * dailyRate
+
+    // Today's live accrual (based on time elapsed today)
     const now = new Date()
     const secondsInDay = (now.getHours() * 3600) + (now.getMinutes() * 60) + now.getSeconds()
     setLiveAccrual(dailyProfit * (secondsInDay / 86400))
 
+    // Yesterday's accrual — full day of interest on capital that was active yesterday
+    const yesterday = new Date(now)
+    yesterday.setDate(yesterday.getDate() - 1)
+    const yesterdayCapital = activeLoansFiltered
+      .filter(l => new Date(l.created_at) <= yesterday)
+      .reduce((s, l) => s + Number(l.loan_amount), 0)
+    setYesterdayAccrual(yesterdayCapital * dailyRate)
+
+    // Overall accrual — total interest accumulated across all days each active loan has been deployed
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    let totalOverall = 0
+    activeLoansFiltered.forEach(l => {
+      const loanStart = new Date(l.created_at)
+      const daysActive = Math.max(0, Math.floor((todayStart - loanStart) / 86400000))
+      totalOverall += Number(l.loan_amount) * dailyRate * daysActive
+    })
+    // Add today's partial accrual
+    totalOverall += dailyProfit * (secondsInDay / 86400)
+    setOverallAccrual(totalOverall)
+
     const iv = setInterval(() => {
-      setLiveAccrual(prev => prev + (dailyProfit / (86400 / 5)))
+      const increment = dailyProfit / (86400 / 5)
+      setLiveAccrual(prev => prev + increment)
+      setOverallAccrual(prev => prev + increment)
     }, 5000)
     return () => clearInterval(iv)
   }, [investor, loans])
@@ -399,7 +424,7 @@ export default function InvestorDashboard() {
           {[
             { label: 'Total Invested', value: formatCurrency(totalInvested), valueColor: t.green, sub: `${investor.tier} Tier Capital Pool`, icon: <Wallet size={22} style={{ color: '#fff' }} /> },
             { label: 'Funds Deployed', value: formatCurrency(activeCapital), valueColor: '#F59E0B', sub: `${activeLoans.length} active loan${activeLoans.length !== 1 ? 's' : ''} · ${(rate * 100).toFixed(0)}% per cycle`, icon: <TrendingUp size={22} style={{ color: '#fff' }} /> },
-            { label: 'Total Earnings', value: formatCurrency(totalEarnings), valueColor: t.green, sub: `Live accrual: +${formatCurrency(liveAccrual)} today`, icon: <CreditCard size={22} style={{ color: '#fff' }} /> },
+            { label: 'Total Earnings', value: formatCurrency(totalEarnings), valueColor: t.green, sub: `Live accrual: +${formatCurrency(liveAccrual)} today · Overall: +${formatCurrency(overallAccrual)}`, icon: <CreditCard size={22} style={{ color: '#fff' }} /> },
           ].map(c => (
             <div key={c.label} style={{ ...card, padding: 0, overflow: 'hidden', boxShadow: isDark ? '0 4px 20px rgba(0,0,0,0.3)' : '0 4px 20px rgba(0,0,0,0.1)' }}>
               <div style={{ background: t.accent, padding: '10px 18px', display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -535,12 +560,24 @@ export default function InvestorDashboard() {
               ))}
             </div>
             {/* Live Accrual ticker */}
-            <div style={{ padding: '12px 20px', borderTop: `1px solid ${t.divider}`, background: isDark ? 'rgba(34,197,94,0.04)' : '#F0FDF4', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <div style={{ width: 8, height: 8, borderRadius: '50%', background: t.green, boxShadow: `0 0 8px ${t.green}` }} />
-                <span style={{ fontSize: 12, color: t.textMuted, fontWeight: 600 }}>Today's Live Accrual</span>
-              </div>
-              <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 800, fontSize: 16, color: t.green }}>+{formatCurrency(liveAccrual)}</span>
+            <div style={{ borderTop: `1px solid ${t.divider}`, background: isDark ? 'rgba(34,197,94,0.04)' : '#F0FDF4' }}>
+              {[
+                { label: "Today's Live Accrual", value: liveAccrual, live: true },
+                { label: "Yesterday's Accrual", value: yesterdayAccrual, live: false },
+                { label: 'Overall Accrued Interest', value: overallAccrual, live: false },
+              ].map((row, i) => (
+                <div key={i} style={{ padding: '10px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: i > 0 ? `1px solid ${t.divider}` : 'none' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    {row.live ? (
+                      <div style={{ width: 8, height: 8, borderRadius: '50%', background: t.green, boxShadow: `0 0 8px ${t.green}`, animation: 'pulse 2s infinite' }} />
+                    ) : (
+                      <div style={{ width: 8, height: 8, borderRadius: '50%', background: i === 2 ? t.accent : t.gold, opacity: 0.7 }} />
+                    )}
+                    <span style={{ fontSize: 12, color: t.textMuted, fontWeight: 600 }}>{row.label}</span>
+                  </div>
+                  <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 800, fontSize: i === 2 ? 16 : 14, color: i === 0 ? t.green : i === 1 ? t.gold : t.accent }}>+{formatCurrency(row.value)}</span>
+                </div>
+              ))}
             </div>
           </div>
 
