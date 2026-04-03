@@ -72,11 +72,10 @@ function UploadModal({ installmentNum, loan, borrower, onClose, onUploaded, qlPa
     const path = `${borrower.access_code}/${Date.now()}-installment${installmentNum}.${ext}`
     const { error: upErr } = await supabase.storage.from('payment-proofs').upload(path, file, { upsert: false })
     if (upErr) { setError('Upload failed: ' + upErr.message); setUploading(false); return }
-    const { data: { publicUrl } } = supabase.storage.from('payment-proofs').getPublicUrl(path)
     const { error: dbErr } = await supabase.from('payment_proofs').insert({
       borrower_id: borrower.id, loan_id: loan.id,
       installment_number: installmentNum, file_path: path,
-      file_url: publicUrl, notes: notes.trim() || null, status: 'Pending'
+      file_name: file.name, notes: notes.trim() || null, status: 'Pending'
     })
     if (dbErr) { setError('Failed to save proof: ' + dbErr.message); setUploading(false); return }
     await supabase.from('portal_notifications').insert({
@@ -189,8 +188,6 @@ function PrincipalPaymentModal({ loan, borrower, onClose, onUploaded }) {
       const path = `principal-payments/${borrower.access_code}/${Date.now()}.${ext}`
       const { error: upErr } = await supabase.storage.from('payment-proofs').upload(path, file, { upsert: false })
       if (upErr) { setError('Upload failed: ' + upErr.message); setUploading(false); return }
-      const { data: { publicUrl } } = supabase.storage.from('payment-proofs').getPublicUrl(path)
-
       const { error: dbErr } = await supabase.from('principal_payments').insert({
         loan_id: loan.id,
         borrower_id: borrower.id,
@@ -202,7 +199,7 @@ function PrincipalPaymentModal({ loan, borrower, onClose, onUploaded }) {
         days_elapsed: daysForInterest,
         accrued_interest: accruedInterest,
         file_path: path,
-        file_url: publicUrl,
+        file_name: file.name,
         notes: notes.trim() || null,
         status: 'Pending'
       })
