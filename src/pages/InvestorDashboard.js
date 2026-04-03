@@ -3,7 +3,8 @@ import { supabase } from '../lib/supabase'
 import { formatCurrency } from '../lib/helpers'
 import {
   Building2, Smartphone, CreditCard, Wallet, TrendingUp,
-  Info, LogOut, RefreshCw, PenTool, XCircle, Sun, Moon, Printer
+  Info, LogOut, RefreshCw, PenTool, XCircle, Sun, Moon, Printer,
+  Shield, Star, Phone, Mail, MapPin, User
 } from 'lucide-react'
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid,
@@ -166,6 +167,7 @@ export default function InvestorDashboard() {
   const [liveAccrual, setLiveAccrual]   = useState(0)
   const [yesterdayAccrual, setYesterdayAccrual] = useState(0)
   const [overallAccrual, setOverallAccrual]     = useState(0)
+  const [selectedBorrowerLoan, setSelectedBorrowerLoan] = useState(null)
   const [isDark, setIsDark]             = useState(true)  // default dark
   const { toast } = useToast()
 
@@ -184,7 +186,7 @@ export default function InvestorDashboard() {
     if (!inv.signed_at) setShowAgreementModal(true)
 
     const { data: lData } = await supabase
-      .from('loans').select('*, borrowers(full_name, department, building)')
+      .from('loans').select('*, borrowers(full_name, department, building, credit_score, risk_score, loyalty_badge, phone, email, address, tenure_years, loan_limit, loan_limit_level)')
       .eq('investor_id', inv.id).order('created_at', { ascending: false })
 
     setLoans(lData || [])
@@ -470,7 +472,7 @@ export default function InvestorDashboard() {
                     return (
                       <tr key={i} style={{ borderBottom: `1px solid ${t.divider}`, background: i % 2 === 0 ? t.tableRow : t.tableRowH, transition: 'background 0.15s' }}>
                         <td style={{ padding: '12px 16px' }}>
-                          <div style={{ fontWeight: 700, color: t.accent, fontSize: 13, cursor: 'pointer' }}>{loan.borrowers?.full_name || '—'}</div>
+                          <div onClick={() => setSelectedBorrowerLoan(loan)} style={{ fontWeight: 700, color: t.accent, fontSize: 13, cursor: 'pointer', textDecoration: 'underline', textDecorationColor: `${t.accent}40`, textUnderlineOffset: 2 }}>{loan.borrowers?.full_name || '—'}</div>
                           <div style={{ fontSize: 11, color: t.textMuted }}>{loan.borrowers?.department}</div>
                         </td>
                         <td style={{ padding: '12px 16px', fontSize: 13, fontWeight: 600, color: t.text }}>{formatCurrency(loan.loan_amount)}</td>
@@ -664,6 +666,118 @@ export default function InvestorDashboard() {
 
       <PayoutRequestModal isOpen={showPayoutModal} onClose={() => setShowPayoutModal(false)} onSubmit={handleRequestPayout} investor={investor} requesting={requestingPayout} t={t} />
       <AgreementModal isOpen={showAgreementModal} onClose={() => setShowAgreementModal(false)} investor={investor} onSign={handleSignMoa} />
+
+      {/* Borrower Detail Modal */}
+      {selectedBorrowerLoan && (() => {
+        const loan = selectedBorrowerLoan
+        const b = loan.borrowers
+        if (!b) return null
+        const BADGE_ICONS = { New: '🆕', Trusted: '✅', Reliable: '⭐', VIP: '👑' }
+        const RISK_COLORS = { Low: t.green, Medium: t.gold, High: t.red }
+        const scoreColor = b.credit_score >= 750 ? t.green : b.credit_score >= 600 ? t.gold : t.red
+        const progressPct = loan.total_repayment > 0 ? (((loan.total_repayment - (loan.remaining_balance || 0)) / loan.total_repayment) * 100).toFixed(0) : 0
+
+        return (
+          <div onClick={() => setSelectedBorrowerLoan(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+            <div onClick={e => e.stopPropagation()} style={{ maxWidth: 520, width: '100%', background: t.cardBg, border: `1px solid ${t.cardBorder}`, borderRadius: 20, overflow: 'hidden', boxShadow: '0 40px 80px rgba(0,0,0,0.5)' }}>
+              {/* Header */}
+              <div style={{ background: `linear-gradient(135deg, ${t.accent}, ${t.accent2})`, padding: '22px 28px', position: 'relative' }}>
+                <button onClick={() => setSelectedBorrowerLoan(null)} style={{ position: 'absolute', top: 16, right: 16, background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: 8, padding: 6, cursor: 'pointer', color: '#fff' }}>
+                  <XCircle size={20} />
+                </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                  <div style={{ width: 52, height: 52, borderRadius: 14, background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <User size={26} style={{ color: '#fff' }} />
+                  </div>
+                  <div>
+                    <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 20, color: '#fff', lineHeight: 1.2 }}>{b.full_name}</div>
+                    <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.75)', marginTop: 2 }}>{b.department}{b.building ? ` · ${b.building}` : ''}</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Credit & Risk Badges */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', borderBottom: `1px solid ${t.divider}` }}>
+                <div style={{ padding: '14px 16px', textAlign: 'center', borderRight: `1px solid ${t.divider}` }}>
+                  <div style={{ fontSize: 10, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Credit Score</div>
+                  <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 800, fontSize: 22, color: scoreColor }}>{b.credit_score || '—'}</div>
+                </div>
+                <div style={{ padding: '14px 16px', textAlign: 'center', borderRight: `1px solid ${t.divider}` }}>
+                  <div style={{ fontSize: 10, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Risk Level</div>
+                  <div style={{ fontWeight: 700, fontSize: 14, color: RISK_COLORS[b.risk_score] || t.text }}>
+                    <Shield size={13} style={{ verticalAlign: 'middle', marginRight: 4 }} />{b.risk_score || '—'}
+                  </div>
+                </div>
+                <div style={{ padding: '14px 16px', textAlign: 'center' }}>
+                  <div style={{ fontSize: 10, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Loyalty</div>
+                  <div style={{ fontWeight: 700, fontSize: 14, color: t.gold }}>
+                    {BADGE_ICONS[b.loyalty_badge] || ''} {b.loyalty_badge || '—'}
+                  </div>
+                </div>
+              </div>
+
+              {/* Personal Info */}
+              <div style={{ padding: '16px 28px', borderBottom: `1px solid ${t.divider}` }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>Borrower Information</div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 20px' }}>
+                  {[
+                    { icon: <MapPin size={13} />, label: 'Department', val: b.department || '—' },
+                    { icon: <Building2 size={13} />, label: 'Building', val: b.building || '—' },
+                    { icon: <Star size={13} />, label: 'Tenure', val: b.tenure_years ? `${b.tenure_years} years` : '—' },
+                    { icon: <Wallet size={13} />, label: 'Loan Limit', val: b.loan_limit ? `₱${Number(b.loan_limit).toLocaleString()} (L${b.loan_limit_level})` : '—' },
+                  ].map((f, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+                      <span style={{ color: t.accent, marginTop: 1, flexShrink: 0 }}>{f.icon}</span>
+                      <div>
+                        <div style={{ fontSize: 10, color: t.textMuted, marginBottom: 1 }}>{f.label}</div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: t.text }}>{f.val}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Loan Details */}
+              <div style={{ padding: '16px 28px', borderBottom: `1px solid ${t.divider}` }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>Loan Details</div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+                  {[
+                    { label: 'Loan Amount', val: formatCurrency(loan.loan_amount), col: t.accent },
+                    { label: 'Total Repayment', val: formatCurrency(loan.total_repayment || 0), col: t.text },
+                    { label: 'Remaining', val: formatCurrency(loan.remaining_balance || 0), col: t.gold },
+                    { label: 'Released', val: loan.release_date ? new Date(loan.release_date).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' }) : '—', col: t.text },
+                    { label: 'Payments', val: `${loan.payments_made || 0} / ${loan.num_installments || 4}`, col: t.green },
+                    { label: 'Status', val: loan.status, col: loan.status === 'Paid' ? t.green : ['Active', 'Partially Paid'].includes(loan.status) ? t.accent : t.gold },
+                  ].map((d, i) => (
+                    <div key={i} style={{ background: isDark ? 'rgba(255,255,255,0.03)' : '#F8FAFF', borderRadius: 8, padding: '10px 12px', border: `1px solid ${t.divider}` }}>
+                      <div style={{ fontSize: 9, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 3 }}>{d.label}</div>
+                      <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: 13, color: d.col }}>{d.val}</div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Repayment progress bar */}
+                <div style={{ marginTop: 14 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, fontSize: 11 }}>
+                    <span style={{ color: t.textMuted }}>Repayment Progress</span>
+                    <span style={{ fontWeight: 700, color: t.accent }}>{progressPct}%</span>
+                  </div>
+                  <div style={{ height: 6, borderRadius: 3, background: isDark ? 'rgba(255,255,255,0.06)' : '#E2E8F0', overflow: 'hidden' }}>
+                    <div style={{ height: '100%', width: `${progressPct}%`, borderRadius: 3, background: `linear-gradient(90deg, ${t.accent}, ${t.green})`, transition: 'width 0.5s ease' }} />
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div style={{ padding: '14px 28px', display: 'flex', justifyContent: 'center' }}>
+                <button onClick={() => setSelectedBorrowerLoan(null)} style={{ padding: '10px 32px', borderRadius: 10, border: 'none', background: `linear-gradient(135deg, ${t.accent}, ${t.accent2})`, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Syne, sans-serif' }}>
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
     </div>
   )
 }
