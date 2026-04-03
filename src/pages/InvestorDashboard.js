@@ -5,7 +5,8 @@ import {
   Building2, Smartphone, CreditCard, Wallet, TrendingUp,
   Info, LogOut, RefreshCw, PenTool, XCircle, Sun, Moon, Printer,
   Shield, Star, Phone, Mail, MapPin, User,
-  ChevronDown, Filter, Download, ArrowUpDown, Clock, DollarSign, CheckCircle, ArrowRight
+  ChevronDown, Filter, Download, ArrowUpDown, Clock, DollarSign, CheckCircle, ArrowRight,
+  Bell, ToggleLeft, ToggleRight, Zap
 } from 'lucide-react'
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid,
@@ -179,6 +180,8 @@ export default function InvestorDashboard() {
   const [dashTab, setDashTab] = useState('overview')
   const [installments, setInstallments] = useState([])
   const [ledgerFilter, setLedgerFilter] = useState('all')
+  const [showNotifications, setShowNotifications] = useState(false)
+  const [togglingReinvest, setTogglingReinvest] = useState(false)
   const { toast } = useToast()
 
   const t = isDark ? DARK : LIGHT
@@ -414,6 +417,72 @@ export default function InvestorDashboard() {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {/* Notification Bell */}
+          <div style={{ position: 'relative' }}>
+            <button onClick={() => setShowNotifications(n => !n)}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 36, height: 36, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.25)', background: showNotifications ? 'rgba(59,130,246,0.3)' : 'rgba(255,255,255,0.1)', color: '#fff', cursor: 'pointer', position: 'relative' }}>
+              <Bell size={16} />
+              {(() => {
+                const lastSeen = localStorage.getItem('lm_notif_seen') || ''
+                const notifs = [...loans].sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))
+                const unread = notifs.filter(l => new Date(l.updated_at).toISOString() > lastSeen).length
+                return unread > 0 ? (
+                  <span style={{ position: 'absolute', top: -2, right: -2, width: 16, height: 16, borderRadius: '50%', background: '#EF4444', fontSize: 9, fontWeight: 800, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{unread > 9 ? '9+' : unread}</span>
+                ) : null
+              })()}
+            </button>
+            {/* Notification Dropdown */}
+            {showNotifications && (
+              <div style={{ position: 'absolute', top: 44, right: 0, width: 360, maxHeight: 420, overflowY: 'auto', background: t.cardBg, border: `1px solid ${t.cardBorder}`, borderRadius: 14, boxShadow: '0 20px 60px rgba(0,0,0,0.4)', zIndex: 100 }}>
+                <div style={{ padding: '14px 18px', borderBottom: `1px solid ${t.divider}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 14, color: t.text }}>🔔 Notifications</span>
+                  <button onClick={() => { localStorage.setItem('lm_notif_seen', new Date().toISOString()); setShowNotifications(false) }}
+                    style={{ fontSize: 11, color: t.accent, background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>Mark all read</button>
+                </div>
+                {(() => {
+                  const lastSeen = localStorage.getItem('lm_notif_seen') || ''
+                  const notifEvents = []
+                  loans.forEach(loan => {
+                    const bName = loan.borrowers?.full_name || 'Unknown'
+                    // Disbursement
+                    notifEvents.push({ date: loan.release_date || loan.created_at, icon: '🚀', title: `Capital deployed to ${bName}`, sub: `₱${Number(loan.loan_amount).toLocaleString()} deployed`, color: t.accent, key: `d-${loan.id}` })
+                    // Payments
+                    const loanInst = installments.filter(inst => inst.loan_id === loan.id && inst.is_paid)
+                    loanInst.forEach(inst => {
+                      notifEvents.push({ date: inst.paid_at || inst.due_date, icon: '💰', title: `Payment from ${bName}`, sub: `Installment #${inst.installment_number} — ₱${Number(inst.amount_due).toLocaleString()}`, color: t.green, key: `p-${inst.id}` })
+                    })
+                    if (loanInst.length === 0 && (loan.payments_made || 0) > 0) {
+                      for (let p = 1; p <= loan.payments_made; p++) {
+                        notifEvents.push({ date: loan.updated_at, icon: '💰', title: `Payment from ${bName}`, sub: `Installment #${p} — ₱${Number(loan.installment_amount || 0).toLocaleString()}`, color: t.green, key: `fp-${loan.id}-${p}` })
+                      }
+                    }
+                    if (loan.status === 'Paid') {
+                      notifEvents.push({ date: loan.updated_at, icon: '✅', title: `${bName} loan fully repaid!`, sub: `₱${Number(loan.loan_amount).toLocaleString()} principal returned`, color: '#8B5CF6', key: `c-${loan.id}` })
+                    }
+                  })
+                  notifEvents.sort((a, b) => new Date(b.date) - new Date(a.date))
+                  if (notifEvents.length === 0) return <div style={{ padding: '30px 20px', textAlign: 'center', color: t.textMuted, fontSize: 13 }}>No notifications yet.</div>
+                  return notifEvents.slice(0, 15).map((n, i) => {
+                    const isNew = new Date(n.date).toISOString() > lastSeen
+                    return (
+                      <div key={n.key} style={{ padding: '12px 18px', borderBottom: `1px solid ${t.divider}`, display: 'flex', gap: 12, alignItems: 'flex-start', background: isNew ? (isDark ? 'rgba(59,130,246,0.06)' : '#EFF6FF') : 'transparent', transition: 'background 0.15s' }}>
+                        <span style={{ fontSize: 20, flexShrink: 0, marginTop: 2 }}>{n.icon}</span>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 13, fontWeight: isNew ? 700 : 500, color: t.text, lineHeight: 1.3 }}>{n.title}</div>
+                          <div style={{ fontSize: 11, color: t.textMuted, marginTop: 2 }}>{n.sub}</div>
+                          <div style={{ fontSize: 10, color: t.textMuted, marginTop: 3, display: 'flex', alignItems: 'center', gap: 4 }}>
+                            <Clock size={10} />
+                            {new Date(n.date).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}
+                          </div>
+                        </div>
+                        {isNew && <div style={{ width: 8, height: 8, borderRadius: '50%', background: t.accent, flexShrink: 0, marginTop: 6 }} />}
+                      </div>
+                    )
+                  })
+                })()}
+              </div>
+            )}
+          </div>
           {/* Light/Dark Toggle */}
           <button
             onClick={() => {
@@ -693,6 +762,44 @@ export default function InvestorDashboard() {
                     )
                   })}
                 </div>
+              </div>
+            </div>
+
+            {/* Capital Reinvestment Control */}
+            <div style={{ borderTop: `1px solid ${t.divider}`, padding: '14px 16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Zap size={14} style={{ color: t.gold }} />
+                  <span style={{ fontSize: 11, fontWeight: 700, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Auto-Reinvest</span>
+                </div>
+                <button
+                  disabled={togglingReinvest}
+                  onClick={async () => {
+                    setTogglingReinvest(true)
+                    try {
+                      const newVal = investor.auto_reinvest === false ? true : false
+                      const { error } = await supabase.from('investors').update({ auto_reinvest: newVal }).eq('id', investor.id)
+                      if (!error) {
+                        setInvestor({ ...investor, auto_reinvest: newVal })
+                        toast(newVal ? 'Auto-reinvest enabled! Returns will compound.' : 'Auto-reinvest disabled.', 'success')
+                      }
+                    } catch { toast('Failed to update.', 'error') }
+                    setTogglingReinvest(false)
+                  }}
+                  style={{ background: 'none', border: 'none', cursor: togglingReinvest ? 'wait' : 'pointer', padding: 0, display: 'flex', alignItems: 'center', color: investor.auto_reinvest !== false ? t.green : t.textMuted }}
+                >
+                  {investor.auto_reinvest !== false ? <ToggleRight size={28} /> : <ToggleLeft size={28} />}
+                </button>
+              </div>
+              <div style={{ fontSize: 11, color: t.textMuted, lineHeight: 1.5 }}>
+                {investor.auto_reinvest !== false
+                  ? <span style={{ color: t.green, fontWeight: 600 }}>Enabled — </span>
+                  : <span style={{ color: t.textMuted, fontWeight: 600 }}>Disabled — </span>
+                }
+                {investor.auto_reinvest !== false
+                  ? 'Your returns are automatically compounded into your capital pool each cycle.'
+                  : 'Returns will be held separately and available for manual withdrawal.'
+                }
               </div>
             </div>
 

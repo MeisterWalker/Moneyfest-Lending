@@ -1,5 +1,5 @@
 import jsPDF from 'jspdf'
-import 'jspdf-autotable'
+import autoTable from 'jspdf-autotable'
 import { formatCurrency } from './helpers'
 
 // ── Shared branding constants ──
@@ -154,7 +154,7 @@ export function generateQuarterlyReport(investor, loans, installments = []) {
   doc.text('ACCRUAL SUMMARY', 14, y)
   y += 4
 
-  doc.autoTable({
+  autoTable(doc, {
     startY: y,
     head: [['Metric', 'Value']],
     body: [
@@ -197,7 +197,7 @@ export function generateQuarterlyReport(investor, loans, installments = []) {
     ]
   })
 
-  doc.autoTable({
+  autoTable(doc, {
     startY: y,
     head: [['Borrower', 'Amount', 'Released', 'Days', 'Accrued', 'Status', 'Payments']],
     body: loanRows,
@@ -263,7 +263,7 @@ export function generateQuarterlyReport(investor, loans, installments = []) {
   })
 
   if (txRows.length > 0) {
-    doc.autoTable({
+    autoTable(doc, {
       startY: y,
       head: [['Date', 'Event', 'Borrower', 'Amount', 'Balance']],
       body: txRows,
@@ -409,7 +409,7 @@ export function generateMoaPDF(investor) {
   doc.text('SECTION 2 · INVESTMENT TERMS AND CONDITIONS', 20, y)
   y += 4
 
-  doc.autoTable({
+  autoTable(doc, {
     startY: y,
     head: [['Term', 'Details']],
     body: [
