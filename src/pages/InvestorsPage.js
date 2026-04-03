@@ -45,7 +45,6 @@ export default function InvestorsPage() {
   const secondsInDay = (now.getHours() * 3600) + (now.getMinutes() * 60) + now.getSeconds()
   const dayProgress = secondsInDay / 86400
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-  const yesterday = new Date(now); yesterday.setDate(yesterday.getDate() - 1)
 
   const activeAccrual = activeInvestorLoans.reduce((s, l) => {
     const inv = investors.find(i => i.id === l.investor_id)
@@ -93,15 +92,18 @@ export default function InvestorsPage() {
 
   // Admin yesterday accrual
   const adminYesterdayCapital = adminActiveLoans
-    .filter(l => new Date(l.created_at) <= yesterday)
+    .filter(l => {
+      const deployDate = l.release_date ? new Date(l.release_date) : new Date(l.created_at)
+      return deployDate < todayStart
+    })
     .reduce((s, l) => s + Number(l.loan_amount || 0), 0)
   const adminYesterdayAccrual = adminYesterdayCapital * adminDailyRate
 
   // Admin overall accrual
   let adminOverallAccrual = 0
   adminActiveLoans.forEach(l => {
-    const loanStart = new Date(l.created_at)
-    const daysActive = Math.max(0, Math.floor((todayStart - loanStart) / 86400000))
+    const deployDate = l.release_date ? new Date(l.release_date) : new Date(l.created_at)
+    const daysActive = Math.max(0, Math.floor((todayStart - deployDate) / 86400000))
     adminOverallAccrual += Number(l.loan_amount) * adminDailyRate * daysActive
   })
   adminOverallAccrual += adminTodayAccrual
@@ -229,13 +231,16 @@ export default function InvestorsPage() {
           const invDailyProfit = invDeployed * dailyRate
           const invTodayAccrual = invDailyProfit * dayProgress
           const invYesterdayCapital = invActive
-            .filter(l => new Date(l.created_at) <= yesterday)
+            .filter(l => {
+              const deployDate = l.release_date ? new Date(l.release_date) : new Date(l.created_at)
+              return deployDate < todayStart
+            })
             .reduce((s, l) => s + Number(l.loan_amount || 0), 0)
           const invYesterdayAccrual = invYesterdayCapital * dailyRate
           let invOverallAccrual = 0
           invActive.forEach(l => {
-            const loanStart = new Date(l.created_at)
-            const daysActive = Math.max(0, Math.floor((todayStart - loanStart) / 86400000))
+            const deployDate = l.release_date ? new Date(l.release_date) : new Date(l.created_at)
+            const daysActive = Math.max(0, Math.floor((todayStart - deployDate) / 86400000))
             invOverallAccrual += Number(l.loan_amount) * dailyRate * daysActive
           })
           invOverallAccrual += invTodayAccrual

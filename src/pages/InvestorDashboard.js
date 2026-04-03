@@ -221,19 +221,22 @@ export default function InvestorDashboard() {
     setLiveAccrual(dailyProfit * (secondsInDay / 86400))
 
     // Yesterday's accrual — full day of interest on capital that was active yesterday
-    const yesterday = new Date(now)
-    yesterday.setDate(yesterday.getDate() - 1)
+    // Use todayStart as cutoff: if a loan's deploy date is before today, it was active yesterday
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    const yesterdayStart = new Date(todayStart); yesterdayStart.setDate(yesterdayStart.getDate() - 1)
     const yesterdayCapital = activeLoansFiltered
-      .filter(l => new Date(l.created_at) <= yesterday)
+      .filter(l => {
+        const deployDate = l.release_date ? new Date(l.release_date) : new Date(l.created_at)
+        return deployDate < todayStart
+      })
       .reduce((s, l) => s + Number(l.loan_amount), 0)
     setYesterdayAccrual(yesterdayCapital * dailyRate)
 
     // Overall accrual — total interest accumulated across all days each active loan has been deployed
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
     let totalOverall = 0
     activeLoansFiltered.forEach(l => {
-      const loanStart = new Date(l.created_at)
-      const daysActive = Math.max(0, Math.floor((todayStart - loanStart) / 86400000))
+      const deployDate = l.release_date ? new Date(l.release_date) : new Date(l.created_at)
+      const daysActive = Math.max(0, Math.floor((todayStart - deployDate) / 86400000))
       totalOverall += Number(l.loan_amount) * dailyRate * daysActive
     })
     // Add today's partial accrual
