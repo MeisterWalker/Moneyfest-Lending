@@ -182,6 +182,8 @@ export default function InvestorDashboard() {
   const [ledgerFilter, setLedgerFilter] = useState('all')
   const [showNotifications, setShowNotifications] = useState(false)
   const [togglingReinvest, setTogglingReinvest] = useState(false)
+  const [calcAmount, setCalcAmount] = useState(10000)
+  const [calcMonths, setCalcMonths] = useState(3)
   const { toast } = useToast()
 
   const t = isDark ? DARK : LIGHT
@@ -548,6 +550,7 @@ export default function InvestorDashboard() {
           {[
             { id: 'overview', label: '📊 Overview' },
             { id: 'ledger', label: '📒 Transaction Ledger' },
+            { id: 'tools', label: '🧮 Tools' },
           ].map(tab => (
             <button key={tab.id} onClick={() => setDashTab(tab.id)}
               style={{
@@ -1050,6 +1053,89 @@ export default function InvestorDashboard() {
                   <div style={{ display: 'flex', gap: 16, fontSize: 12 }}>
                     <span style={{ color: t.textMuted }}>Net Interest: <strong style={{ color: t.green }}>{formatCurrency(totalInterestEarned)}</strong></span>
                     <span style={{ color: t.textMuted }}>Current Balance: <strong style={{ color: t.accent }}>{formatCurrency(runBal)}</strong></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )
+        })()}
+        {/* ── TOOLS TAB ── */}
+        {dashTab === 'tools' && (() => {
+          const rate = TIER_RATES[investor.tier] || 0.08
+          // Calculate compound interest based on 90-day cycles (approx 3 months)
+          const cycles = calcMonths / 3
+          // simple interest if auto_reinvest is false, compound if true. Simulation assumes compound.
+          const futureValue = calcAmount * Math.pow((1 + rate), cycles)
+          const totalEarned = futureValue - calcAmount
+          const roi = ((totalEarned / calcAmount) * 100).toFixed(2)
+
+          return (
+            <div style={{ paddingBottom: 60, animation: 'fadeIn 0.3s ease-out' }}>
+              <div style={{ maxWidth: 800, margin: '0 auto' }}>
+                <div style={{ ...card, padding: 32, boxShadow: isDark ? '0 10px 40px rgba(0,0,0,0.3)' : '0 10px 40px rgba(0,0,0,0.06)' }}>
+                  <div style={{ textAlign: 'center', marginBottom: 32 }}>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 48, height: 48, borderRadius: 16, background: `linear-gradient(135deg, ${t.accent}, ${t.accent2})`, color: '#fff', marginBottom: 16 }}>
+                      <TrendingUp size={24} />
+                    </div>
+                    <h2 style={{ fontFamily: 'Syne, sans-serif', fontSize: 24, fontWeight: 800, color: t.text, margin: '0 0 8px' }}>Earnings Simulator</h2>
+                    <p style={{ color: t.textMuted, fontSize: 14, margin: 0 }}>Project your wealth growth based on your <strong style={{ color: t.gold }}>{investor.tier}</strong> Partner rate ({(rate * 100).toFixed(1)}% per cycle).</p>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'minmax(300px, 1fr) minmax(300px, 1fr)', gap: 40, alignItems: 'center' }}>
+                    {/* Controls */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+                      <div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                          <span style={{ fontSize: 13, fontWeight: 600, color: t.text }}>Initial Capital</span>
+                          <span style={{ fontSize: 14, fontWeight: 800, color: t.accent }}>₱{Number(calcAmount).toLocaleString()}</span>
+                        </div>
+                        <input type="range" min={1000} max={1000000} step={1000} value={calcAmount} onChange={e => setCalcAmount(Number(e.target.value))}
+                          style={{ width: '100%', accentColor: t.accent, cursor: 'pointer' }} />
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6, fontSize: 11, color: t.textMuted }}>
+                          <span>₱1K</span><span>₱1M</span>
+                        </div>
+                      </div>
+
+                      <div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                          <span style={{ fontSize: 13, fontWeight: 600, color: t.text }}>Investment Duration</span>
+                          <span style={{ fontSize: 14, fontWeight: 800, color: t.accent }}>{calcMonths} Months</span>
+                        </div>
+                        <input type="range" min={3} max={60} step={3} value={calcMonths} onChange={e => setCalcMonths(Number(e.target.value))}
+                          style={{ width: '100%', accentColor: t.accent, cursor: 'pointer' }} />
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6, fontSize: 11, color: t.textMuted }}>
+                          <span>3 Months</span><span>5 Years</span>
+                        </div>
+                      </div>
+
+                      <div style={{ padding: 16, background: isDark ? 'rgba(34,197,94,0.1)' : '#DCFCE7', borderRadius: 12, border: `1px solid ${isDark ? 'rgba(34,197,94,0.2)' : '#BBF7D0'}` }}>
+                        <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                          <Info size={16} style={{ color: t.green, marginTop: 2, flexShrink: 0 }} />
+                          <div style={{ fontSize: 12, color: isDark ? '#BBF7D0' : '#166534', lineHeight: 1.5 }}>
+                            <strong>Compounding engaged!</strong> This projection assumes your <strong>Auto-Reinvest</strong> feature is enabled, compounding your returns back into your capital pool every 90-day cycle.
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Results */}
+                    <div style={{ background: isDark ? 'rgba(255,255,255,0.03)' : '#F8FAFF', borderRadius: 20, padding: 32, border: `1px solid ${t.divider}`, textAlign: 'center' }}>
+                      <div style={{ fontSize: 12, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700, marginBottom: 8 }}>Projected Future Value</div>
+                      <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 36, fontWeight: 800, color: t.text, marginBottom: 24 }}>
+                        {formatCurrency(futureValue)}
+                      </div>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                        <div style={{ background: t.cardBg, border: `1px solid ${t.cardBorder}`, borderRadius: 12, padding: 16 }}>
+                          <div style={{ fontSize: 11, color: t.textMuted, marginBottom: 4 }}>Total Earned</div>
+                          <div style={{ fontSize: 18, fontWeight: 800, color: t.green }}>+{formatCurrency(totalEarned)}</div>
+                        </div>
+                        <div style={{ background: t.cardBg, border: `1px solid ${t.cardBorder}`, borderRadius: 12, padding: 16 }}>
+                          <div style={{ fontSize: 11, color: t.textMuted, marginBottom: 4 }}>Total ROI</div>
+                          <div style={{ fontSize: 18, fontWeight: 800, color: t.green }}>+{roi}%</div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
