@@ -1451,8 +1451,7 @@ export default function BorrowerPortalPage() {
         .stats-grid { transition: all 0.3s ease; }
         @media (max-width: 860px) { 
           .portal-grid { grid-template-columns: 1fr !important; } 
-          .portal-sidebar { display: none !important; } 
-          .bottom-nav { display: flex !important; }
+          .bottom-nav { display: flex !important; margin-top: 20px; }
           .main-content-area { padding-bottom: 80px !important; }
         }
         @media (max-width: 640px) { .stats-grid { grid-template-columns: repeat(2, 1fr) !important; } }
@@ -2003,9 +2002,12 @@ export default function BorrowerPortalPage() {
                     { icon: <Clock size={16} />, page: 'payment-history', label: 'History', color: '#22C55E' },
                     { icon: <User size={16} />, page: 'profile', label: 'My Profile', color: '#3B82F6' },
                     { icon: <Wallet size={16} />, page: 'wallet', label: 'Wallet', color: '#F59E0B' },
-                    { icon: <CreditCard size={16} />, page: 'payment-methods', label: 'Repay Now', color: '#8B5CF6' },
+                    { icon: <CreditCard size={16} />, page: 'home', action: 'scroll-to-pay', label: 'Repay Now', color: '#8B5CF6' },
                   ].map((item, i) => (
-                    <button key={i} onClick={() => setPage(item.page)} className="ribbon-btn" data-label={item.label}
+                    <button key={i} onClick={() => {
+                        setPage(item.page)
+                        if (item.action === 'scroll-to-pay') setTimeout(() => document.getElementById('payment-section')?.scrollIntoView({ behavior: 'smooth' }), 150)
+                      }} className="ribbon-btn" data-label={item.label}
                       style={{ 
                         flex: 1, height: 42, borderRadius: 12, border: '1px solid rgba(255,255,255,0.06)', 
                         background: 'rgba(255,255,255,0.02)', display: 'flex', alignItems: 'center', justifyContent: 'center', 
@@ -2071,6 +2073,7 @@ export default function BorrowerPortalPage() {
 
 
               {/* Payment Options in sidebar (QuickLoan only) */}
+              <div id="payment-section">
               {loan && loan.loan_type === 'quickloan' && loan.status !== 'Pending' && (
                 <div className="pc" style={{ background: '#0E1320', border: '1px solid rgba(99,102,241,0.18)', borderRadius: 16, overflow: 'hidden' }}>
                   <div style={{ padding: '12px 14px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: 7 }}>
@@ -2132,6 +2135,7 @@ export default function BorrowerPortalPage() {
                   </div>
                 </div>
               )}
+              </div>
 
               {/* Calendar: keep for installment loans only */}
               {(!loan || loan.loan_type !== 'quickloan') && (
@@ -2197,7 +2201,7 @@ export default function BorrowerPortalPage() {
                           <span style={{ fontSize: 11, color: '#4B5580' }}>Est. Total Savings</span>
                           <span style={{ fontSize: 14, fontWeight: 900, color: '#60A5FA', fontFamily: 'Syne, sans-serif' }}>₱{rebate.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
                         </div>
-                        <button onClick={() => setPage('payment-methods')} style={{ width: '100%', marginTop: 14, padding: '9px', borderRadius: 10, border: '1px solid rgba(34,197,94,0.3)', background: 'rgba(34,197,94,0.06)', color: '#22C55E', fontSize: 12, fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s' }}>
+                        <button onClick={() => { setPage('home'); setTimeout(() => document.getElementById('payment-section')?.scrollIntoView({ behavior: 'smooth' }), 150) }} style={{ width: '100%', marginTop: 14, padding: '9px', borderRadius: 10, border: '1px solid rgba(34,197,94,0.3)', background: 'rgba(34,197,94,0.06)', color: '#22C55E', fontSize: 12, fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s' }}>
                           Pay Early Now →
                         </button>
                       </div>
@@ -2250,7 +2254,7 @@ export default function BorrowerPortalPage() {
             <Wallet size={20} />
             <span className="bn-label">Wallet</span>
           </button>
-          <button onClick={() => setPage('payment-methods')} className={`bn-item ${page === 'payment-methods' ? 'active' : ''}`}>
+          <button onClick={() => { setPage('home'); setTimeout(() => document.getElementById('payment-section')?.scrollIntoView({ behavior: 'smooth' }), 150) }} className={`bn-item ${page === 'payment-methods' ? 'active' : ''}`}>
             <CreditCard size={20} />
             <span className="bn-label">Repay</span>
           </button>

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { Bell, X, CheckCheck, FileText, Clock, BellOff, Eye } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
+import { useToast } from './Toast'
 
 const VAPID_PUBLIC = 'BH38yVjqloXzB2UF9aDXCV8qdOiKhPoQ1rRTYSyRtWZiDe8qOcFFW8ZNOMA-yw0xlf0O0jcPBnrK99xyZsjzpRE'
 
@@ -61,6 +62,7 @@ function timeAgo(dateStr) {
 
 export default function NotificationBell() {
   const { user } = useAuth()
+  const { toast } = useToast()
   const [open, setOpen] = useState(false)
   const [notifications, setNotifications] = useState([])
   const [loading, setLoading] = useState(true)
@@ -148,7 +150,7 @@ export default function NotificationBell() {
     checkDue()
   }, [user, loading, addNotif])
 
-  // Real-time new applications
+  // Real-time new applications and proofs
   useEffect(() => {
     if (!user) return
     const channel = supabase.channel('new-applications-bell')
@@ -157,10 +159,25 @@ export default function NotificationBell() {
           const app = payload.new
           const msg = app.full_name + ' applied for P' + Number(app.loan_amount).toLocaleString()
           addNotif('application', 'New Application', msg, true)
+          toast(msg, 'info')
+        })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'payment_proofs' },
+        payload => {
+          const proof = payload.new
+          const msg = `Installment ${proof.installment_number} proof submitted and is pending review.`
+          addNotif('proof', 'Payment Proof Submitted', msg, true)
+          toast(msg, 'info')
+        })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'principal_payments' },
+        payload => {
+          const pp = payload.new
+          const msg = `Principal payment proof of P${Number(pp.payment_amount).toLocaleString()} submitted and is pending review.`
+          addNotif('proof', 'Principal Payment Proof', msg, true)
+          toast(msg, 'info')
         })
       .subscribe()
     return () => supabase.removeChannel(channel)
-  }, [user, addNotif])
+  }, [user, addNotif, toast])
 
   // Close on outside click
   useEffect(() => {
