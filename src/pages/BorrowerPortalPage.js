@@ -120,6 +120,7 @@ function UploadModal({ installmentNum, loan, borrower, onClose, onUploaded, qlPa
           <div style={{ padding: '14px', background: 'rgba(59,130,246,0.06)', borderRadius: 12, border: '1px solid rgba(59,130,246,0.15)', marginBottom: 14, textAlign: 'left' }}>
             <div style={{ fontSize: 11, color: '#3B82F6', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Send Payment To</div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 8 }}>
+              {/* GCash Option */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: 'rgba(255,255,255,0.03)', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <img src="/gcash-logo.png" alt="GCash" style={{ width: 24, height: 24, objectFit: 'contain' }} />
@@ -129,6 +130,17 @@ function UploadModal({ installmentNum, loan, borrower, onClose, onUploaded, qlPa
                   </div>
                 </div>
                 <div style={{ fontSize: 13, fontFamily: 'Space Grotesk, sans-serif', fontWeight: 800, color: '#60A5FA' }}>09665835179</div>
+              </div>
+              {/* RCBC Option */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: 'rgba(255,255,255,0.03)', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <img src="/rcbc-logo.png" alt="RCBC" style={{ width: 24, height: 24, objectFit: 'contain', borderRadius: 4 }} />
+                  <div>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: '#F0F4FF' }}>RCBC</div>
+                    <div style={{ fontSize: 10, color: '#7A8AAA' }}>John Paul Lacaron</div>
+                  </div>
+                </div>
+                <div style={{ fontSize: 13, fontFamily: 'Space Grotesk, sans-serif', fontWeight: 800, color: '#60A5FA' }}>9051147397</div>
               </div>
             </div>
           </div>
@@ -309,6 +321,7 @@ function PrincipalPaymentModal({ loan, borrower, onClose, onUploaded }) {
           <div style={{ padding: '14px', background: 'rgba(59,130,246,0.06)', borderRadius: 12, border: '1px solid rgba(59,130,246,0.15)', marginBottom: 16, textAlign: 'left' }}>
             <div style={{ fontSize: 11, color: '#3B82F6', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Send Payment To</div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 8 }}>
+              {/* GCash Option */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: 'rgba(255,255,255,0.03)', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <img src="/gcash-logo.png" alt="GCash" style={{ width: 24, height: 24, objectFit: 'contain' }} />
@@ -318,6 +331,17 @@ function PrincipalPaymentModal({ loan, borrower, onClose, onUploaded }) {
                   </div>
                 </div>
                 <div style={{ fontSize: 13, fontFamily: 'Space Grotesk, sans-serif', fontWeight: 800, color: '#60A5FA' }}>09665835179</div>
+              </div>
+              {/* RCBC Option */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: 'rgba(255,255,255,0.03)', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <img src="/rcbc-logo.png" alt="RCBC" style={{ width: 24, height: 24, objectFit: 'contain', borderRadius: 4 }} />
+                  <div>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: '#F0F4FF' }}>RCBC</div>
+                    <div style={{ fontSize: 10, color: '#7A8AAA' }}>John Paul Lacaron</div>
+                  </div>
+                </div>
+                <div style={{ fontSize: 13, fontFamily: 'Space Grotesk, sans-serif', fontWeight: 800, color: '#60A5FA' }}>9051147397</div>
               </div>
             </div>
           </div>
