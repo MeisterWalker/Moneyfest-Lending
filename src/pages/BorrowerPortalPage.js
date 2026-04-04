@@ -142,6 +142,17 @@ function UploadModal({ installmentNum, loan, borrower, onClose, onUploaded, qlPa
                 </div>
                 <div style={{ fontSize: 13, fontFamily: 'Space Grotesk, sans-serif', fontWeight: 800, color: '#60A5FA' }}>9051147397</div>
               </div>
+              {/* MariBank Option */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: 'rgba(255,255,255,0.03)', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{ width: 24, height: 24, background: '#F59E0B', borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, color: '#fff' }}>M</div>
+                  <div>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: '#F0F4FF' }}>MariBank</div>
+                    <div style={{ fontSize: 10, color: '#7A8AAA' }}>Charlou June Ramil</div>
+                  </div>
+                </div>
+                <div style={{ fontSize: 13, fontFamily: 'Space Grotesk, sans-serif', fontWeight: 800, color: '#60A5FA' }}>12476681477</div>
+              </div>
             </div>
           </div>
           <label style={{
@@ -342,6 +353,17 @@ function PrincipalPaymentModal({ loan, borrower, onClose, onUploaded }) {
                   </div>
                 </div>
                 <div style={{ fontSize: 13, fontFamily: 'Space Grotesk, sans-serif', fontWeight: 800, color: '#60A5FA' }}>9051147397</div>
+              </div>
+              {/* MariBank Option */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: 'rgba(255,255,255,0.03)', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{ width: 24, height: 24, background: '#F59E0B', borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, color: '#fff' }}>M</div>
+                  <div>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: '#F0F4FF' }}>MariBank</div>
+                    <div style={{ fontSize: 10, color: '#7A8AAA' }}>Charlou June Ramil</div>
+                  </div>
+                </div>
+                <div style={{ fontSize: 13, fontFamily: 'Space Grotesk, sans-serif', fontWeight: 800, color: '#60A5FA' }}>12476681477</div>
               </div>
             </div>
           </div>
