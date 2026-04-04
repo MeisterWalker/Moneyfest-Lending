@@ -4,7 +4,7 @@ import { CREDIT_CONFIG, calcSecurityHold } from '../lib/creditSystem'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../components/Toast'
 import { logAudit } from '../lib/helpers'
-import { sendApplicationApprovedEmail, sendApplicationRejectedEmail } from '../lib/emailService'
+import { sendApplicationApprovedEmail, sendApplicationRejectedEmail, sendPaymentConfirmedEmail } from '../lib/emailService'
 import { ClipboardList, Check, X, Clock, ChevronDown, ChevronUp, User, Phone, Mail, MapPin, Users, DollarSign, ExternalLink, Image, Brain } from 'lucide-react'
 
 const STATUS_COLORS = {
@@ -306,6 +306,39 @@ function ProofReviewSection({ supabase, user, logAudit }) {
         message: `Your Installment ${proof.installment_number} payment of ₱${Number(proof.loans?.installment_amount || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })} has been confirmed by the admin.`
       })
     }
+    
+    // Send payment confirmed receipt email
+    if (proof.borrowers?.email || proof.borrowers?.email) {
+      // In ApplicationsPage, we fetch email via borrowers relation. Wait, borrowers() didn't include email. Let's fetch it if missing.
+      const borrowerEmail = (proof.borrowers?.email) || (await supabase.from('borrowers').select('email, access_code').eq('id', proof.borrower_id).single().then(res => res.data))
+      
+      if (borrowerEmail && borrowerEmail.email) {
+        const numInstallments = proof.loans?.num_installments || 4
+        const installAmt = Math.ceil(proof.loans?.installment_amount || 0)
+        const remaining = Math.max(0, (proof.loans?.remaining_balance || 0) - installAmt)
+        const loanFullyPaid = remaining <= 0 || proof.installment_number >= numInstallments
+        
+        // This import might be missing, I'll need to check the top of the file
+        // Also assuming sendPaymentConfirmedEmail is imported
+        try {
+          // In JS, dynamic import or standard call because we already imported it at the top? Wait let me verify.
+          // sendApplicationApprovedEmail and sendApplicationRejectedEmail are imported at the top. I need to make sure I add this import!
+          // We'll update the import at the top next.
+          sendPaymentConfirmedEmail({
+            to: borrowerEmail.email,
+            borrowerName: proof.borrowers.full_name,
+            accessCode: proof.borrowers.access_code || borrowerEmail.access_code,
+            installmentNum: proof.installment_number,
+            numInstallments,
+            amountPaid: installAmt,
+            paymentDate: new Date().toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' }),
+            remainingBalance: remaining,
+            loanFullyPaid,
+          }).catch(e => console.warn('Payment email failed:', e))
+        } catch (e) { console.warn(e) }
+      }
+    }
+
     toast('Payment proof confirmed', 'success')
     fetchProofs()
   }

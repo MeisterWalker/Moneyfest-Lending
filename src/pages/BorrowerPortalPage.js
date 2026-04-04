@@ -115,6 +115,23 @@ function UploadModal({ installmentNum, loan, borrower, onClose, onUploaded, qlPa
                 : '⚠️ Upload proof of your 15-day interest + ₱100 extension fee payment. Your principal rolls over to Day 30.'}
             </div>
           )}
+          
+          {/* Admin Payment Details Box */}
+          <div style={{ padding: '14px', background: 'rgba(59,130,246,0.06)', borderRadius: 12, border: '1px solid rgba(59,130,246,0.15)', marginBottom: 14, textAlign: 'left' }}>
+            <div style={{ fontSize: 11, color: '#3B82F6', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Send Payment To</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: 'rgba(255,255,255,0.03)', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <img src="/gcash-logo.png" alt="GCash" style={{ width: 24, height: 24, objectFit: 'contain' }} />
+                  <div>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: '#F0F4FF' }}>GCash</div>
+                    <div style={{ fontSize: 10, color: '#7A8AAA' }}>Charlou June Ramil</div>
+                  </div>
+                </div>
+                <div style={{ fontSize: 13, fontFamily: 'Space Grotesk, sans-serif', fontWeight: 800, color: '#60A5FA' }}>09665835179</div>
+              </div>
+            </div>
+          </div>
           <label style={{
             display: 'block', border: `2px dashed ${file ? accentColor : 'rgba(255,255,255,0.1)'}`,
             borderRadius: 14, padding: '28px 20px', textAlign: 'center', cursor: 'pointer',
@@ -287,6 +304,23 @@ function PrincipalPaymentModal({ loan, borrower, onClose, onUploaded }) {
               )}
             </div>
           )}
+
+          {/* Admin Payment Details Box */}
+          <div style={{ padding: '14px', background: 'rgba(59,130,246,0.06)', borderRadius: 12, border: '1px solid rgba(59,130,246,0.15)', marginBottom: 16, textAlign: 'left' }}>
+            <div style={{ fontSize: 11, color: '#3B82F6', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Send Payment To</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: 'rgba(255,255,255,0.03)', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <img src="/gcash-logo.png" alt="GCash" style={{ width: 24, height: 24, objectFit: 'contain' }} />
+                  <div>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: '#F0F4FF' }}>GCash</div>
+                    <div style={{ fontSize: 10, color: '#7A8AAA' }}>Charlou June Ramil</div>
+                  </div>
+                </div>
+                <div style={{ fontSize: 13, fontFamily: 'Space Grotesk, sans-serif', fontWeight: 800, color: '#60A5FA' }}>09665835179</div>
+              </div>
+            </div>
+          </div>
 
           {/* File upload */}
           <label style={{ display: 'block', border: `2px dashed ${file ? 'rgba(99,102,241,0.5)' : 'rgba(255,255,255,0.1)'}`, borderRadius: 12, padding: '20px', textAlign: 'center', cursor: 'pointer', background: file ? 'rgba(99,102,241,0.05)' : 'rgba(255,255,255,0.02)', marginBottom: 14, transition: 'all 0.2s' }}>
@@ -2002,12 +2036,8 @@ export default function BorrowerPortalPage() {
                     { icon: <Clock size={16} />, page: 'payment-history', label: 'History', color: '#22C55E' },
                     { icon: <User size={16} />, page: 'profile', label: 'My Profile', color: '#3B82F6' },
                     { icon: <Wallet size={16} />, page: 'wallet', label: 'Wallet', color: '#F59E0B' },
-                    { icon: <CreditCard size={16} />, page: 'home', action: 'scroll-to-pay', label: 'Repay Now', color: '#8B5CF6' },
                   ].map((item, i) => (
-                    <button key={i} onClick={() => {
-                        setPage(item.page)
-                        if (item.action === 'scroll-to-pay') setTimeout(() => document.getElementById('payment-section')?.scrollIntoView({ behavior: 'smooth' }), 150)
-                      }} className="ribbon-btn" data-label={item.label}
+                    <button key={i} onClick={() => setPage(item.page)} className="ribbon-btn" data-label={item.label}
                       style={{ 
                         flex: 1, height: 42, borderRadius: 12, border: '1px solid rgba(255,255,255,0.06)', 
                         background: 'rgba(255,255,255,0.02)', display: 'flex', alignItems: 'center', justifyContent: 'center', 
@@ -2017,6 +2047,27 @@ export default function BorrowerPortalPage() {
                       <div style={{ position: 'absolute', bottom: 0, left: '20%', right: '20%', height: 2, background: item.color, opacity: 0.4, borderRadius: '2px 2px 0 0' }} />
                     </button>
                   ))}
+                  {/* Repay Now — direct action */}
+                  <button
+                    className="ribbon-btn"
+                    data-label="Repay Now"
+                    onClick={() => {
+                      if (!loan || loan.status === 'Pending' || loan.status === 'Paid') return
+                      if (loan.loan_type === 'quickloan') {
+                        document.getElementById('payment-section')?.scrollIntoView({ behavior: 'smooth' })
+                      } else {
+                        setUploadModal((loan.payments_made || 0) + 1)
+                      }
+                    }}
+                    style={{
+                      flex: 1, height: 42, borderRadius: 12, border: '1px solid rgba(255,255,255,0.06)',
+                      background: 'rgba(255,255,255,0.02)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      color: '#8B5CF6', cursor: loan && loan.status !== 'Pending' && loan.status !== 'Paid' ? 'pointer' : 'not-allowed',
+                      outline: 'none', opacity: loan && loan.status !== 'Pending' && loan.status !== 'Paid' ? 1 : 0.4
+                    }}>
+                    <CreditCard size={16} />
+                    <div style={{ position: 'absolute', bottom: 0, left: '20%', right: '20%', height: 2, background: '#8B5CF6', opacity: 0.4, borderRadius: '2px 2px 0 0' }} />
+                  </button>
                 </div>
 
                 {(() => {
