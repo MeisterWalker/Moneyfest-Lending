@@ -238,7 +238,7 @@ function LoanCard({ loan: rawLoan, borrowers, applications, investors, onEdit, o
         </div>
 
         {/* Progress bar */}
-        {(canPay || isPaid) && (
+        {(canPay || isPaid) && !isQuickLoan && (
           <InstallmentProgressBar
             paid={loan.payments_made}
             total={loan.num_installments || 4}
@@ -248,7 +248,7 @@ function LoanCard({ loan: rawLoan, borrowers, applications, investors, onEdit, o
         )}
 
         {/* Live penalty counter for overdue installments */}
-        {(loan.status === 'Active' || loan.status === 'Partially Paid' || loan.status === 'Overdue') && nextDue && (() => {
+        {(loan.status === 'Active' || loan.status === 'Partially Paid' || loan.status === 'Overdue') && !isQuickLoan && nextDue && (() => {
           const todayP = new Date(); todayP.setHours(0,0,0,0)
           const dueDateP = new Date(nextDue); dueDateP.setHours(0,0,0,0)
           const daysLateP = Math.max(0, Math.ceil((todayP - dueDateP) / (1000 * 60 * 60 * 24)))
