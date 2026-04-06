@@ -638,6 +638,10 @@ export default function BorrowerPortalPage() {
   const [partnerInputCode, setPartnerInputCode] = useState('')
   const [partnerError, setPartnerError] = useState('')
   const [partnerLoading, setPartnerLoading] = useState(false)
+  const [showReloanModal, setShowReloanModal] = useState(false)
+  const [reloanAmount, setReloanAmount] = useState(5000)
+  const [reloanPurpose, setReloanPurpose] = useState('')
+
 
   const handleCopy = (text, key) => {
     navigator.clipboard.writeText(text)
@@ -645,33 +649,38 @@ export default function BorrowerPortalPage() {
     setTimeout(() => setCopiedKey(null), 2000)
   }
 
-  const handleFastTrackRenewal = async () => {
+  const submitReloanRequest = async () => {
     if (!borrower) return
+    if (!reloanPurpose.trim()) {
+      alert('Please specify the purpose of your loan.')
+      return
+    }
     setRenewing(true)
     try {
-      // Create new application
       const { error: appError } = await supabase.from('applications').insert([{
         full_name: borrower.full_name,
         department: borrower.department,
         contact_number: borrower.contact_number,
         facebook_account: borrower.facebook_account,
-        requested_amount: borrower.loan_limit_level === 4 ? 10000 : borrower.loan_limit_level === 3 ? 9000 : borrower.loan_limit_level === 2 ? 7000 : 5000,
-        loan_purpose: loan?.loan_purpose || '', // Carry over previous purpose
+        loan_amount: Number(reloanAmount),
+        loan_purpose: reloanPurpose.trim(),
         status: 'Pending',
-        is_fast_track: true, // Tagging it for admin
-        borrower_id: borrower.id
+        is_fast_track: true,
+        borrower_id: borrower.id,
+        credit_score: borrower.credit_score || 750
       }])
       if (appError) throw appError
       setRenewalSent(true)
-      // Log audit
-      await logAudit(borrower.id, borrower.full_name, 'Fast-Track Renewal Submitted')
+      setShowReloanModal(false)
+      await logAudit(borrower.id, borrower.full_name, `Reloan Application Submitted: ₱${Number(reloanAmount).toLocaleString()} for ${reloanPurpose}`)
     } catch (err) {
       console.error(err)
-      alert('Failed to submit renewal. Please contact admin.')
+      alert('Failed to submit application. Please contact admin.')
     } finally {
       setRenewing(false)
     }
   }
+
 
 
   const fetchPortalData = useCallback(async (accessCode) => {
@@ -1639,11 +1648,17 @@ export default function BorrowerPortalPage() {
                   </div>
                 </div>
                 <button 
-                  onClick={handleFastTrackRenewal}
+                  onClick={() => {
+                    const max = borrower.loan_limit_level === 4 ? 10000 : borrower.loan_limit_level === 3 ? 9000 : borrower.loan_limit_level === 2 ? 7000 : 5000
+                    setReloanAmount(max)
+                    setReloanPurpose(loan?.loan_purpose || '')
+                    setShowReloanModal(true)
+                  }}
                   disabled={renewing}
                   style={{ width: '100%', padding: '14px', borderRadius: 14, border: 'none', background: renewing ? 'rgba(139,92,246,0.3)' : 'linear-gradient(135deg,#6366F1,#8B5CF6)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: renewing ? 'not-allowed' : 'pointer', fontFamily: 'Syne, sans-serif', transition: 'all 0.2s', boxShadow: '0 8px 20px rgba(99,102,241,0.3)' }}>
                   {renewing ? 'Submitting...' : '✨ Apply for a New Loan'}
                 </button>
+
               </div>
             )}
 
@@ -2336,6 +2351,105 @@ export default function BorrowerPortalPage() {
         {showPrincipalModal && loan && borrower && (
           <PrincipalPaymentModal loan={loan} borrower={borrower} onClose={() => setShowPrincipalModal(false)} onUploaded={() => { setShowPrincipalModal(false); handleUploaded() }} />
         )}
+        {showReloanModal && (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20 }}>
+            <div style={{ width: '100%', maxWidth: 460, background: '#0E1320', border: '1px solid rgba(139,92,241,0.25)', borderRadius: 24, overflow: 'hidden', boxShadow: '0 40px 80px rgba(0,0,0,0.6)', animation: 'scaleIn 0.3s ease-out' }}>
+              <div style={{ padding: '24px 28px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'linear-gradient(to right, rgba(99,102,241,0.05), transparent)' }}>
+                <div>
+                  <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 18, color: '#F0F4FF' }}>Apply for a New Loan</div>
+                  <div style={{ fontSize: 12, color: '#7A8AAA', marginTop: 4 }}>Based on your credit score: <strong style={{ color: '#8B5CF6' }}>{borrower.credit_score || 750}</strong></div>
+                </div>
+                <button onClick={() => setShowReloanModal(false)} style={{ width: 36, height: 36, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: '#7A8AAA', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }} onMouseEnter={e => e.currentTarget.style.color = '#fff'}>✕</button>
+              </div>
+              
+              <div style={{ padding: '28px' }}>
+                <div style={{ marginBottom: 24 }}>
+                  <label style={{ display: 'block', fontSize: 11, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 800, marginBottom: 12 }}>Select Loan Amount</label>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>
+                    {[
+                      { amount: 5000, minLvl: 1 },
+                      { amount: 7000, minLvl: 2 },
+                      { amount: 9000, minLvl: 3 },
+                      { amount: 10000, minLvl: 4 }
+                    ].map((opt) => {
+                      const isUnlocked = (borrower.loan_limit_level || 1) >= opt.minLvl
+                      const isSelected = reloanAmount === opt.amount
+                      return (
+                        <button 
+                          key={opt.amount}
+                          disabled={!isUnlocked}
+                          onClick={() => setReloanAmount(opt.amount)}
+                          style={{ 
+                            padding: '14px', 
+                            borderRadius: 14, 
+                            border: `1.5px solid ${isSelected ? '#8B5CF6' : isUnlocked ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.03)'}`, 
+                            background: isSelected ? 'rgba(139,92,246,0.1)' : isUnlocked ? 'rgba(255,255,255,0.02)' : 'transparent',
+                            color: isSelected ? '#F0F4FF' : isUnlocked ? '#7A8AAA' : '#334155',
+                            cursor: isUnlocked ? 'pointer' : 'not-allowed',
+                            textAlign: 'center',
+                            transition: 'all 0.2s'
+                          }}
+                        >
+                          <div style={{ fontSize: 15, fontWeight: 800, fontFamily: 'Space Grotesk, sans-serif' }}>₱{opt.amount.toLocaleString()}</div>
+                          {!isUnlocked && <div style={{ fontSize: 9, marginTop: 4, fontWeight: 700 }}>🔒 LVL {opt.minLvl} REQUIRED</div>}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                <div style={{ marginBottom: 28 }}>
+                  <label style={{ display: 'block', fontSize: 11, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 800, marginBottom: 12 }}>Loan Purpose</label>
+                  <textarea 
+                    value={reloanPurpose}
+                    onChange={e => setReloanPurpose(e.target.value)}
+                    placeholder="What will you use this loan for? (e.g., Medical, Emergency, Utility Bills)"
+                    rows={3}
+                    style={{ 
+                      width: '100%', 
+                      boxSizing: 'border-box', 
+                      padding: '14px 16px', 
+                      background: 'rgba(255,255,255,0.03)', 
+                      border: '1px solid rgba(255,255,255,0.08)', 
+                      borderRadius: 16, 
+                      color: '#F0F4FF', 
+                      fontSize: 14, 
+                      resize: 'none', 
+                      outline: 'none', 
+                      fontFamily: 'DM Sans, sans-serif',
+                      transition: 'border-color 0.2s'
+                    }}
+                    onFocus={e => e.target.style.borderColor = 'rgba(139,92,246,0.5)'}
+                    onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', gap: 12 }}>
+                  <button onClick={() => setShowReloanModal(false)} style={{ flex: 1, padding: '14px', borderRadius: 14, border: '1px solid rgba(255,255,255,0.08)', background: 'transparent', color: '#7A8AAA', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>Cancel</button>
+                  <button 
+                    disabled={renewing || !reloanPurpose.trim()}
+                    onClick={submitReloanRequest}
+                    style={{ 
+                      flex: 2, 
+                      padding: '14px', 
+                      borderRadius: 14, 
+                      border: 'none', 
+                      background: (!reloanPurpose.trim() || renewing) ? 'rgba(255,255,255,0.05)' : 'linear-gradient(135deg,#6366F1,#8B5CF6)', 
+                      color: (!reloanPurpose.trim() || renewing) ? '#4B5580' : '#fff', 
+                      fontSize: 14, 
+                      fontWeight: 800, 
+                      cursor: (!reloanPurpose.trim() || renewing) ? 'not-allowed' : 'pointer', 
+                      fontFamily: 'Syne, sans-serif',
+                      boxShadow: (!reloanPurpose.trim() || renewing) ? 'none' : '0 10px 25px rgba(99,102,241,0.3)'
+                    }}>
+                    {renewing ? 'Submitting...' : '✨ Confirm Application'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
 
         {/* Mobile Bottom Navigation */}
         <nav className="bottom-nav">
