@@ -817,14 +817,15 @@ export default function LoansPage() {
       const scoreChange = daysLate > 0 ? CREDIT_CONFIG.LATE_PAYMENT : CREDIT_CONFIG.ON_TIME_PAYMENT
       const newScore = Math.min(CREDIT_CONFIG.MAX_SCORE, Math.max(CREDIT_CONFIG.MIN_SCORE, borrower.credit_score + scoreChange))
       const newRisk = CREDIT_CONFIG.riskFromScore(newScore)
-      const cleanLoans = loans.filter(l => l.borrower_id === borrower.id && l.status === 'Paid').length
       const newBadgeTemp = getBadgeFromScore(newScore)
+      
       await supabase.from('borrowers').update({
         credit_score: newScore,
         risk_score: newRisk,
         loyalty_badge: newBadgeTemp
       }).eq('id', borrower.id)
     }
+
 
     await logAudit({
       action_type: 'INSTALLMENT_PAID',
@@ -834,14 +835,14 @@ export default function LoansPage() {
     })
 
     if (newStatus === 'Paid') {
-      // Update borrower loan limit progression
       if (borrower) {
         // Use already-updated score from payment recording above
         const { data: freshBorrower } = await supabase.from('borrowers').select('credit_score').eq('id', borrower.id).single()
         const currentScore = freshBorrower?.credit_score || borrower.credit_score
         // +25 bonus fires on every clean loan completion
         const bonusScore = Math.min(CREDIT_CONFIG.MAX_SCORE, currentScore + CREDIT_CONFIG.FULL_LOAN_COMPLETE)
-        const newBadge = getBadgeFromScore(bonusScore)
+        const finalBadge = getBadgeFromScore(bonusScore) // Recalculate badge based on final score
+        
         // Only upgrade loan limit if borrower maintained at least starting score (750)
         const qualifiesForLimitUpgrade = currentScore >= CREDIT_CONFIG.STARTING_SCORE
         const newLevel = qualifiesForLimitUpgrade
@@ -851,10 +852,11 @@ export default function LoansPage() {
         const newLimit = limitMap[newLevel]
         await supabase.from('borrowers').update({
           loan_limit_level: newLevel, loan_limit: newLimit,
-          loyalty_badge: newBadge, credit_score: bonusScore,
+          loyalty_badge: finalBadge, credit_score: bonusScore,
           risk_score: CREDIT_CONFIG.riskFromScore(bonusScore)
         }).eq('id', borrower.id)
       }
+
 
       // ── Return Security Hold to borrower portal ─────────────
       // Fetch fresh loan data in case security_hold was NULL on old loans
@@ -993,11 +995,14 @@ export default function LoansPage() {
     // Deduct credit score -150 for default
     if (borrower) {
       const newScore = Math.max(CREDIT_CONFIG.MIN_SCORE, borrower.credit_score + CREDIT_CONFIG.LOAN_DEFAULT)
+      const newBadge = getBadgeFromScore(newScore)
       await supabase.from('borrowers').update({
         credit_score: newScore,
-        risk_score: CREDIT_CONFIG.riskFromScore(newScore)
+        risk_score: CREDIT_CONFIG.riskFromScore(newScore),
+        loyalty_badge: newBadge
       }).eq('id', borrower.id)
     }
+
     await logAudit({ action_type: 'LOAN_DEFAULTED', module: 'Loan', description: `Loan marked as defaulted for ${borrower?.full_name}`, changed_by: user?.email })
     toast(`Loan marked as defaulted`, 'warning')
     setDefaultTarget(null)
@@ -1124,15 +1129,20 @@ export default function LoansPage() {
       })
     }
 
-    // +25 credit score completion bonus
+    // +25 credit score completion bonus + badge update
     if (borrower) {
-      const newScore = Math.min(CREDIT_CONFIG.MAX_SCORE, (borrower.credit_score || CREDIT_CONFIG.STARTING_SCORE) + CREDIT_CONFIG.FULL_LOAN_COMPLETE)
+      const currentPoints = borrower.credit_score || CREDIT_CONFIG.STARTING_SCORE
+      const newScore = Math.min(CREDIT_CONFIG.MAX_SCORE, currentPoints + CREDIT_CONFIG.FULL_LOAN_COMPLETE)
       const newRisk = CREDIT_CONFIG.riskFromScore(newScore)
+      const newBadge = getBadgeFromScore(newScore) // Correctly update badge
+      
       await supabase.from('borrowers').update({
         credit_score: newScore,
-        risk_score: newRisk
+        risk_score: newRisk,
+        loyalty_badge: newBadge
       }).eq('id', borrower.id)
     }
+
 
     await logAudit({
       action_type: 'QUICKLOAN_PAID',
