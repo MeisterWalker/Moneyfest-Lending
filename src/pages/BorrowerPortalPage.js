@@ -9,6 +9,8 @@ import {
   Lock, CheckCircle, Clock, AlertCircle, Upload,
   FileText, Calendar, CreditCard, User, Wallet, ChevronDown, ChevronUp, X, Home
 } from 'lucide-react'
+import { useToast } from '../components/Toast'
+
 
 function formatDate(str) {
   if (!str) return "—"
@@ -602,10 +604,12 @@ function PortalHeader({ borrower, notifications, showNotifs, setShowNotifs, mark
 // Using pdfGenerator instead of raw HTML
 
 export default function BorrowerPortalPage() {
+  const { toast } = useToast()
   usePageVisit('portal')
   const [code, setCode] = useState('')
   const [inputCode, setInputCode] = useState('')
   const [borrower, setBorrower] = useState(null)
+
   const [loan, setLoan] = useState(null)
   const [proofs, setProofs] = useState([])
   const [loading, setLoading] = useState(false)
@@ -681,7 +685,10 @@ export default function BorrowerPortalPage() {
       
       setRenewalSent(true)
       setShowReloanModal(false)
+      toast('Reloan application submitted!', 'success')
       await logAudit(borrower.id, borrower.full_name, `Reloan Application Submitted: ₱${Number(reloanAmount).toLocaleString()} for ${reloanPurpose}`)
+      fetchPortalData(borrower.access_code) // Refresh to hide banner
+
     } catch (err) {
       console.error('Reloan Submission Error:', err)
       alert(`Submission failed: ${err.message || 'Please contact admin.'}\n\nTIP: Please refresh the page (Ctrl+R) to ensure you are using the latest version.`)
@@ -727,14 +734,15 @@ export default function BorrowerPortalPage() {
           break
         }
       }
-      // 3. Fetch latest application by borrower_id OR access_code
+      // 3. Fetch latest application by email OR access_code
       const { data: latestApp } = await supabase
         .from('applications')
         .select('*')
-        .or(`borrower_id.eq.${b.id},access_code.eq.${cleanCode}`)
+        .or(`email.eq.${b.email},access_code.eq.${cleanCode}`)
         .order('created_at', { ascending: false })
         .limit(1)
         .single()
+
       
       setPendingApp(latestApp || null)
       setLoading(false); return

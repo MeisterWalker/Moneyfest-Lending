@@ -240,11 +240,12 @@ function ApplicationCard({ app, onApprove, onReject }) {
                 </div>
               ) : (
                 <div>
-                  <input
+                  <textarea
                     value={rejectReason}
                     onChange={e => setRejectReason(e.target.value)}
                     placeholder="Enter rejection reason..."
-                    style={{ width: '100%', padding: '10px 14px', borderRadius: 9, border: '1px solid rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.05)', color: '#F0F4FF', fontSize: 13, boxSizing: 'border-box', marginBottom: 10 }}
+                    rows={3}
+                    style={{ width: '100%', padding: '12px 14px', borderRadius: 9, border: '1px solid rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.05)', color: '#F0F4FF', fontSize: 13, boxSizing: 'border-box', marginBottom: 10, resize: 'vertical', fontFamily: 'inherit', outline: 'none' }}
                   />
                   <div style={{ display: 'flex', gap: 8 }}>
                     <button onClick={handleReject} disabled={!rejectReason.trim() || loading} style={{ flex: 1, padding: '10px', borderRadius: 9, border: 'none', background: '#EF4444', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
