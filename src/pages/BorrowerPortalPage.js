@@ -844,7 +844,7 @@ export default function BorrowerPortalPage() {
 
 
   // ── PENDING APP SCREEN ───────────────────────────────────────
-  if (pendingApp) return (
+  if (!borrower && pendingApp) return (
     <div style={{ minHeight: '100dvh', background: '#080B14', fontFamily: 'DM Sans, sans-serif', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
       <PortalHeader />
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', minHeight: 'calc(100dvh - 60px)', padding: '20px 16px' }}>
