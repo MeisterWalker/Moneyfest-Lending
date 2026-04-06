@@ -657,29 +657,40 @@ export default function BorrowerPortalPage() {
     }
     setRenewing(true)
     try {
-      const { error: appError } = await supabase.from('applications').insert([{
+      // Generate tracking code like PublicApplyPage does
+      const newAppCode = 'LM-' + Math.random().toString(36).substring(2, 6).toUpperCase()
+      
+      const { error: appError } = await supabase.from('applications').insert({
         full_name: borrower.full_name,
-        department: borrower.department,
-        contact_number: borrower.contact_number,
-        facebook_account: borrower.facebook_account,
+        department: borrower.department || '',
+        phone: borrower.phone || '', 
+        email: borrower.email || '',
+        address: borrower.address || '',
         loan_amount: Number(reloanAmount),
         loan_purpose: reloanPurpose.trim(),
         status: 'Pending',
-        is_fast_track: true,
-        borrower_id: borrower.id,
-        credit_score: borrower.credit_score || 750
-      }])
+        access_code: newAppCode,
+        loan_type: 'regular',
+        loan_term: 2,
+        building: borrower.building || '',
+        tenure_years: parseFloat(borrower.tenure_years) || 0,
+        release_method: 'Physical Cash'
+      })
+
       if (appError) throw appError
+      
       setRenewalSent(true)
       setShowReloanModal(false)
       await logAudit(borrower.id, borrower.full_name, `Reloan Application Submitted: ₱${Number(reloanAmount).toLocaleString()} for ${reloanPurpose}`)
     } catch (err) {
-      console.error(err)
-      alert('Failed to submit application. Please contact admin.')
+      console.error('Reloan Submission Error:', err)
+      alert(`Submission failed: ${err.message || 'Please contact admin.'}\n\nTIP: Please refresh the page (Ctrl+R) to ensure you are using the latest version.`)
     } finally {
       setRenewing(false)
     }
   }
+
+
 
 
 
@@ -2066,12 +2077,9 @@ export default function BorrowerPortalPage() {
               <div style={{ textAlign: 'center', padding: '100px 20px', background: 'rgba(255,255,255,0.01)', border: '1px solid rgba(255,255,255,0.04)', borderRadius: 24 }}>
                 <div style={{ fontSize: 52, marginBottom: 16 }}>🏦</div>
                 <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 24, color: '#F0F4FF', marginBottom: 12 }}>No Active Loan</div>
-                <p style={{ fontSize: 14, color: '#7A8AAA', marginBottom: 24, maxWidth: 300, margin: '0 auto 24px' }}>
+                <p style={{ fontSize: 14, color: '#7A8AAA', marginBottom: 0, maxWidth: 300, margin: '0 auto' }}>
                   You don't have an active loan at the moment. Explore our loan options or check back later!
                 </p>
-                <a href="/apply" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '12px 28px', borderRadius: 14, background: 'linear-gradient(135deg,#3B82F6,#2563EB)', color: '#fff', fontSize: 14, fontWeight: 700, textDecoration: 'none', fontFamily: 'Syne, sans-serif' }}>
-                  Apply for a Loan →
-                </a>
               </div>
             )}
           </div>{/* end left column */}
