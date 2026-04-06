@@ -748,11 +748,20 @@ export default function BorrowerPortalPage() {
       setLoading(false); return
     }
     
-    // 4. If no borrower found, check if it's a first-time applicant
+    // 4. If no borrower found, check if it's an application tracking code
     const { data: app } = await supabase.from('applications').select('*').eq('access_code', cleanCode).single()
-    if (app) { setPendingApp(app); setLoading(false); return }
+    if (app) {
+      // If this application belongs to an existing borrower, log them in as that borrower instead
+      const { data: bByEmail } = await supabase.from('borrowers').select('access_code').eq('email', app.email).maybeSingle()
+      if (bByEmail) {
+        localStorage.setItem('lm_portal_code', bByEmail.access_code)
+        return fetchPortalData(bByEmail.access_code)
+      }
+      setPendingApp(app); setLoading(false); return 
+    }
     setError('Invalid access code. Please check and try again.')
     setLoading(false)
+
   }, [])
 
   useEffect(() => {
@@ -868,11 +877,12 @@ export default function BorrowerPortalPage() {
               </div>
               <div>
                 <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 800, fontSize: 20, color: '#F0F4FF', marginBottom: 3 }}>
-                  {pendingApp.status === 'Rejected' ? 'Application Not Approved' : 'Application Under Review'}
+                  {pendingApp.status === 'Rejected' ? 'Application Not Approved' : pendingApp.status === 'Approved' ? 'Application Approved!' : 'Application Under Review'}
                 </div>
-                <div style={{ fontSize: 12, color: pendingApp.status === 'Rejected' ? '#EF4444' : '#F59E0B', fontWeight: 600 }}>
-                  {pendingApp.status === 'Rejected' ? 'Status: Rejected' : 'Status: Pending Review'}
+                <div style={{ fontSize: 12, color: pendingApp.status === 'Rejected' ? '#EF4444' : pendingApp.status === 'Approved' ? '#22C55E' : '#F59E0B', fontWeight: 600 }}>
+                  {pendingApp.status === 'Rejected' ? 'Status: Rejected' : pendingApp.status === 'Approved' ? 'Status: Approved' : 'Status: Pending Review'}
                 </div>
+
               </div>
             </div>
 
@@ -884,7 +894,10 @@ export default function BorrowerPortalPage() {
             }}>
               {pendingApp.status === 'Rejected'
                 ? (pendingApp.reject_reason || 'Your application was not approved. Please contact an admin for more information.')
+                : pendingApp.status === 'Approved'
+                ? 'Your application has been approved! Our team is preparing your documents. You can now use your main access code to access the portal.'
                 : 'Your application is currently being reviewed by our admin team. Please check back later or reach out directly via Microsoft Teams for updates.'}
+
             </div>
 
             {/* Application details */}
