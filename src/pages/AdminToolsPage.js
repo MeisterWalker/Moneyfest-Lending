@@ -277,6 +277,7 @@ function LoanOverrideTool({ loans, borrowers, fetchData, adminEmail }) {
       status: l.status, payments_made: l.payments_made || 0,
       remaining_balance: l.remaining_balance || 0,
       security_hold: l.security_hold || 0, security_hold_returned: l.security_hold_returned || false,
+      release_date: l.release_date || '', due_date: l.due_date || '',
       current_principal: l.current_principal ?? l.loan_amount,
       extension_fee_charged: l.extension_fee_charged || false,
       interest_baseline_date: l.interest_baseline_date || l.release_date || ''
@@ -296,6 +297,8 @@ function LoanOverrideTool({ loans, borrowers, fetchData, adminEmail }) {
       remaining_balance: parseFloat(form.remaining_balance) || 0,
       security_hold: parseFloat(form.security_hold) || 0,
       security_hold_returned: form.security_hold_returned,
+      release_date: form.release_date || null,
+      due_date: form.due_date || null,
       updated_at: new Date().toISOString()
     }
     if (selected.loan_type === 'quickloan') {
@@ -388,6 +391,14 @@ function LoanOverrideTool({ loans, borrowers, fetchData, adminEmail }) {
                 <option value="false">No</option>
                 <option value="true">Yes</option>
               </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Release Date</label>
+              <input type="date" value={form.release_date} onChange={e => setForm(f => ({ ...f, release_date: e.target.value }))} />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Next Due Date</label>
+              <input type="date" value={form.due_date} onChange={e => setForm(f => ({ ...f, due_date: e.target.value }))} />
             </div>
             {isQL && (
               <>
