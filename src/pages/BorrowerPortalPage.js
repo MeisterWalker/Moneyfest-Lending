@@ -708,8 +708,13 @@ export default function BorrowerPortalPage() {
     if (b) {
       const { data: allL } = await supabase.from('loans').select('*').eq('borrower_id', b.id).order('created_at', { ascending: false })
       const { data: p } = await supabase.from('payment_proofs').select('*').eq('borrower_id', b.id).order('created_at', { ascending: false })
+      const { data: wBal } = await supabase.from('wallet_balances').select('*').eq('borrower_id', b.id).maybeSingle()
+      const { data: wTxns } = await supabase.from('wallet_transactions').select('*').eq('borrower_id', b.id).order('created_at', { ascending: false })
       let { data: notifs } = await supabase.from('portal_notifications').select('*').eq('borrower_id', b.id).order('created_at', { ascending: false }).limit(20)
+      
       setBorrower(b); setAllLoans(allL || []); setLoan(allL?.[0] || null); setProofs(p || [])
+      setRebateCredits(wBal || { balance: 0 }); setCreditTxns(wTxns || [])
+      
       const activeLoans = (allL || []).filter(l => l.status === 'Active')
       for (const activeLoan of activeLoans) {
         if (!activeLoan.release_date) continue
@@ -728,6 +733,15 @@ export default function BorrowerPortalPage() {
                 ? `Installment ${dueEntry.num} of ₱${Number(activeLoan.installment_amount).toLocaleString('en-PH', { minimumFractionDigits: 2 })} is due TODAY. Please submit your payment proof.`
                 : `Installment ${dueEntry.num} of ₱${Number(activeLoan.installment_amount).toLocaleString('en-PH', { minimumFractionDigits: 2 })} is due in ${diffDays} day${diffDays > 1 ? 's' : ''} (${due.toLocaleDateString('en-PH', { month: 'short', day: 'numeric' })}). Don't forget to pay!`
               const { data: newNotif } = await supabase.from('portal_notifications').insert({ borrower_id: b.id, type: 'due_soon', title: diffDays === 0 ? '⏰ Payment Due Today!' : '⏰ Payment Due Soon', message: msg }).select().single()
+              if (newNotif) notifs = [...(notifs || []), newNotif]
+            }
+          } else if (diffDays <= -3) {
+            // Trigger red warning for 3+ days overdue
+            const todayStr = new Date().toLocaleDateString('en-CA')
+            const alreadyNotifiedOverdue = (notifs || []).some(n => n.type === 'overdue_warning' && n.created_at.startsWith(todayStr))
+            if (!alreadyNotifiedOverdue) {
+              const msg = `🚨 IMPORTANT: Installment ${dueEntry.num} is ${Math.abs(diffDays)} days overdue. Unpaid daily penalties are accumulating. Please settle immediately.`
+              const { data: newNotif } = await supabase.from('portal_notifications').insert({ borrower_id: b.id, type: 'overdue_warning', title: '🔴 INSTALLMENT OVERDUE', message: msg }).select().single()
               if (newNotif) notifs = [...(notifs || []), newNotif]
             }
           }
@@ -1326,9 +1340,10 @@ export default function BorrowerPortalPage() {
                   {creditTxns.map((txn, i) => {
                     const isHoldReturn = txn.type === 'rebate' && txn.description?.toLowerCase().includes('security hold')
                     const isRebate = txn.type === 'rebate' && !isHoldReturn
-                    const label = isHoldReturn ? 'Security Hold Returned' : isRebate ? 'Early Payoff Rebate' : 'Withdrawal'
-                    const icon = isHoldReturn ? '🔐' : isRebate ? '🎁' : '💸'
-                    const amountColor = isHoldReturn ? '#F59E0B' : isRebate ? '#22C55E' : '#F0F4FF'
+                    const isDeduction = txn.type === 'penalty' || txn.type === 'deduction'
+                    const label = isHoldReturn ? 'Security Hold Returned' : isRebate ? 'Early Payoff Rebate' : isDeduction ? 'Penalty Deduction' : 'Withdrawal'
+                    const icon = isHoldReturn ? '🔐' : isRebate ? '🎁' : isDeduction ? '⚠️' : '💸'
+                    const amountColor = isHoldReturn ? '#F59E0B' : isRebate ? '#22C55E' : isDeduction ? '#EF4444' : '#F0F4FF'
                     return (
                       <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 18px', borderBottom: i < creditTxns.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -1343,7 +1358,7 @@ export default function BorrowerPortalPage() {
                           </div>
                         </div>
                         <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 15, color: amountColor }}>
-                          {txn.type === 'rebate' ? '+' : '-'}₱{Number(txn.amount).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
+                          {isDeduction || txn.type === 'withdrawal' ? '-' : '+'}₱{Number(txn.amount).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
                         </div>
                       </div>
                     )
