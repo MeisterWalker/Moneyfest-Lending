@@ -337,12 +337,7 @@ export default function BorrowersPage() {
       const currentLoan = bLoans.find(loan => ['Pending', 'Active', 'Partially Paid'].includes(loan.status))
       let loanUpdate = null
       
-      if (currentLoan && currentLoan.loan_type !== 'quickloan') {
-        const { hold: newHold, released: newReleased } = calcSecurityHold(Number(currentLoan.loan_amount), borrower.credit_score || 750)
-        if (Number(currentLoan.security_hold) !== newHold) {
-          loanUpdate = { id: currentLoan.id, security_hold: newHold, funds_released: newReleased }
-        }
-      }
+
 
       return {
         id: borrower.id,

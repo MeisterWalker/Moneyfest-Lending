@@ -73,17 +73,15 @@ export const SECURITY_HOLD_TIERS = [
   { minScore: 0,    badge: 'HighRisk', rate: 0.20, label: '20%', color: '#EF4444', perk: '🔴 High risk — max hold applied' },
 ]
 
-export const getSecurityHoldRate = (creditScore) => {
-  const score = creditScore || CREDIT_CONFIG.STARTING_SCORE
-  for (const tier of SECURITY_HOLD_TIERS) {
-    if (score >= tier.minScore) return tier
-  }
-  return SECURITY_HOLD_TIERS[SECURITY_HOLD_TIERS.length - 1]
+export const getSecurityHoldRate = (creditScore, cleanLoans = 0) => {
+  const badgeId = getBadgeStatus(creditScore, cleanLoans)
+  return SECURITY_HOLD_TIERS.find(t => t.badge === badgeId) || SECURITY_HOLD_TIERS[SECURITY_HOLD_TIERS.length - 1]
 }
 
-export const calcSecurityHold = (loanAmount, creditScore) => {
-  const tier = getSecurityHoldRate(creditScore)
+export const calcSecurityHold = (loanAmount, creditScore, cleanLoans = 0) => {
+  const tier = getSecurityHoldRate(creditScore, cleanLoans)
   const hold = parseFloat((loanAmount * tier.rate).toFixed(2))
   const released = parseFloat((loanAmount - hold).toFixed(2))
   return { hold, released, tier }
 }
+

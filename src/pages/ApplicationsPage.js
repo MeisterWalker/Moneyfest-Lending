@@ -603,9 +603,7 @@ export default function ApplicationsPage() {
           const installment = Math.ceil(total / numInstallments)
           const adjustedTotal = installment * numInstallments
 
-          const { data: borrowerData } = await supabase.from('borrowers').select('credit_score').eq('id', borrowerId).single()
-          const creditScore = borrowerData?.credit_score || 750
-          const { hold: holdAmt, released } = calcSecurityHold(loanAmount, creditScore)
+
 
 
           const { error: lErr } = await supabase.from('loans').insert({
