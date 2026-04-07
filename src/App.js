@@ -28,6 +28,7 @@ import InvestorDashboard from './pages/InvestorDashboard'
 import InvestorsPage from './pages/InvestorsPage'
 import AssessmentPage from './pages/AssessmentPage'
 import AssessmentForm from './pages/AssessmentForm'
+import AdminToolsPage from './pages/AdminToolsPage'
 import NotificationBell from './components/NotificationBell'
 import { useAutoLogout } from './hooks/useAutoLogout'
 import { useEffect, useState } from 'react'
@@ -93,6 +94,7 @@ function AppRoutes() {
       <Route path="/privacy"           element={<PrivacyPage />} />
       <Route path="/admin/investor-pitch" element={<ProtectedRoute><AppLayout><InvestorPitchPage /></AppLayout></ProtectedRoute>} />
       <Route path="/admin/investors"      element={<ProtectedRoute><AppLayout><InvestorsPage /></AppLayout></ProtectedRoute>} />
+      <Route path="/admin/tools"           element={<ProtectedRoute><AppLayout><AdminToolsPage /></AppLayout></ProtectedRoute>} />
       <Route path="/terms"            element={<TermsPage />} />
       <Route path="/contact"          element={<ContactPage />} />
       <Route path="/partners"         element={<PartnersPage />} />

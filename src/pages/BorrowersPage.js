@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
-import { CREDIT_CONFIG, getBadgeStatus, getBadgeConfig } from '../lib/creditSystem'
+import { CREDIT_CONFIG, getBadgeStatus, getBadgeConfig, calcSecurityHold } from '../lib/creditSystem'
 
 import { logAudit, formatDate } from '../lib/helpers'
 import { useAuth } from '../context/AuthContext'
@@ -334,10 +334,19 @@ export default function BorrowersPage() {
       const newBadge = getBadgeStatus(borrower.credit_score || 750, paidCount)
       
       // Find active/pending loan to potentially update hold
-      const currentLoan = bLoans.find(loan => ['Pending', 'Active', 'Partially Paid'].includes(loan.status))
+      const currentLoan = bLoans.find(loan => ['Pending', 'Active', 'Partially Paid', 'Overdue'].includes(loan.status))
       let loanUpdate = null
       
-
+      if (currentLoan && currentLoan.loan_type !== 'quickloan') {
+        const { hold: newHold, released: newReleased } = calcSecurityHold(
+          Number(currentLoan.loan_amount), 
+          borrower.credit_score || 750,
+          paidCount
+        )
+        if (Number(currentLoan.security_hold) !== newHold) {
+          loanUpdate = { id: currentLoan.id, security_hold: newHold, funds_released: newReleased }
+        }
+      }
 
       return {
         id: borrower.id,
@@ -362,15 +371,12 @@ export default function BorrowersPage() {
       }
     }
 
-    
     await logAudit({ action_type: 'SYSTEM_SYNC', module: 'Borrower', description: `Synchronized credit tiers and loan holds for ${borrowerUpdates.length} borrowers`, changed_by: user?.email })
     toast(`Successfully synced ${borrowerUpdates.length} borrowers`, 'success')
-
     fetchData()
   }
 
   const filtered = borrowers.filter(b =>
-
     b.full_name?.toLowerCase().includes(search.toLowerCase()) ||
     b.department?.toLowerCase().includes(search.toLowerCase())
   )
@@ -395,7 +401,6 @@ export default function BorrowersPage() {
             <UserPlus size={16} /> Add Borrower
           </button>
         </div>
-
       </div>
 
       {/* Stats row */}
