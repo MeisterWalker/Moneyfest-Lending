@@ -47,7 +47,7 @@ module.exports = async (req, res) => {
   // 1. Fetch active/partially paid installment loans
   const { data: loans, error: loansErr } = await supabase
     .from('loans')
-    .select('*, borrowers(id, full_name, email)')
+    .select('*, borrowers(id, full_name, email, credit_score)')
     .in('status', ['Active', 'Partially Paid', 'Overdue'])
     .neq('loan_type', 'quickloan');
 
@@ -121,6 +121,13 @@ module.exports = async (req, res) => {
 
       await supabase.from('loans').update(updatePayload).eq('id', loan.id);
 
+      // Decrement Credit Score logic (-10 points per late day)
+      const pointsToDeduct = (penalty / 20) * 10;
+      const currentScore = Number(loan.borrowers?.credit_score || 750);
+      const newScore = Math.max(300, currentScore - pointsToDeduct);
+      
+      await supabase.from('borrowers').update({ credit_score: newScore }).eq('id', loan.borrower_id);
+
       // Record transaction history for portal visibility
       await supabase.from('wallet_transactions').insert({
         borrower_id: loan.borrower_id,
@@ -150,6 +157,9 @@ module.exports = async (req, res) => {
                 <li><strong>Amount added to Principal Balance:</strong> ₱${addedToBalance > 0 ? addedToBalance.toLocaleString() : '0'}</li>
                 <li><strong>New Total Outstanding Balance:</strong> ₱${((Number(loan.remaining_balance) + addedToBalance)).toLocaleString()}</li>
               </ul>
+              <div style="margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.05);">
+                <p style="margin:0;color:#F97316;font-size:13px;">⚠️ <strong>Credit Impact:</strong> Your credit score has been lowered by ${pointsToDeduct} points (Now: ${newScore}).</p>
+              </div>
             </div>
             <p style="font-size:13px;color:#8892B0;">Please settle your payment immediately via your Borrower Portal to stop daily compounding penalties.</p>
             <a href="${process.env.REACT_APP_PORTAL_URL || 'https://moneyfestlending.loan/portal'}" style="display:inline-block;padding:12px 24px;background:#3B82F6;color:#FFF;text-decoration:none;font-weight:bold;border-radius:8px;margin-top:10px;">Login to Portal</a>
