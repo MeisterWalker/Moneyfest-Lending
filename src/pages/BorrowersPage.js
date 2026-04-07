@@ -324,30 +324,53 @@ export default function BorrowersPage() {
     
     setLoading(true)
     const { data: b } = await supabase.from('borrowers').select('id, credit_score, loyalty_badge')
-    const { data: l } = await supabase.from('loans').select('borrower_id, status')
+    const { data: l } = await supabase.from('loans').select('id, borrower_id, status, loan_amount, loan_type, security_hold, funds_released')
     
     if (!b || !l) { toast('Fetch failed', 'error'); setLoading(false); return }
     
-    const updates = b.map(borrower => {
-      const paidCount = l.filter(loan => loan.borrower_id === borrower.id && loan.status === 'Paid').length
+    const borrowerUpdates = b.map(borrower => {
+      const bLoans = l.filter(loan => loan.borrower_id === borrower.id)
+      const paidCount = bLoans.filter(loan => loan.status === 'Paid').length
       const newBadge = getBadgeStatus(borrower.credit_score || 750, paidCount)
+      
+      // Find active/pending loan to potentially update hold
+      const currentLoan = bLoans.find(loan => ['Pending', 'Active', 'Partially Paid'].includes(loan.status))
+      let loanUpdate = null
+      
+      if (currentLoan && currentLoan.loan_type !== 'quickloan') {
+        const { hold: newHold, released: newReleased } = calcSecurityHold(Number(currentLoan.loan_amount), borrower.credit_score || 750)
+        if (Number(currentLoan.security_hold) !== newHold) {
+          loanUpdate = { id: currentLoan.id, security_hold: newHold, funds_released: newReleased }
+        }
+      }
+
       return {
         id: borrower.id,
         clean_loans: paidCount,
-        loyalty_badge: newBadge
+        loyalty_badge: newBadge,
+        loanUpdate
       }
     })
     
-    // Batch update
-    for (const up of updates) {
+    // Batch update borrowers and their loans
+    for (const up of borrowerUpdates) {
       await supabase.from('borrowers').update({
         clean_loans: up.clean_loans,
         loyalty_badge: up.loyalty_badge
       }).eq('id', up.id)
+      
+      if (up.loanUpdate) {
+        await supabase.from('loans').update({
+          security_hold: up.loanUpdate.security_hold,
+          funds_released: up.loanUpdate.funds_released
+        }).eq('id', up.loanUpdate.id)
+      }
     }
+
     
-    await logAudit({ action_type: 'SYSTEM_SYNC', module: 'Borrower', description: `Synchronized credit tiers for ${updates.length} borrowers`, changed_by: user?.email })
-    toast(`Successfully synced ${updates.length} borrowers`, 'success')
+    await logAudit({ action_type: 'SYSTEM_SYNC', module: 'Borrower', description: `Synchronized credit tiers and loan holds for ${borrowerUpdates.length} borrowers`, changed_by: user?.email })
+    toast(`Successfully synced ${borrowerUpdates.length} borrowers`, 'success')
+
     fetchData()
   }
 

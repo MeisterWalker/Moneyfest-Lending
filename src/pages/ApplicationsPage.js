@@ -605,9 +605,8 @@ export default function ApplicationsPage() {
 
           const { data: borrowerData } = await supabase.from('borrowers').select('credit_score').eq('id', borrowerId).single()
           const creditScore = borrowerData?.credit_score || 750
-          const holdRate = creditScore >= 1000 ? 0.05 : creditScore >= 920 ? 0.06 : creditScore >= 835 ? 0.08 : creditScore >= 750 ? 0.10 : creditScore >= 500 ? 0.15 : 0.20
-          const holdAmt = parseFloat((loanAmount * holdRate).toFixed(2))
-          const released = loanAmount - holdAmt
+          const { hold: holdAmt, released } = calcSecurityHold(loanAmount, creditScore)
+
 
           const { error: lErr } = await supabase.from('loans').insert({
             borrower_id: borrowerId,
