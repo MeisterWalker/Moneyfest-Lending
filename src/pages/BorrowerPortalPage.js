@@ -1757,16 +1757,19 @@ export default function BorrowerPortalPage() {
                     }
                     const dates = getDueDates(loan.release_date, loan.payments_made, loan.num_installments)
                     const next = dates.find(d => !d.paid)
-                    const now = new Date()
-                    const diff = next ? Math.ceil((new Date(next.date) - now) / (1000 * 60 * 60 * 24)) : null
+                    const now = new Date(); now.setHours(0,0,0,0)
+                    const nextDate = next ? new Date(next.date) : null
+                    if (nextDate) nextDate.setHours(0,0,0,0)
+                    const diff = next ? Math.ceil((nextDate - now) / (1000 * 60 * 60 * 24)) : null
+                    const isOverdue = diff !== null && diff < 0
                     return {
                       label: 'Next Payday',
-                      value: next ? (diff > 0 ? `${diff} Days Left` : 'Due Today') : 'No pending',
+                      value: next ? (diff > 0 ? `${diff} Days Left` : diff < 0 ? `${Math.abs(diff)} Days Overdue` : 'Due Today') : 'No pending',
                       sub: next ? formatDate(next.dateStr) : 'Fully Paid',
                       icon: <Calendar size={14} />,
-                      color: '#8B5CF6',
-                      bg: 'rgba(139,92,246,0.08)',
-                      border: 'rgba(139,92,246,0.2)'
+                      color: isOverdue ? '#EF4444' : '#8B5CF6',
+                      bg: isOverdue ? 'rgba(239,68,68,0.08)' : 'rgba(139,92,246,0.08)',
+                      border: isOverdue ? 'rgba(239,68,68,0.2)' : 'rgba(139,92,246,0.2)'
                     }
                   })(),
                   { 

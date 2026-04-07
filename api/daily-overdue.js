@@ -120,46 +120,46 @@ module.exports = async (req, res) => {
         loan_id: loan.id,
         type: 'penalty_deduction',
         amount: -penalty,
-        description: \`Daily overdue penalty (Day \${daysLate}). \${holdToDeduct > 0 ? \`₱\${holdToDeduct} deducted from Hold.\` : ''} \${addedToBalance > 0 ? \`₱\${addedToBalance} added to Balance.\` : ''}\`.trim(),
+        description: `Daily overdue penalty (Day ${daysLate}). ${holdToDeduct > 0 ? `₱${holdToDeduct} deducted from Hold.` : ''} ${addedToBalance > 0 ? `₱${addedToBalance} added to Balance.` : ''}`.trim(),
         status: 'completed'
       });
 
       // 4. Send Email using the Supabase edge function mechanism directly to avoid importing React ES modules here.
       if (loan.borrowers?.email) {
         // Send via edge function or direct
-        const subject = \`🔴 Action Required: Installment is \${daysLate} days OVERDUE\`;
+        const subject = `🔴 Action Required: Installment is ${daysLate} days OVERDUE`;
         
-        const html = \`
+        const html = `
           <div style="font-family:sans-serif;background:#0B0F1A;padding:32px;color:#F0F4FF;border-radius:12px;">
             <div style="border-left:4px solid #EF4444;padding-left:14px;background:rgba(239,68,68,0.1);padding:14px;border-radius:0 8px 8px 0;margin-bottom:20px;">
               <h2 style="margin:0;color:#EF4444;font-size:18px;">⚠️ Account Overdue Warning</h2>
-              <p style="margin:8px 0 0;font-size:14px;line-height:1.5;">Hi <strong>\${loan.borrowers.full_name}</strong>, your loan installment due on <strong>\${nextDue.toLocaleDateString('en-PH')}</strong> is currently <strong>\${daysLate} days overdue.</strong></p>
+              <p style="margin:8px 0 0;font-size:14px;line-height:1.5;">Hi <strong>${loan.borrowers.full_name}</strong>, your loan installment due on <strong>${nextDue.toLocaleDateString('en-PH')}</strong> is currently <strong>${daysLate} days overdue.</strong></p>
             </div>
             
             <div style="background:#141B2D;border:1px solid #1E2640;border-radius:8px;padding:20px;margin-bottom:20px;">
               <p style="margin:0 0 10px;color:#8892B0;">We have automatically applied today's <strong>₱20 daily penalty</strong> to your account.</p>
               <ul style="margin:0;padding-left:20px;color:#CBD5F0;font-size:14px;line-height:1.6;">
-                <li><strong>Remaining Security Hold:</strong> ₱\${(currentHold - holdToDeduct).toLocaleString()}</li>
-                <li><strong>Amount added to Principal Balance:</strong> ₱\${addedToBalance > 0 ? addedToBalance.toLocaleString() : '0'}</li>
-                <li><strong>New Total Outstanding Balance:</strong> ₱\${((Number(loan.remaining_balance) + addedToBalance)).toLocaleString()}</li>
+                <li><strong>Remaining Security Hold:</strong> ₱${(currentHold - holdToDeduct).toLocaleString()}</li>
+                <li><strong>Amount added to Principal Balance:</strong> ₱${addedToBalance > 0 ? addedToBalance.toLocaleString() : '0'}</li>
+                <li><strong>New Total Outstanding Balance:</strong> ₱${((Number(loan.remaining_balance) + addedToBalance)).toLocaleString()}</li>
               </ul>
             </div>
             <p style="font-size:13px;color:#8892B0;">Please settle your payment immediately via your Borrower Portal to stop daily compounding penalties.</p>
-            <a href="\${process.env.REACT_APP_PORTAL_URL || 'https://moneyfestlending.loan/portal'}" style="display:inline-block;padding:12px 24px;background:#3B82F6;color:#FFF;text-decoration:none;font-weight:bold;border-radius:8px;margin-top:10px;">Login to Portal</a>
+            <a href="${process.env.REACT_APP_PORTAL_URL || 'https://moneyfestlending.loan/portal'}" style="display:inline-block;padding:12px 24px;background:#3B82F6;color:#FFF;text-decoration:none;font-weight:bold;border-radius:8px;margin-top:10px;">Login to Portal</a>
           </div>
-        \`;
+        `;
 
         // POST to Mail Edge Function
         try {
-          await fetch(\`\${supabaseUrl}/functions/v1/send-email\`, {
+          await fetch(`${supabaseUrl}/functions/v1/send-email`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'Authorization': \`Bearer \${supabaseKey}\`
+              'Authorization': `Bearer ${supabaseKey}`
             },
             body: JSON.stringify({ to: loan.borrowers.email, subject, html })
           });
-          console.log(\`[CRON] Email sent to \${loan.borrowers.email}\`);
+          console.log(`[CRON] Email sent to ${loan.borrowers.email}`);
         } catch (e) {
           console.error('[CRON] Email err:', e);
         }
