@@ -50,19 +50,7 @@ export const BADGE_TIERS = [
   { id: 'VIP',      emoji: '👑', label: 'VIP Borrower',      color: '#8B5CF6', bg: 'rgba(139,92,246,0.1)',   border: 'rgba(139,92,246,0.4)',   minScore: 1000, cleanLoans: 3, desc: 'After 3 clean loans' },
 ]
 
-export const getBadgeFromScore = (score) => {
-  if (score >= 1000) return 'VIP'
-  if (score >= 920)  return 'Reliable'
-  if (score >= 835)  return 'Trusted'
-  return 'New'
-}
 
-export const getBadgeFromCleanLoans = (cleanLoans) => {
-  if (cleanLoans >= 3) return 'VIP'
-  if (cleanLoans >= 2) return 'Reliable'
-  if (cleanLoans >= 1) return 'Trusted'
-  return 'New'
-}
 
 export const getBadgeConfig = (badgeId) =>
   BADGE_TIERS.find(b => b.id === badgeId) || BADGE_TIERS[0]

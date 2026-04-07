@@ -2162,9 +2162,11 @@ export default function BorrowerPortalPage() {
 
                 {(() => {
                   const score = borrower.credit_score || 750
+                  const cleanLoans = borrower.clean_loans || 0
                   const currentBadge = getBadgeConfig(borrower.loyalty_badge || 'New')
                   const nextBadgeIdx = BADGE_TIERS.findIndex(b => b.id === currentBadge.id) + 1
                   const nextBadge = BADGE_TIERS[nextBadgeIdx] || null
+
                   
                   const scorePct = ((score - 300) / 700) * 100
 
@@ -2185,16 +2187,32 @@ export default function BorrowerPortalPage() {
                               <span style={{ fontSize: 13, fontWeight: 700, color: '#CBD5F0' }}>Road to {nextBadge.label}</span>
                               <span style={{ fontSize: 12 }}>{nextBadge.emoji}</span>
                             </div>
-                            <span style={{ fontSize: 11, fontWeight: 800, color: nextBadge.color }}>{nextBadge.minScore - score} pts left</span>
+                            <span style={{ fontSize: 11, fontWeight: 800, color: nextBadge.color }}>
+                              {nextBadge.cleanLoans > cleanLoans 
+                                ? `${nextBadge.cleanLoans - cleanLoans} clean loan${nextBadge.cleanLoans - cleanLoans > 1 ? 's' : ''} to go`
+                                : `${nextBadge.minScore - score} pts left`}
+                            </span>
+
                           </div>
                           <div style={{ height: 6, background: 'rgba(255,255,255,0.06)', borderRadius: 3, overflow: 'hidden', marginBottom: 12 }}>
                             <div style={{ 
                               height: '100%', 
-                              width: Math.min(100, Math.max(5, ((score - currentBadge.minScore) / (nextBadge.minScore - currentBadge.minScore)) * 100)) + '%', 
+                              width: (() => {
+                                const ptsNeeded = nextBadge.minScore - currentBadge.minScore
+                                const ptsHave = score - currentBadge.minScore
+                                const ptsPct = ptsNeeded > 0 ? (ptsHave / ptsNeeded) * 100 : 0
+                                
+                                const loansNeeded = nextBadge.cleanLoans - currentBadge.cleanLoans
+                                const loansHave = cleanLoans - currentBadge.cleanLoans
+                                const loansPct = loansNeeded > 0 ? (loansHave / loansNeeded) * 100 : 0
+                                
+                                return Math.min(100, Math.max(5, Math.max(ptsPct, loansPct))) + '%'
+                              })(),
                               background: `linear-gradient(90deg, ${currentBadge.color}, ${nextBadge.color})`, 
                               borderRadius: 3, 
                               transition: 'width 1s ease' 
                             }} />
+
                           </div>
                           <div style={{ padding: '10px', background: `${nextBadge.color}08`, border: `1px solid ${nextBadge.color}15`, borderRadius: 10 }}>
                             <div style={{ fontSize: 9, color: nextBadge.color, textTransform: 'uppercase', fontWeight: 800, letterSpacing: '0.05em', marginBottom: 4 }}>Next Perk Unlocked</div>

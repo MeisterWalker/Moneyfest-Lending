@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
-import { CREDIT_CONFIG, getBadgeFromScore, getBadgeFromCleanLoans, calcSecurityHold, getSecurityHoldRate } from '../lib/creditSystem'
+import { CREDIT_CONFIG, getBadgeStatus, calcSecurityHold, getSecurityHoldRate } from '../lib/creditSystem'
+
 import { logAudit, formatCurrency, formatDate, getInstallmentDates, getNumInstallments, calcQuickLoanBalance, getQuickLoanDueDates, QUICKLOAN_CONFIG, getQuickLoanDaysElapsed } from '../lib/helpers'
 import { notifyBorrower } from '../lib/portalNotifications'
 import { sendFundsReleasedEmail, sendPaymentConfirmedEmail } from '../lib/emailService'
@@ -817,13 +818,14 @@ export default function LoansPage() {
       const scoreChange = daysLate > 0 ? CREDIT_CONFIG.LATE_PAYMENT : CREDIT_CONFIG.ON_TIME_PAYMENT
       const newScore = Math.min(CREDIT_CONFIG.MAX_SCORE, Math.max(CREDIT_CONFIG.MIN_SCORE, borrower.credit_score + scoreChange))
       const newRisk = CREDIT_CONFIG.riskFromScore(newScore)
-      const newBadgeTemp = getBadgeFromScore(newScore)
+      const newBadgeTemp = getBadgeStatus(newScore, borrower.clean_loans || 0)
       
       await supabase.from('borrowers').update({
         credit_score: newScore,
         risk_score: newRisk,
         loyalty_badge: newBadgeTemp
       }).eq('id', borrower.id)
+
     }
 
 
@@ -841,7 +843,8 @@ export default function LoansPage() {
         const currentScore = freshBorrower?.credit_score || borrower.credit_score
         // +25 bonus fires on every clean loan completion
         const bonusScore = Math.min(CREDIT_CONFIG.MAX_SCORE, currentScore + CREDIT_CONFIG.FULL_LOAN_COMPLETE)
-        const finalBadge = getBadgeFromScore(bonusScore) // Recalculate badge based on final score
+        const newCleanLoans = (borrower.clean_loans || 0) + 1
+        const finalBadge = getBadgeStatus(bonusScore, newCleanLoans)
         
         // Only upgrade loan limit if borrower maintained at least starting score (750)
         const qualifiesForLimitUpgrade = currentScore >= CREDIT_CONFIG.STARTING_SCORE
@@ -853,8 +856,10 @@ export default function LoansPage() {
         await supabase.from('borrowers').update({
           loan_limit_level: newLevel, loan_limit: newLimit,
           loyalty_badge: finalBadge, credit_score: bonusScore,
+          clean_loans: newCleanLoans,
           risk_score: CREDIT_CONFIG.riskFromScore(bonusScore)
         }).eq('id', borrower.id)
+
       }
 
 
@@ -995,13 +1000,14 @@ export default function LoansPage() {
     // Deduct credit score -150 for default
     if (borrower) {
       const newScore = Math.max(CREDIT_CONFIG.MIN_SCORE, borrower.credit_score + CREDIT_CONFIG.LOAN_DEFAULT)
-      const newBadge = getBadgeFromScore(newScore)
+      const newBadge = getBadgeStatus(newScore, borrower.clean_loans || 0)
       await supabase.from('borrowers').update({
         credit_score: newScore,
         risk_score: CREDIT_CONFIG.riskFromScore(newScore),
         loyalty_badge: newBadge
       }).eq('id', borrower.id)
     }
+
 
     await logAudit({ action_type: 'LOAN_DEFAULTED', module: 'Loan', description: `Loan marked as defaulted for ${borrower?.full_name}`, changed_by: user?.email })
     toast(`Loan marked as defaulted`, 'warning')
@@ -1134,14 +1140,17 @@ export default function LoansPage() {
       const currentPoints = borrower.credit_score || CREDIT_CONFIG.STARTING_SCORE
       const newScore = Math.min(CREDIT_CONFIG.MAX_SCORE, currentPoints + CREDIT_CONFIG.FULL_LOAN_COMPLETE)
       const newRisk = CREDIT_CONFIG.riskFromScore(newScore)
-      const newBadge = getBadgeFromScore(newScore) // Correctly update badge
+      const newCleanLoans = (borrower.clean_loans || 0) + 1
+      const newBadge = getBadgeStatus(newScore, newCleanLoans) 
       
       await supabase.from('borrowers').update({
         credit_score: newScore,
         risk_score: newRisk,
-        loyalty_badge: newBadge
+        loyalty_badge: newBadge,
+        clean_loans: newCleanLoans
       }).eq('id', borrower.id)
     }
+
 
 
     await logAudit({

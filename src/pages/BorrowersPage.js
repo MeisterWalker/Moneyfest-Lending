@@ -1,15 +1,18 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
-import { CREDIT_CONFIG, getBadgeConfig } from '../lib/creditSystem'
+import { CREDIT_CONFIG, getBadgeStatus, getBadgeConfig } from '../lib/creditSystem'
+
 import { logAudit, formatDate } from '../lib/helpers'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../components/Toast'
 import BorrowerModal from '../components/BorrowerModal'
-import {
-  UserPlus, Search, Users, Trash2, Edit2,
-  ChevronDown, ChevronUp, Phone, Mail,
-  CreditCard, Calendar, StickyNote, MapPin
+import { 
+  UserPlus, Search, Users, Trash2, Edit2, 
+  ChevronDown, ChevronUp, Phone, Mail, 
+  CreditCard, Calendar, StickyNote, MapPin,
+  RefreshCw
 } from 'lucide-react'
+
 import BorrowerAvatar from '../components/BorrowerAvatar'
 
 const BADGE_CONFIG = {
@@ -316,7 +319,40 @@ export default function BorrowersPage() {
     fetchData()
   }
 
+  const handleSyncAll = async () => {
+    if (!window.confirm('Recalculate all borrowers clean loans and badge tiers based on current loan history?')) return
+    
+    setLoading(true)
+    const { data: b } = await supabase.from('borrowers').select('id, credit_score, loyalty_badge')
+    const { data: l } = await supabase.from('loans').select('borrower_id, status')
+    
+    if (!b || !l) { toast('Fetch failed', 'error'); setLoading(false); return }
+    
+    const updates = b.map(borrower => {
+      const paidCount = l.filter(loan => loan.borrower_id === borrower.id && loan.status === 'Paid').length
+      const newBadge = getBadgeStatus(borrower.credit_score || 750, paidCount)
+      return {
+        id: borrower.id,
+        clean_loans: paidCount,
+        loyalty_badge: newBadge
+      }
+    })
+    
+    // Batch update
+    for (const up of updates) {
+      await supabase.from('borrowers').update({
+        clean_loans: up.clean_loans,
+        loyalty_badge: up.loyalty_badge
+      }).eq('id', up.id)
+    }
+    
+    await logAudit({ action_type: 'SYSTEM_SYNC', module: 'Borrower', description: `Synchronized credit tiers for ${updates.length} borrowers`, changed_by: user?.email })
+    toast(`Successfully synced ${updates.length} borrowers`, 'success')
+    fetchData()
+  }
+
   const filtered = borrowers.filter(b =>
+
     b.full_name?.toLowerCase().includes(search.toLowerCase()) ||
     b.department?.toLowerCase().includes(search.toLowerCase())
   )
@@ -334,10 +370,14 @@ export default function BorrowersPage() {
             <Search size={15} />
             <input placeholder="Search borrowers..." value={search} onChange={e => setSearch(e.target.value)} />
           </div>
-          <button className="btn-primary" onClick={openAdd}>
+          <button className="btn-edit" onClick={handleSyncAll} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 14px' }}>
+            <RefreshCw size={14} /> Sync Tiers
+          </button>
+          <button className="btn-primary" onClick={openAdd} style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
             <UserPlus size={16} /> Add Borrower
           </button>
         </div>
+
       </div>
 
       {/* Stats row */}
