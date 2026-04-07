@@ -68,24 +68,31 @@ module.exports = async (req, res) => {
     const daysLate = Math.floor((today - nextDue) / (1000 * 60 * 60 * 24));
 
     if (daysLate > 0) {
-      // 2. Check if we already processed a penalty for this exact loan today (prevent duplicate cron runs)
-      const { data: logs } = await supabase
+      // 2. Robust State-Based Penalty Calculation
+      // Retrieve past penalty deductions for this specific loan
+      const { data: pastLogs } = await supabase
         .from('wallet_transactions')
-        .select('id')
+        .select('amount')
         .eq('loan_id', loan.id)
-        .eq('type', 'penalty_deduction')
-        .gte('created_at', new Date(today.getTime() - today.getTimezoneOffset() * 60000).toISOString())
-        .limit(1);
+        .eq('type', 'penalty_deduction');
 
-      if (logs && logs.length > 0) {
-        console.log(`[CRON] Already processed penalty for loan ${loan.id} today.`);
-        continue; // skip
+      let totalPreviouslyCharged = 0;
+      if (pastLogs) {
+        pastLogs.forEach(log => {
+          totalPreviouslyCharged += Math.abs(log.amount || 0);
+        });
       }
 
-      console.log(`[CRON] Loan ${loan.id} is ${daysLate} days late. Processing penalty...`);
+      // 3. Catch-up Penalty logic: calculate what is owed minus what was already charged
+      const expectedTotalPenalty = daysLate * 20;
+      let penalty = expectedTotalPenalty - totalPreviouslyCharged;
 
-      // 3. Penalty logic: ₱20 per day 
-      let penalty = 20;
+      if (penalty <= 0) {
+        console.log(`[CRON] Loan ${loan.id} is up to date with penalty deductions.`);
+        continue; // skip, already billed correctly
+      }
+
+      console.log(`[CRON] Loan ${loan.id} is ${daysLate} days late. Processing catch-up penalty of ₱${penalty}...`);
       let holdToDeduct = 0;
       let addedToBalance = 0;
 
@@ -137,7 +144,7 @@ module.exports = async (req, res) => {
             </div>
             
             <div style="background:#141B2D;border:1px solid #1E2640;border-radius:8px;padding:20px;margin-bottom:20px;">
-              <p style="margin:0 0 10px;color:#8892B0;">We have automatically applied today's <strong>₱20 daily penalty</strong> to your account.</p>
+              <p style="margin:0 0 10px;color:#8892B0;">We have automatically applied a deduction of <strong>₱${penalty}</strong> to your account for accrued overdue penalties.</p>
               <ul style="margin:0;padding-left:20px;color:#CBD5F0;font-size:14px;line-height:1.6;">
                 <li><strong>Remaining Security Hold:</strong> ₱${(currentHold - holdToDeduct).toLocaleString()}</li>
                 <li><strong>Amount added to Principal Balance:</strong> ₱${addedToBalance > 0 ? addedToBalance.toLocaleString() : '0'}</li>

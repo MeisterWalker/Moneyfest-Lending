@@ -1669,7 +1669,7 @@ export default function BorrowerPortalPage() {
         }
       `}</style>
 
-      <PortalHeader borrower={borrower} notifications={notifications} showNotifs={showNotifs} setShowNotifs={setShowNotifs} markAllRead={markAllRead} onSignOut={() => { setBorrower(null); setLoan(null); setAllLoans([]); setCode(''); setInputCode(''); localStorage.removeItem('lm_portal_code') }} />
+      <PortalHeader borrower={borrower} notifications={notifications} showNotifs={showNotifs} setShowNotifs={setShowNotifs} markAllRead={markAllRead} onSignOut={() => { setBorrower(null); setLoan(null); setAllLoans([]); setCode(''); setInputCode(''); setPendingApp(null); localStorage.removeItem('lm_portal_code') }} />
 
       <div className="main-content-area" style={{ maxWidth: 1000, margin: '0 auto', padding: '28px 20px 48px' }}>
 
