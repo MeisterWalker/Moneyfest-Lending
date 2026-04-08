@@ -1115,6 +1115,7 @@ export default function LoansPage() {
       status: 'Paid',
       payments_made: 1,
       remaining_balance: 0,
+      total_repayment: totalCollected,
       updated_at: new Date().toISOString()
     }).eq('id', loan.id)
 
