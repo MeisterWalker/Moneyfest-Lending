@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../components/Toast'
-import { logAudit } from '../lib/helpers'
+import { logAudit, calcQuickLoanBalance, QUICKLOAN_CONFIG } from '../lib/helpers'
 import { sendPaymentConfirmedEmail } from '../lib/emailService'
 import { 
   ExternalLink, 
@@ -254,7 +254,7 @@ function PaymentProofsPanel({ user }) {
     setLoading(true)
     const { data } = await supabase
       .from('payment_proofs')
-      .select('*, borrowers(full_name, access_code, email), loans(loan_amount, installment_amount, num_installments, remaining_balance)')
+      .select('*, borrowers(full_name, access_code, email), loans(loan_amount, installment_amount, num_installments, remaining_balance, loan_type, release_date, current_principal, interest_baseline_date, extension_fee_charged)')
       .eq('status', 'Pending')
       .order('created_at', { ascending: false })
     setProofs(data || [])
@@ -351,7 +351,27 @@ function PaymentProofsPanel({ user }) {
                 {/* Info */}
                 <div style={{ flex: 1, minWidth: 200 }}>
                   <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 3 }}>{proof.borrowers?.full_name}</div>
-                  <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Installment {proof.installment_number} of {proof.loans?.num_installments || 4} · ₱{Number(proof.loans?.installment_amount).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</div>
+                  {(() => {
+                    const isQL = proof.loans?.loan_type === 'quickloan'
+                    const qlBalance = isQL ? calcQuickLoanBalance(proof.loans, proof.created_at) : null
+                    const label = isQL 
+                      ? (proof.notes?.toLowerCase().includes('pay-off') ? '⚡ QuickLoan Full Pay-off' : '📅 QuickLoan Interest Extension')
+                      : `Installment ${proof.installment_number} of ${proof.loans?.num_installments || 4}`
+                    const amount = isQL ? qlBalance.totalOwed : proof.loans?.installment_amount
+                    
+                    return (
+                      <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                        <span style={{ color: isQL ? 'var(--blue)' : 'inherit', fontWeight: isQL ? 700 : 400 }}>{label}</span>
+                        {' · '}
+                        <span style={{ fontWeight: 700 }}>₱{Number(amount).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
+                        {isQL && (
+                          <div style={{ fontSize: 10, color: '#4B5580', marginTop: 2 }}>
+                            (System balance as of {new Date(proof.created_at).toLocaleDateString()})
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })()}
                   {proof.notes && <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4, fontStyle: 'italic' }}>"{proof.notes}"</div>}
                   <div style={{ fontSize: 11, color: '#4B5580', marginTop: 4 }}>{new Date(proof.created_at).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
                 </div>
