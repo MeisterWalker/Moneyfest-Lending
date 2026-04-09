@@ -1948,7 +1948,8 @@ export default function BorrowerPortalPage() {
                   </div>
                   {(() => {
                     let maturity = 'TBD'
-                    if (loan.loan_type === 'quickloan' && loan.release_date) {
+                    const isQuickLoan = loan.loan_type?.toLowerCase().trim() === 'quickloan'
+                    if (isQuickLoan && loan.release_date) {
                       const { day30 } = getQuickLoanDueDates(loan.release_date)
                       if (day30) maturity = day30.toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' })
                     } else if (loan.release_date) {
@@ -1958,7 +1959,7 @@ export default function BorrowerPortalPage() {
                     }
                     return (
                       <div style={{ background: 'rgba(255,255,255,0.02)', borderRadius: 10, padding: '10px 12px' }}>
-                        <div style={{ fontSize: 9, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 4, fontWeight: 700 }}>Maturity Date</div>
+                        <div style={{ fontSize: 9, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 4, fontWeight: 700 }}>{isQuickLoan && '⚡ '}Maturity Date</div>
                         <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 13, color: '#F59E0B' }}>{maturity}</div>
                       </div>
                     )
