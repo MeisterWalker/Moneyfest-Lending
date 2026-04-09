@@ -395,7 +395,7 @@ export default function DashboardPage() {
 
   // ── Computed stats ──────────────────────────────────────────
   const capital = settings?.starting_capital || 30000
-  const activeLoans = loans.filter(l => ['Active', 'Partially Paid'].includes(l.status) && l.loan_type !== 'quickloan')
+  const activeLoans = loans.filter(l => ['Active', 'Partially Paid', 'Overdue'].includes(l.status) && l.loan_type !== 'quickloan')
   const amountLentOut = activeLoans.reduce((sum, l) => sum + (l.loan_amount || 0), 0)
   const paidLoans = loans.filter(l => l.status === 'Paid' && l.loan_type !== 'quickloan')
 
