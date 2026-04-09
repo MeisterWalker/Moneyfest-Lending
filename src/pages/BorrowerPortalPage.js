@@ -645,6 +645,7 @@ export default function BorrowerPortalPage() {
   const [showReloanModal, setShowReloanModal] = useState(false)
   const [reloanAmount, setReloanAmount] = useState(5000)
   const [reloanPurpose, setReloanPurpose] = useState('')
+  const [reloanType, setReloanType] = useState('regular') // 'regular' or 'quickloan'
 
 
   const handleCopy = (text, key) => {
@@ -674,8 +675,8 @@ export default function BorrowerPortalPage() {
         loan_purpose: reloanPurpose.trim(),
         status: 'Pending',
         access_code: newAppCode,
-        loan_type: 'regular',
-        loan_term: 2,
+        loan_type: reloanType,
+        loan_term: reloanType === 'quickloan' ? 0 : 2,
         building: borrower.building || '',
         tenure_years: parseFloat(borrower.tenure_years) || 0,
         release_method: 'Physical Cash'
@@ -1698,6 +1699,7 @@ export default function BorrowerPortalPage() {
                   onClick={() => {
                     const max = borrower.loan_limit_level === 4 ? 10000 : borrower.loan_limit_level === 3 ? 9000 : borrower.loan_limit_level === 2 ? 7000 : 5000
                     setReloanAmount(max)
+                    setReloanType('regular')
                     setReloanPurpose(loan?.loan_purpose || '')
                     setShowReloanModal(true)
                   }}
@@ -2429,14 +2431,39 @@ export default function BorrowerPortalPage() {
               
               <div style={{ padding: '28px' }}>
                 <div style={{ marginBottom: 24 }}>
+                  <label style={{ display: 'block', fontSize: 11, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 800, marginBottom: 12 }}>Select Loan Type</label>
+                  <div style={{ display: 'flex', background: 'rgba(0,0,0,0.2)', padding: 4, borderRadius: 14, marginBottom: 12, border: '1px solid rgba(255,255,255,0.04)' }}>
+                    <button 
+                      onClick={() => { setReloanType('regular'); if (reloanAmount > 10000) setReloanAmount(10000) }}
+                      style={{ flex: 1, padding: '10px', borderRadius: 11, border: 'none', background: reloanType === 'regular' ? 'rgba(255,255,255,0.06)' : 'transparent', color: reloanType === 'regular' ? '#F0F4FF' : '#4B5580', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s' }}
+                    >
+                      📅 Installment
+                    </button>
+                    <button 
+                      onClick={() => { setReloanType('quickloan'); if (reloanAmount > 3000) setReloanAmount(3000) }}
+                      style={{ flex: 1, padding: '10px', borderRadius: 11, border: 'none', background: reloanType === 'quickloan' ? 'rgba(245,158,11,0.1)' : 'transparent', color: reloanType === 'quickloan' ? '#F59E0B' : '#4B5580', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s' }}
+                    >
+                      ⚡ QuickLoan
+                    </button>
+                  </div>
+                  <div style={{ fontSize: 11, color: '#7A8AAA', lineHeight: 1.5 }}>
+                    {reloanType === 'regular' 
+                      ? '📅 Repay in semi-monthly installments over 2 months.' 
+                      : '⚡ Daily interest (10%/mo). Pay off anytime up to Day 30.'}
+                  </div>
+                </div>
+
+                <div style={{ marginBottom: 24 }}>
                   <label style={{ display: 'block', fontSize: 11, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 800, marginBottom: 12 }}>Select Loan Amount</label>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>
                     {[
+                      { amount: 1500, minLvl: 1 },
+                      { amount: 3000, minLvl: 1 },
                       { amount: 5000, minLvl: 1 },
                       { amount: 7000, minLvl: 2 },
                       { amount: 9000, minLvl: 3 },
                       { amount: 10000, minLvl: 4 }
-                    ].map((opt) => {
+                    ].filter(opt => reloanType === 'quickloan' ? opt.amount <= 3000 : true).map((opt) => {
                       const isUnlocked = (borrower.loan_limit_level || 1) >= opt.minLvl
                       const isSelected = reloanAmount === opt.amount
                       return (
