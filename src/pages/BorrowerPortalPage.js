@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { CREDIT_CONFIG, BADGE_TIERS, SECURITY_HOLD_TIERS, getBadgeConfig, getBadgeFromScore, getSecurityHoldRate } from '../lib/creditSystem'
 import { supabase } from '../lib/supabase'
 import { usePageVisit } from '../hooks/usePageVisit'
-import { getInstallmentDates, formatDateValue, logAudit } from '../lib/helpers'
+import { getInstallmentDates, formatDateValue, logAudit, getQuickLoanDueDates } from '../lib/helpers'
 import { generateBorrowerReceiptPDF, generateBorrowerLoanAgreementPDF, generateBorrowerQuickLoanPDF } from '../lib/pdfGenerator'
 import { sendLoanAgreementSignedAdminEmail } from '../lib/emailService'
 import {
@@ -646,6 +646,11 @@ export default function BorrowerPortalPage() {
   const [reloanAmount, setReloanAmount] = useState(5000)
   const [reloanPurpose, setReloanPurpose] = useState('')
   const [reloanType, setReloanType] = useState('regular') // 'regular' or 'quickloan'
+  const [reloanReleaseMethod, setReloanReleaseMethod] = useState('Physical Cash')
+  const [reloanGcashNumber, setReloanGcashNumber] = useState('')
+  const [reloanGcashName, setReloanGcashName] = useState('')
+  const [reloanBankName, setReloanBankName] = useState('')
+  const [reloanBankAccountNumber, setReloanBankAccountNumber] = useState('')
 
 
   const handleCopy = (text, key) => {
@@ -679,7 +684,11 @@ export default function BorrowerPortalPage() {
         loan_term: reloanType === 'quickloan' ? 0 : 2,
         building: borrower.building || '',
         tenure_years: parseFloat(borrower.tenure_years) || 0,
-        release_method: 'Physical Cash'
+        release_method: reloanReleaseMethod,
+        gcash_number: reloanReleaseMethod === 'GCash' ? reloanGcashNumber : null,
+        gcash_name: reloanReleaseMethod === 'GCash' ? reloanGcashName : null,
+        bank_name: reloanReleaseMethod === 'Other Bank Transfer' ? reloanBankName : (reloanReleaseMethod === 'RCBC' ? 'RCBC' : null),
+        bank_account_number: (reloanReleaseMethod === 'RCBC' || reloanReleaseMethod === 'Other Bank Transfer') ? reloanBankAccountNumber : null
       })
 
       if (appError) throw appError
@@ -1701,6 +1710,16 @@ export default function BorrowerPortalPage() {
                     setReloanAmount(max)
                     setReloanType('regular')
                     setReloanPurpose(loan?.loan_purpose || '')
+                    
+                    // Default release method from previous app if available
+                    if (pendingApp) {
+                      setReloanReleaseMethod(pendingApp.release_method || 'Physical Cash')
+                      setReloanGcashNumber(pendingApp.gcash_number || '')
+                      setReloanGcashName(pendingApp.gcash_name || '')
+                      setReloanBankName(pendingApp.bank_name || '')
+                      setReloanBankAccountNumber(pendingApp.bank_account_number || '')
+                    }
+
                     setShowReloanModal(true)
                   }}
                   disabled={renewing}
@@ -1928,9 +1947,15 @@ export default function BorrowerPortalPage() {
                     <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 13, color: '#F59E0B' }}>{formatDate(loan.release_date)}</div>
                   </div>
                   {(() => {
-                    const numInst = loan.num_installments || 4
-                    const dueDates = getDueDates(loan.release_date, loan.payments_made || 0, numInst)
-                    const maturity = dueDates.length >= numInst ? dueDates[numInst - 1].date.toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' }) : 'TBD'
+                    let maturity = 'TBD'
+                    if (loan.loan_type === 'quickloan' && loan.release_date) {
+                      const { day30 } = getQuickLoanDueDates(loan.release_date)
+                      if (day30) maturity = day30.toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' })
+                    } else if (loan.release_date) {
+                      const numInst = loan.num_installments || 4
+                      const dueDates = getDueDates(loan.release_date, loan.payments_made || 0, numInst)
+                      maturity = dueDates.length >= numInst ? dueDates[numInst - 1].date.toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' }) : 'TBD'
+                    }
                     return (
                       <div style={{ background: 'rgba(255,255,255,0.02)', borderRadius: 10, padding: '10px 12px' }}>
                         <div style={{ fontSize: 9, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 4, fontWeight: 700 }}>Maturity Date</div>
@@ -2490,30 +2515,75 @@ export default function BorrowerPortalPage() {
                   </div>
                 </div>
 
-                <div style={{ marginBottom: 28 }}>
-                  <label style={{ display: 'block', fontSize: 11, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 800, marginBottom: 12 }}>Loan Purpose</label>
+                <div style={{ marginBottom: 24 }}>
+                  <label style={{ display: 'block', fontSize: 11, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 800, marginBottom: 12 }}>Reloan Purpose</label>
                   <textarea 
                     value={reloanPurpose}
                     onChange={e => setReloanPurpose(e.target.value)}
-                    placeholder="What will you use this loan for? (e.g., Medical, Emergency, Utility Bills)"
-                    rows={3}
+                    placeholder="Briefly explain what you'll use this for..."
+                    rows={2}
                     style={{ 
-                      width: '100%', 
-                      boxSizing: 'border-box', 
-                      padding: '14px 16px', 
-                      background: 'rgba(255,255,255,0.03)', 
-                      border: '1px solid rgba(255,255,255,0.08)', 
-                      borderRadius: 16, 
-                      color: '#F0F4FF', 
-                      fontSize: 14, 
-                      resize: 'none', 
-                      outline: 'none', 
-                      fontFamily: 'DM Sans, sans-serif',
-                      transition: 'border-color 0.2s'
+                      width: '100%', boxSizing: 'border-box', padding: '12px 14px', background: 'rgba(255,255,255,0.02)', 
+                      border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, color: '#F0F4FF', fontSize: 13, 
+                      resize: 'none', outline: 'none', fontFamily: 'inherit' 
                     }}
-                    onFocus={e => e.target.style.borderColor = 'rgba(139,92,246,0.5)'}
-                    onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
                   />
+                </div>
+
+                <div style={{ marginBottom: 24 }}>
+                  <label style={{ display: 'block', fontSize: 11, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 800, marginBottom: 12 }}>Preferred Release Method</label>
+                  <div style={{ 
+                    display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8, marginBottom: 16
+                  }}>
+                    {['Physical Cash', 'GCash', 'RCBC', 'Other Bank Transfer'].map(m => (
+                      <button 
+                        key={m}
+                        onClick={() => setReloanReleaseMethod(m)}
+                        style={{ 
+                          padding: '10px 8px', borderRadius: 12, fontSize: 12, fontWeight: 700, cursor: 'pointer',
+                          background: reloanReleaseMethod === m ? 'rgba(99,102,241,0.1)' : 'rgba(255,255,255,0.02)',
+                          color: reloanReleaseMethod === m ? '#a78bfa' : '#4B5580',
+                          border: `1.5px solid ${reloanReleaseMethod === m ? '#6366F180' : 'rgba(255,255,255,0.05)'}`,
+                          transition: 'all 0.2s'
+                        }}
+                      >
+                        {m === 'Physical Cash' ? '💵 Cash' : m === 'GCash' ? '💙 GCash' : m === 'RCBC' ? '🏦 RCBC' : '🏛️ Other'}
+                      </button>
+                    ))}
+                  </div>
+
+                  {reloanReleaseMethod === 'GCash' && (
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <input 
+                        placeholder="GCash Number" value={reloanGcashNumber} onChange={e => setReloanGcashNumber(e.target.value)}
+                        style={{ flex: 1.2, padding: '12px', borderRadius: 12, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)', color: '#F0F4FF', fontSize: 13, outline: 'none' }}
+                      />
+                      <input 
+                        placeholder="Name" value={reloanGcashName} onChange={e => setReloanGcashName(e.target.value)}
+                        style={{ flex: 1, padding: '12px', borderRadius: 12, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)', color: '#F0F4FF', fontSize: 13, outline: 'none' }}
+                      />
+                    </div>
+                  )}
+
+                  {reloanReleaseMethod === 'RCBC' && (
+                    <input 
+                      placeholder="RCBC Account Number" value={reloanBankAccountNumber} onChange={e => setReloanBankAccountNumber(e.target.value)}
+                      style={{ width: '100%', boxSizing: 'border-box', padding: '12px', borderRadius: 12, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)', color: '#F0F4FF', fontSize: 13, outline: 'none' }}
+                    />
+                  )}
+
+                  {reloanReleaseMethod === 'Other Bank Transfer' && (
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <input 
+                        placeholder="Bank Name" value={reloanBankName} onChange={e => setReloanBankName(e.target.value)}
+                        style={{ flex: 1, padding: '12px', borderRadius: 12, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)', color: '#F0F4FF', fontSize: 13, outline: 'none' }}
+                      />
+                      <input 
+                        placeholder="Acct Number" value={reloanBankAccountNumber} onChange={e => setReloanBankAccountNumber(e.target.value)}
+                        style={{ flex: 1.2, padding: '12px', borderRadius: 12, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)', color: '#F0F4FF', fontSize: 13, outline: 'none' }}
+                      />
+                    </div>
+                  )}
                 </div>
 
                 <div style={{ display: 'flex', gap: 12 }}>
