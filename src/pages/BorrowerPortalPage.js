@@ -1679,7 +1679,7 @@ export default function BorrowerPortalPage() {
           {/* ── LEFT COLUMN ── */}
           <div>
             {/* Reloan Banner (Shows if latest loan is paid and no pending app) */}
-            {borrower && (!loan || loan.status === 'Paid') && (!pendingApp || (pendingApp.status !== 'Pending' && pendingApp.status !== 'Approved')) && !renewalSent && (
+            {borrower && (!loan || loan.status === 'Paid') && (!pendingApp || pendingApp.status !== 'Pending') && !renewalSent && (
               <div className="pc" style={{ 
                 background: 'linear-gradient(135deg, #1e1b4b, #312e81)', 
                 border: '1px solid rgba(139,92,246,0.3)', 
@@ -1710,12 +1710,12 @@ export default function BorrowerPortalPage() {
             )}
 
             {/* Application Pending State */}
-            {borrower && pendingApp && (pendingApp.status === 'Pending' || pendingApp.status === 'Approved') && (!loan || loan.status === 'Paid') && (
+            {borrower && pendingApp && pendingApp.status === 'Pending' && (!loan || loan.status === 'Paid') && (
               <div className="pc" style={{ background: 'rgba(59,130,246,0.06)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: 24, padding: 32, textAlign: 'center' }}>
                 <div style={{ fontSize: 40, marginBottom: 16 }}>⏳</div>
                 <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 20, color: '#60A5FA', marginBottom: 8 }}>Application Under Review</div>
                 <p style={{ fontSize: 14, color: '#7A8AAA', lineHeight: 1.6, maxWidth: 340, margin: '0 auto' }}>
-                  Your reloan application for **₱{Number(pendingApp.requested_amount).toLocaleString()}** has been received and is currently being reviewed by our team.
+                  Your reloan application for **₱{Number(pendingApp.loan_amount).toLocaleString()}** has been received and is currently being reviewed by our team.
                 </p>
                 <div style={{ marginTop: 24, display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 16px', background: 'rgba(59,130,246,0.1)', borderRadius: 20, color: '#60A5FA', fontSize: 12, fontWeight: 700 }}>
                   <Clock size={14} /> Status: {pendingApp.status}
