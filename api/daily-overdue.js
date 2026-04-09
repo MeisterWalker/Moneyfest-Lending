@@ -1,5 +1,12 @@
 const { createClient } = require('@supabase/supabase-js');
 
+// FIX 2: Guard against missing required environment variables at startup
+if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  throw new Error(
+    'Missing required environment variables: SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY'
+  );
+}
+
 // Helper to calculate exact installment due dates (same logic as frontend)
 function getInstallmentDates(releaseDateStr, numInstallments) {
   if (!releaseDateStr) return [];
@@ -36,13 +43,11 @@ module.exports = async (req, res) => {
   // Allow manual invocation or cron. Vercel automatically passes an auth header for cron but we can leave it open for admin testing if needed, or secure it via secret.
   console.log('[CRON] Starting daily overdue script...');
 
-  const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || process.env.SUPABASE_URL;
-  const supabaseKey = process.env.REACT_APP_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
-  if (!supabaseUrl || !supabaseKey) {
-    return res.status(500).json({ error: 'Missing Supabase environment variables' });
-  }
-
-  const supabase = createClient(supabaseUrl, supabaseKey);
+  // FIX 1: Using service role key to bypass RLS for server-side cron operations
+  const supabase = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+  );
 
   // 1. Fetch active/partially paid installment loans
   const { data: loans, error: loansErr } = await supabase
@@ -168,11 +173,11 @@ module.exports = async (req, res) => {
 
         // POST to Mail Edge Function
         try {
-          await fetch(`${supabaseUrl}/functions/v1/send-email`, {
+          await fetch(`${process.env.SUPABASE_URL}/functions/v1/send-email`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'Authorization': `Bearer ${supabaseKey}`
+              'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`
             },
             body: JSON.stringify({ to: loan.borrowers.email, subject, html })
           });

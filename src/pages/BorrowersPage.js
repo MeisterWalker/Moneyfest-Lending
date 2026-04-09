@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
-import { CREDIT_CONFIG, getBadgeStatus, getBadgeConfig, calcSecurityHold } from '../lib/creditSystem'
+import { CREDIT_CONFIG, getBadgeStatus, calcSecurityHold } from '../lib/creditSystem' // FIX 5: Removed unused getBadgeConfig import
 
 import { logAudit, formatDate } from '../lib/helpers'
 import { useAuth } from '../context/AuthContext'

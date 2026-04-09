@@ -962,20 +962,26 @@ export default function LoansPage() {
     downloadReceiptPDF({ loan, borrower, installmentNum: newPaymentsMade, amount: installAmt })
 
     // Send payment confirmed email
+    // FIX 4: Catch email failures and show toast instead of silently swallowing errors
     if (borrower?.email) {
       const paymentDate = new Date().toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' })
       const loanFullyPaid = newStatus === 'Paid'
-      sendPaymentConfirmedEmail({
-        to: borrower.email,
-        borrowerName: borrower.full_name,
-        accessCode: borrower.access_code,
-        installmentNum: newPaymentsMade,
-        numInstallments: loan.num_installments || 4,
-        amountPaid: installAmt,
-        paymentDate,
-        remainingBalance: Math.max(0, loan.remaining_balance - installAmt),
-        loanFullyPaid,
-      }).catch(e => console.warn('Payment confirmed email failed:', e))
+      try {
+        await sendPaymentConfirmedEmail({
+          to: borrower.email,
+          borrowerName: borrower.full_name,
+          accessCode: borrower.access_code,
+          installmentNum: newPaymentsMade,
+          numInstallments: loan.num_installments || 4,
+          amountPaid: installAmt,
+          paymentDate,
+          remainingBalance: Math.max(0, loan.remaining_balance - installAmt),
+          loanFullyPaid,
+        })
+      } catch (e) {
+        console.warn('Payment confirmed email failed:', e)
+        toast('Failed to send payment confirmation email.', 'error')
+      }
     }
 
     fetchData()
@@ -1077,22 +1083,28 @@ export default function LoansPage() {
     })
 
     // Send funds released email
+    // FIX 4: Catch email failures and show toast instead of silently swallowing errors
     if (borrower?.email) {
       const numInstallments = loan.num_installments || 4
       const allDates = getInstallmentDates(todayStr, numInstallments)
       const firstDueDate = allDates[0]?.toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' }) || '—'
       const releaseDateFormatted = today.toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' })
-      sendFundsReleasedEmail({
-        to: borrower.email,
-        borrowerName: borrower.full_name,
-        accessCode: borrower.access_code,
-        loanAmount: loan.loan_amount,
-        loanType: loan.loan_type === 'quickloan' ? 'QuickLoan' : 'Installment Loan',
-        releaseDate: releaseDateFormatted,
-        firstDueDate,
-        numInstallments,
-        installmentAmount: Math.ceil(loan.installment_amount),
-      }).catch(e => console.warn('Funds released email failed:', e))
+      try {
+        await sendFundsReleasedEmail({
+          to: borrower.email,
+          borrowerName: borrower.full_name,
+          accessCode: borrower.access_code,
+          loanAmount: loan.loan_amount,
+          loanType: loan.loan_type === 'quickloan' ? 'QuickLoan' : 'Installment Loan',
+          releaseDate: releaseDateFormatted,
+          firstDueDate,
+          numInstallments,
+          installmentAmount: Math.ceil(loan.installment_amount),
+        })
+      } catch (e) {
+        console.warn('Funds released email failed:', e)
+        toast('Failed to send funds released email.', 'error')
+      }
     }
 
     await logAudit({

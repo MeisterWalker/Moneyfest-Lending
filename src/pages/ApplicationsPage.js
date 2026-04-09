@@ -322,10 +322,8 @@ function ProofReviewSection({ supabase, user, logAudit }) {
         // This import might be missing, I'll need to check the top of the file
         // Also assuming sendPaymentConfirmedEmail is imported
         try {
-          // In JS, dynamic import or standard call because we already imported it at the top? Wait let me verify.
-          // sendApplicationApprovedEmail and sendApplicationRejectedEmail are imported at the top. I need to make sure I add this import!
-          // We'll update the import at the top next.
-          sendPaymentConfirmedEmail({
+          // FIX 4: Catch email failures and notify the admin via toast
+          await sendPaymentConfirmedEmail({
             to: borrowerEmail.email,
             borrowerName: proof.borrowers.full_name,
             accessCode: proof.borrowers.access_code || borrowerEmail.access_code,
@@ -335,8 +333,11 @@ function ProofReviewSection({ supabase, user, logAudit }) {
             paymentDate: new Date().toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' }),
             remainingBalance: remaining,
             loanFullyPaid,
-          }).catch(e => console.warn('Payment email failed:', e))
-        } catch (e) { console.warn(e) }
+          })
+        } catch (e) {
+          console.warn('Payment email failed:', e)
+          toast('Failed to send payment confirmation email.', 'error')
+        }
       }
     }
 
@@ -658,18 +659,24 @@ export default function ApplicationsPage() {
         else rel = new Date(today.getFullYear(), today.getMonth() + 1, 5)
         const releaseDateStr = rel.toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' })
         const loanType = app.loan_type === 'quickloan' ? 'QuickLoan' : 'Installment Loan'
-        sendApplicationApprovedEmail({
-          to: app.email,
-          borrowerName: app.full_name,
-          accessCode: finalCode,
-          loanAmount,
-          loanType,
-          releaseDate: releaseDateStr,
-          installmentAmount,
-          totalRepayment,
-          loanTerm,
-          numInstallments,
-        }).catch(e => console.warn('Approval email failed:', e))
+        // FIX 4: Catch approval email failures and notify the admin via toast
+        try {
+          await sendApplicationApprovedEmail({
+            to: app.email,
+            borrowerName: app.full_name,
+            accessCode: finalCode,
+            loanAmount,
+            loanType,
+            releaseDate: releaseDateStr,
+            installmentAmount,
+            totalRepayment,
+            loanTerm,
+            numInstallments,
+          })
+        } catch (e) {
+          console.warn('Approval email failed:', e)
+          toast('Failed to send approval email notification.', 'error')
+        }
       }
 
       // 9. Update UI immediately
@@ -687,13 +694,19 @@ export default function ApplicationsPage() {
     await logAudit({ action_type: 'APPLICATION_REJECTED', module: 'Applications', description: `Application rejected for ${app.full_name}. Reason: ${reason}`, changed_by: user?.email })
     // Send rejection email
     if (app.email) {
-      sendApplicationRejectedEmail({
+    // FIX 4: Catch rejection email failures and notify the admin via toast
+    try {
+      await sendApplicationRejectedEmail({
         to: app.email,
         borrowerName: app.full_name,
         loanAmount: app.loan_amount,
         loanType: app.loan_type === 'quickloan' ? 'QuickLoan' : 'Installment Loan',
         reason,
-      }).catch(e => console.warn('Rejection email failed:', e))
+      })
+    } catch (e) {
+      console.warn('Rejection email failed:', e)
+      toast('Failed to send rejection email notification.', 'error')
+    }
     }
     toast(`Application rejected`, 'success')
     setApplications(prev => prev.map(a => a.id === app.id ? { ...a, status: 'Rejected', reject_reason: reason } : a))
