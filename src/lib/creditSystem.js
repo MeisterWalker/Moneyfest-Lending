@@ -45,16 +45,16 @@ export const CREDIT_CONFIG = {
 
 export const BADGE_TIERS = [
   { id: 'New',      emoji: '🌱', label: 'New Borrower',     color: '#7A8AAA', bg: 'rgba(122,138,170,0.08)',  border: 'rgba(122,138,170,0.2)',  minScore: 0,    cleanLoans: 0, desc: 'Starting tier' },
-  { id: 'Trusted',  emoji: '⭐', label: 'Trusted Borrower',  color: '#F59E0B', bg: 'rgba(245,158,11,0.08)',  border: 'rgba(245,158,11,0.3)',   minScore: 835,  cleanLoans: 1, desc: 'After 1 clean loan' },
-  { id: 'Reliable', emoji: '🤝', label: 'Reliable Borrower', color: '#3B82F6', bg: 'rgba(59,130,246,0.08)',  border: 'rgba(59,130,246,0.3)',   minScore: 920,  cleanLoans: 2, desc: 'After 2 clean loans' },
-  { id: 'VIP',      emoji: '👑', label: 'VIP Borrower',      color: '#8B5CF6', bg: 'rgba(139,92,246,0.1)',   border: 'rgba(139,92,246,0.4)',   minScore: 1000, cleanLoans: 3, desc: 'After 3 clean loans' },
+  { id: 'Trusted',  emoji: '⭐', label: 'Trusted Borrower',  color: '#F59E0B', bg: 'rgba(245,158,11,0.08)',  border: 'rgba(245,158,11,0.3)',   minScore: 835,  cleanLoans: 1, desc: 'Unlocks at 835 Credit Score' },
+  { id: 'Reliable', emoji: '🤝', label: 'Reliable Borrower', color: '#3B82F6', bg: 'rgba(59,130,246,0.08)',  border: 'rgba(59,130,246,0.3)',   minScore: 920,  cleanLoans: 2, desc: 'Unlocks at 920 Credit Score' },
+  { id: 'VIP',      emoji: '👑', label: 'VIP Borrower',      color: '#8B5CF6', bg: 'rgba(139,92,246,0.1)',   border: 'rgba(139,92,246,0.4)',   minScore: 1000, cleanLoans: 3, desc: 'Unlocks at 1000 Credit Score' },
 ]
 
 export const getBadgeStatus = (score, cleanLoans = 0) => {
-  // Hybrid logic: Meet EITHER the score OR the loan count milestone
-  if (score >= 1000 || cleanLoans >= 3) return 'VIP'
-  if (score >= 920  || cleanLoans >= 2) return 'Reliable'
-  if (score >= 835  || cleanLoans >= 1) return 'Trusted'
+  // Purely Score-based progression
+  if (score >= 1000) return 'VIP'
+  if (score >= 920)  return 'Reliable'
+  if (score >= 835)  return 'Trusted'
   return 'New'
 }
 

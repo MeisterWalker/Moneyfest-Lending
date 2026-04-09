@@ -2234,9 +2234,7 @@ export default function BorrowerPortalPage() {
                               <span style={{ fontSize: 12 }}>{nextBadge.emoji}</span>
                             </div>
                             <span style={{ fontSize: 11, fontWeight: 800, color: nextBadge.color }}>
-                              {nextBadge.cleanLoans > cleanLoans 
-                                ? `${nextBadge.cleanLoans - cleanLoans} clean loan${nextBadge.cleanLoans - cleanLoans > 1 ? 's' : ''} to go`
-                                : `${nextBadge.minScore - score} pts left`}
+                              {nextBadge.minScore - score} pts left
                             </span>
 
                           </div>
@@ -2247,12 +2245,7 @@ export default function BorrowerPortalPage() {
                                 const ptsNeeded = nextBadge.minScore - currentBadge.minScore
                                 const ptsHave = score - currentBadge.minScore
                                 const ptsPct = ptsNeeded > 0 ? (ptsHave / ptsNeeded) * 100 : 0
-                                
-                                const loansNeeded = nextBadge.cleanLoans - currentBadge.cleanLoans
-                                const loansHave = cleanLoans - currentBadge.cleanLoans
-                                const loansPct = loansNeeded > 0 ? (loansHave / loansNeeded) * 100 : 0
-                                
-                                return Math.min(100, Math.max(5, Math.max(ptsPct, loansPct))) + '%'
+                                return Math.min(100, Math.max(5, ptsPct)) + '%'
                               })(),
                               background: `linear-gradient(90deg, ${currentBadge.color}, ${nextBadge.color})`, 
                               borderRadius: 3, 
