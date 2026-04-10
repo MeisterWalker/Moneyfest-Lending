@@ -58,7 +58,11 @@ export default function InboxPage() {
     setContent(null)
     setLoadingMsg(true)
     try {
-      const data = await callInbox({ action: 'message', messageId: msg.messageId })
+      const data = await callInbox({
+        action: 'message',
+        messageId: msg.messageId,
+        folderId: msg.folderId   // required by Zoho API
+      })
       setContent(data?.data ?? null)
     } catch (e) {
       toast('Failed to load email', 'error')
@@ -244,24 +248,19 @@ export default function InboxPage() {
                   Loading email...
                 </div>
               ) : content ? (
-                <div style={{
-                  fontSize: 14, lineHeight: 1.8, color: 'var(--text)',
-                  background: 'rgba(255,255,255,0.02)', borderRadius: 12,
-                  padding: 20, border: '1px solid var(--border)'
-                }}>
-                  {content.htmlContent ? (
-                    <iframe
-                      srcDoc={content.htmlContent}
-                      style={{ width: '100%', minHeight: 400, border: 'none', borderRadius: 8, background: '#fff' }}
-                      title="email-content"
-                      sandbox="allow-same-origin"
-                    />
-                  ) : (
-                    <pre style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit', margin: 0 }}>
-                      {content.content || stripHtml(content.htmlContent || '') || '(Empty message)'}
-                    </pre>
-                  )}
-                </div>
+                // Zoho returns HTML in the 'content' field — render it in a sandboxed iframe
+                content.content ? (
+                  <iframe
+                    srcDoc={content.content}
+                    style={{ width: '100%', minHeight: 500, border: 'none', borderRadius: 8, background: '#fff' }}
+                    title="email-content"
+                    sandbox="allow-same-origin"
+                  />
+                ) : (
+                  <pre style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit', margin: 0, color: 'var(--text)', fontSize: 14, lineHeight: 1.8 }}>
+                    (Empty message)
+                  </pre>
+                )
               ) : (
                 <div style={{ textAlign: 'center', padding: 48, color: 'var(--text-muted)' }}>
                   Could not load email content.

@@ -57,10 +57,10 @@ serve(async (req: Request) => {
       })
     }
 
-    // ── Action: get single message ─────────────────────────
-    if (action === 'message' && messageId) {
+    // ── Action: get single message (requires folderId) ─────
+    if (action === 'message' && messageId && folderId) {
       const res = await fetch(
-        `https://mail.zoho.com/api/accounts/${accountId}/messages/${messageId}/content`,
+        `https://mail.zoho.com/api/accounts/${accountId}/folders/${folderId}/messages/${messageId}/content`,
         { headers }
       )
       const data = await res.json()
