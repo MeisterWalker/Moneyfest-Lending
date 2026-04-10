@@ -1,7 +1,7 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 
 const GEMINI_API_KEY = 'AIzaSyAv1Oht5tcft2lGuHF50x2vsk1RIdaRRaE'
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`
+const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -154,10 +154,15 @@ serve(async (req) => {
     const { messages } = await req.json()
 
     // Build conversation history for Gemini
-    const contents = messages.map((m: { role: string; text: string }) => ({
+    let contents = messages.map((m: { role: string; text: string }) => ({
       role: m.role === 'user' ? 'user' : 'model',
       parts: [{ text: m.text }]
     }))
+
+    // Gemini requirement: conversation must start with 'user' role
+    if (contents.length > 0 && contents[0].role === 'model') {
+      contents = contents.slice(1)
+    }
 
     const payload = {
       system_instruction: {
