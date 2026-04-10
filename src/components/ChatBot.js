@@ -76,7 +76,8 @@ export default function ChatBot() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${ANON_KEY}`
+          'Authorization': `Bearer ${ANON_KEY}`,
+          'apikey': ANON_KEY
         },
         body: JSON.stringify({
           messages: newMessages.map(m => ({ role: m.role, text: m.text }))
