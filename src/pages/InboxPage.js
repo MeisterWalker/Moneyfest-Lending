@@ -85,7 +85,7 @@ export default function InboxPage() {
   })
 
   return (
-    <div style={{ padding: '28px 24px', minHeight: '100vh', background: 'var(--bg)' }}>
+    <div style={{ padding: '28px 24px 0', height: '100vh', background: 'var(--bg)', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxSizing: 'border-box' }}>
       {/* ── Header ── */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
@@ -114,12 +114,12 @@ export default function InboxPage() {
       </div>
 
       {/* ── Layout ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: selected ? '360px 1fr' : '1fr', gap: 16 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: selected ? '360px 1fr' : '1fr', gap: 16, flex: 1, overflow: 'hidden', minHeight: 0 }}>
 
         {/* ── Message List ── */}
         <div style={{
           background: 'var(--card)', borderRadius: 16, border: '1px solid var(--border)',
-          overflow: 'hidden', display: 'flex', flexDirection: 'column'
+          overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 0
         }}>
           {/* Search */}
           <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--border)' }}>
@@ -139,7 +139,7 @@ export default function InboxPage() {
           </div>
 
           {/* List */}
-          <div style={{ flex: 1, overflowY: 'auto', maxHeight: 'calc(100vh - 220px)' }}>
+          <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
             {loading ? (
               <div style={{ padding: 32, textAlign: 'center', color: 'var(--text-muted)', fontSize: 14 }}>
                 Loading inbox...
@@ -221,7 +221,7 @@ export default function InboxPage() {
         {selected && (
           <div style={{
             background: 'var(--card)', borderRadius: 16, border: '1px solid var(--border)',
-            overflow: 'hidden', display: 'flex', flexDirection: 'column'
+            overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 0
           }}>
             {/* Detail Header */}
             <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -242,23 +242,22 @@ export default function InboxPage() {
               </div>
             </div>
 
-            {/* Detail Body */}
-            <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px', maxHeight: 'calc(100vh - 220px)' }}>
+            {/* Detail Body — flex:1 so it fills remaining height after the header */}
+            <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
               {loadingMsg ? (
                 <div style={{ textAlign: 'center', padding: 48, color: 'var(--text-muted)', fontSize: 14 }}>
                   Loading email...
                 </div>
               ) : content ? (
-                // Zoho returns HTML in the 'content' field — render it in a sandboxed iframe
                 content.content ? (
                   <iframe
                     srcDoc={content.content}
-                    style={{ width: '100%', minHeight: 500, border: 'none', borderRadius: 8, background: '#fff' }}
+                    style={{ flex: 1, width: '100%', height: '100%', border: 'none', background: '#fff', display: 'block' }}
                     title="email-content"
                     sandbox="allow-same-origin"
                   />
                 ) : (
-                  <pre style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit', margin: 0, color: 'var(--text)', fontSize: 14, lineHeight: 1.8 }}>
+                  <pre style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit', margin: 0, padding: '20px 24px', color: 'var(--text)', fontSize: 14, lineHeight: 1.8 }}>
                     (Empty message)
                   </pre>
                 )
