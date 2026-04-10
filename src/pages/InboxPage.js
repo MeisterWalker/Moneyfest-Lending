@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback } from 'react'
-import { supabase } from '../lib/supabase'
 import { useToast } from '../components/Toast'
-import { Mail, Inbox, RefreshCw, Star, Trash2, ChevronLeft, Search, Circle } from 'lucide-react'
+import { Mail, Inbox, RefreshCw, Search, Circle, ChevronLeft } from 'lucide-react'
 
-const EDGE_URL = `${process.env.REACT_APP_SUPABASE_URL}/functions/v1/zoho-inbox`
-const ANON_KEY = process.env.REACT_APP_SUPABASE_ANON_KEY
+// Hardcoded like emailService.js to avoid undefined env vars on Vercel
+const SUPABASE_URL = 'https://swwedyfgbqhtavxmbmhv.supabase.co'
+const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN3d2VkeWZnYnFodGF2eG1ibWh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMwNzY2MDEsImV4cCI6MjA4ODY1MjYwMX0.IFVKtSVFmNytOYMD23yFXgEyGyBNVQ31SknoxpGvuio'
+const EDGE_URL = `${SUPABASE_URL}/functions/v1/zoho-inbox`
 
 function callInbox(params = {}) {
   const qs = new URLSearchParams(params).toString()
