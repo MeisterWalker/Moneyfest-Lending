@@ -1,5 +1,6 @@
 // ── MoneyfestLending Email Service ──────────────────────────────────────
-// All emails are sent via Supabase Edge Function → Privateemail SMTP
+// All emails are sent via Supabase Edge Function → Zoho Workplace SMTP
+// Sender: support@moneyfestlending.loan
 // --- Admin Notifications ---
 
 export async function sendLoanAgreementSignedAdminEmail({ borrowerName, loanAmount, loanType, accessCode }) {
@@ -45,7 +46,7 @@ export async function sendLoanAgreementSignedAdminEmail({ borrowerName, loanAmou
   `
 
   return sendEmail({
-    to: 'administrator@moneyfestlending.loan',
+    to: 'support@moneyfestlending.loan',
     subject,
     html
   })
@@ -88,7 +89,7 @@ export async function sendPayoutRequestedAdminEmail({ investorName, amount, tier
   `
 
   return sendEmail({
-    to: 'administrator@moneyfestlending.loan',
+    to: 'support@moneyfestlending.loan',
     subject,
     html
   })
@@ -131,7 +132,7 @@ export async function sendMoaSignedAdminEmail({ investorName, tier, accessCode }
   `
 
   return sendEmail({
-    to: 'administrator@moneyfestlending.loan',
+    to: 'support@moneyfestlending.loan',
     subject,
     html
   })
@@ -179,7 +180,7 @@ export async function sendApplicationReceivedAdminEmail({ borrowerName, loanAmou
   `
 
   return sendEmail({
-    to: 'administrator@moneyfestlending.loan',
+    to: 'support@moneyfestlending.loan',
     subject,
     html
   })

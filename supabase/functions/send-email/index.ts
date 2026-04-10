@@ -1,5 +1,5 @@
 // Supabase Edge Function: send-email
-// Uses nodemailer via npm: import to send through Privateemail SMTP
+// Uses nodemailer via npm: import to send through Zoho Workplace SMTP
 // Secrets set via: supabase secrets set SMTP_USER=... SMTP_PASS=...
 
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
@@ -36,8 +36,9 @@ serve(async (req: Request) => {
       })
     }
 
+    // Zoho Workplace SMTP — support@moneyfestlending.loan
     const transporter = nodemailer.createTransport({
-      host: 'mail.privateemail.com',
+      host: 'smtp.zoho.com',
       port: 587,
       secure: false,     // TLS via STARTTLS
       auth: { user: smtpUser, pass: smtpPass },
@@ -45,7 +46,7 @@ serve(async (req: Request) => {
     })
 
     const info = await transporter.sendMail({
-      from: `"MoneyfestLending" <${smtpUser}>`,
+      from: `"Moneyfest Lending" <${smtpUser}>`,
       to,
       subject,
       html,
