@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { CREDIT_CONFIG, BADGE_TIERS, SECURITY_HOLD_TIERS, getBadgeConfig, getBadgeFromScore, getSecurityHoldRate } from '../lib/creditSystem'
 import { supabase } from '../lib/supabase'
 import { usePageVisit } from '../hooks/usePageVisit'
+import ChatBot from '../components/ChatBot'
 import { getInstallmentDates, formatDateValue, logAudit, getQuickLoanDueDates } from '../lib/helpers'
 import { generateBorrowerReceiptPDF, generateBorrowerLoanAgreementPDF, generateBorrowerQuickLoanPDF } from '../lib/pdfGenerator'
 import { sendLoanAgreementSignedAdminEmail } from '../lib/emailService'
@@ -2630,6 +2631,7 @@ export default function BorrowerPortalPage() {
             <span className="bn-label">Profile</span>
           </button>
         </nav>
+        <ChatBot />
       </div>
     )
 }

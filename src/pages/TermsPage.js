@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import ChatBot from '../components/ChatBot'
 
 export default function TermsPage() {
   const [interestRate, setInterestRate] = useState(0.07)
@@ -353,6 +354,7 @@ export default function TermsPage() {
         <button onClick={handlePrint} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '11px 20px', borderRadius: 12, background: 'linear-gradient(135deg,#22C55E,#16A34A)', border: 'none', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Space Grotesk', boxShadow: '0 4px 20px rgba(34,197,94,0.4)' }}>Print / PDF</button>
       </div>
 
+      <ChatBot />
     </div>
   )
 }

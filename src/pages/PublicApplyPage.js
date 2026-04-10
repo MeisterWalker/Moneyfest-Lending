@@ -3,6 +3,7 @@ import { calcSecurityHold, CREDIT_CONFIG } from '../lib/creditSystem'
 import { supabase } from '../lib/supabase'
 import { sendPendingEmail, sendApplicationReceivedAdminEmail } from '../lib/emailService'
 import { usePageVisit } from '../hooks/usePageVisit'
+import ChatBot from '../components/ChatBot'
 
 const DEPARTMENTS = ['Minto Money', 'Greyhound']
 const LOAN_AMOUNTS = [5000, 7000, 9000, 10000]
@@ -915,9 +916,9 @@ export default function PublicApplyPage() {
             <SidebarTiers />
             {step > 1 && <SidebarCalc interestRate={interestRate} selectedAmount={form.loan_amount} loanTerm={form.loan_term} loanType={form.loan_type} />}
           </div>
-
         </div>
       </div>
+      <ChatBot />
     </div>
   )
 }

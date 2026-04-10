@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { usePageVisit } from '../hooks/usePageVisit'
+import ChatBot from '../components/ChatBot'
 
 function useCountUp(target, duration = 1800, start = false) {
   const [val, setVal] = useState(0)
@@ -378,7 +379,7 @@ export default function PartnersPage() {
             <span style={{ color: '#323a52' }}> · Developer</span>
           </div>
         </footer>
-
+        <ChatBot />
       </div>
     </div>
   )

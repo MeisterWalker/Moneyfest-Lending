@@ -1,3 +1,5 @@
+import ChatBot from '../components/ChatBot'
+
 export default function PrivacyPage() {
   const effectiveDate = 'March 14, 2026'
 
@@ -208,6 +210,7 @@ export default function PrivacyPage() {
         </div>
 
       </div>
+      <ChatBot />
     </div>
   )
 }

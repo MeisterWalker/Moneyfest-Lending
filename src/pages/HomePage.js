@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { usePageVisit } from '../hooks/usePageVisit'
+import ChatBot from '../components/ChatBot'
 
 export default function HomePage() {
   usePageVisit('home')
@@ -565,7 +566,7 @@ export default function HomePage() {
           </div>
         </div>
       </footer>
-
+      <ChatBot />
     </div>
   )
 }

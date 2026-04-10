@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { usePageVisit } from '../hooks/usePageVisit'
+import ChatBot from '../components/ChatBot'
 
 function FAQItem({ question, answer, children }) {
   const [open, setOpen] = useState(false)
@@ -244,6 +245,7 @@ export default function FAQPage() {
 
       </div>
       </div>
+      <ChatBot />
     </div>
   )
 }

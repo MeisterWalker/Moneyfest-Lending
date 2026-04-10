@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react'
 import { usePageVisit } from '../hooks/usePageVisit'
+import ChatBot from '../components/ChatBot'
 
 function ContactCard({ initials, gradient, badge, badgeBg, badgeBorder, badgeColor, name, role, email, teamsEmail, expandedContent, accentColor, accentBg, accentBorder, glowColor }) {
   const [copied, setCopied] = useState(false)
@@ -339,7 +340,7 @@ export default function ContactPage() {
             </div>
           </div>
         </footer>
-
+        <ChatBot />
       </div>
     </div>
   )
