@@ -49,7 +49,7 @@ export const logAutomatedPayment = async (loan, amountReceived) => {
       entries.push({
         entry_date: new Date().toISOString().slice(0, 10),
         type: 'CASH IN',
-        category: 'Interest Profit',
+        category: isQuickLoan ? 'Interest Profit (QuickLoan)' : 'Interest Profit (Installment)',
         amount: interestProfit,
         notes: `Auto: Interest Profit from ${loan.borrowers?.full_name || 'Borrower'} payment`
       })

@@ -86,7 +86,7 @@ export default function CapitalPage() {
     const charlouShare = (charlouCapital / (jpCapital + charlouCapital || 1)) * 100
 
     const totalIncome = entries
-      .filter(e => e.type === 'CASH IN' && ['Interest Profit', 'Other Income'].includes(e.category))
+      .filter(e => e.type === 'CASH IN' && ['Interest Profit (Installment)', 'Interest Profit (QuickLoan)', 'Interest Profit', 'Other Income'].includes(e.category))
       .reduce((sum, e) => sum + parseFloat(e.amount), 0)
     
     const totalExpenses = entries
@@ -137,7 +137,7 @@ export default function CapitalPage() {
       setFormData({
         entry_date: new Date().toISOString().slice(0, 10),
         type: 'CASH IN',
-        category: 'Interest Profit',
+        category: 'Interest Profit (Installment)',
         amount: '',
         notes: ''
       })
@@ -301,7 +301,7 @@ export default function CapitalPage() {
                   setFormData({ 
                     ...formData, 
                     type: newType,
-                    category: newType === 'CASH IN' ? 'Interest Profit' : 'Subscription / Hosting' 
+                    category: newType === 'CASH IN' ? 'Interest Profit (Installment)' : 'Subscription / Hosting' 
                   })
                 }}
               >
@@ -320,11 +320,11 @@ export default function CapitalPage() {
               >
                 {formData.type === 'CASH IN' ? (
                   <>
-                    <option value="Interest Profit">Interest Profit</option>
+                    <option value="Interest Profit (Installment)">Interest Profit (Installment)</option>
+                    <option value="Interest Profit (QuickLoan)">Interest Profit (QuickLoan)</option>
                     <option value="Loan Principal Return">Loan Principal Return</option>
                     <option value="Capital Top-up (JP)">Capital Top-up (JP)</option>
                     <option value="Capital Top-up (Charlou)">Capital Top-up (Charlou)</option>
-                    <option value="Other Income">Other Income</option>
                   </>
                 ) : (
                   <>
