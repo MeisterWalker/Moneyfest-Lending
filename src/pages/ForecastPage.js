@@ -62,14 +62,29 @@ export default function ForecastPage() {
   const [loading, setLoading] = useState(true)
 
   const fetchData = useCallback(async () => {
-    const [{ data: s }, { data: l }] = await Promise.all([
+    const [{ data: s }, { data: l }, { data: cf }] = await Promise.all([
       supabase.from('settings').select('*').eq('id', 1).single(),
-      supabase.from('loans').select('*')
+      supabase.from('loans').select('*'),
+      supabase.from('capital_flow').select('*')
     ])
     setSettings(s)
     setLoans(l || [])
+    
+    if (cf) {
+      const dynamicCapital = cf
+        .filter(c => c.type === 'CASH IN' && (c.category.includes('Initial Pool') || c.category.includes('Capital Top-up')))
+        .filter(c => !c.category.includes('QuickLoan'))
+        .reduce((sum, c) => sum + (c.amount || 0), 0)
+      
+      const dynamicQLCapital = cf
+        .filter(c => c.type === 'CASH IN' && c.category.includes('QuickLoan') && (c.category.includes('Initial Pool') || c.category.includes('Capital Top-up')))
+        .reduce((sum, c) => sum + (c.amount || 0), 0)
+
+      setCapital(dynamicCapital || (s?.starting_capital || 30000))
+      setQlCapital(dynamicQLCapital || (s?.ql_starting_capital || 0))
+    }
+
     if (s) {
-      setCapital(s.starting_capital || 30000)
       setRate(Math.round((s.interest_rate || 0.07) * 100))
     }
     setLoading(false)

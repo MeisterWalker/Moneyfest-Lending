@@ -11,19 +11,31 @@ export default function InvestorsPage() {
   const [loans, setLoans] = useState([])
   const [borrowers, setBorrowers] = useState([])
   const [settings, setSettings] = useState(null)
+  const [adminCapitalState, setAdminCapitalState] = useState(30000)
   const [loading, setLoading] = useState(true)
 
   const fetchData = useCallback(async () => {
-    const [{ data: inv }, { data: l }, { data: b }, { data: s }] = await Promise.all([
+    const [{ data: inv }, { data: l }, { data: b }, { data: s }, { data: cf }] = await Promise.all([
       supabase.from('investors').select('*').order('created_at', { ascending: false }),
       supabase.from('loans').select('*').order('created_at', { ascending: false }),
       supabase.from('borrowers').select('id, full_name, department, building'),
-      supabase.from('settings').select('*').eq('id', 1).single()
+      supabase.from('settings').select('*').eq('id', 1).single(),
+      supabase.from('capital_flow').select('*')
     ])
     setInvestors(inv || [])
     setLoans(l || [])
     setBorrowers(b || [])
     setSettings(s)
+    
+    // Calculate dynamic ledger capital for admin
+    let dynamicAdminCapital = 30000
+    if (cf) {
+      dynamicAdminCapital = cf
+        .filter(c => c.type === 'CASH IN' && (c.category.includes('Initial Pool') || c.category.includes('Capital Top-up')))
+        .filter(c => !c.category.includes('QuickLoan'))
+        .reduce((sum, c) => sum + (c.amount || 0), 0)
+    }
+    setAdminCapitalState(dynamicAdminCapital)
     setLoading(false)
   }, [])
 
@@ -67,7 +79,7 @@ export default function InvestorsPage() {
   const adminLoans = installmentLoans.filter(l => !l.investor_id)
   const adminActiveLoans = adminLoans.filter(l => ['Active', 'Partially Paid', 'Overdue'].includes(l.status))
   const adminPaidLoans = adminLoans.filter(l => l.status === 'Paid')
-  const adminCapital = Number(settings?.starting_capital || 30000)
+  const adminCapital = adminCapitalState
   const adminInterestRate = Number(settings?.interest_rate || 0.07)
 
   // Admin profit from paid loans (fully collected interest)

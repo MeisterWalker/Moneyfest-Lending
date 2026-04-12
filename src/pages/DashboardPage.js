@@ -687,7 +687,8 @@ export default function DashboardPage() {
   // ── Other Categories stats ───────────────────────────────────
   const otherTotalCapital = otherProducts.reduce((sum, p) => sum + (p.capital || 0), 0)
   const otherTotalProfit = otherProducts.reduce((sum, p) => sum + getProductStats(p.id).netProfit, 0)
-  const systemTotalCapital = (settings?.starting_capital || 30000) + qlCapital + otherTotalCapital
+  // SYNCED TOTAL: Uses dynamic ledger capital
+  const systemTotalCapital = capital + qlCapital + otherTotalCapital
   const donutData = [
     { name: 'Active', value: activeLoans.length, color: 'var(--blue)' },
     { name: 'Paid', value: paidLoans.length, color: 'var(--green)' },
@@ -1088,8 +1089,8 @@ export default function DashboardPage() {
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12, flex: 1, maxWidth: 600 }}>
                 {[
-                  { label: 'Installment Pool', value: settings?.starting_capital || 30000, color: 'var(--blue)' },
-                  { label: 'QuickLoan Pool', value: settings?.ql_starting_capital || 0, color: '#F59E0B' },
+                  { label: 'Installment Pool', value: capital, color: 'var(--blue)' },
+                  { label: 'QuickLoan Pool', value: qlCapital, color: '#F59E0B' },
                   { label: 'Other Products', value: otherTotalCapital, color: '#10B981' },
                 ].map(item => (
                   <div key={item.label} style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 12, padding: '12px 16px', border: '1px solid var(--card-border)' }}>
@@ -1102,8 +1103,8 @@ export default function DashboardPage() {
 
             {/* Visual Breakdown Bar */}
             <div style={{ height: 12, background: 'rgba(255,255,255,0.05)', borderRadius: 6, overflow: 'hidden', display: 'flex' }}>
-              <div style={{ width: `${((settings?.starting_capital || 30000) / (systemTotalCapital || 1)) * 100}%`, background: 'var(--blue)', transition: 'width 0.5s ease' }} />
-              <div style={{ width: `${((settings?.ql_starting_capital || 0) / (systemTotalCapital || 1)) * 100}%`, background: '#F59E0B', transition: 'width 0.5s ease' }} />
+              <div style={{ width: `${(capital / (systemTotalCapital || 1)) * 100}%`, background: 'var(--blue)', transition: 'width 0.5s ease' }} />
+              <div style={{ width: `${(qlCapital / (systemTotalCapital || 1)) * 100}%`, background: '#F59E0B', transition: 'width 0.5s ease' }} />
               <div style={{ width: `${(otherTotalCapital / (systemTotalCapital || 1)) * 100}%`, background: '#10B981', transition: 'width 0.5s ease' }} />
             </div>
             <div style={{ display: 'flex', gap: 16, marginTop: 12, fontSize: 11, color: "var(--text-muted)" }}>

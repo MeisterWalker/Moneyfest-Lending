@@ -64,10 +64,12 @@ function LoanConfigSection({ settings, onSave }) {
   return (
     <Section icon={Sliders} title="Loan Configuration" color="var(--blue)">
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 18, marginBottom: 20 }}>
-        <div className="form-group">
+        <div className="form-group" style={{ opacity: 0.6 }}>
           <label className="form-label">Starting Capital (₱)</label>
-          <input type="number" min="0" step="1000" value={form.starting_capital} onChange={e => set('starting_capital', e.target.value)} />
-          <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>Total lending pool</div>
+          <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--card-border)', borderRadius: 8, padding: '10px 14px', fontSize: 13, color: 'var(--text-muted)' }}>
+            Managed via <a href="/admin/capital" style={{ color: 'var(--blue)', textDecoration: 'none', fontWeight: 600 }}>Ledger ↗</a>
+          </div>
+          <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>Now dynamic & ledger-based</div>
         </div>
         <div className="form-group">
           <label className="form-label">Interest Rate (%)</label>
@@ -130,10 +132,12 @@ function QuickLoanConfigSection({ settings, onSave }) {
   return (
     <Section icon={Sliders} title="⚡ QuickLoan Configuration" color="#F59E0B">
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 18, marginBottom: 20 }}>
-        <div className="form-group">
+        <div className="form-group" style={{ opacity: 0.6 }}>
           <label className="form-label">QuickLoan Capital Pool (₱)</label>
-          <input type="number" min="0" step="500" value={form.ql_starting_capital} onChange={e => set('ql_starting_capital', e.target.value)} />
-          <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>Separate from installment loan capital</div>
+          <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--card-border)', borderRadius: 8, padding: '10px 14px', fontSize: 13, color: 'var(--text-muted)' }}>
+            Managed via <a href="/admin/capital" style={{ color: '#F59E0B', textDecoration: 'none', fontWeight: 600 }}>Ledger ↗</a>
+          </div>
+          <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>Separate from installment ledger</div>
         </div>
       </div>
       {qlCapital > 0 && (
