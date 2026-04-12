@@ -265,9 +265,6 @@ export default function CapitalForecastPage() {
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, background: 'rgba(255,255,255,0.06)', borderRadius: 8, overflow: 'hidden', marginBottom: 16 }}>
                       <div style={{ background: 'rgba(255,255,255,0.02)', padding: '12px' }}>
                         <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 4 }}>If all pay</div>
-                        <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--green)', fontFamily: 'Space Grotesk' }}>{formatCurrency(capCash + (idx === 0 ? nextOptimisticTotal : expectedOptimistic /* Note: This specific box is per-cutoff, but wait, the prompt asks for currentCash + sum of all borrowers due in that cutoff */))}</div>
-                        {/* Correcting based on prompt: currentCash + sum of ALL borrowers due THAT cutoff */}
-                        <div style={{ display: 'none' }}>{/* Placeholder for logic adjustment */}</div>
                         <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--green)', fontFamily: 'Space Grotesk' }}>
                           {formatCurrency(capCash + expectedOptimistic)}
                         </div>

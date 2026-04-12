@@ -737,6 +737,16 @@ export default function LoansPage() {
       description: `Principal reduced by ₱${amount} for ${borrower?.full_name}. New principal: ₱${newPrincipal}`,
       changed_by: user?.email
     })
+
+    // Direct capital_flow insert for mid-loan principal returns
+    await supabase.from('capital_flow').insert({
+      entry_date: todayStr,
+      type: 'CASH IN',
+      category: 'Loan Principal Return',
+      amount: amount,
+      notes: `Auto: Principal payment from ${borrower?.full_name || 'Borrower'} — ₱${amount} toward QuickLoan principal (reduced from ₱${currentPrincipal} to ₱${newPrincipal})`
+    })
+
     toast(`✅ Principal reduced by ₱${amount.toLocaleString('en-PH', { minimumFractionDigits: 2 })} for ${borrower?.full_name}`, 'success')
     fetchData()
   }
