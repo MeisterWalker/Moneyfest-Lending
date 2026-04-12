@@ -410,9 +410,8 @@ export default function DashboardPage() {
     .filter(c => c.type === 'CASH IN' && (
       c.category === 'Initial Pool (Installment)' ||
       c.category === 'Capital Top-up (JP)' ||
-      c.category === 'Capital Top-up (Charlou)' ||
-      c.category === 'Initial Pool'
-    ))
+      c.category === 'Capital Top-up (Charlou)'
+    ) && !c.category.includes('QuickLoan'))
     .reduce((sum, c) => sum + (c.amount || 0), 0)
 
   const activeLoans = loans.filter(l => ['Active', 'Partially Paid', 'Overdue'].includes(l.status) && l.loan_type !== 'quickloan')
