@@ -45,7 +45,7 @@ const navGroups = [
       { to: '/admin/capital', icon: Wallet, label: 'Capital' },
       { to: '/admin/forecast-capital', icon: BarChart, label: 'Cash Forecast' },
       { to: '/admin/forecast', icon: TrendingUp, label: 'Profit Forecast' },
-      { to: '/admin/investors', icon: Wallet, label: 'Investors' },
+      // { to: '/admin/investors', icon: Wallet, label: 'Investors' },
     ]
   },
   {
@@ -60,7 +60,7 @@ const navGroups = [
     items: [
       { to: '/admin/inbox', icon: Mail, label: 'Inbox' },
       { to: '/admin/tools', icon: Wrench, label: 'Admin Tools' },
-      { to: '/admin/investor-pitch', icon: Briefcase, label: 'Investor Pitch' },
+      // { to: '/admin/investor-pitch', icon: Briefcase, label: 'Investor Pitch' },
     ]
   }
 ]
