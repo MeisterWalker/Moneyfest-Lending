@@ -581,16 +581,21 @@ function LoanCard({ loan: rawLoan, borrowers, applications, investors, onEdit, o
 
           {/* Renew Confirmation Banner */}
           {confirmingRenew && (() => {
-            const score = borrower?.credit_score || 0
-            const newMax = score >= 1000 ? 10000 : score >= 920 ? 9000 : score >= 835 ? 7000 : 5000
+            const level = borrower?.loan_limit_level || 1
+            const limitMap = { 4: 10000, 3: 9000, 2: 7000, 1: 5000 }
+            const tierMap = { 4: '👑 VIP', 3: '🤝 Reliable', 2: '⭐ Trusted', 1: '🌱 New' }
+            
+            const newMax = limitMap[level] || 5000
+            const tierName = tierMap[level] || '🌱 New'
             const increased = newMax > loan.loan_amount
+            
             return (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10, background: 'rgba(20,184,166,0.06)', border: '1px solid rgba(20,184,166,0.25)', borderRadius: 10, padding: '12px 14px', width: '100%', marginTop: 8 }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div style={{ fontSize: 13 }}>
-                    <span style={{ fontWeight: 700, color: 'var(--teal)' }}>{borrower?.loyalty_badge} Tier Upgrade</span>
+                    <span style={{ fontWeight: 700, color: 'var(--teal)' }}>{tierName} Tier Upgrade</span>
                     <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
-                      Credit Score: <strong>{score}</strong> · {' '}
+                      Credit Score: <strong>{borrower?.credit_score || 0}</strong> · {' '}
                       {increased 
                         ? <span>Eligible limit increased to <strong style={{ color: 'var(--green)' }}>{formatCurrency(newMax)}</strong>!</span>
                         : <span>Eligible for renewal up to {formatCurrency(newMax)}</span>
@@ -898,11 +903,8 @@ export default function LoansPage() {
         const newCleanLoans = (borrower.clean_loans || 0) + 1
         const finalBadge = getBadgeStatus(bonusScore, newCleanLoans)
         
-        // Only upgrade loan limit if borrower maintained at least starting score (750)
-        const qualifiesForLimitUpgrade = currentScore >= CREDIT_CONFIG.STARTING_SCORE
-        const newLevel = qualifiesForLimitUpgrade
-          ? Math.min(4, (borrower.loan_limit_level || 1) + 1)
-          : (borrower.loan_limit_level || 1)
+        // Recalculate loan limit level based on the NEW score thresholds
+        const newLevel = bonusScore >= 1000 ? 4 : bonusScore >= 920 ? 3 : bonusScore >= 835 ? 2 : 1
         const limitMap = { 1: 5000, 2: 7000, 3: 9000, 4: 10000 }
         const newLimit = limitMap[newLevel]
         await supabase.from('borrowers').update({
