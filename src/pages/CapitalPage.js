@@ -278,6 +278,7 @@ export default function CapitalPage() {
                 {formData.type === 'CASH IN' ? (
                   <>
                     <option value="Interest Profit">Interest Profit</option>
+                    <option value="Loan Principal Return">Loan Principal Return</option>
                     <option value="Capital Top-up (JP)">Capital Top-up (JP)</option>
                     <option value="Capital Top-up (Charlou)">Capital Top-up (Charlou)</option>
                     <option value="Other Income">Other Income</option>
@@ -288,6 +289,7 @@ export default function CapitalPage() {
                     <option value="Partner Withdrawal (JP)">Partner Withdrawal (JP)</option>
                     <option value="Partner Withdrawal (Charlou)">Partner Withdrawal (Charlou)</option>
                     <option value="Operating Expense">Operating Expense</option>
+                    <option value="Other Expense">Other Expense</option>
                   </>
                 )}
               </select>
