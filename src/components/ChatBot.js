@@ -204,7 +204,7 @@ export default function ChatBot() {
             </div>
             <div style={{ flex: 1 }}>
               <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 15, color: '#F0F4FF', letterSpacing: -0.3 }}>
-                Paul <span style={{ fontWeight: 400, fontSize: 12, color: 'rgba(139,92,246,0.9)' }}>by Moneyfest</span>
+                Paul <span style={{ fontWeight: 400, fontSize: 12, color: 'rgba(139,92,246,0.9)' }}>by LacaroNexus</span>
               </div>
               <div style={{ fontSize: 11, color: '#22C55E', display: 'flex', alignItems: 'center', gap: 4 }}>
                 <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#22C55E', display: 'inline-block' }} />
@@ -317,7 +317,7 @@ export default function ChatBot() {
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={handleKey}
-              placeholder="Ask JP anything... (English or Bisaya)"
+              placeholder="Ask Paul anything... (English or Bisaya)"
               rows={1}
               style={{
                 flex: 1, background: 'rgba(255,255,255,0.05)',
@@ -357,7 +357,7 @@ export default function ChatBot() {
           <div style={{
             padding: '6px 14px 10px',
             textAlign: 'center', fontSize: 10,
-            color: '#2D3748', letterSpacing: '0.04em'
+            color: '#64748B', letterSpacing: '0.04em'
           }}>
             Paul · Powered by LacaroNexus — Where Infrastructure Meets Intelligence.
           </div>
