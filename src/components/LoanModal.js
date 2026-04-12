@@ -53,10 +53,13 @@ export default function LoanModal({ isOpen, onClose, onSave, loan, borrower, bor
         notes: loan.notes || ''
       })
     } else if (prefill) {
+      const initialAmount = (prefill.suggested_max && prefill.suggested_max > (prefill.loan_amount || 0)) 
+        ? prefill.suggested_max 
+        : (prefill.loan_amount || '')
       setForm({
         borrower_id: prefill.borrower_id || '',
         loan_type: prefill.loan_type || 'regular',
-        loan_amount: prefill.loan_amount || '',
+        loan_amount: initialAmount,
         interest_rate: prefill.interest_rate || settings?.interest_rate || 0.07,
         loan_term: prefill.loan_term || 2,
         release_date: formatDateValue(nextCutoff),
@@ -167,7 +170,15 @@ export default function LoanModal({ isOpen, onClose, onSave, loan, borrower, bor
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}><X size={20} /></button>
         </div>
 
-        <div style={{ padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <div style={{ 
+          padding: '24px 28px', 
+          display: 'flex', 
+          flexDirection: 'column', 
+          gap: 20,
+          maxHeight: 'calc(90vh - 85px)',
+          overflowY: 'auto',
+          WebkitOverflowScrolling: 'touch'
+        }}>
 
           {/* Loan Type Toggle */}
           {!isEdit && (

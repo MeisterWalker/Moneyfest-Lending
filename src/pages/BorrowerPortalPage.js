@@ -723,7 +723,8 @@ export default function BorrowerPortalPage() {
       const { data: wTxns } = await supabase.from('wallet_transactions').select('*').eq('borrower_id', b.id).order('created_at', { ascending: false })
       let { data: notifs } = await supabase.from('portal_notifications').select('*').eq('borrower_id', b.id).order('created_at', { ascending: false }).limit(20)
       
-      setBorrower(b); setAllLoans(allL || []); setLoan(allL?.[0] || null); setProofs(p || [])
+      const activeLoan = (allL || []).find(l => !['Paid','Defaulted'].includes(l.status)); 
+      setBorrower(b); setAllLoans(allL || []); setLoan(activeLoan || allL?.[0] || null); setProofs(p || [])
       setRebateCredits(wBal || { balance: 0 }); setCreditTxns(wTxns || [])
       
       const activeLoans = (allL || []).filter(l => l.status === 'Active')
@@ -1690,7 +1691,7 @@ export default function BorrowerPortalPage() {
           {/* ── LEFT COLUMN ── */}
           <div>
             {/* Reloan Banner (Shows if latest loan is paid and no pending app) */}
-            {borrower && (!loan || loan.status === 'Paid') && (!pendingApp || pendingApp.status !== 'Pending') && !renewalSent && (
+            {borrower && (!loan || ['Paid','Defaulted'].includes(loan.status)) && (!pendingApp || pendingApp.status !== 'Pending') && !renewalSent && (
               <div className="pc" style={{ 
                 background: 'linear-gradient(135deg, #1e1b4b, #312e81)', 
                 border: '1px solid rgba(139,92,246,0.3)', 
@@ -1710,7 +1711,7 @@ export default function BorrowerPortalPage() {
                     const max = borrower.loan_limit_level === 4 ? 10000 : borrower.loan_limit_level === 3 ? 9000 : borrower.loan_limit_level === 2 ? 7000 : 5000
                     setReloanAmount(max)
                     setReloanType('regular')
-                    setReloanPurpose(loan?.loan_purpose || '')
+                    setReloanPurpose('')
                     
                     // Default release method from previous app if available
                     if (pendingApp) {
@@ -1732,7 +1733,7 @@ export default function BorrowerPortalPage() {
             )}
 
             {/* Application Pending State */}
-            {borrower && pendingApp && pendingApp.status === 'Pending' && (!loan || loan.status === 'Paid') && (
+            {borrower && pendingApp && pendingApp.status === 'Pending' && (!loan || ['Paid','Defaulted'].includes(loan.status)) && (
               <div className="pc" style={{ background: 'rgba(59,130,246,0.06)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: 24, padding: 32, textAlign: 'center' }}>
                 <div style={{ fontSize: 40, marginBottom: 16 }}>⏳</div>
                 <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 20, color: '#60A5FA', marginBottom: 8 }}>Application Under Review</div>
@@ -1754,7 +1755,7 @@ export default function BorrowerPortalPage() {
             )}
 
             {/* Conditional Display for Active Loan or No Active Loan Placeholder */}
-            {loan && loan.status !== 'Paid' ? (
+            {loan && !['Paid','Defaulted'].includes(loan.status) ? (
               <>
                 {/* Dashboard Highlights Row (Mini-Stats) */}
               <div className="pc stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 16 }}>
@@ -2142,6 +2143,17 @@ export default function BorrowerPortalPage() {
                 })()}
 
               </>
+            ) : loan && loan.status === 'Defaulted' ? (
+              <div className="pc" style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 24, padding: 32, textAlign: 'center' }}>
+                <div style={{ fontSize: 40, marginBottom: 16 }}>⚠️</div>
+                <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 18, color: '#EF4444', marginBottom: 8 }}>Account in Default</div>
+                <p style={{ fontSize: 14, color: '#7A8AAA', lineHeight: 1.6, maxWidth: 300, margin: '0 auto' }}>
+                  Your loan is currently in default. Please contact the admin team immediately to resolve your account.
+                </p>
+                <a href="/contact" style={{ display: 'inline-block', marginTop: 24, padding: '12px 24px', background: '#EF4444', color: '#fff', borderRadius: 12, textDecoration: 'none', fontWeight: 700, fontSize: 13, fontFamily: 'Syne, sans-serif' }}>
+                  Contact Us
+                </a>
+              </div>
             ) : (
               <div style={{ textAlign: 'center', padding: '100px 20px', background: 'rgba(255,255,255,0.01)', border: '1px solid rgba(255,255,255,0.04)', borderRadius: 24 }}>
                 <div style={{ fontSize: 52, marginBottom: 16 }}>🏦</div>
@@ -2338,7 +2350,7 @@ export default function BorrowerPortalPage() {
               </div>
 
               {/* Calendar: keep for installment loans only */}
-              {(!loan || loan.loan_type !== 'quickloan') && (
+              {loan && !['Paid','Defaulted'].includes(loan.status) && loan.loan_type !== 'quickloan' && (
                 <div className="pc" style={{ background: '#0E1320', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 18, overflow: 'hidden' }}>
                   <div style={{ padding: '14px 16px', borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.01)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
