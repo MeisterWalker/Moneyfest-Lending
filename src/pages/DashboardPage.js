@@ -940,14 +940,14 @@ export default function DashboardPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
           {/* Stat cards — mirrors installment dashboard */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
-            <StatCard label="Total Capital" value={qlCapital > 0 ? formatCurrency(qlCapital) : '—'} sub="QuickLoan capital pool" icon={Banknote} color="var(--blue)" />
+            <StatCard label="Total Capital" value={formatCurrency(qlCapital + qlTotalInterestEarned)} sub="Total portfolio value" icon={Banknote} color="var(--blue)" />
             <StatCard label="Amount Lent Out" value={formatCurrency(qlAmountLentOut)} sub={`${activeQuickLoans.length} active loans`} icon={CreditCard} color="var(--purple)" />
             <StatCard label="Total Profit" value={formatCurrency(qlTotalInterestEarned)} sub="All-time interest earned" icon={TrendingUp} color="var(--green)" />
             <StatCard label="Profit This Month" value={formatCurrency(qlProfitThisMonth)} sub="Paid QuickLoans this month" icon={Activity} color="var(--teal)" />
             <StatCard label="Projected Yearly" value={formatCurrency(qlProjectedYearly)} sub="10%/mo on available capital" icon={ArrowUpRight} color="var(--blue)" />
             <StatCard label="Day 15 Missed" value={qlDay15Overdue} sub="Extension fee pending" icon={AlertTriangle} color={qlDay15Overdue > 0 ? 'var(--gold)' : 'var(--text-muted)'} />
-            <StatCard label="Available Liquidity" value={qlCapital > 0 ? formatCurrency(qlAvailableLiquidity) : '—'} sub="Ready to lend" icon={Banknote} color="var(--green)" />
-            <StatCard label="ROI" value={qlCapital > 0 ? `${qlRoi.toFixed(1)}%` : '—'} sub="Return on capital" icon={Percent} color="var(--purple)" />
+            <StatCard label="Available Liquidity" value={formatCurrency(Math.max(0, (qlCapital + qlTotalInterestEarned) - qlAmountLentOut))} sub="Ready to lend" icon={Banknote} color="var(--green)" />
+            <StatCard label="ROI" value={qlCapital > 0 ? `${qlRoi.toFixed(1)}%` : `${((qlTotalInterestEarned / 9000) * 100).toFixed(1)}%`} sub="Return on capital" icon={Percent} color="var(--purple)" />
             <StatCard label="Active QuickLoans" value={activeQuickLoans.length} sub={`${paidQuickLoans.length} paid all-time`} icon={Users} color="#F59E0B" />
           </div>
 
