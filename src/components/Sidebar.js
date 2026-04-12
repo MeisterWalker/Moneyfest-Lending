@@ -1,6 +1,6 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import {
-  LayoutDashboard, Users, FileText, TrendingUp,
+  LayoutDashboard, Users, FileText, TrendingUp, BarChart,
   Calendar, History, Settings, LogOut, ClipboardList, Shield, CheckSquare, Briefcase, Brain, Moon, Sun, Wallet, Wrench, Mail
 } from 'lucide-react'
 
@@ -22,22 +22,47 @@ import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 import { useToast } from './Toast'
 
-const navItems = [
-  { to: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/admin/borrowers', icon: Users, label: 'Borrowers' },
-  { to: '/admin/loans', icon: FileText, label: 'Loans' },
-  { to: '/admin/collection', icon: Calendar, label: 'Collection Schedule' },
-  { to: '/admin/forecast', icon: TrendingUp, label: 'Profit Forecast' },
-  { to: '/admin/audit', icon: History, label: 'Audit History' },
-  { to: '/admin/applications', icon: ClipboardList, label: 'Applications' },
-  { to: '/admin/assessments', icon: Brain, label: 'Assessments' },
-  { to: '/admin/approvals', icon: CheckSquare, label: 'Approvals' },
-  { to: '/admin/investor-pitch', icon: Briefcase, label: 'Investor Pitch' },
-  { to: '/admin/investors', icon: Wallet, label: 'Investors' },
-  { to: '/admin/login-logs', icon: Shield, label: 'Login Logs' },
-  { to: '/admin/tools', icon: Wrench, label: 'Admin Tools' },
-  { to: '/admin/inbox', icon: Mail, label: 'Inbox' },
-  { to: '/admin/capital', icon: Wallet, label: 'Capital' },
+const navGroups = [
+  {
+    items: [
+      { to: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' }
+    ]
+  },
+  {
+    label: 'LENDING',
+    items: [
+      { to: '/admin/borrowers', icon: Users, label: 'Borrowers' },
+      { to: '/admin/loans', icon: FileText, label: 'Loans' },
+      { to: '/admin/collection', icon: Calendar, label: 'Collection Schedule' },
+      { to: '/admin/applications', icon: ClipboardList, label: 'Applications' },
+      { to: '/admin/approvals', icon: CheckSquare, label: 'Approvals' },
+      { to: '/admin/assessments', icon: Brain, label: 'Assessments' },
+    ]
+  },
+  {
+    label: 'FINANCE',
+    items: [
+      { to: '/admin/capital', icon: Wallet, label: 'Capital' },
+      { to: '/admin/forecast-capital', icon: BarChart, label: 'Cash Forecast' },
+      { to: '/admin/forecast', icon: TrendingUp, label: 'Profit Forecast' },
+      { to: '/admin/investors', icon: Wallet, label: 'Investors' },
+    ]
+  },
+  {
+    label: 'RECORDS',
+    items: [
+      { to: '/admin/audit', icon: History, label: 'Audit History' },
+      { to: '/admin/login-logs', icon: Shield, label: 'Login Logs' },
+    ]
+  },
+  {
+    label: 'SYSTEM',
+    items: [
+      { to: '/admin/inbox', icon: Mail, label: 'Inbox' },
+      { to: '/admin/tools', icon: Wrench, label: 'Admin Tools' },
+      { to: '/admin/investor-pitch', icon: Briefcase, label: 'Investor Pitch' },
+    ]
+  }
 ]
 
 export default function Sidebar() {
@@ -79,30 +104,47 @@ export default function Sidebar() {
       </div>
 
       {/* Nav items */}
-      <nav style={{ flex: 1, padding: '12px 10px', display: 'flex', flexDirection: 'column', gap: 2 }}>
-        {navItems.map(({ to, icon: Icon, label }) => (
-          <NavLink
-            key={to}
-            to={to}
-            style={({ isActive }) => ({
-              display: 'flex',
-              alignItems: 'center',
-              gap: 10,
-              padding: '10px 12px',
-              borderRadius: 10,
-              textDecoration: 'none',
-              fontSize: 14,
-              fontWeight: 500,
-              position: 'relative',
-              transition: 'all 0.15s ease',
-              background: isActive ? 'rgba(99,102,241,0.15)' : 'transparent',
-              color: isActive ? 'var(--text-primary)' : 'var(--text-label)',
-              borderLeft: isActive ? '3px solid var(--blue)' : '3px solid transparent',
-            })}
-          >
-            <Icon size={18} />
-            {label}
-          </NavLink>
+      <nav style={{ flex: 1, padding: '12px 10px', display: 'flex', flexDirection: 'column', gap: 2, overflowY: 'auto' }}>
+        {navGroups.map((group, idx) => (
+          <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            {group.label && (
+              <span style={{
+                fontSize: 9,
+                fontWeight: 800,
+                color: 'rgba(255,255,255,0.2)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.12em',
+                padding: '16px 20px 6px',
+                display: 'block'
+              }}>
+                {group.label}
+              </span>
+            )}
+            {group.items.map(({ to, icon: Icon, label }) => (
+              <NavLink
+                key={to}
+                to={to}
+                style={({ isActive }) => ({
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 10,
+                  padding: '10px 12px',
+                  borderRadius: 10,
+                  textDecoration: 'none',
+                  fontSize: 14,
+                  fontWeight: 500,
+                  position: 'relative',
+                  transition: 'all 0.15s ease',
+                  background: isActive ? 'rgba(99,102,241,0.15)' : 'transparent',
+                  color: isActive ? 'var(--text-primary)' : 'var(--text-label)',
+                  borderLeft: isActive ? '3px solid var(--blue)' : '3px solid transparent',
+                })}
+              >
+                <Icon size={18} />
+                {label}
+              </NavLink>
+            ))}
+          </div>
         ))}
       </nav>
 
