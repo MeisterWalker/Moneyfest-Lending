@@ -319,6 +319,7 @@ export default function DashboardPage() {
   const [borrowers, setBorrowers] = useState([])
   const [settings, setSettings] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [auditLogs, setAuditLogs] = useState([])
   const [capitalFlow, setCapitalFlow] = useState([])
   const [bannerDismissed, setBannerDismissed] = useState(false)
   const [visitStats, setVisitStats] = useState({ total: 0, today: 0, pages: {} })
