@@ -29,19 +29,22 @@ function TypingDots() {
 function Avatar() {
   return (
     <div style={{
-      width: 32, height: 32, borderRadius: '50%', flexShrink: 0,
+      width: 34, height: 34, borderRadius: '50%', flexShrink: 0,
       background: 'linear-gradient(135deg, #3B82F6, #8B5CF6)',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      fontSize: 14, fontWeight: 900, color: '#fff', fontFamily: 'Space Grotesk',
-      boxShadow: '0 0 10px rgba(139,92,246,0.4)'
-    }}>Paul</div>
+      overflow: 'hidden',
+      boxShadow: '0 0 10px rgba(139,92,246,0.4)',
+      border: '1px solid rgba(139,92,246,0.3)'
+    }}>
+      <img src="/saulx-avatar.png" alt="SaulX" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+    </div>
   )
 }
 
 export default function ChatBot() {
   const [open, setOpen] = useState(false)
   const [messages, setMessages] = useState([
-    { role: 'assistant', text: "Hi! I'm **Paul**, your AI assistant by LacaroNexus 😊 I'm here to help you with loans, interest rates, eligibility, and more! I can understand and respond in both **English** and **Cebuano (Bisaya)** — feel free to ask me anything!" }
+    { role: 'assistant', text: "Hi! I'm **SaulX**, your AI assistant by LacaroNexus 😊 I'm here to help you with loans, interest rates, eligibility, and more! I can understand and respond in both **English** and **Cebuano (Bisaya)** — feel free to ask me anything!" }
   ])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
@@ -154,12 +157,14 @@ export default function ChatBot() {
           transition: 'transform 0.2s, box-shadow 0.2s',
           transform: open ? 'scale(1.05)' : 'scale(1)',
         }}
-        title="Chat with JP"
+        title="Chat with SaulX"
       >
         {open ? (
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         ) : (
-          <span style={{ fontFamily: 'Space Grotesk', fontWeight: 900, fontSize: 18, color: '#fff', letterSpacing: -0.5 }}>Paul</span>
+          <div style={{ width: '100%', height: '100%', borderRadius: '50%', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <img src="/saulx-avatar.png" alt="SaulX" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          </div>
         )}
         {unread > 0 && !open && (
           <div style={{
@@ -204,7 +209,7 @@ export default function ChatBot() {
             </div>
             <div style={{ flex: 1 }}>
               <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 15, color: '#F0F4FF', letterSpacing: -0.3 }}>
-                Paul <span style={{ fontWeight: 400, fontSize: 12, color: 'rgba(139,92,246,0.9)' }}>by LacaroNexus</span>
+                SaulX <span style={{ fontWeight: 400, fontSize: 12, color: 'rgba(139,92,246,0.9)' }}>by LacaroNexus</span>
               </div>
               <div style={{ fontSize: 11, color: '#22C55E', display: 'flex', alignItems: 'center', gap: 4 }}>
                 <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#22C55E', display: 'inline-block' }} />
@@ -317,7 +322,7 @@ export default function ChatBot() {
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={handleKey}
-              placeholder="Ask Paul anything... (English or Bisaya)"
+              placeholder="Ask SaulX anything... (English or Bisaya)"
               rows={1}
               style={{
                 flex: 1, background: 'rgba(255,255,255,0.05)',
@@ -359,7 +364,7 @@ export default function ChatBot() {
             textAlign: 'center', fontSize: 10,
             color: '#64748B', letterSpacing: '0.04em'
           }}>
-            Paul · Powered by LacaroNexus — Where Infrastructure Meets Intelligence.
+            SaulX · Powered by LacaroNexus — Where Infrastructure Meets Intelligence.
           </div>
         </div>
       )}
