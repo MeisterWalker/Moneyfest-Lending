@@ -150,28 +150,37 @@ export default function CapitalPage() {
   }
 
   const handleReconcileData = async () => {
-    if (!window.confirm("Fix Ledger Math?\n\nThis will:\n1. Delete the wrong \u20b15,000 profit entry\n2. Add the correct \u20b11,175 profit from Apr 5 (After \u20b150 rebate)\n3. Add \u20b13,725 Charlou top-up\n\nResult: Total Pool = \u20b148,900.00 (before Sheena's \u20b1100).")) return;
+    const msg = "Refine Ledger Math?\n\nThis will:\n1. Fix April 5 Profit: ₱1,175 (James payoff)\n2. Add JP Top-up: ₱200 (Unrecorded Juico/James release)\n3. Add Charlou Top-up: ₱3,525\n\nResult: Total Pool = ₱48,900.00 (Perfect Baseline)."
+    if (!window.confirm(msg)) return;
     
     setLoading(true)
     try {
-      // 1. Delete bad entry
+      // 1. Delete bad entry (if exists from previous tests)
       await supabase.from('capital_flow').delete().eq('category', 'Interest Profit').eq('amount', 5000)
       
-      // 2. Insert Profit & Top-up
+      // 2. Insert Profit & Top-ups
       const { error } = await supabase.from('capital_flow').insert([
         { 
           entry_date: '2026-04-05', 
           type: 'CASH IN', 
           category: 'Interest Profit (Installment)', 
           amount: 1175, 
-          notes: 'Audited Interest Profit from April 5th (incl. James \u20b150 rebate)',
+          notes: 'Audited Interest Profit from April 5th (incl. James ₱50 rebate)',
+          created_by: user?.email || 'admin'
+        },
+        { 
+          entry_date: '2026-04-05', 
+          type: 'CASH IN', 
+          category: 'Capital Top-up (JP)', 
+          amount: 200, 
+          notes: 'Manual top-up for Juico/James unrecorded release',
           created_by: user?.email || 'admin'
         },
         { 
           entry_date: '2026-04-05', 
           type: 'CASH IN', 
           category: 'Capital Top-up (Charlou)', 
-          amount: 3725, 
+          amount: 3525, 
           notes: 'Reconciled Top-up to fund April 2026 expansion',
           created_by: user?.email || 'admin'
         }
