@@ -1,0 +1,79 @@
+import { supabase } from './supabase'
+import { QUICKLOAN_CONFIG } from './helpers'
+
+/**
+ * Automatically splits a loan payment into Interest Profit and Principal Return
+ * and logs them in the capital_flow ledger.
+ */
+export const logAutomatedPayment = async (loan, amountReceived) => {
+  try {
+    const isQuickLoan = loan.loan_type === 'quickloan'
+    let interestProfit = 0
+    let principalReturn = 0
+
+    if (isQuickLoan) {
+      // For QuickLoans, we calculate interest based on the 1% daily rate
+      // But usually, the user collects a fixed amount.
+      // We assume any amount above the principal is profit.
+      // In this specific system, the user is often collecting ₱3,300 for a ₱3,000 loan.
+      
+      const principalPart = Math.min(loan.loan_amount, amountReceived)
+      const interestPart = amountReceived - principalPart
+      
+      interestProfit = interestPart
+      principalReturn = principalPart
+    } else {
+      // For Regular Loans:
+      // Interest is usually (Total Repayment - Principal) / Num Installments
+      const totalInterest = (loan.total_repayment || 0) - (loan.loan_amount || 0)
+      const numInstallments = loan.num_installments || 4
+      
+      // We calculate the specific interest portion for ONE standard installment
+      const interestPerInstallment = totalInterest / numInstallments
+      
+      // If the amount received matches a standard installment, use the pre-calculated split
+      // Otherwise (partial payment), we prorate it.
+      const ratio = amountReceived / loan.installment_amount
+      interestProfit = interestPerInstallment * ratio
+      principalReturn = amountReceived - interestProfit
+    }
+
+    // Round to 2 decimal places
+    interestProfit = Math.round(interestProfit * 100) / 100
+    principalReturn = Math.round(principalReturn * 100) / 100
+
+    const entries = []
+    
+    // Add Interest Profit Entry
+    if (interestProfit > 0) {
+      entries.push({
+        entry_date: new Date().toISOString().slice(0, 10),
+        type: 'CASH IN',
+        category: 'Interest Profit',
+        amount: interestProfit,
+        notes: `Auto: Interest Profit from ${loan.borrowers?.full_name || 'Borrower'} payment`
+      })
+    }
+
+    // Add Principal Return Entry
+    if (principalReturn > 0) {
+      entries.push({
+        entry_date: new Date().toISOString().slice(0, 10),
+        type: 'CASH IN',
+        category: 'Loan Principal Return',
+        amount: principalReturn,
+        notes: `Auto: Principal Return from ${loan.borrowers?.full_name || 'Borrower'} installment`
+      })
+    }
+
+    if (entries.length > 0) {
+      const { error } = await supabase.from('capital_flow').insert(entries)
+      if (error) throw error
+    }
+
+    return { success: true, interestProfit, principalReturn }
+  } catch (err) {
+    console.error('Error in logAutomatedPayment:', err)
+    return { success: false, error: err.message }
+  }
+}

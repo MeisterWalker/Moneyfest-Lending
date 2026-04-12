@@ -149,6 +149,46 @@ export default function CapitalPage() {
     }
   }
 
+  const handleReconcileData = async () => {
+    if (!window.confirm("Fix Ledger Math?\n\nThis will:\n1. Delete the wrong \u20b15,000 profit entry\n2. Add the correct \u20b11,225 profit from Apr 5\n3. Add \u20b13,675 Charlou top-up\n\nResult: Total Pool = \u20b149,000.00 exactly.")) return;
+    
+    setLoading(true)
+    try {
+      // 1. Delete bad entry
+      await supabase.from('capital_flow').delete().eq('category', 'Interest Profit').eq('amount', 5000)
+      
+      // 2. Insert Profit & Top-up
+      const { error } = await supabase.from('capital_flow').insert([
+        { 
+          entry_date: '2026-04-05', 
+          type: 'CASH IN', 
+          category: 'Interest Profit', 
+          amount: 1225, 
+          notes: 'Audited Interest Profit from April 5th Collection',
+          created_by: user?.email || 'admin'
+        },
+        { 
+          entry_date: '2026-04-05', 
+          type: 'CASH IN', 
+          category: 'Capital Top-up (Charlou)', 
+          amount: 3675, 
+          notes: 'Reconciled Top-up to fund April 2026 expansion',
+          created_by: user?.email || 'admin'
+        }
+      ])
+
+      if (error) throw error
+      
+      await logAudit({ action_type: 'LEDGER_RECONCILED', module: 'Capital', description: 'Admin corrected ledger to reach \u20b149,000 total capital', changed_by: user?.email })
+      toast('Ledger reconciled perfectly!', 'success')
+      fetchData()
+    } catch (err) {
+      toast('Failed to reconcile: ' + err.message, 'error')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const handleDelete = async (id, cat, amt) => {
     if (cat === 'Initial Pool') return toast('Cannot delete baseline capital', 'warning')
     if (!window.confirm('Delete this entry?')) return
@@ -179,6 +219,9 @@ export default function CapitalPage() {
           <h1 className="page-title">Capital & Cash Flow</h1>
           <p className="page-subtitle">Track ownership shares, capital top-ups, and business liquidity</p>
         </div>
+        <button onClick={handleReconcileData} style={{ fontSize: 12, padding: '7px 14px', borderRadius: 8, border: '1px solid rgba(34,197,94,0.3)', background: 'rgba(34,197,94,0.1)', color: 'var(--green)', cursor: 'pointer', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
+          ✨ Reconcile Math (Fixed ₱49k)
+        </button>
       </div>
 
       {/* Ownership Cards */}

@@ -7,6 +7,7 @@ import { notifyBorrower } from '../lib/portalNotifications'
 import { sendFundsReleasedEmail, sendPaymentConfirmedEmail } from '../lib/emailService'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../components/Toast'
+import { logAutomatedPayment } from '../lib/accounting'
 import LoanModal from '../components/LoanModal'
 import InstallmentProgressBar from '../components/InstallmentProgressBar'
 import {
@@ -756,6 +757,9 @@ export default function LoansPage() {
 
     if (error) { toast('Failed to record payment', 'error'); return }
 
+    // Log Automated Accounting Movement
+    await logAutomatedPayment(loan, installAmt)
+
     // ── Penalty calculation ─────────────────────────────────────
     const borrower = borrowers.find(b => b.id === loan.borrower_id)
     const PENALTY_PER_DAY = 20
@@ -1133,6 +1137,9 @@ export default function LoansPage() {
 
     if (error) { toast('Failed to record QuickLoan payoff', 'error'); return }
 
+    // Log Automated Accounting Movement
+    await logAutomatedPayment(loan, totalCollected)
+
     // Log penalty if in penalty phase
     if (balance.penaltyAccrued > 0) {
       const penaltyDays = balance.daysElapsed - QUICKLOAN_CONFIG.DAY30_THRESHOLD
@@ -1192,6 +1199,9 @@ export default function LoansPage() {
     }).eq('id', loan.id)
 
     if (error) { toast('Failed to record extension', 'error'); return }
+
+    // Log Automated Accounting Movement (Interest + Extension Fee)
+    await logAutomatedPayment(loan, collectNow)
 
     await logAudit({
       action_type: 'QUICKLOAN_DAY15_MISSED',
