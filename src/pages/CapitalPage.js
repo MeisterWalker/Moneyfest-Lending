@@ -150,7 +150,7 @@ export default function CapitalPage() {
   }
 
   const handleReconcileData = async () => {
-    if (!window.confirm("Fix Ledger Math?\n\nThis will:\n1. Delete the wrong \u20b15,000 profit entry\n2. Add the correct \u20b11,225 profit from Apr 5\n3. Add \u20b13,675 Charlou top-up\n\nResult: Total Pool = \u20b149,000.00 exactly.")) return;
+    if (!window.confirm("Fix Ledger Math?\n\nThis will:\n1. Delete the wrong \u20b15,000 profit entry\n2. Add the correct \u20b11,175 profit from Apr 5 (After \u20b150 rebate)\n3. Add \u20b13,725 Charlou top-up\n\nResult: Total Pool = \u20b148,900.00 (before Sheena's \u20b1100).")) return;
     
     setLoading(true)
     try {
@@ -162,16 +162,16 @@ export default function CapitalPage() {
         { 
           entry_date: '2026-04-05', 
           type: 'CASH IN', 
-          category: 'Interest Profit', 
-          amount: 1225, 
-          notes: 'Audited Interest Profit from April 5th Collection',
+          category: 'Interest Profit (Installment)', 
+          amount: 1175, 
+          notes: 'Audited Interest Profit from April 5th (incl. James \u20b150 rebate)',
           created_by: user?.email || 'admin'
         },
         { 
           entry_date: '2026-04-05', 
           type: 'CASH IN', 
           category: 'Capital Top-up (Charlou)', 
-          amount: 3675, 
+          amount: 3725, 
           notes: 'Reconciled Top-up to fund April 2026 expansion',
           created_by: user?.email || 'admin'
         }
