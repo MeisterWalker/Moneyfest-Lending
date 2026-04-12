@@ -2,7 +2,7 @@
 
 > A full-stack workplace micro-lending management system built for internal employee lending programs. Includes a borrower-facing portal, public loan application, admin dashboard, and automated credit scoring — all powered by React and Supabase.
 
-**Live:** [loanmoneyfest.vercel.app](https://loanmoneyfest.vercel.app)
+**Live:** [loanmoneyfest.vercel.app](https://moneyfestlending.loan)
 
 ---
 
