@@ -410,7 +410,8 @@ export default function DashboardPage() {
     .filter(c => c.type === 'CASH IN' && (
       c.category === 'Initial Pool (Installment)' ||
       c.category === 'Capital Top-up (JP)' ||
-      c.category === 'Capital Top-up (Charlou)'
+      c.category === 'Capital Top-up (Charlou)' ||
+      c.category === 'Initial Pool'
     ))
     .reduce((sum, c) => sum + (c.amount || 0), 0)
 
@@ -951,7 +952,7 @@ export default function DashboardPage() {
             <StatCard label="Profit This Month" value={formatCurrency(qlProfitThisMonth)} sub="Paid QuickLoans this month" icon={Activity} color="var(--teal)" />
             <StatCard label="Projected Yearly" value={formatCurrency(qlProjectedYearly)} sub="10%/mo on available capital" icon={ArrowUpRight} color="var(--blue)" />
             <StatCard label="Day 15 Missed" value={qlDay15Overdue} sub="Extension fee pending" icon={AlertTriangle} color={qlDay15Overdue > 0 ? 'var(--gold)' : 'var(--text-muted)'} />
-            <StatCard label="Available Liquidity" value={formatCurrency(Math.max(0, (qlCapital + qlTotalInterestEarned) - qlAmountLentOut))} sub="Ready to lend" icon={Banknote} color="var(--green)" />
+            <StatCard label="Available Liquidity" value={formatCurrency(Math.max(0, (qlLedgerCapital + qlTotalInterestEarned) - qlAmountLentOut))} sub="Ready to lend" icon={Banknote} color="var(--green)" />
             <StatCard label="ROI" value={qlLedgerCapital > 0 ? `${qlRoi.toFixed(1)}%` : `${((qlTotalInterestEarned / 9000) * 100).toFixed(1)}%`} sub="Return on capital" icon={Percent} color="var(--purple)" />
             <StatCard label="Active QuickLoans" value={activeQuickLoans.length} sub={`${paidQuickLoans.length} paid all-time`} icon={Users} color="#F59E0B" />
           </div>
