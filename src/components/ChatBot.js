@@ -41,7 +41,7 @@ function Avatar() {
 export default function ChatBot() {
   const [open, setOpen] = useState(false)
   const [messages, setMessages] = useState([
-    { role: 'assistant', text: "Hi! I'm **Paul**, your AI assistant by Moneyfest 😊 I'm here to help you with loans, interest rates, eligibility, and more! I can understand and respond in both **English** and **Cebuano (Bisaya)** — feel free to ask me anything!" }
+    { role: 'assistant', text: "Hi! I'm **Paul**, your AI assistant by LacaroNexus 😊 I'm here to help you with loans, interest rates, eligibility, and more! I can understand and respond in both **English** and **Cebuano (Bisaya)** — feel free to ask me anything!" }
   ])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
