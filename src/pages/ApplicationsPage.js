@@ -59,12 +59,19 @@ function IdViewer({ app }) {
     )
   }
 
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth)
+  useEffect(() => {
+    const h = () => setWindowWidth(window.innerWidth)
+    window.addEventListener('resize', h)
+    return () => window.removeEventListener('resize', h)
+  }, [])
+
   return (
     <div style={{ marginBottom: 16 }}>
       <div style={{ fontSize: 11, fontWeight: 700, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
         <Image size={12} /> Valid ID Submitted
       </div>
-      <div style={{ display: 'flex', gap: 10 }}>
+      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
         {renderCard(frontUrl, app.valid_id_path, 'Front')}
         {renderCard(backUrl, app.valid_id_back_path, 'Back')}
       </div>
@@ -95,32 +102,36 @@ function ApplicationCard({ app, onApprove, onReject }) {
   return (
     <div style={{ background: '#141B2D', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, overflow: 'hidden', marginBottom: 12 }}>
       {/* Header row */}
-      <div style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 14, cursor: 'pointer' }} onClick={() => setExpanded(e => !e)}>
+      <div style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 14, cursor: 'pointer', flexWrap: 'wrap' }} onClick={() => setExpanded(e => !e)}>
         <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'linear-gradient(135deg,#3B82F6,#8B5CF6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Space Grotesk', fontWeight: 800, color: '#fff', fontSize: 15, flexShrink: 0 }}>
           {app.full_name?.charAt(0).toUpperCase()}
         </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ flex: 1, minWidth: window.innerWidth < 480 ? '100%' : '200px' }}>
           <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 15, color: '#F0F4FF' }}>{app.full_name}</div>
           <div style={{ fontSize: 12, color: '#7A8AAA', marginTop: 2 }}>{app.department} · {new Date(app.created_at).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
         </div>
-        <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 18, color: '#22C55E', flexShrink: 0 }}>
-          ₱{app.loan_amount?.toLocaleString()}
-        </div>
-        <div style={{ padding: '4px 12px', borderRadius: 20, background: s.bg, border: `1px solid ${s.border}`, fontSize: 12, fontWeight: 700, color: s.text, flexShrink: 0 }}>
-          {app.status}
-        </div>
-        {app.assessment_recommendation && (
-          <div style={{ padding: '4px 12px', borderRadius: 20, background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.3)', fontSize: 11, fontWeight: 800, color: 'var(--blue)', flexShrink: 0 }}>
-            ★ {app.assessment_recommendation}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+          <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 18, color: '#22C55E' }}>
+            ₱{app.loan_amount?.toLocaleString()}
           </div>
-        )}
-        {expanded ? <ChevronUp size={16} color="#4B5580" /> : <ChevronDown size={16} color="#4B5580" />}
+          <div style={{ padding: '4px 12px', borderRadius: 20, background: s.bg, border: `1px solid ${s.border}`, fontSize: 12, fontWeight: 700, color: s.text }}>
+            {app.status}
+          </div>
+          {app.assessment_recommendation && (
+            <div style={{ padding: '4px 12px', borderRadius: 20, background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.3)', fontSize: 11, fontWeight: 800, color: 'var(--blue)' }}>
+              ★ {app.assessment_recommendation}
+            </div>
+          )}
+        </div>
+        <div style={{ marginLeft: 'auto' }}>
+          {expanded ? <ChevronUp size={16} color="#4B5580" /> : <ChevronDown size={16} color="#4B5580" />}
+        </div>
       </div>
 
       {/* Expanded details */}
       {expanded && (
         <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', padding: '20px' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 20 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 20, marginBottom: 20 }}>
             {/* Personal */}
             <div>
               <div style={{ fontSize: 11, fontWeight: 700, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}><span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><img src="/list.png" alt="info" style={{ width: 13, height: 13, objectFit: 'contain', marginRight: 5, verticalAlign: 'middle' }} />Personal Info</span></div>
@@ -143,7 +154,7 @@ function ApplicationCard({ app, onApprove, onReject }) {
 
           {/* Loan details */}
           <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, padding: '14px 16px', marginBottom: 20 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
               <div>
                 <div style={{ fontSize: 11, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Requested Amount</div>
                 <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 24, color: '#22C55E' }}>₱{app.loan_amount?.toLocaleString()}</div>
@@ -230,7 +241,7 @@ function ApplicationCard({ app, onApprove, onReject }) {
               </div>
               
               {!showRejectInput ? (
-                <div style={{ display: 'flex', gap: 10 }}>
+                <div style={{ display: 'flex', gap: 10, flexDirection: window.innerWidth < 480 ? 'column' : 'row' }}>
                   <button onClick={handleApprove} disabled={loading} style={{ flex: 1, padding: '11px', borderRadius: 10, border: 'none', background: 'rgba(34,197,94,0.15)', color: '#22C55E', fontSize: 14, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, border: '1px solid rgba(34,197,94,0.3)' }}>
                     <Check size={15} /> Approve & Create Loan
                   </button>
@@ -390,23 +401,23 @@ function ProofReviewSection({ supabase, user, logAudit }) {
                 {proof.notes && <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4, fontStyle: 'italic' }}>"{proof.notes}"</div>}
                 <div style={{ fontSize: 11, color: '#4B5580', marginTop: 4 }}>{new Date(proof.created_at).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
               </div>
-              <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+              <div style={{ display: 'flex', gap: 6, flexShrink: 0, flex: 1, minWidth: 200 }}>
                 {signedUrls[proof.id] ? (
                   <a href={signedUrls[proof.id]} target="_blank" rel="noreferrer"
-                    style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 12px', borderRadius: 8, background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.2)', color: '#3B82F6', fontSize: 12, fontWeight: 600, textDecoration: 'none' }}>
+                    style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '7px 12px', borderRadius: 8, background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.2)', color: '#3B82F6', fontSize: 12, fontWeight: 600, textDecoration: 'none' }}>
                     <ExternalLink size={12} /> View
                   </a>
                 ) : (
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 12px', borderRadius: 8, background: 'rgba(255,255,255,0.04)', color: '#4B5580', fontSize: 12 }}>
+                  <span style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '7px 12px', borderRadius: 8, background: 'rgba(255,255,255,0.04)', color: '#4B5580', fontSize: 12 }}>
                     Loading...
                   </span>
                 )}
                 <button onClick={() => handleConfirm(proof)}
-                  style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 12px', borderRadius: 8, border: 'none', background: 'rgba(34,197,94,0.15)', color: '#22C55E', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                  style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '7px 12px', borderRadius: 8, border: 'none', background: 'rgba(34,197,94,0.15)', color: '#22C55E', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
                   ✓ Confirm
                 </button>
                 <button onClick={() => handleReject(proof)}
-                  style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 12px', borderRadius: 8, border: 'none', background: 'rgba(239,68,68,0.1)', color: '#EF4444', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                  style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, padding: '7px 12px', borderRadius: 8, border: 'none', background: 'rgba(239,68,68,0.1)', color: '#EF4444', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
                   ✗ Reject
                 </button>
               </div>
@@ -720,7 +731,7 @@ export default function ApplicationsPage() {
   )
 
   return (
-    <div style={{ padding: '32px 28px', maxWidth: 900, margin: '0 auto' }}>
+    <div style={{ padding: 'clamp(16px, 4vw, 32px) clamp(12px, 3vw, 28px)', maxWidth: 900, margin: '0 auto' }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 28, flexWrap: 'wrap', gap: 16 }}>
         <div>
           <h1 style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 28, color: '#F0F4FF', margin: 0 }}>Applications</h1>

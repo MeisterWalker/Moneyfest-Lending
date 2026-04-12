@@ -32,7 +32,7 @@ function SuccessScreen({ accessCode, fullName, loanAmount }) {
     })
   }
   return (
-    <div style={{ minHeight: '100dvh', background: '#0B0F1A', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', padding: '40px 24px', position: 'relative', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
+    <div style={{ minHeight: '100dvh', background: '#0B0F1A', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', padding: 'clamp(24px, 5vw, 40px) clamp(16px, 4vw, 24px)', position: 'relative', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
       <style>{`@keyframes confettiFall{0%{transform:translateY(-20px) rotate(0deg);opacity:1}100%{transform:translateY(110vh) rotate(720deg);opacity:0}}@keyframes confettiSway{0%,100%{margin-left:0px}25%{margin-left:30px}75%{margin-left:-30px}}@keyframes codePulse{0%,100%{box-shadow:0 0 0 0 rgba(139,92,246,0.4)}50%{box-shadow:0 0 0 8px rgba(139,92,246,0)}}@keyframes warningPulse{0%,100%{border-color:rgba(245,158,11,0.4)}50%{border-color:rgba(245,158,11,0.9)}}.confetti-piece{position:fixed;top:-20px;animation:confettiFall linear forwards,confettiSway ease-in-out infinite;z-index:0;border-radius:2px;pointer-events:none}.code-pulse{animation:codePulse 2s ease-in-out infinite}.warning-pulse{animation:warningPulse 1.5s ease-in-out infinite}`}</style>
       {Array.from({ length: 80 }, (_, i) => { const colors = ['#3B82F6','#8B5CF6','#22C55E','#F59E0B','#EF4444','#14B8A6','#EC4899','#F97316','#A78BFA','#34D399']; const isCircle = i % 5 === 0; const w = 6 + (i % 3) * 4; const h = 8 + (i % 4) * 4; return <div key={i} className="confetti-piece" style={{ left: ((i * 1.27) % 100) + 'vw', width: isCircle ? w : w, height: isCircle ? w : h, borderRadius: isCircle ? '50%' : '2px', background: colors[i % colors.length], animationDuration: (2.5 + (i % 4) * 0.5) + 's, ' + ((2.5 + (i % 4) * 0.5) * 0.8) + 's', animationDelay: ((i * 0.07) % 3) + 's, ' + ((i * 0.07) % 3) + 's', opacity: 0.9 }} /> })}
       <div style={{ maxWidth: 500, width: '100%', position: 'relative', zIndex: 1, margin: 'auto 0' }}>
@@ -49,7 +49,7 @@ function SuccessScreen({ accessCode, fullName, loanAmount }) {
         )}
         <div className="code-pulse" style={{ background: 'linear-gradient(135deg,#0f1729,#1a1040)', border: '2px solid rgba(139,92,246,0.5)', borderRadius: 18, padding: '28px 28px 24px', marginBottom: 16, textAlign: 'center' }}>
           <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#4B5580', marginBottom: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}><img src="/padlock.png" alt="access" style={{ width: 13, height: 13, objectFit: 'contain' }} /> Your Portal Access Code</div>
-          <div style={{ fontSize: 40, fontWeight: 900, letterSpacing: 10, color: '#F0F4FF', fontFamily: 'monospace', marginBottom: 6, textShadow: '0 0 20px rgba(139,92,246,0.4)' }}>{accessCode}</div>
+          <div style={{ fontSize: 'clamp(28px, 8vw, 40px)', fontWeight: 900, letterSpacing: 10, color: '#F0F4FF', fontFamily: 'monospace', marginBottom: 6, textShadow: '0 0 20px rgba(139,92,246,0.4)' }}>{accessCode}</div>
           <div style={{ fontSize: 12, color: '#4B5580', marginBottom: 20 }}>Use this code to log in to the Borrower Portal</div>
           <button onClick={handleCopy} style={{ width: '100%', padding: '13px', borderRadius: 10, border: copied ? '1px solid rgba(34,197,94,0.3)' : 'none', background: copied ? 'rgba(34,197,94,0.15)' : 'linear-gradient(135deg,#8B5CF6,#6366F1)', color: copied ? '#22C55E' : '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'Space Grotesk', marginBottom: 12, transition: 'all 0.2s ease', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
             {copied ? <><span style={{ fontSize: 16 }}>✅</span> Copied to clipboard!</> : <><span style={{ fontSize: 16 }}>📋</span> Copy Access Code</>}
@@ -61,7 +61,7 @@ function SuccessScreen({ accessCode, fullName, loanAmount }) {
           <span style={{ fontSize: 18, flexShrink: 0, marginTop: 1 }}>📸</span>
           <div style={{ fontSize: 12, color: '#7A8AAA', lineHeight: 1.6 }}><strong style={{ color: '#CBD5F0', display: 'block', marginBottom: 2 }}>Tip: Take a screenshot of this page</strong>Your access code is <strong style={{ color: '#F0F4FF' }}>{accessCode}</strong>. Without it, you won't be able to check your application status. A confirmation email has been sent to your email address.</div>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 10, marginBottom: 16 }}>
           <div style={{ background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 12, padding: '14px 16px' }}><div style={{ fontSize: 11, color: '#4B5580', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Loan Amount</div><div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 20, color: '#22C55E' }}>₱{parseFloat(loanAmount).toLocaleString()}</div></div>
           <div style={{ background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 12, padding: '14px 16px' }}><div style={{ fontSize: 11, color: '#4B5580', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Status</div><div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 20, color: '#F59E0B' }}>Pending</div></div>
         </div>
@@ -370,9 +370,9 @@ export default function PublicApplyPage() {
   const progressPct = step === 1 ? 16 : step === 2 ? 50 : 83
 
   const cardStyle = { background: '#0f1624', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 16, overflow: 'hidden' }
-  const cardHeader = { padding: '18px 22px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: 10 }
-  const cardBody = { padding: '22px' }
-  const cardFooter = { padding: '16px 22px', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }
+  const cardHeader = { padding: 'clamp(14px, 3vw, 18px) clamp(14px, 3vw, 22px)', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: 10 }
+  const cardBody = { padding: 'clamp(14px, 3vw, 22px)' }
+  const cardFooter = { padding: 'clamp(12px, 3vw, 16px) clamp(14px, 3vw, 22px)', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }
   const iconBox = (color) => ({ width: 36, height: 36, borderRadius: 9, background: `rgba(${color},0.12)`, border: `1px solid rgba(${color},0.2)`, display: 'flex', alignItems: 'center', justifyContent: 'center' })
 
   return (
@@ -382,13 +382,20 @@ export default function PublicApplyPage() {
         .apply-inp:focus{border-color:rgba(99,102,241,0.5)!important;outline:none}
         .upload-zone{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:24px 12px;border-radius:12px;cursor:pointer;transition:all 0.2s;min-height:130px}
         .upload-zone:hover{background:rgba(255,255,255,0.04)!important}
-        .amt-btn{padding:16px 12px;border-radius:12px;cursor:pointer;text-align:center;transition:all 0.15s}
+        .amt-btn{padding:16px 12px;border-radius:12px;cursor:pointer;text-align:center;transition:all 0.15s;minHeight: '72px'}
         .amt-btn:hover{transform:translateY(-2px)}
         .release-opt{padding:11px 14px;border-radius:10px;cursor:pointer;text-align:left;display:flex;justify-content:space-between;align-items:center;gap:10px;transition:all 0.15s;width:100%}
         .release-opt:hover{background:rgba(255,255,255,0.04)!important}
         .submit-btn:hover .rocket-icon{animation:rocketFly 0.6s ease-in-out infinite}
         @keyframes rocketFly{0%{transform:translate(0,0) rotate(-45deg)}25%{transform:translate(3px,-4px) rotate(-45deg)}50%{transform:translate(6px,-8px) rotate(-45deg)}75%{transform:translate(3px,-4px) rotate(-45deg)}100%{transform:translate(0,0) rotate(-45deg)}}
         @media(max-width:820px){.apply-2col{grid-template-columns:1fr!important}.apply-sidebar{display:none!important}}
+        @media(max-width:400px){.header-faq{display:none!important}}
+        @media(max-width:480px){
+          .step-label{display:none!important}
+          .apply-2col{padding-left:12px!important;padding-right:12px!important}
+          .upload-zone{min-height:110px!important;padding:16px 8px!important}
+          .release-opt{padding:10px 12px!important}
+        }
       `}</style>
 
       <div className="apply-grid-bg" />
@@ -400,7 +407,7 @@ export default function PublicApplyPage() {
         {/* Disclaimer Modal */}
         {showDisclaimer && (
           <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: 20 }}>
-            <div style={{ background: '#141B2D', border: '1px solid rgba(245,158,11,0.3)', borderRadius: 20, padding: 32, width: '100%', maxWidth: 460, maxHeight: '90vh', overflowY: 'auto' }}>
+            <div style={{ background: '#141B2D', border: '1px solid rgba(245,158,11,0.3)', borderRadius: 20, padding: 'clamp(18px, 4vw, 32px)', width: '100%', maxWidth: 460, maxHeight: '90vh', overflowY: 'auto' }}>
               <div style={{ textAlign: 'center', marginBottom: 24 }}>
                 <img src="/warning.png" alt="warning" style={{ width: 44, height: 44, objectFit: 'contain', marginBottom: 12 }} />
                 <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 20, color: '#F59E0B', marginBottom: 6 }}>Important Loan Disclaimer</div>
@@ -431,8 +438,8 @@ export default function PublicApplyPage() {
         {/* T&C Modal */}
         {showTnC && (
           <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.88)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: 20 }}>
-            <div style={{ background: '#141B2D', border: '1px solid rgba(99,102,241,0.3)', borderRadius: 20, width: '100%', maxWidth: 560, maxHeight: '85vh', display: 'flex', flexDirection: 'column' }}>
-              <div style={{ padding: '22px 28px', borderBottom: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+            <div style={{ background: '#141B2D', border: '1px solid rgba(99,102,241,0.3)', borderRadius: 20, width: '100%', maxWidth: 560, maxHeight: '92dvh', display: 'flex', flexDirection: 'column' }}>
+              <div style={{ padding: 'clamp(18px, 4vw, 32px)', borderBottom: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <img src="/list.png" alt="terms" style={{ width: 22, height: 22, objectFit: 'contain' }} />
                   <div>
@@ -500,7 +507,7 @@ export default function PublicApplyPage() {
                   For data privacy concerns, refer to our <a href="/privacy" target="_blank" rel="noreferrer" style={{ color: '#60A5FA', textDecoration: 'none' }}>Privacy Notice</a>.
                 </div>
               </div>
-              <div style={{ padding: '16px 28px', borderTop: '1px solid rgba(255,255,255,0.07)', display: 'flex', gap: 10, flexShrink: 0 }}>
+              <div style={{ padding: '16px 28px', borderTop: '1px solid rgba(255,255,255,0.07)', display: 'flex', gap: 10, flexShrink: 0, flexWrap: 'wrap' }}>
                 <button disabled={!tncScrolled} onClick={() => { set('agreed', true); setShowTnC(false) }} style={{ flex: 1, padding: '12px', borderRadius: 10, border: 'none', background: tncScrolled ? 'linear-gradient(135deg,#6366F1,#8B5CF6)' : 'rgba(255,255,255,0.05)', color: tncScrolled ? '#fff' : '#4B5580', fontSize: 13, fontWeight: 700, cursor: tncScrolled ? 'pointer' : 'not-allowed', fontFamily: 'Space Grotesk', transition: 'all 0.2s ease' }}>
                   {tncScrolled ? '✓ I Agree & Close' : '🔒 Scroll to bottom to agree'}
                 </button>
@@ -511,7 +518,7 @@ export default function PublicApplyPage() {
         )}
 
         {/* Sticky Header */}
-        <div style={{ background: 'rgba(7,9,15,0.96)', borderBottom: '1px solid rgba(139,92,246,0.2)', padding: '14px 28px', backdropFilter: 'blur(12px)', position: 'sticky', top: 0, zIndex: 100 }}>
+        <div style={{ background: 'rgba(7,9,15,0.96)', borderBottom: '1px solid rgba(139,92,246,0.2)', padding: '14px clamp(12px, 4vw, 28px)', backdropFilter: 'blur(12px)', position: 'sticky', top: 0, zIndex: 100 }}>
           <div style={{ maxWidth: 1060, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
             <a href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
               <img src="/favicon-96x96.png" alt="MoneyfestLending" style={{ width: 34, height: 34, objectFit: 'contain' }} />
@@ -521,7 +528,7 @@ export default function PublicApplyPage() {
               </div>
             </a>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-              <a href="/faq" style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px', borderRadius: 8, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', color: '#7A8AAA', fontSize: 12, fontWeight: 600, textDecoration: 'none' }}><img src="/faq.png" alt="faq" style={{ width: 12, height: 12, objectFit: 'contain' }} />FAQ</a>
+              <a href="/faq" className="header-faq" style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px', borderRadius: 8, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', color: '#7A8AAA', fontSize: 12, fontWeight: 600, textDecoration: 'none' }}><img src="/faq.png" alt="faq" style={{ width: 12, height: 12, objectFit: 'contain' }} />FAQ</a>
               <a href="/portal" style={{ padding: '6px 12px', borderRadius: 8, background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.25)', color: '#a78bfa', fontSize: 12, fontWeight: 700, textDecoration: 'none', fontFamily: 'Space Grotesk' }}>My Portal →</a>
             </div>
           </div>
@@ -540,7 +547,7 @@ export default function PublicApplyPage() {
         </div>
 
         {/* Step bar + progress */}
-        <div style={{ maxWidth: 1060, margin: '0 auto', padding: '16px 16px 0' }}>
+        <div style={{ maxWidth: 1060, margin: '0 auto', padding: 'clamp(10px, 3vw, 16px) clamp(10px, 3vw, 16px) 0' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0, marginBottom: 10 }}>
             {['Personal Info', 'ID Verification', 'Loan Details'].map((label, i) => {
               const num = i + 1; const done = step > num; const active = step === num
@@ -548,7 +555,7 @@ export default function PublicApplyPage() {
                 <div key={num} style={{ display: 'flex', alignItems: 'center' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 16px', borderRadius: 24, background: active ? 'rgba(59,130,246,0.12)' : done ? 'rgba(34,197,94,0.08)' : 'transparent', border: `1px solid ${active ? 'rgba(59,130,246,0.3)' : done ? 'rgba(34,197,94,0.25)' : 'transparent'}` }}>
                     <div style={{ width: 22, height: 22, borderRadius: '50%', background: done ? '#22C55E' : active ? '#3B82F6' : 'rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 800, color: done || active ? '#fff' : '#4B5580', flexShrink: 0 }}>{done ? '✓' : num}</div>
-                    <span style={{ fontSize: 12, fontWeight: active ? 700 : 500, color: active ? '#F0F4FF' : done ? '#22C55E' : '#4B5580', whiteSpace: 'nowrap', fontFamily: 'Space Grotesk' }}>{label}</span>
+                    <span className="step-label" style={{ fontSize: 12, fontWeight: active ? 700 : 500, color: active ? '#F0F4FF' : done ? '#22C55E' : '#4B5580', whiteSpace: 'nowrap', fontFamily: 'Space Grotesk' }}>{label}</span>
                   </div>
                   {i < 2 && <div style={{ width: 36, height: 2, background: step > num ? '#22C55E' : 'rgba(255,255,255,0.06)', margin: '0 4px' }} />}
                 </div>
@@ -561,7 +568,7 @@ export default function PublicApplyPage() {
         </div>
 
         {/* Two-column layout */}
-        <div className="apply-2col" style={{ maxWidth: 1060, margin: '0 auto', padding: '0 16px 60px', display: 'grid', gridTemplateColumns: '1fr 290px', gap: 18, alignItems: 'start' }}>
+        <div className="apply-2col" style={{ maxWidth: 1060, margin: '0 auto', padding: 'clamp(0px, 2vw, 0px) clamp(10px, 3vw, 16px) 60px', display: 'grid', gridTemplateColumns: '1fr 290px', gap: 18, alignItems: 'start' }}>
 
           {/* LEFT COLUMN */}
           <div>
@@ -576,7 +583,7 @@ export default function PublicApplyPage() {
                 <div style={cardBody}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                     <div><label style={lbl}>Full Name *</label><input className="apply-inp" value={form.full_name} onChange={e => set('full_name', e.target.value)} placeholder="Enter your full legal name" style={inp} /></div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
                       <div>
                         <label style={lbl}>Department *</label>
                         <input className="apply-inp" value={form.department} onChange={e => set('department', e.target.value)} placeholder="e.g. Minto Money, Greyhound..." style={{ ...inp }} />
@@ -591,7 +598,7 @@ export default function PublicApplyPage() {
                       </div>
                     </div>
                     <div><label style={lbl}>Years of Tenure *</label><input className="apply-inp" value={form.tenure_years} onChange={e => set('tenure_years', e.target.value)} placeholder="e.g. 2.5" type="number" min="0" step="0.5" style={inp} /></div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
                       <div><label style={lbl}>Phone Number *</label><input className="apply-inp" value={form.phone} onChange={e => set('phone', e.target.value)} placeholder="09XX XXX XXXX" style={inp} /></div>
                       <div>
                         <label style={lbl}>Email Address *</label>
@@ -606,7 +613,7 @@ export default function PublicApplyPage() {
                 {error && <div style={{ margin: '0 22px 12px', padding: '10px 14px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, fontSize: 13, color: '#EF4444' }}>{error}</div>}
                 <div style={cardFooter}>
                   <div style={{ display: 'flex', gap: 8 }}><a href="/faq" style={{ fontSize: 11, color: '#6366F1', textDecoration: 'none', fontWeight: 600 }}>FAQ</a><span style={{ fontSize: 11, color: '#4B5580' }}>·</span><a href="/privacy" target="_blank" rel="noreferrer" style={{ fontSize: 11, color: '#6366F1', textDecoration: 'none', fontWeight: 600 }}>Privacy</a></div>
-                  <button onClick={handleNext} style={{ padding: '11px 26px', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#3B82F6,#8B5CF6)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Space Grotesk' }}>Continue to ID Upload →</button>
+                  <button onClick={handleNext} style={{ padding: 'clamp(9px, 2vw, 11px) clamp(14px, 3vw, 26px)', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#3B82F6,#8B5CF6)', color: '#fff', fontSize: 'clamp(11px, 3vw, 13px)', fontWeight: 700, cursor: 'pointer', fontFamily: 'Space Grotesk' }}>Continue to ID Upload →</button>
                 </div>
               </div>
             )}
@@ -623,7 +630,7 @@ export default function PublicApplyPage() {
                     <div style={{ fontWeight: 700, color: '#60A5FA', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 6 }}><img src="/checkbox.png" alt="check" style={{ width: 13, height: 13, objectFit: 'contain' }} /> Accepted IDs</div>
                     SSS · GSIS · PhilHealth · Pag-IBIG · Passport · Driver's License · Postal ID · Voter's ID · PRC ID · Senior Citizen ID
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, marginBottom: 16 }}>
                     {[{ label: 'Front of ID *', file: idFile, setFile: setIdFile, icon: '/id.png' }, { label: 'Back of ID *', file: idFileBack, setFile: setIdFileBack, icon: '/refresh.png' }].map(({ label, file, setFile, icon }, i) => (
                       <div key={i}>
                         <div style={{ fontSize: 10, color: '#7A8AAA', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.07em', fontWeight: 700 }}>{label}</div>
@@ -646,7 +653,7 @@ export default function PublicApplyPage() {
                 {error && <div style={{ margin: '0 22px 12px', padding: '10px 14px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, fontSize: 13, color: '#EF4444' }}>{error}</div>}
                 <div style={cardFooter}>
                   <button onClick={() => { setStep(1); setError('') }} style={{ padding: '10px 18px', borderRadius: 9, border: '1px solid rgba(255,255,255,0.08)', background: 'transparent', color: '#7A8AAA', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>← Back</button>
-                  <button onClick={handleNext} style={{ padding: '11px 26px', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#3B82F6,#8B5CF6)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Space Grotesk' }}>Continue to Loan Details →</button>
+                  <button onClick={handleNext} style={{ padding: 'clamp(9px, 2vw, 11px) clamp(14px, 3vw, 26px)', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#3B82F6,#8B5CF6)', color: '#fff', fontSize: 'clamp(11px, 3vw, 13px)', fontWeight: 700, cursor: 'pointer', fontFamily: 'Space Grotesk' }}>Continue to Loan Details →</button>
                 </div>
               </div>
             )}
@@ -662,7 +669,7 @@ export default function PublicApplyPage() {
                     <div><div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 15, color: '#F0F4FF' }}>Loan Type</div><div style={{ fontSize: 11, color: '#4B5580', marginTop: 1 }}>Choose the right loan for your need</div></div>
                   </div>
                   <div style={cardBody}>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10 }}>
                       {[
                         { value: 'regular', label: 'Installment Loan', sub: 'Up to ₱10,000 · 2–3 months · semi-monthly payments', color: '#3B82F6' },
                         { value: 'quickloan', label: '⚡ QuickLoan', sub: 'Up to ₱3,000 · pay anytime · daily interest · Day 15 target', color: '#F59E0B' },
@@ -691,10 +698,10 @@ export default function PublicApplyPage() {
                     {form.loan_type === 'quickloan' ? (
                       /* QuickLoan amounts */
                       <div>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10, marginBottom: 14 }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: 10, marginBottom: 14 }}>
                           {[1000, 2000, 3000].map(amt => (
                             <button key={amt} className="amt-btn" onClick={() => set('loan_amount', amt)}
-                              style={{ border: `2px solid ${form.loan_amount === amt ? '#F59E0B' : 'rgba(255,255,255,0.07)'}`, background: form.loan_amount === amt ? 'rgba(245,158,11,0.1)' : 'rgba(255,255,255,0.02)' }}>
+                              style={{ border: `2px solid ${form.loan_amount === amt ? '#F59E0B' : 'rgba(255,255,255,0.07)'}`, background: form.loan_amount === amt ? 'rgba(245,158,11,0.1)' : 'rgba(255,255,255,0.02)', minHeight: '72px' }}>
                               <div style={{ fontFamily: 'Space Grotesk', fontWeight: 900, fontSize: 18, color: form.loan_amount === amt ? '#F59E0B' : '#7A8AAA' }}>₱{amt.toLocaleString()}</div>
                               <div style={{ fontSize: 10, color: '#4B5580', marginTop: 2 }}>₱{(amt * 0.1 / 30).toFixed(2)}/day</div>
                               <div style={{ fontSize: 10, color: '#4B5580' }}>₱{(amt + amt * 0.1 / 30 * 15).toFixed(0)} at Day 15</div>
@@ -708,10 +715,10 @@ export default function PublicApplyPage() {
                     ) : (
                       /* Installment loan amounts */
                       <div>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10, marginBottom: 14 }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 10, marginBottom: 14 }}>
                           {LOAN_AMOUNTS.map(amt => (
                             <button key={amt} className="amt-btn" onClick={() => form.loan_amount === amt ? null : startDisclaimer(amt)}
-                              style={{ border: `2px solid ${form.loan_amount === amt ? '#3B82F6' : 'rgba(255,255,255,0.07)'}`, background: form.loan_amount === amt ? 'rgba(59,130,246,0.12)' : 'rgba(255,255,255,0.02)' }}>
+                              style={{ border: `2px solid ${form.loan_amount === amt ? '#3B82F6' : 'rgba(255,255,255,0.07)'}`, background: form.loan_amount === amt ? 'rgba(59,130,246,0.12)' : 'rgba(255,255,255,0.02)', minHeight: '72px' }}>
                               <div style={{ fontFamily: 'Space Grotesk', fontWeight: 900, fontSize: 18, color: form.loan_amount === amt ? '#22C55E' : '#7A8AAA' }}>₱{amt.toLocaleString()}</div>
                               <div style={{ fontSize: 10, color: '#4B5580', marginTop: 2 }}>₱{Math.ceil(amt * (1 + interestRate * form.loan_term) / (form.loan_term * 2)).toLocaleString('en-PH')}/cutoff</div>
                             </button>
@@ -725,7 +732,7 @@ export default function PublicApplyPage() {
                     {form.loan_type !== 'quickloan' && (
                       <div style={{ marginTop: 14 }}>
                         <label style={lbl}>Loan Term *</label>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 10 }}>
                           {[
                             { term: 2, label: '2 Months', sub: '4 installments · 14% total interest' },
                             { term: 3, label: '3 Months', sub: '6 installments · 21% total interest' },
@@ -760,8 +767,8 @@ export default function PublicApplyPage() {
                         { value: 'Other Bank Transfer', logo: '/bank-logo.png', desc: 'Instapay/PESONet. Borrower covers fee.', fee: 'You cover fee' },
                       ].map(opt => (
                         <button key={opt.value} className="release-opt" onClick={() => set('release_method', opt.value)}
-                          style={{ border: `2px solid ${form.release_method === opt.value ? '#3B82F6' : 'rgba(255,255,255,0.07)'}`, background: form.release_method === opt.value ? 'rgba(59,130,246,0.08)' : 'rgba(255,255,255,0.02)' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          style={{ border: `2px solid ${form.release_method === opt.value ? '#3B82F6' : 'rgba(255,255,255,0.07)'}`, background: form.release_method === opt.value ? 'rgba(59,130,246,0.08)' : 'rgba(255,255,255,0.02)', flexWrap: 'wrap', gap: 8 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1 }}>
                             <img src={opt.logo} alt={opt.value} style={{ width: 26, height: 26, objectFit: 'contain' }} />
                             <div>
                               <div style={{ fontWeight: 700, fontSize: 13, color: form.release_method === opt.value ? '#F0F4FF' : '#7A8AAA' }}>{opt.value}</div>
@@ -863,7 +870,7 @@ export default function PublicApplyPage() {
                             <span style={{ fontSize: 12, color: '#7A8AAA' }}>Daily Interest</span>
                             <span style={{ fontSize: 13, fontWeight: 700, color: '#a78bfa' }}>₱{dailyInterest.toFixed(2)} / day</span>
                           </div>
-                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 10 }}>
                             <div style={{ padding: '12px', background: 'rgba(34,197,94,0.08)', borderRadius: 10, border: '1px solid rgba(34,197,94,0.2)', textAlign: 'center' }}>
                               <div style={{ fontSize: 10, color: '#4B5580', textTransform: 'uppercase', marginBottom: 4 }}>Pay on Day 15</div>
                               <div style={{ fontSize: 16, fontWeight: 900, color: '#22C55E', fontFamily: 'Space Grotesk' }}>₱{day15Total.toLocaleString('en-PH')}</div>
