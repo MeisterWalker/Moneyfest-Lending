@@ -23,7 +23,7 @@ function buildSchedule(loans, borrowers, loanTypeFilter = 'all') {
       const today = new Date(); today.setHours(0, 0, 0, 0)
       if (day15) {
         const isPaid = loan.payments_made >= 1
-        const isPast = day15 < today && !isPaid
+        const isPast = false // Day 15 target is not a hard overdue deadline
         const isNext = !isPaid
         const balance = calcQuickLoanBalance(loan)
         events.push({
@@ -284,7 +284,7 @@ function CalendarView({ events, currentMonth, setCurrentMonth }) {
 
 function AgendaView({ events }) {
   const today = new Date(); today.setHours(0, 0, 0, 0)
-  const upcoming = events.filter(e => !e.isPaid && e.date >= today)
+  const upcoming = events.filter(e => !e.isPaid && !e.isPast)
   const overdue = events.filter(e => e.isPast)
   const grouped = {}
   upcoming.forEach(e => { if (!grouped[e.dateKey]) grouped[e.dateKey] = []; grouped[e.dateKey].push(e) })
@@ -296,7 +296,15 @@ function AgendaView({ events }) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {overdue.map((ev, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8 }}>
-                <div><span style={{ fontWeight: 500, fontSize: 13 }}>{ev.borrower?.full_name}</span><span style={{ fontSize: 12, color: 'var(--text-muted)', marginLeft: 8 }}>Installment {ev.installmentNum}/4 · {formatDate(ev.dateKey)}</span></div>
+                <div>
+                  <span style={{ fontWeight: 500, fontSize: 13 }}>{ev.borrower?.full_name}</span>
+                  <span style={{ fontSize: 12, color: 'var(--text-muted)', marginLeft: 8 }}>
+                    {ev.isQuickLoan 
+                      ? `⚡ QuickLoan (${ev.label})` 
+                      : `Installment ${ev.installmentNum}/${ev.loan?.num_installments || 4}`
+                    } · {formatDate(ev.dateKey)}
+                  </span>
+                </div>
                 <span style={{ fontWeight: 700, color: 'var(--red)' }}>{formatCurrency(ev.amount)}</span>
               </div>
             ))}
@@ -322,8 +330,8 @@ function AgendaView({ events }) {
                       {date.toLocaleDateString('en-PH', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
                     </span>
                   </div>
-                  <span style={{ fontSize: 11, color: isToday ? 'var(--blue)' : 'var(--text-muted)', background: isToday ? 'rgba(59,130,246,0.1)' : 'rgba(255,255,255,0.04)', padding: '2px 8px', borderRadius: 10 }}>
-                    {isToday ? "📅 Today" : daysLeft === 1 ? 'Tomorrow' : `In ${daysLeft} days`}
+                  <span style={{ fontSize: 11, color: isToday ? 'var(--blue)' : daysLeft < 0 ? 'var(--gold)' : 'var(--text-muted)', background: isToday ? 'rgba(59,130,246,0.1)' : daysLeft < 0 ? 'rgba(245,158,11,0.1)' : 'rgba(255,255,255,0.04)', padding: '2px 8px', borderRadius: 10 }}>
+                    {isToday ? "📅 Today" : daysLeft === 1 ? 'Tomorrow' : daysLeft < 0 ? '⏳ Extension Period' : `In ${daysLeft} days`}
                   </span>
                   <span style={{ marginLeft: 'auto', fontWeight: 700, color: 'var(--green)', fontSize: 14 }}>{formatCurrency(total)}</span>
                 </div>
