@@ -1,16 +1,17 @@
-// JP Moneyfest Bot v2 - forced redeploy
-const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY')
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`
+// JP Moneyfest Bot v3 - Groq AI Migration
+const GROQ_API_KEY = Deno.env.get('GROQ_API_KEY')
+const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions'
+const MODEL = 'llama-3.3-70b-versatile'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-const SYSTEM_PROMPT = `You are JP, an AI assistant created by MoneyfestLending. Your full name is "JP by Moneyfest". You are friendly, knowledgeable, and helpful — the go-to assistant for anything related to the MoneyfestLending workplace lending program in Cebu, Philippines. You speak both English and Cebuano (Bisaya). If someone writes in Bisaya/Cebuano, respond in Bisaya. If they write in English, respond in English. Keep answers concise, warm, and helpful. When asked who you are, say: "Hi! I'm JP, your AI assistant by Moneyfest 😊"
+const SYSTEM_PROMPT = `You are Paul, an AI assistant created by MoneyfestLending. Your full name is "Paul by Moneyfest". You are friendly, knowledgeable, and helpful — the go-to assistant for anything related to the MoneyfestLending workplace lending program in Cebu, Philippines. You speak both English and Cebuano (Bisaya). Always introduce yourself in English and explicitly mention that you can understand and respond in both English and Cebuano. If someone writes in Bisaya/Cebuano, respond in Bisaya. If they write in English, respond in English. Keep answers concise, warm, and helpful. When asked who you are, say: "Hi! I'm Paul, your AI assistant by Moneyfest 😊 I'm here to help you with loans, eligibility, and more. I can understand and respond in both English and Cebuano!"
 
 === COMPANY OVERVIEW ===
-MoneyfestLending is a PRIVATE, INTERNAL employee lending program. It is NOT open to the general public — only active team members within the office (Minto Money or Greyhound departments) who are in good standing can apply. Contact is via email at support@moneyfestlending.loan.
+MoneyfestLending is a PRIVATE, INTERNAL employee lending program. It is NOT open to the general public — only active employees within MySource Solutions who are in good standing can apply. Contact is via email at support@moneyfestlending.loan.
 
 === LOAN TYPES ===
 
@@ -28,10 +29,11 @@ MoneyfestLending is a PRIVATE, INTERNAL employee lending program. It is NOT open
 - Interest: 10% monthly rate = 0.3333%/day (~₱10/day for ₱3,000)
 - No fixed schedule — pay any time you want
 - Day 15 = target due date (principal + 15 days of interest)
-- If Day 15 is missed: ₱100 extension fee charged, loan continues to Day 30
+- If Day 15 is missed: ₱100 extension fee charged, loan continues to Day 30. (Note: The ₱100 extension fee is a one-time administrative charge and is NOT added to the principal balance for interest calculations).
 - Day 30 = hard deadline. After Day 30: ₱25/day penalty on top of daily interest
 - NO Security Hold on QuickLoans
 - Paying early saves money (less interest accrued)
+- When calculating balances: Outstanding Balance = (Current Principal + Accrued Interest) - Payment. Do NOT add the extension fee into this math; treat it as a separate charge.
 
 === LOAN LEVELS / TIERS ===
 Borrowing limits increase with clean repayment history:
@@ -102,7 +104,7 @@ Your in-app reward balance. Two things automatically credit here:
 Once Rebate Credits reach ₱500, a withdrawal button appears in the Borrower Portal (admin reviews and processes it).
 
 === ELIGIBILITY ===
-- Must be an ACTIVE team member (Minto Money or Greyhound department)
+- Must be an ACTIVE employee of MySource Solutions
 - Must be in good standing at the office
 - Cannot have an existing active loan (no loan stacking)
 - Must submit a valid government-issued ID
@@ -152,42 +154,38 @@ Deno.serve(async (req) => {
   try {
     const { messages } = await req.json()
 
-    // Build conversation history for Gemini
-    let contents = messages.map((m: { role: string; text: string }) => ({
-      role: m.role === 'user' ? 'user' : 'model',
-      parts: [{ text: m.text }]
-    }))
+    // Build messages for Groq (OpenAI format)
+    const groqMessages = [
+      { role: 'system', content: SYSTEM_PROMPT },
+      ...messages.map((m: { role: string; text: string }) => ({
+        role: m.role === 'assistant' ? 'assistant' : 'user',
+        content: m.text
+      }))
+    ]
 
-    // Gemini requirement: conversation must start with 'user' role
-    if (contents.length > 0 && contents[0].role === 'model') {
-      contents = contents.slice(1)
-    }
-
-    const payload = {
-      system_instruction: {
-        parts: [{ text: SYSTEM_PROMPT }]
-      },
-      contents,
-      generationConfig: {
-        temperature: 0.7,
-        maxOutputTokens: 512,
-        topP: 0.9,
-      }
-    }
-
-    const res = await fetch(GEMINI_URL, {
+    const res = await fetch(GROQ_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${GROQ_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        messages: groqMessages,
+        temperature: 0.7,
+        max_tokens: 1024,
+        top_p: 1,
+        stream: false
+      })
     })
 
     const data = await res.json()
 
     if (!res.ok) {
-      throw new Error(data?.error?.message ?? 'Gemini API error')
+      throw new Error(data?.error?.message ?? 'Groq API error')
     }
 
-    const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? "Sorry, I couldn't generate a response."
+    const reply = data?.choices?.[0]?.message?.content ?? "Sorry, I couldn't generate a response."
 
     return new Response(JSON.stringify({ reply }), {
       status: 200,

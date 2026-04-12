@@ -34,14 +34,14 @@ function Avatar() {
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       fontSize: 14, fontWeight: 900, color: '#fff', fontFamily: 'Space Grotesk',
       boxShadow: '0 0 10px rgba(139,92,246,0.4)'
-    }}>JP</div>
+    }}>Paul</div>
   )
 }
 
 export default function ChatBot() {
   const [open, setOpen] = useState(false)
   const [messages, setMessages] = useState([
-    { role: 'assistant', text: "Hi! I'm **JP**, your AI assistant by Moneyfest 😊\n\nAko makatabang nimo bahin sa loans, interest rates, eligibility, ug uban pa! Ask me anything — English or Bisaya!" }
+    { role: 'assistant', text: "Hi! I'm **Paul**, your AI assistant by Moneyfest 😊 I'm here to help you with loans, interest rates, eligibility, and more! I can understand and respond in both **English** and **Cebuano (Bisaya)** — feel free to ask me anything!" }
   ])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
@@ -159,7 +159,7 @@ export default function ChatBot() {
         {open ? (
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         ) : (
-          <span style={{ fontFamily: 'Space Grotesk', fontWeight: 900, fontSize: 18, color: '#fff', letterSpacing: -0.5 }}>JP</span>
+          <span style={{ fontFamily: 'Space Grotesk', fontWeight: 900, fontSize: 18, color: '#fff', letterSpacing: -0.5 }}>Paul</span>
         )}
         {unread > 0 && !open && (
           <div style={{
@@ -204,7 +204,7 @@ export default function ChatBot() {
             </div>
             <div style={{ flex: 1 }}>
               <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 15, color: '#F0F4FF', letterSpacing: -0.3 }}>
-                JP <span style={{ fontWeight: 400, fontSize: 12, color: 'rgba(139,92,246,0.9)' }}>by Moneyfest</span>
+                Paul <span style={{ fontWeight: 400, fontSize: 12, color: 'rgba(139,92,246,0.9)' }}>by Moneyfest</span>
               </div>
               <div style={{ fontSize: 11, color: '#22C55E', display: 'flex', alignItems: 'center', gap: 4 }}>
                 <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#22C55E', display: 'inline-block' }} />
@@ -359,7 +359,7 @@ export default function ChatBot() {
             textAlign: 'center', fontSize: 10,
             color: '#2D3748', letterSpacing: '0.04em'
           }}>
-            JP by Moneyfest · Powered by Gemini AI
+            Paul · Powered by LacaroNexus — Where Infrastructure Meets Intelligence.
           </div>
         </div>
       )}
