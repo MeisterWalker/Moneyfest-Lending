@@ -38,6 +38,7 @@ const AssessmentPage     = lazy(() => import('./pages/AssessmentPage'))
 const AssessmentForm     = lazy(() => import('./pages/AssessmentForm'))
 const AdminToolsPage     = lazy(() => import('./pages/AdminToolsPage'))
 const InboxPage          = lazy(() => import('./pages/InboxPage'))
+const CapitalPage        = lazy(() => import('./pages/CapitalPage'))
 
 
 function ProtectedRoute({ children }) {
@@ -102,6 +103,7 @@ function AppRoutes() {
         <Route path="/admin/investors"      element={<ProtectedRoute><AppLayout><InvestorsPage /></AppLayout></ProtectedRoute>} />
         <Route path="/admin/tools"           element={<ProtectedRoute><AppLayout><AdminToolsPage /></AppLayout></ProtectedRoute>} />
         <Route path="/admin/inbox"           element={<ProtectedRoute><AppLayout><InboxPage /></AppLayout></ProtectedRoute>} />
+        <Route path="/admin/capital"         element={<ProtectedRoute><AppLayout><CapitalPage /></AppLayout></ProtectedRoute>} />
         <Route path="/terms"            element={<TermsPage />} />
         <Route path="/contact"          element={<ContactPage />} />
         <Route path="/partners"         element={<PartnersPage />} />

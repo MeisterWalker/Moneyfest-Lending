@@ -37,6 +37,7 @@ const navItems = [
   { to: '/admin/login-logs', icon: Shield, label: 'Login Logs' },
   { to: '/admin/tools', icon: Wrench, label: 'Admin Tools' },
   { to: '/admin/inbox', icon: Mail, label: 'Inbox' },
+  { to: '/admin/capital', icon: Wallet, label: 'Capital' },
 ]
 
 export default function Sidebar() {
