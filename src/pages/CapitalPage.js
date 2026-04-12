@@ -150,7 +150,7 @@ export default function CapitalPage() {
   }
 
   const handleReconcileData = async () => {
-    const msg = "Refine Ledger Math?\n\nThis will:\n1. Fix April 5 Profit: ₱1,175 (James payoff)\n2. Add JP Top-up: ₱200 (Unrecorded Juico/James release)\n3. Add Charlou Top-up: ₱3,525\n\nResult: Total Pool = ₱48,900.00 (Perfect Baseline)."
+    const msg = "Finalize Ledger Audit?\n\nThis will:\n1. Add April 5 Profits: ₱1,175 (James/Installments)\n2. Add April 8-11 Profits: ₱750 (Sheena Payoff + Ria/Mary Extensions)\n3. Add JP Top-up: ₱200 (Unrecorded Juico/James release)\n4. Add Charlou Top-up: ₱3,525\n\nResult: Total Pool = ₱49,650.00 (Verified Cash on Hand)."
     if (!window.confirm(msg)) return;
     
     setLoading(true)
@@ -165,7 +165,15 @@ export default function CapitalPage() {
           type: 'CASH IN', 
           category: 'Interest Profit (Installment)', 
           amount: 1175, 
-          notes: 'Audited Interest Profit from April 5th (incl. James ₱50 rebate)',
+          notes: 'Audited Interest Profit (incl. James ₱50 rebate)',
+          created_by: user?.email || 'admin'
+        },
+        { 
+          entry_date: '2026-04-11', 
+          type: 'CASH IN', 
+          category: 'Interest Profit (QuickLoan)', 
+          amount: 750, 
+          notes: 'Combined Profit: Sheena Payoff (₱100) + Ria/Mary Extensions (₱650)',
           created_by: user?.email || 'admin'
         },
         { 
