@@ -602,10 +602,7 @@ export default function ApplicationsPage() {
           const monthlyRate = Number(rateSettings?.interest_rate) || 0.07
           const total = loanAmount * (1 + monthlyRate * loanTerm)
           const installment = Math.ceil(total / numInstallments)
-          const adjustedTotal = installment * numInstallments
-
-
-
+          const adjustedTotal = installment * numInstallments          const { hold: holdAmt, released } = calcSecurityHold(loanAmount, existingBorrower?.credit_score || 750)
 
           const { error: lErr } = await supabase.from('loans').insert({
             borrower_id: borrowerId,

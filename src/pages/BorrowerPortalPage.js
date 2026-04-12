@@ -2095,9 +2095,10 @@ export default function BorrowerPortalPage() {
                 {/* ── Truth in Lending Act Disclosure (installment only — QL version is in sidebar) ── */}
                 {loan && loan.status !== 'Pending' && loan.loan_type !== 'quickloan' && (() => {
                     const principal = parseFloat(loan.loan_amount) || 0
-                    const holdAmt = loan.security_hold ? parseFloat(loan.security_hold) : principal * 0.10
-                    const holdRate = principal > 0 ? ((holdAmt / principal) * 100).toFixed(0) : 10
-                    const released = loan.funds_released ? parseFloat(loan.funds_released) : principal - holdAmt
+                    const released = loan.funds_released ? parseFloat(loan.funds_released) : principal * 0.90
+                    const originalHold = principal - released
+                    const holdAmt = loan.security_hold ? parseFloat(loan.security_hold) : originalHold
+                    const holdRate = principal > 0 ? ((originalHold / principal) * 100).toFixed(0) : 10
                     const total = parseFloat(loan.total_repayment) || 0
                     const financeCharge = total - principal
                     const rate = ((loan.interest_rate || 0.07) * 100).toFixed(0)
