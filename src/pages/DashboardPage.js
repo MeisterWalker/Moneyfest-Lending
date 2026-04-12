@@ -318,8 +318,8 @@ export default function DashboardPage() {
   const [pendingApps, setPendingApps] = useState(0)
   const [borrowers, setBorrowers] = useState([])
   const [settings, setSettings] = useState(null)
-  const [auditLogs, setAuditLogs] = useState([])
   const [loading, setLoading] = useState(true)
+  const [capitalFlow, setCapitalFlow] = useState([])
   const [bannerDismissed, setBannerDismissed] = useState(false)
   const [visitStats, setVisitStats] = useState({ total: 0, today: 0, pages: {} })
   const [dashTab, setDashTab] = useState('installment')
@@ -336,7 +336,7 @@ export default function DashboardPage() {
 
   const fetchData = useCallback(async () => {
     try {
-      const [{ data: l }, { data: b }, { data: s }, { data: a }, { data: apps }, { data: visits }, { data: others }, { data: logs }, { data: inv }] = await Promise.all([
+      const [{ data: l }, { data: b }, { data: s }, { data: a }, { data: apps }, { data: visits }, { data: others }, { data: logs }, { data: inv }, { data: cf }] = await Promise.all([
         supabase.from('loans').select('*').order('created_at', { ascending: false }),
         supabase.from('borrowers').select('*'),
         supabase.from('settings').select('*').eq('id', 1).single(),
@@ -345,7 +345,8 @@ export default function DashboardPage() {
         supabase.from('page_visits').select('page, visited_at'),
         supabase.from('other_products').select('*').order('created_at', { ascending: false }),
         supabase.from('product_logs').select('*').order('log_date', { ascending: false }),
-        supabase.from('investors').select('id,full_name,tier,total_capital,access_code')
+        supabase.from('investors').select('id,full_name,tier,total_capital,access_code'),
+        supabase.from('capital_flow').select('*')
       ])
       setLoans(l || [])
       setBorrowers(b || [])
@@ -355,6 +356,7 @@ export default function DashboardPage() {
       setOtherProducts(others || [])
       setProductLogs(logs || [])
       setInvestors(inv || [])
+      setCapitalFlow(cf || [])
 
       // Compute visitor stats
       const allVisits = visits || []
@@ -393,33 +395,59 @@ export default function DashboardPage() {
     }
   }, [fetchData])
 
-  // ── Computed stats ──────────────────────────────────────────
-  const capital = settings?.starting_capital || 30000
+  useEffect(() => {
+    const subCF = supabase
+      .channel('capital-dashboard')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'capital_flow' }, () => fetchData())
+      .subscribe()
+    return () => supabase.removeChannel(subCF)
+  }, [fetchData])
+
+  // ── Computed stats (Installment) ──────────
+  // DYNAMIC CAPITAL: Sum of Initial Pool + Top-ups from the Ledger
+  const capital = capitalFlow
+    .filter(cf => cf.type === 'CASH IN' && (cf.category.includes('Initial Pool') || cf.category.includes('Capital Top-up')))
+    .filter(cf => !cf.category.includes('QuickLoan'))
+    .reduce((sum, cf) => sum + (cf.amount || 0), 0) || (settings?.starting_capital || 30000)
+
   const activeLoans = loans.filter(l => ['Active', 'Partially Paid', 'Overdue'].includes(l.status) && l.loan_type !== 'quickloan')
   const amountLentOut = activeLoans.reduce((sum, l) => sum + (l.loan_amount || 0), 0)
   const paidLoans = loans.filter(l => l.status === 'Paid' && l.loan_type !== 'quickloan')
 
-  // Total profit = fully paid loans interest + interest earned so far on active loans
-  const paidProfit = paidLoans.reduce((sum, l) => sum + ((l.total_repayment || 0) - (l.loan_amount || 0)), 0)
-  const activeProfit = activeLoans.reduce((sum, l) => {
-    const installment = Math.ceil(l.installment_amount || 0)
-    const paidSoFar = installment * (l.payments_made || 0)
-    const interestRate = (l.interest_rate || 0.07) * (l.loan_term || 2)
-    const totalInterest = (l.loan_amount || 0) * interestRate
-    const interestEarned = totalInterest > 0 ? (paidSoFar / (l.total_repayment || 1)) * totalInterest : 0
-    return sum + interestEarned
-  }, 0)
-  const totalProfit = paidProfit + activeProfit
+  // DYNAMIC PROFIT: Sum of Interest Profit entries in the Ledger
+  const ledgerProfit = capitalFlow
+    .filter(cf => cf.type === 'CASH IN' && cf.category === 'Interest Profit (Installment)')
+    .reduce((sum, cf) => sum + (cf.amount || 0), 0)
 
-  // ── QuickLoan stats ──────────────────────────────────────────
+  // System profit (for fallback/comparison)
+  const systemProfit = paidLoans.reduce((sum, l) => sum + ((l.total_repayment || 0) - (l.loan_amount || 0)), 0) + 
+    activeLoans.reduce((sum, l) => {
+      const installment = Math.ceil(l.installment_amount || 0)
+      const paidSoFar = installment * (l.payments_made || 0)
+      const interestRate = (l.interest_rate || 0.07) * (l.loan_term || 2)
+      const totalInterest = (l.loan_amount || 0) * interestRate
+      return (totalInterest > 0 ? (paidSoFar / (l.total_repayment || 1)) * totalInterest : 0)
+    }, 0)
+
+  // We prioritize the Audit/Ledger profit if it exists
+  const totalProfit = ledgerProfit || systemProfit
+
+  // ── QuickLoan stats ──────────────────────
   const activeQuickLoans = loans.filter(l => l.loan_type === 'quickloan' && ['Active', 'Partially Paid', 'Overdue'].includes(l.status))
   const paidQuickLoans = loans.filter(l => l.loan_type === 'quickloan' && l.status === 'Paid')
 
   const qlTotalPrincipalOut = activeQuickLoans.reduce((sum, l) => sum + (l.loan_amount || 0), 0)
 
-  const qlTotalInterestEarned = paidQuickLoans.reduce((sum, l) => {
+  // DYNAMIC QL PROFIT: Read from Ledger
+  const qlLedgerProfit = capitalFlow
+    .filter(cf => cf.type === 'CASH IN' && cf.category === 'Interest Profit (QuickLoan)')
+    .reduce((sum, cf) => sum + (cf.amount || 0), 0)
+
+  const qlSystemProfit = paidQuickLoans.reduce((sum, l) => {
     return sum + ((l.total_repayment || 0) - (l.loan_amount || 0))
   }, 0)
+
+  const qlTotalInterestEarned = qlLedgerProfit || qlSystemProfit
 
   const qlDay15Overdue = activeQuickLoans.filter(l => {
     if (!l.release_date) return false
@@ -435,7 +463,9 @@ export default function DashboardPage() {
 
   const defaultedLoans = loans.filter(l => l.status === 'Defaulted' && l.loan_type !== 'quickloan')
   const defaultRate = loans.length > 0 ? (defaultedLoans.length / loans.length) * 100 : 0
-  const availableLiquidity = capital - amountLentOut
+  
+  // Liquidity now includes dynamic profit (CASH on Hand)
+  const availableLiquidity = (capital + totalProfit) - amountLentOut
   const roi = capital > 0 ? (totalProfit / capital) * 100 : 0
 
   // Profit this month — paid loans + active interest earned this month
@@ -620,11 +650,16 @@ export default function DashboardPage() {
     capital: capital + monthlyData.slice(0, i + 1).reduce((sum, x) => sum + x.profit, 0)
   }))
 
-  // ── QuickLoan dashboard stats ────────────────────────────────
+  // ── QuickLoan dashboard stats ──────────
   const qlResetDate = settings?.ql_last_reset_date ? new Date(settings.ql_last_reset_date) : null
-  const qlCapital = settings?.ql_starting_capital || 0
+  
+  // Dynamic QL Capital
+  const qlCapital = capitalFlow
+    .filter(cf => cf.type === 'CASH IN' && cf.category.includes('QuickLoan') && (cf.category.includes('Initial Pool') || cf.category.includes('Capital Top-up')))
+    .reduce((sum, cf) => sum + (cf.amount || 0), 0) || (settings?.ql_starting_capital || 0)
+
   const qlAmountLentOut = activeQuickLoans.reduce((sum, l) => sum + (l.loan_amount || 0), 0)
-  const qlAvailableLiquidity = qlCapital - qlAmountLentOut
+  const qlAvailableLiquidity = (qlCapital + qlTotalInterestEarned) - qlAmountLentOut
 
   const qlPaidAfterReset = qlResetDate
     ? paidQuickLoans.filter(l => new Date(l.updated_at) >= qlResetDate)

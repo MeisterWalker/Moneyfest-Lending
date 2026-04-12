@@ -150,7 +150,8 @@ export default function CapitalPage() {
   }
 
   const handleReconcileData = async () => {
-    const msg = "Finalize Ledger Audit?\n\nThis will:\n1. Add April 5 Profits: ₱1,175 (James/Installments)\n2. Add April 8-11 Profits: ₱600 (Sheena Payoff + Ria/Mary Extensions)\n3. Add JP Top-up: ₱200 (Unrecorded Juico/James release)\n4. Add Charlou Top-up: ₱3,525\n\nResult: Total Pool = ₱49,500.00 (Verified Cash on Hand)."
+    // v2.0 Audit Fix - Ensuring ₱49,500.00 total
+    const msg = "Finalize Ledger Audit (v2.0)?\n\nThis will:\n1. Add April 5 Profits: ₱1,175 (James/Installments)\n2. Add April 8-11 Profits: ₱600 (Sheena Payoff + Ria/Mary Extensions)\n3. Add JP Top-up: ₱200 (Unrecorded Juico/James release)\n4. Add Charlou Top-up: ₱3,525\n\nResult: Total Pool = ₱49,500.00 (Verified Business Value)."
     if (!window.confirm(msg)) return;
     
     setLoading(true)
@@ -196,8 +197,8 @@ export default function CapitalPage() {
 
       if (error) throw error
       
-      await logAudit({ action_type: 'LEDGER_RECONCILED', module: 'Capital', description: 'Admin corrected ledger to reach \u20b149,000 total capital', changed_by: user?.email })
-      toast('Ledger reconciled perfectly!', 'success')
+      await logAudit({ action_type: 'LEDGER_RECONCILED_V2', module: 'Capital', description: 'Admin corrected ledger to reach \u20b149,500 total business value (v2.0)', changed_by: user?.email })
+      toast('Ledger reconciled perfectly (v2.0)!', 'success')
       fetchData()
     } catch (err) {
       toast('Failed to reconcile: ' + err.message, 'error')
@@ -237,7 +238,7 @@ export default function CapitalPage() {
           <p className="page-subtitle">Track ownership shares, capital top-ups, and business liquidity</p>
         </div>
         <button onClick={handleReconcileData} style={{ fontSize: 12, padding: '7px 14px', borderRadius: 8, border: '1px solid rgba(34,197,94,0.3)', background: 'rgba(34,197,94,0.1)', color: 'var(--green)', cursor: 'pointer', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
-          ✨ Reconcile Math (Fixed ₱49k)
+          ✨ Finalize Ledger Audit (v2.0)
         </button>
       </div>
 
