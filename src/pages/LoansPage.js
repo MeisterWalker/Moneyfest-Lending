@@ -153,6 +153,7 @@ function LoanCard({ loan: rawLoan, borrowers, applications, investors, onEdit, o
   const [confirming, setConfirming] = useState(false)
   const [confirmingExtension, setConfirmingExtension] = useState(false)
   const [confirmingPrincipal, setConfirmingPrincipal] = useState(false)
+  const [confirmingRenew, setConfirmingRenew] = useState(false)
   const [principalInput, setPrincipalInput] = useState('')
   const [showInvestorPicker, setShowInvestorPicker] = useState(false)
   // Normalize installment to whole peso — handles loans created before rounding was added
@@ -572,11 +573,48 @@ function LoanCard({ loan: rawLoan, borrowers, applications, investors, onEdit, o
           )}
 
           {/* Renew loan button (paid loans) */}
-          {isPaid && (
-            <button onClick={() => onRenew(loan)} className="btn-primary" style={{ fontSize: 12, padding: '6px 14px', background: 'rgba(20,184,166,0.2)', color: 'var(--teal)' }}>
+          {isPaid && !confirmingRenew && (
+            <button onClick={() => setConfirmingRenew(true)} className="btn-primary" style={{ fontSize: 12, padding: '6px 14px', background: 'rgba(20,184,166,0.2)', color: 'var(--teal)' }}>
               <RefreshCw size={13} /> Renew Loan
             </button>
           )}
+
+          {/* Renew Confirmation Banner */}
+          {confirmingRenew && (() => {
+            const score = borrower?.credit_score || 0
+            const newMax = score >= 1000 ? 10000 : score >= 920 ? 9000 : score >= 835 ? 7000 : 5000
+            const increased = newMax > loan.loan_amount
+            return (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, background: 'rgba(20,184,166,0.06)', border: '1px solid rgba(20,184,166,0.25)', borderRadius: 10, padding: '12px 14px', width: '100%', marginTop: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div style={{ fontSize: 13 }}>
+                    <span style={{ fontWeight: 700, color: 'var(--teal)' }}>{borrower?.loyalty_badge} Tier Upgrade</span>
+                    <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
+                      Credit Score: <strong>{score}</strong> · {' '}
+                      {increased 
+                        ? <span>Eligible limit increased to <strong style={{ color: 'var(--green)' }}>{formatCurrency(newMax)}</strong>!</span>
+                        : <span>Eligible for renewal up to {formatCurrency(newMax)}</span>
+                      }
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button 
+                      onClick={() => { onRenew(loan, newMax); setConfirmingRenew(false) }}
+                      style={{ background: 'var(--teal)', color: '#fff', border: 'none', borderRadius: 6, padding: '6px 12px', cursor: 'pointer', fontSize: 12, fontWeight: 700 }}
+                    >
+                      Confirm Renewal
+                    </button>
+                    <button 
+                      onClick={() => setConfirmingRenew(false)}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 12 }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )
+          })()}
 
           {/* Edit */}
           {!isPaid && loan.status !== 'Defaulted' && (
@@ -1049,8 +1087,14 @@ export default function LoansPage() {
     setLoans(prev => prev.filter(l => l.id !== loan.id))
   }
 
-  const handleRenew = (loan) => {
-    setPrefillLoan({ borrower_id: loan.borrower_id, loan_amount: loan.loan_amount, interest_rate: loan.interest_rate, loan_type: loan.loan_type })
+  const handleRenew = (loan, suggestedMax) => {
+    setPrefillLoan({ 
+      borrower_id: loan.borrower_id, 
+      loan_amount: loan.loan_amount, 
+      interest_rate: loan.interest_rate, 
+      loan_type: loan.loan_type,
+      suggested_max: suggestedMax
+    })
     setEditingLoan(null)
     setModalOpen(true)
   }

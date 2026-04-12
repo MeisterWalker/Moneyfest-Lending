@@ -221,7 +221,16 @@ export default function LoanModal({ isOpen, onClose, onSave, loan, borrower, bor
                 <div className="form-group">
                   <label className="form-label">Loan Amount (₱) *</label>
                   <input type="number" min={minLoan} max={maxLoan} step="500" placeholder={`₱${minLoan.toLocaleString()} – ₱${maxLoan.toLocaleString()}`} value={form.loan_amount} onChange={e => set('loan_amount', e.target.value)} />
-                  {selectedBorrower && <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>Borrower limit: ₱{maxLoan.toLocaleString()} (Level {selectedBorrower.loan_limit_level})</div>}
+                  {selectedBorrower && (
+                    <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
+                      Borrower limit: ₱{maxLoan.toLocaleString()} (Level {selectedBorrower.loan_limit_level})
+                    </div>
+                  )}
+                  {prefill?.suggested_max > prefill?.loan_amount && (
+                    <div style={{ fontSize: 11, color: 'var(--green)', marginTop: 6, display: 'flex', alignItems: 'center', gap: 5, padding: '4px 8px', background: 'rgba(34,197,94,0.06)', borderRadius: 6, border: '1px solid rgba(34,197,94,0.15)' }}>
+                      <span>💡 This borrower now qualifies for up to <strong>{formatCurrency(prefill.suggested_max)}</strong> based on their credit score.</span>
+                    </div>
+                  )}
                 </div>
                 <div className="form-group">
                   <label className="form-label">Interest Rate</label>

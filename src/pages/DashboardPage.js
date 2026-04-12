@@ -46,7 +46,7 @@ function StatCard({ label, value, sub, icon: Icon, color, trend }) {
 }
 
 // ─── Collection Efficiency Card ───────────────────────────────
-function EfficiencyCard({ rate, onTime, total }) {
+function EfficiencyCard({ rate, onTime, total, onToggleBreakdown, isExpanded }) {
   const color = rate >= 90 ? 'var(--green)' : rate >= 70 ? 'var(--gold)' : 'var(--red)'
   const label = rate >= 90 ? 'Excellent' : rate >= 70 ? 'Good' : 'Needs Attention'
   return (
@@ -55,7 +55,18 @@ function EfficiencyCard({ rate, onTime, total }) {
         <div style={{ width: 40, height: 40, borderRadius: 10, background: `${color}20`, border: `1px solid ${color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <Percent size={18} color={color} />
         </div>
-        <span style={{ fontSize: 11, color, background: `${color}15`, border: `1px solid ${color}30`, padding: '2px 8px', borderRadius: 10, fontWeight: 600 }}>{label}</span>
+        <div style={{ textAlign: 'right' }}>
+          <span style={{ fontSize: 11, color, background: `${color}15`, border: `1px solid ${color}30`, padding: '2px 8px', borderRadius: 10, fontWeight: 600 }}>{label}</span>
+          <button 
+            onClick={onToggleBreakdown}
+            style={{ 
+              display: 'block', background: 'none', border: 'none', color: 'var(--blue)', fontSize: 11, 
+              marginTop: 6, cursor: 'pointer', fontWeight: 600, padding: 0 
+            }}
+          >
+            {isExpanded ? '← Hide Breakdown' : 'View Breakdown →'}
+          </button>
+        </div>
       </div>
       <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Collection Efficiency</div>
       <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 22, color, lineHeight: 1.1, marginBottom: 4 }}>{rate.toFixed(1)}%</div>
@@ -63,6 +74,110 @@ function EfficiencyCard({ rate, onTime, total }) {
       {/* Mini bar */}
       <div style={{ height: 4, background: 'rgba(255,255,255,0.06)', borderRadius: 2, marginTop: 10, overflow: 'hidden' }}>
         <div style={{ height: '100%', width: `${rate}%`, background: color, borderRadius: 2, transition: 'width 0.5s ease' }} />
+      </div>
+    </div>
+  )
+}
+
+function CollectionEfficiencyBreakdown({ borrowers, loans, penaltyCharges, resetDate }) {
+  const today = new Date(); today.setHours(0,0,0,0)
+  
+  const stats = borrowers.map(b => {
+    const bLoans = loans.filter(l => l.borrower_id === b.id && l.loan_type !== 'quickloan' && (!resetDate || new Date(l.created_at) >= resetDate))
+    if (bLoans.length === 0) return null
+
+    let totalDue = 0
+    let paidOnTime = 0
+    let paidLate = 0
+    let missed = 0
+
+    bLoans.forEach(l => {
+      totalDue += (l.num_installments || 4)
+      const lPenalties = penaltyCharges.filter(pc => pc.loan_id === l.id)
+      
+      // Check each installment
+      for (let i = 1; i <= (l.num_installments || 4); i++) {
+        const isPaid = i <= l.payments_made
+        if (isPaid) {
+          const wasLate = lPenalties.some(pc => pc.installment_number === i)
+          if (wasLate) paidLate++
+          else paidOnTime++
+        } else {
+          // Check if missed (past due date)
+          const dates = getInstallmentDates(l.release_date, l.num_installments || 4)
+          const dueDate = dates[i - 1]
+          if (dueDate && dueDate < today) {
+            missed++
+          }
+        }
+      }
+    })
+
+    const eff = totalDue > 0 ? (paidOnTime / (paidOnTime + paidLate + missed || 1)) * 100 : 100
+
+    return {
+      name: b.full_name,
+      totalDue,
+      paidOnTime,
+      paidLate,
+      missed,
+      efficiency: eff
+    }
+  }).filter(Boolean).sort((a,b) => a.efficiency - b.efficiency)
+
+  const totals = stats.reduce((acc, s) => ({
+    totalDue: acc.totalDue + s.totalDue,
+    paidOnTime: acc.paidOnTime + s.paidOnTime,
+    paidLate: acc.paidLate + s.paidLate,
+    missed: acc.missed + s.missed
+  }), { totalDue: 0, paidOnTime: 0, paidLate: 0, missed: 0 })
+
+  const totalEff = totals.totalDue > 0 ? (totals.paidOnTime / (totals.paidOnTime + totals.paidLate + totals.missed || 1)) * 100 : 100
+
+  return (
+    <div className="card" style={{ padding: '0', overflow: 'hidden', marginTop: 16, animation: 'fadeIn 0.3s ease' }}>
+      <div style={{ padding: '16px 22px', borderBottom: '1px solid var(--card-border)', background: 'rgba(255,255,255,0.02)' }}>
+        <h3 style={{ fontFamily: 'Space Grotesk', fontSize: 16, fontWeight: 700 }}>📊 Collection Efficiency Breakdown</h3>
+      </div>
+      <div style={{ overflowX: 'auto' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+          <thead>
+            <tr style={{ textAlign: 'left', borderBottom: '1px solid var(--card-border)', background: 'rgba(255,255,255,0.01)' }}>
+              <th style={{ padding: '12px 22px', color: 'var(--text-muted)', fontWeight: 600 }}>Borrower Name</th>
+              <th style={{ padding: '12px 14px', color: 'var(--text-muted)', fontWeight: 600 }}>Total Installments</th>
+              <th style={{ padding: '12px 14px', color: 'var(--text-muted)', fontWeight: 600 }}>Paid On Time</th>
+              <th style={{ padding: '12px 14px', color: 'var(--text-muted)', fontWeight: 600 }}>Paid Late</th>
+              <th style={{ padding: '12px 14px', color: 'var(--text-muted)', fontWeight: 600 }}>Missed</th>
+              <th style={{ padding: '12px 22px', color: 'var(--text-muted)', fontWeight: 600, textAlign: 'right' }}>Efficiency %</th>
+            </tr>
+          </thead>
+          <tbody>
+            {stats.map((s, i) => (
+              <tr key={i} style={{ borderBottom: '1px solid var(--card-border)' }}>
+                <td style={{ padding: '12px 22px', fontWeight: 600 }}>{s.name}</td>
+                <td style={{ padding: '12px 14px' }}>{s.totalDue}</td>
+                <td style={{ padding: '12px 14px', color: 'var(--green)' }}>{s.paidOnTime}</td>
+                <td style={{ padding: '12px 14px', color: 'var(--gold)' }}>{s.paidLate}</td>
+                <td style={{ padding: '12px 14px', color: 'var(--red)' }}>{s.missed}</td>
+                <td style={{ padding: '12px 22px', textAlign: 'right', fontFamily: 'Space Grotesk', fontWeight: 700, color: s.efficiency >= 90 ? 'var(--green)' : s.efficiency >= 70 ? 'var(--gold)' : 'var(--red)' }}>
+                  {s.efficiency.toFixed(1)}%
+                </td>
+              </tr>
+            ))}
+          </tbody>
+          <tfoot>
+            <tr style={{ background: 'rgba(59,130,246,0.05)', fontWeight: 700 }}>
+              <td style={{ padding: '14px 22px' }}>Total Portfolio</td>
+              <td style={{ padding: '14px 14px' }}>{totals.totalDue}</td>
+              <td style={{ padding: '14px 14px', color: 'var(--green)' }}>{totals.paidOnTime}</td>
+              <td style={{ padding: '14px 14px', color: 'var(--gold)' }}>{totals.paidLate}</td>
+              <td style={{ padding: '14px 14px', color: 'var(--red)' }}>{totals.missed}</td>
+              <td style={{ padding: '14px 22px', textAlign: 'right', fontSize: 16, color: 'var(--blue)', fontFamily: 'Space Grotesk' }}>
+                {totalEff.toFixed(1)}%
+              </td>
+            </tr>
+          </tfoot>
+        </table>
       </div>
     </div>
   )
@@ -322,6 +437,8 @@ export default function DashboardPage() {
   const [auditLogs, setAuditLogs] = useState([])
   const [capitalEntries, setCapitalEntries] = useState([])
   const [bannerDismissed, setBannerDismissed] = useState(false)
+  const [showEfficiencyBreakdown, setShowEfficiencyBreakdown] = useState(false)
+  const [penaltyCharges, setPenaltyCharges] = useState([])
   const [visitStats, setVisitStats] = useState({ total: 0, today: 0, pages: {} })
   const [dashTab, setDashTab] = useState('installment')
   const [otherProducts, setOtherProducts] = useState([])
@@ -347,7 +464,8 @@ export default function DashboardPage() {
         supabase.from('other_products').select('*').order('created_at', { ascending: false }),
         supabase.from('product_logs').select('*').order('log_date', { ascending: false }),
         supabase.from('investors').select('id,full_name,tier,total_capital,access_code'),
-        supabase.from('capital_flow').select('*')
+        supabase.from('capital_flow').select('*'),
+        supabase.from('penalty_charges').select('*')
       ])
       setLoans(l || [])
       setBorrowers(b || [])
@@ -358,6 +476,7 @@ export default function DashboardPage() {
       setProductLogs(logs || [])
       setInvestors(inv || [])
       setCapitalEntries(cf || [])
+      setPenaltyCharges(pc || [])
 
       // Compute visitor stats
       const allVisits = visits || []
@@ -792,7 +911,21 @@ export default function DashboardPage() {
 
       {/* Collection Efficiency */}
       <div style={{ marginBottom: 24 }}>
-        <EfficiencyCard rate={efficiencyRate} onTime={totalInstallmentsDue} total={totalExpectedInstallments || 1} />
+        <EfficiencyCard 
+          rate={efficiencyRate} 
+          onTime={totalInstallmentsDue} 
+          total={totalExpectedInstallments || 1} 
+          onToggleBreakdown={() => setShowEfficiencyBreakdown(!showEfficiencyBreakdown)}
+          isExpanded={showEfficiencyBreakdown}
+        />
+        {showEfficiencyBreakdown && (
+          <CollectionEfficiencyBreakdown 
+            borrowers={borrowers} 
+            loans={loans} 
+            penaltyCharges={penaltyCharges} 
+            resetDate={resetDate}
+          />
+        )}
       </div>
 
       {/* Charts Row */}

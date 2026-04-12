@@ -4,6 +4,9 @@ import { formatCurrency, formatDate, getInstallmentDates, formatDateValue, getQu
 import { Calendar, List, ChevronLeft, ChevronRight, CheckCircle, Clock, AlertTriangle, Mail, Send, X } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { sendBulkReminders } from '../lib/emailService'
+import { logAutomatedPayment } from '../lib/accounting'
+import { logAudit } from '../lib/helpers'
+import { useToast } from '../components/Toast'
 
 function toLocalDateKey(date) {
   return formatDateValue(date)
@@ -282,7 +285,7 @@ function CalendarView({ events, currentMonth, setCurrentMonth }) {
   )
 }
 
-function AgendaView({ events }) {
+function AgendaView({ events, bulkMode, bulkSelected, onToggleSelection }) {
   const today = new Date(); today.setHours(0, 0, 0, 0)
   const upcoming = events.filter(e => !e.isPaid && !e.isPast)
   const overdue = events.filter(e => e.isPast)
@@ -339,6 +342,14 @@ function AgendaView({ events }) {
                   {dayEvents.map((ev, i) => (
                     <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px', background: ev.isQuickLoan ? 'rgba(245,158,11,0.04)' : 'rgba(255,255,255,0.02)', border: `1px solid ${ev.isDeadline ? 'rgba(239,68,68,0.25)' : ev.isQuickLoan ? 'rgba(245,158,11,0.2)' : 'var(--card-border)'}`, borderRadius: 8 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        {bulkMode && !ev.isPaid && !ev.isQuickLoan && (
+                          <input 
+                            type="checkbox" 
+                            checked={bulkSelected.has(`${ev.loan.id}-${ev.installmentNum}`)}
+                            onChange={() => onToggleSelection(`${ev.loan.id}-${ev.installmentNum}`)}
+                            style={{ width: 18, height: 18, cursor: 'pointer', accentColor: 'var(--blue)' }}
+                          />
+                        )}
                         <Clock size={13} color="var(--text-muted)" />
                         <div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13, fontWeight: 500 }}>
@@ -377,7 +388,11 @@ export default function CollectionPage() {
   const [currentMonth, setCurrentMonth] = useState(new Date())
   const [showEmailModal, setShowEmailModal] = useState(false)
   const [loanTypeFilter, setLoanTypeFilter] = useState('all')
+  const [bulkMode, setBulkMode] = useState(false)
+  const [bulkSelected, setBulkSelected] = useState(new Set())
+  const [bulkProcessing, setBulkProcessing] = useState(false)
   const navigate = useNavigate()
+  const { toast } = useToast()
 
   const fetchData = useCallback(async () => {
     const [{ data: l }, { data: b }] = await Promise.all([
@@ -392,13 +407,74 @@ export default function CollectionPage() {
   useEffect(() => { fetchData() }, [fetchData])
 
   const handleAuditLog = async (action) => {
-    await supabase.from('audit_logs').insert({
+    await logAudit({
       action_type: 'EMAIL_SENT',
       module: 'Collection',
       description: action,
-      changed_by: 'admin',
-      created_at: new Date().toISOString()
+      changed_by: 'admin'
     })
+  }
+
+  const toggleBulkSelection = (key) => {
+    const next = new Set(bulkSelected)
+    if (next.has(key)) next.delete(key)
+    else next.add(key)
+    setBulkSelected(next)
+  }
+
+  const handleBulkRecord = async () => {
+    if (bulkSelected.size === 0 || bulkProcessing) return
+    setBulkProcessing(true)
+    
+    const toProcess = Array.from(bulkSelected).map(key => {
+      const [loanId, instNum] = key.split('-')
+      const ev = events.find(e => e.loan.id === loanId && e.installmentNum === parseInt(instNum))
+      return ev
+    }).filter(Boolean)
+
+    let successCount = 0
+    
+    try {
+      for (const ev of toProcess) {
+        const loan = ev.loan
+        const newPaymentsMade = loan.payments_made + 1
+        const numInstallments = loan.num_installments || 4
+        const installAmt = Math.ceil(loan.installment_amount)
+        const newBalance = loan.remaining_balance - installAmt
+        const newStatus = newPaymentsMade >= numInstallments ? 'Paid' : 'Partially Paid'
+
+        const { error } = await supabase.from('loans').update({
+          payments_made: newPaymentsMade,
+          remaining_balance: Math.max(0, newBalance),
+          status: newStatus,
+          updated_at: new Date().toISOString()
+        }).eq('id', loan.id)
+
+        if (error) {
+          console.error(`Bulk pay failed for loan ${loan.id}:`, error)
+          continue
+        }
+
+        await logAutomatedPayment(loan, installAmt)
+        await logAudit({
+          action_type: 'INSTALLMENT_PAID',
+          module: 'Collection (Bulk)',
+          description: `Bulk payment recorded for ${ev.borrower?.full_name} — Installment ${newPaymentsMade} of ${numInstallments} (₱${installAmt.toLocaleString()})`,
+          changed_by: 'admin'
+        })
+        successCount++
+      }
+      
+      toast(`✅ Successfully recorded ${successCount} payments`, 'success')
+      setBulkSelected(new Set())
+      setBulkMode(false)
+      await fetchData() // fetchData resolves at the end
+    } catch (err) {
+      console.error('Bulk processing error:', err)
+      toast('An error occurred during bulk processing', 'error')
+    } finally {
+      setBulkProcessing(false)
+    }
   }
 
   const events = buildSchedule(loans, borrowers, loanTypeFilter)
@@ -420,6 +496,17 @@ export default function CollectionPage() {
           <p className="page-subtitle">All upcoming installment due dates</p>
         </div>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          <button 
+            onClick={() => { setBulkMode(!bulkMode); setBulkSelected(new Set()) }}
+            style={{ 
+              display: 'flex', alignItems: 'center', gap: 7, padding: '9px 16px', borderRadius: 9, 
+              border: `1px solid ${bulkMode ? 'var(--blue)' : 'rgba(255,255,255,0.1)'}`, 
+              background: bulkMode ? 'rgba(59,130,246,0.1)' : 'transparent', 
+              color: bulkMode ? 'var(--blue)' : 'var(--text-muted)', cursor: 'pointer', fontSize: 13, fontWeight: 600 
+            }}
+          >
+            {bulkMode ? '✕ Cancel Bulk' : '✅ Bulk Record'}
+          </button>
           <button onClick={() => setShowEmailModal(true)} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '9px 16px', borderRadius: 9, border: '1px solid rgba(59,130,246,0.35)', background: 'rgba(59,130,246,0.1)', color: 'var(--blue)', cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
             <Mail size={15} />
             Send Reminders
@@ -482,9 +569,40 @@ export default function CollectionPage() {
       <div className="card" style={{ padding: '22px 24px' }}>
         {view === 'calendar'
           ? <CalendarView events={events} currentMonth={currentMonth} setCurrentMonth={setCurrentMonth} />
-          : <AgendaView events={events} />
+          : <AgendaView events={events} bulkMode={bulkMode} bulkSelected={bulkSelected} onToggleSelection={toggleBulkSelection} />
         }
       </div>
+
+      {/* Sticky Bulk Action Bar */}
+      {bulkMode && bulkSelected.size > 0 && (
+        <div style={{ position: 'fixed', bottom: 30, left: '50%', transform: 'translateX(-50%)', zIndex: 100, width: '100%', maxWidth: 500, padding: '0 20px', animation: 'jpSlideUp 0.3s ease' }}>
+          <div style={{ background: 'var(--blue)', borderRadius: 16, padding: '14px 24px', boxShadow: '0 20px 50px rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ color: '#fff' }}>
+              <div style={{ fontSize: 14, fontWeight: 700 }}>{bulkSelected.size} selected</div>
+              <div style={{ fontSize: 11, opacity: 0.8 }}>Total: {formatCurrency(Array.from(bulkSelected).reduce((sum, key) => {
+                const [lId, iN] = key.split('-')
+                const ev = events.find(e => e.loan.id === lId && e.installmentNum === parseInt(iN))
+                return sum + (ev?.amount || 0)
+              }, 0))}</div>
+            </div>
+            <button 
+              disabled={bulkProcessing}
+              onClick={handleBulkRecord}
+              style={{ background: '#fff', color: 'var(--blue)', border: 'none', borderRadius: 10, padding: '10px 20px', fontSize: 14, fontWeight: 800, cursor: bulkProcessing ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
+            >
+              {bulkProcessing ? 'Processing...' : `Record ${bulkSelected.size} Payments`}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Animation Styles */}
+      <style>{`
+        @keyframes jpSlideUp {
+          from { transform: translateX(-50%) translateY(40px); opacity: 0; }
+          to { transform: translateX(-50%) translateY(0); opacity: 1; }
+        }
+      `}</style>
 
       {showEmailModal && <EmailReminderModal events={events} onClose={() => setShowEmailModal(false)} onLog={handleAuditLog} />}
     </div>
