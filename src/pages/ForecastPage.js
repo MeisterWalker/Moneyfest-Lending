@@ -72,16 +72,19 @@ export default function ForecastPage() {
     
     if (cf) {
       const dynamicCapital = cf
-        .filter(c => c.type === 'CASH IN' && (c.category?.includes('Initial Pool') || c.category?.includes('Capital Top-up')))
-        .filter(c => !c.category?.includes('QuickLoan'))
+        .filter(c => c.type === 'CASH IN' && (
+          c.category === 'Initial Pool (Installment)' ||
+          c.category === 'Capital Top-up (JP)' || 
+          c.category === 'Capital Top-up (Charlou)'
+        ))
         .reduce((sum, c) => sum + (c.amount || 0), 0)
       
       const dynamicQLCapital = cf
-        .filter(c => c.type === 'CASH IN' && c.category?.includes('QuickLoan') && (c.category?.includes('Initial Pool') || c.category?.includes('Capital Top-up')))
+        .filter(c => c.type === 'CASH IN' && c.category === 'Initial Pool (QuickLoan)')
         .reduce((sum, c) => sum + (c.amount || 0), 0)
 
-      setCapital(dynamicCapital || (s?.starting_capital || 30000))
-      setQlCapital(dynamicQLCapital || (s?.ql_starting_capital || 0))
+      setCapital(dynamicCapital || (s?.starting_capital || 35000))
+      setQlCapital(dynamicQLCapital || (s?.ql_starting_capital || 9000))
     }
 
     if (s) {

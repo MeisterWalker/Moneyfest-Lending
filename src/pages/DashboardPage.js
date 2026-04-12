@@ -320,7 +320,7 @@ export default function DashboardPage() {
   const [settings, setSettings] = useState(null)
   const [loading, setLoading] = useState(true)
   const [auditLogs, setAuditLogs] = useState([])
-  const [capitalFlow, setCapitalFlow] = useState([])
+  const [capitalEntries, setCapitalEntries] = useState([])
   const [bannerDismissed, setBannerDismissed] = useState(false)
   const [visitStats, setVisitStats] = useState({ total: 0, today: 0, pages: {} })
   const [dashTab, setDashTab] = useState('installment')
@@ -357,7 +357,7 @@ export default function DashboardPage() {
       setOtherProducts(others || [])
       setProductLogs(logs || [])
       setInvestors(inv || [])
-      setCapitalFlow(cf || [])
+      setCapitalEntries(cf || [])
 
       // Compute visitor stats
       const allVisits = visits || []
@@ -406,17 +406,20 @@ export default function DashboardPage() {
 
   // ── Computed stats (Installment) ──────────
   // DYNAMIC CAPITAL: Sum of Initial Pool + Top-ups from the Ledger
-  const capital = capitalFlow
-    .filter(cf => cf.type === 'CASH IN' && (cf.category?.includes('Initial Pool') || cf.category?.includes('Capital Top-up')))
-    .filter(cf => !cf.category?.includes('QuickLoan'))
-    .reduce((sum, cf) => sum + (cf.amount || 0), 0) || (settings?.starting_capital || 30000)
+  const ledgerCapital = capitalEntries
+    .filter(c => c.type === 'CASH IN' && (
+      c.category === 'Initial Pool (Installment)' ||
+      c.category === 'Capital Top-up (JP)' ||
+      c.category === 'Capital Top-up (Charlou)'
+    ))
+    .reduce((sum, c) => sum + (c.amount || 0), 0)
 
   const activeLoans = loans.filter(l => ['Active', 'Partially Paid', 'Overdue'].includes(l.status) && l.loan_type !== 'quickloan')
   const amountLentOut = activeLoans.reduce((sum, l) => sum + (l.loan_amount || 0), 0)
   const paidLoans = loans.filter(l => l.status === 'Paid' && l.loan_type !== 'quickloan')
 
   // DYNAMIC PROFIT: Sum of Interest Profit entries in the Ledger
-  const ledgerProfit = capitalFlow
+  const ledgerProfit = capitalEntries
     .filter(cf => cf.type === 'CASH IN' && cf.category === 'Interest Profit (Installment)')
     .reduce((sum, cf) => sum + (cf.amount || 0), 0)
 
@@ -440,7 +443,7 @@ export default function DashboardPage() {
   const qlTotalPrincipalOut = activeQuickLoans.reduce((sum, l) => sum + (l.loan_amount || 0), 0)
 
   // DYNAMIC QL PROFIT: Read from Ledger
-  const qlLedgerProfit = capitalFlow
+  const qlLedgerProfit = capitalEntries
     .filter(cf => cf.type === 'CASH IN' && cf.category === 'Interest Profit (QuickLoan)')
     .reduce((sum, cf) => sum + (cf.amount || 0), 0)
 
@@ -466,8 +469,8 @@ export default function DashboardPage() {
   const defaultRate = loans.length > 0 ? (defaultedLoans.length / loans.length) * 100 : 0
   
   // Liquidity now includes dynamic profit (CASH on Hand)
-  const availableLiquidity = (capital + totalProfit) - amountLentOut
-  const roi = capital > 0 ? (totalProfit / capital) * 100 : 0
+  const availableLiquidity = (ledgerCapital + totalProfit) - amountLentOut
+  const roi = ledgerCapital > 0 ? (totalProfit / ledgerCapital) * 100 : 0
 
   // Profit this month — paid loans + active interest earned this month
   const now = new Date()
@@ -648,19 +651,21 @@ export default function DashboardPage() {
   // Capital growth chart
   const capitalGrowthData = monthlyData.map((m, i) => ({
     month: m.month,
-    capital: capital + monthlyData.slice(0, i + 1).reduce((sum, x) => sum + x.profit, 0)
+    capital: ledgerCapital + monthlyData.slice(0, i + 1).reduce((sum, x) => sum + x.profit, 0)
   }))
 
   // ── QuickLoan dashboard stats ──────────
   const qlResetDate = settings?.ql_last_reset_date ? new Date(settings.ql_last_reset_date) : null
   
   // Dynamic QL Capital
-  const qlCapital = capitalFlow
-    .filter(cf => cf.type === 'CASH IN' && cf.category?.includes('QuickLoan') && (cf.category?.includes('Initial Pool') || cf.category?.includes('Capital Top-up')))
-    .reduce((sum, cf) => sum + (cf.amount || 0), 0) || (settings?.ql_starting_capital || 0)
+  const qlLedgerCapital = capitalEntries
+    .filter(c => c.type === 'CASH IN' && 
+      c.category === 'Initial Pool (QuickLoan)'
+    )
+    .reduce((sum, c) => sum + (c.amount || 0), 0)
 
   const qlAmountLentOut = activeQuickLoans.reduce((sum, l) => sum + (l.loan_amount || 0), 0)
-  const qlAvailableLiquidity = (qlCapital + qlTotalInterestEarned) - qlAmountLentOut
+  const qlAvailableLiquidity = (qlLedgerCapital + qlTotalInterestEarned) - qlAmountLentOut
 
   const qlPaidAfterReset = qlResetDate
     ? paidQuickLoans.filter(l => new Date(l.updated_at) >= qlResetDate)
@@ -673,9 +678,9 @@ export default function DashboardPage() {
     .reduce((sum, l) => sum + Math.max(0, (l.total_repayment || 0) - (l.loan_amount || 0)), 0)
 
   // QuickLoan ROI — based on capital if set, otherwise based on principal deployed
-  const qlRoi = qlCapital > 0 ? (qlTotalProfitAllTime / qlCapital) * 100 : 0
+  const qlRoi = qlLedgerCapital > 0 ? (qlTotalProfitAllTime / qlLedgerCapital) * 100 : 0
   // Projected: 2 cycles/month at 10%/month = 5% per cycle × 2 = 10%/month on deployed capital
-  const qlProjectedYearly = qlAvailableLiquidity > 0 ? qlAvailableLiquidity * 0.10 * 12 : (qlCapital * 0.10 * 12)
+  const qlProjectedYearly = qlAvailableLiquidity > 0 ? qlAvailableLiquidity * 0.10 * 12 : (qlLedgerCapital * 0.10 * 12)
 
   // QL collection efficiency — ratio of loans paid on time (day 15) vs extended/late
   const qlPaidOnDay15 = paidQuickLoans.filter(l => {
@@ -689,7 +694,7 @@ export default function DashboardPage() {
   const otherTotalCapital = otherProducts.reduce((sum, p) => sum + (p.capital || 0), 0)
   const otherTotalProfit = otherProducts.reduce((sum, p) => sum + getProductStats(p.id).netProfit, 0)
   // SYNCED TOTAL: Uses dynamic ledger capital
-  const systemTotalCapital = capital + qlCapital + otherTotalCapital
+  const systemTotalCapital = ledgerCapital + qlLedgerCapital + otherTotalCapital
   const donutData = [
     { name: 'Active', value: activeLoans.length, color: 'var(--blue)' },
     { name: 'Paid', value: paidLoans.length, color: 'var(--green)' },
@@ -774,7 +779,7 @@ export default function DashboardPage() {
 
       {/* Stat Cards Grid */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 24 }}>
-        <StatCard label="Total Capital" value={formatCurrency(capital)} sub="Starting capital" icon={Banknote} color="var(--blue)" />
+        <StatCard label="Total Capital" value={formatCurrency(ledgerCapital)} sub="Starting capital" icon={Banknote} color="var(--blue)" />
         <StatCard label="Amount Lent Out" value={formatCurrency(amountLentOut)} sub={`${activeLoans.length} active loans`} icon={CreditCard} color="var(--purple)" />
         <StatCard label="Total Profit" value={formatCurrency(totalProfit)} sub="All-time earnings" icon={TrendingUp} color="var(--green)" />
         <StatCard label="Profit This Month" value={formatCurrency(profitThisMonth)} icon={Activity} color="var(--teal)" />
@@ -940,14 +945,14 @@ export default function DashboardPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
           {/* Stat cards — mirrors installment dashboard */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
-            <StatCard label="Total Capital" value={formatCurrency(qlCapital + qlTotalInterestEarned)} sub="Total portfolio value" icon={Banknote} color="var(--blue)" />
+            <StatCard label="Total Capital" value={formatCurrency(qlLedgerCapital + qlTotalInterestEarned)} sub="Total portfolio value" icon={Banknote} color="var(--blue)" />
             <StatCard label="Amount Lent Out" value={formatCurrency(qlAmountLentOut)} sub={`${activeQuickLoans.length} active loans`} icon={CreditCard} color="var(--purple)" />
             <StatCard label="Total Profit" value={formatCurrency(qlTotalInterestEarned)} sub="All-time interest earned" icon={TrendingUp} color="var(--green)" />
             <StatCard label="Profit This Month" value={formatCurrency(qlProfitThisMonth)} sub="Paid QuickLoans this month" icon={Activity} color="var(--teal)" />
             <StatCard label="Projected Yearly" value={formatCurrency(qlProjectedYearly)} sub="10%/mo on available capital" icon={ArrowUpRight} color="var(--blue)" />
             <StatCard label="Day 15 Missed" value={qlDay15Overdue} sub="Extension fee pending" icon={AlertTriangle} color={qlDay15Overdue > 0 ? 'var(--gold)' : 'var(--text-muted)'} />
             <StatCard label="Available Liquidity" value={formatCurrency(Math.max(0, (qlCapital + qlTotalInterestEarned) - qlAmountLentOut))} sub="Ready to lend" icon={Banknote} color="var(--green)" />
-            <StatCard label="ROI" value={qlCapital > 0 ? `${qlRoi.toFixed(1)}%` : `${((qlTotalInterestEarned / 9000) * 100).toFixed(1)}%`} sub="Return on capital" icon={Percent} color="var(--purple)" />
+            <StatCard label="ROI" value={qlLedgerCapital > 0 ? `${qlRoi.toFixed(1)}%` : `${((qlTotalInterestEarned / 9000) * 100).toFixed(1)}%`} sub="Return on capital" icon={Percent} color="var(--purple)" />
             <StatCard label="Active QuickLoans" value={activeQuickLoans.length} sub={`${paidQuickLoans.length} paid all-time`} icon={Users} color="#F59E0B" />
           </div>
 
@@ -1090,8 +1095,8 @@ export default function DashboardPage() {
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12, flex: 1, maxWidth: 600 }}>
                 {[
-                  { label: 'Installment Pool', value: capital, color: 'var(--blue)' },
-                  { label: 'QuickLoan Pool', value: qlCapital, color: '#F59E0B' },
+                  { label: 'Installment Pool', value: ledgerCapital, color: 'var(--blue)' },
+                  { label: 'QuickLoan Pool', value: qlLedgerCapital, color: '#F59E0B' },
                   { label: 'Other Products', value: otherTotalCapital, color: '#10B981' },
                 ].map(item => (
                   <div key={item.label} style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 12, padding: '12px 16px', border: '1px solid var(--card-border)' }}>
@@ -1104,8 +1109,8 @@ export default function DashboardPage() {
 
             {/* Visual Breakdown Bar */}
             <div style={{ height: 12, background: 'rgba(255,255,255,0.05)', borderRadius: 6, overflow: 'hidden', display: 'flex' }}>
-              <div style={{ width: `${(capital / (systemTotalCapital || 1)) * 100}%`, background: 'var(--blue)', transition: 'width 0.5s ease' }} />
-              <div style={{ width: `${(qlCapital / (systemTotalCapital || 1)) * 100}%`, background: '#F59E0B', transition: 'width 0.5s ease' }} />
+              <div style={{ width: `${(ledgerCapital / (systemTotalCapital || 1)) * 100}%`, background: 'var(--blue)', transition: 'width 0.5s ease' }} />
+              <div style={{ width: `${(qlLedgerCapital / (systemTotalCapital || 1)) * 100}%`, background: '#F59E0B', transition: 'width 0.5s ease' }} />
               <div style={{ width: `${(otherTotalCapital / (systemTotalCapital || 1)) * 100}%`, background: '#10B981', transition: 'width 0.5s ease' }} />
             </div>
             <div style={{ display: 'flex', gap: 16, marginTop: 12, fontSize: 11, color: "var(--text-muted)" }}>

@@ -28,11 +28,14 @@ export default function InvestorsPage() {
     setSettings(s)
     
     // Calculate dynamic ledger capital for admin
-    let dynamicAdminCapital = 30000
+    let dynamicAdminCapital = 35000
     if (cf) {
       dynamicAdminCapital = cf
-        .filter(c => c.type === 'CASH IN' && (c.category?.includes('Initial Pool') || c.category?.includes('Capital Top-up')))
-        .filter(c => !c.category?.includes('QuickLoan'))
+        .filter(c => c.type === 'CASH IN' && (
+          c.category === 'Initial Pool (Installment)' ||
+          c.category === 'Capital Top-up (JP)' || 
+          c.category === 'Capital Top-up (Charlou)'
+        ))
         .reduce((sum, c) => sum + (c.amount || 0), 0)
     }
     setAdminCapitalState(dynamicAdminCapital)
