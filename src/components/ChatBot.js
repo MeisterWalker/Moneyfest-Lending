@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 
-const SUPABASE_URL = 'https://swwedyfgbqhtavxmbmhv.supabase.co'
-const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN3d2VkeWZnYnFodGF2eG1ibWh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMwNzY2MDEsImV4cCI6MjA4ODY1MjYwMX0.IFVKtSVFmNytOYMD23yFXgEyGyBNVQ31SknoxpGvuio'
+const SUPABASE_URL = process.env.REACT_APP_SUPABASE_URL
+const ANON_KEY = process.env.REACT_APP_SUPABASE_ANON_KEY
 
 const SUGGESTIONS = [
   'How do I apply for a loan?',
@@ -71,6 +71,7 @@ export default function ChatBot() {
     setShowSuggestions(false)
 
     const newMessages = [...messages, { role: 'user', text: userText }]
+    const trimmedMessages = newMessages.slice(-10)
     setMessages(newMessages)
     setLoading(true)
 
@@ -83,7 +84,7 @@ export default function ChatBot() {
           'apikey': ANON_KEY
         },
         body: JSON.stringify({
-          messages: newMessages.map(m => ({ role: m.role, text: m.text }))
+          messages: trimmedMessages.map(m => ({ role: m.role, text: m.text }))
         })
       })
       const data = await res.json()

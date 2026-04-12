@@ -1224,11 +1224,15 @@ export default function LoansPage() {
     fetchData()
   }
 
-  const statuses = ['All', 'Pending', 'Active', 'Partially Paid', 'Paid', 'Overdue', 'Defaulted']
+  const statuses = ['All', 'Pending', 'Active', 'Paid', 'Overdue', 'Defaulted']
   const filtered = loans.filter(l => {
     const borrower = borrowers.find(b => b.id === l.borrower_id)
     const matchSearch = borrower?.full_name?.toLowerCase().includes(search.toLowerCase())
-    const matchStatus = statusFilter === 'All' || l.status === statusFilter
+    const matchStatus = statusFilter === 'All' 
+      ? true 
+      : statusFilter === 'Active' 
+        ? ['Active', 'Partially Paid'].includes(l.status) 
+        : l.status === statusFilter
     const matchType = loanTypeTab === 'all' || l.loan_type === loanTypeTab || (!l.loan_type && loanTypeTab === 'regular')
     return matchSearch && matchStatus && matchType
   })

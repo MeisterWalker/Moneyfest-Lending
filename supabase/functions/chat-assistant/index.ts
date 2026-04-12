@@ -36,6 +36,7 @@ MoneyfestLending is a PRIVATE, INTERNAL lending initiative created BY employees,
 - Day 15 = target due date (principal + 15 days of interest)
 - If Day 15 is missed: ₱100 extension fee charged, loan continues to Day 30. (Note: The ₱100 extension fee is a one-time administrative charge and is NOT added to the principal balance for interest calculations).
 - Day 30 = hard deadline. After Day 30: ₱25/day penalty on top of daily interest
+- Principal Payment Option: Borrowers may make a partial payment directly toward the QuickLoan principal at any time. This reduces the outstanding principal balance and resets the interest calculation from that day forward — meaning future daily interest accrues on the lower remaining principal. Example: If you owe ₱3,000 principal and pay ₱1,000 toward principal, your remaining principal becomes ₱2,000 and daily interest drops from ~₱10/day to ~₱6.67/day. This is separate from paying your full balance.
 - NO Security Hold on QuickLoans
 - Paying early saves money (less interest accrued)
 - When calculating balances: Outstanding Balance = (Current Principal + Accrued Interest) - Payment. Do NOT add the extension fee into this math; treat it as a separate charge.
@@ -91,7 +92,7 @@ Installment Loans:
 - Penalties deducted from Security Hold balance
 
 QuickLoan:
-- Day 16–30: ₱100 extension fee (one-time) + daily interest continues
+- If Day 15 is missed: a one-time ₱100 extension fee is charged immediately, and daily interest continues accruing on the principal through Day 30.
 - Day 31+: ₱25/day penalty on top of daily interest
 - Default: -150 credit score
 
