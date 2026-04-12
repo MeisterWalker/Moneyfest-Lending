@@ -85,10 +85,18 @@ export default function CapitalPage() {
     const jpShare = (jpCapital / (jpCapital + charlouCapital || 1)) * 100
     const charlouShare = (charlouCapital / (jpCapital + charlouCapital || 1)) * 100
 
-    return { ledger, jpCapital, charlouCapital, currentTotal, jpShare, charlouShare }
+    const totalIncome = entries
+      .filter(e => e.type === 'CASH IN' && ['Interest Profit', 'Other Income'].includes(e.category))
+      .reduce((sum, e) => sum + parseFloat(e.amount), 0)
+    
+    const totalExpenses = entries
+      .filter(e => e.type === 'CASH OUT' && ['Subscription / Hosting', 'Operating Expense'].includes(e.category))
+      .reduce((sum, e) => sum + parseFloat(e.amount), 0)
+
+    return { ledger, jpCapital, charlouCapital, currentTotal, jpShare, charlouShare, totalIncome, totalExpenses }
   }
 
-  const { ledger, jpCapital, charlouCapital, currentTotal, jpShare, charlouShare } = processLedger()
+  const { ledger, jpCapital, charlouCapital, currentTotal, jpShare, charlouShare, totalIncome, totalExpenses } = processLedger()
 
   // Chart Data
   const chartData = ledger.map(item => ({
@@ -201,6 +209,22 @@ export default function CapitalPage() {
             </div>
             <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>Primary Investor</div>
           </div>
+        </div>
+      </div>
+
+      {/* Profit Summary Section */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 30 }}>
+        <div className="card" style={{ padding: '16px 20px', borderLeft: '4px solid var(--green)' }}>
+          <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 4 }}>Total Income (Profit)</div>
+          <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--green)', fontFamily: 'Space Grotesk' }}>{formatCurrency(totalIncome)}</div>
+        </div>
+        <div className="card" style={{ padding: '16px 20px', borderLeft: '4px solid var(--red)' }}>
+          <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 4 }}>Total Expenses</div>
+          <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--red)', fontFamily: 'Space Grotesk' }}>{formatCurrency(totalExpenses)}</div>
+        </div>
+        <div className="card" style={{ padding: '16px 20px', borderLeft: '4px solid var(--blue)' }}>
+          <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 4 }}>Net Business Profit</div>
+          <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--blue)', fontFamily: 'Space Grotesk' }}>{formatCurrency(totalIncome - totalExpenses)}</div>
         </div>
       </div>
 
