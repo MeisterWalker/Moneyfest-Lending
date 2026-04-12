@@ -31,8 +31,8 @@ export default function InvestorsPage() {
     let dynamicAdminCapital = 30000
     if (cf) {
       dynamicAdminCapital = cf
-        .filter(c => c.type === 'CASH IN' && (c.category.includes('Initial Pool') || c.category.includes('Capital Top-up')))
-        .filter(c => !c.category.includes('QuickLoan'))
+        .filter(c => c.type === 'CASH IN' && (c.category?.includes('Initial Pool') || c.category?.includes('Capital Top-up')))
+        .filter(c => !c.category?.includes('QuickLoan'))
         .reduce((sum, c) => sum + (c.amount || 0), 0)
     }
     setAdminCapitalState(dynamicAdminCapital)

@@ -406,8 +406,8 @@ export default function DashboardPage() {
   // ── Computed stats (Installment) ──────────
   // DYNAMIC CAPITAL: Sum of Initial Pool + Top-ups from the Ledger
   const capital = capitalFlow
-    .filter(cf => cf.type === 'CASH IN' && (cf.category.includes('Initial Pool') || cf.category.includes('Capital Top-up')))
-    .filter(cf => !cf.category.includes('QuickLoan'))
+    .filter(cf => cf.type === 'CASH IN' && (cf.category?.includes('Initial Pool') || cf.category?.includes('Capital Top-up')))
+    .filter(cf => !cf.category?.includes('QuickLoan'))
     .reduce((sum, cf) => sum + (cf.amount || 0), 0) || (settings?.starting_capital || 30000)
 
   const activeLoans = loans.filter(l => ['Active', 'Partially Paid', 'Overdue'].includes(l.status) && l.loan_type !== 'quickloan')
@@ -655,7 +655,7 @@ export default function DashboardPage() {
   
   // Dynamic QL Capital
   const qlCapital = capitalFlow
-    .filter(cf => cf.type === 'CASH IN' && cf.category.includes('QuickLoan') && (cf.category.includes('Initial Pool') || cf.category.includes('Capital Top-up')))
+    .filter(cf => cf.type === 'CASH IN' && cf.category?.includes('QuickLoan') && (cf.category?.includes('Initial Pool') || cf.category?.includes('Capital Top-up')))
     .reduce((sum, cf) => sum + (cf.amount || 0), 0) || (settings?.ql_starting_capital || 0)
 
   const qlAmountLentOut = activeQuickLoans.reduce((sum, l) => sum + (l.loan_amount || 0), 0)
