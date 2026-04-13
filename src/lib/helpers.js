@@ -15,18 +15,9 @@ export async function logAudit({ action_type, module, description, changed_by })
   }
 }
 
-export function getRiskFromScore(score) {
-  if (score >= 650) return 'Low'
-  if (score >= 550) return 'Medium'
-  return 'High'
-}
+// NOTE: Badge and risk functions are in src/lib/creditSystem.js (single source of truth)
+// Do NOT add badge/risk/score functions here — use CREDIT_CONFIG and getBadgeStatus instead.
 
-export function getLoyaltyBadge(cleanLoans) {
-  if (cleanLoans >= 3) return 'VIP'
-  if (cleanLoans >= 2) return 'Reliable'
-  if (cleanLoans >= 1) return 'Trusted'
-  return 'New'
-}
 
 export function getNextCutoffDate() {
   const today = new Date()

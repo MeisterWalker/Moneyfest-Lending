@@ -11,6 +11,16 @@ export const logAutomatedPayment = async (loan, amountReceived) => {
     let interestProfit = 0
     let principalReturn = 0
 
+    // ── BL-07 FIX: Guard against NaN from null/zero amounts ──
+    if (!amountReceived || amountReceived <= 0) {
+      console.error('logAutomatedPayment: invalid amountReceived', amountReceived)
+      return { success: false, error: 'Invalid amount received' }
+    }
+    if (!loan.loan_amount || loan.loan_amount <= 0) {
+      console.error('logAutomatedPayment: invalid loan_amount', loan.loan_amount)
+      return { success: false, error: 'Invalid loan amount' }
+    }
+
     if (isQuickLoan) {
       // For QuickLoans, we calculate interest based on the 1% daily rate
       // But usually, the user collects a fixed amount.
@@ -28,6 +38,12 @@ export const logAutomatedPayment = async (loan, amountReceived) => {
       const totalInterest = (loan.total_repayment || 0) - (loan.loan_amount || 0)
       const numInstallments = loan.num_installments || 4
       
+      // ── BL-07 FIX: Guard against division by zero/null ──
+      if (!loan.installment_amount || loan.installment_amount <= 0) {
+        console.error('logAutomatedPayment: invalid installment_amount', loan.installment_amount)
+        return { success: false, error: 'Invalid installment amount — cannot calculate interest/principal split' }
+      }
+
       // We calculate the specific interest portion for ONE standard installment
       const interestPerInstallment = totalInterest / numInstallments
       

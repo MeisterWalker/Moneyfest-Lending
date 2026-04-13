@@ -40,16 +40,14 @@ function getInstallmentDates(releaseDateStr, numInstallments) {
 }
 
 module.exports = async (req, res) => {
-  // Allow manual invocation or cron. Vercel automatically passes an auth header for cron but we can leave it open for admin testing if needed, or secure it via secret.
   console.log('[CRON] Starting daily overdue script...');
 
-  // FIX 1: Using service role key to bypass RLS for server-side cron operations
   const supabase = createClient(
     process.env.SUPABASE_URL,
     process.env.SUPABASE_SERVICE_ROLE_KEY
   );
 
-  // 1. Fetch active/partially paid installment loans
+  // 1. Fetch active/partially paid installment loans (with borrower data joined)
   const { data: loans, error: loansErr } = await supabase
     .from('loans')
     .select('*, borrowers(id, full_name, email, credit_score)')
@@ -57,11 +55,34 @@ module.exports = async (req, res) => {
     .neq('loan_type', 'quickloan');
 
   if (loansErr) return res.status(500).json({ error: loansErr.message });
+  if (!loans || loans.length === 0) {
+    return res.status(200).json({ success: true, processed: 0, message: 'No overdue loans found.' });
+  }
 
-  let processedCount = 0;
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const todayStr = today.toISOString().slice(0, 10); // YYYY-MM-DD
+
+  // ── BL-02 FIX: Batch-fetch all penalty deduction transactions for all relevant loans ──
+  const loanIds = loans.map(l => l.id);
+  const { data: allPenaltyTxns } = await supabase
+    .from('wallet_transactions')
+    .select('loan_id, amount')
+    .in('loan_id', loanIds)
+    .eq('type', 'penalty_deduction');
+
+  // Build a map: loan_id → total previously charged
+  const previousChargesMap = {};
+  (allPenaltyTxns || []).forEach(txn => {
+    if (!previousChargesMap[txn.loan_id]) previousChargesMap[txn.loan_id] = 0;
+    previousChargesMap[txn.loan_id] += Math.abs(txn.amount || 0);
+  });
+
+  // ── BL-02 FIX: Collect all mutations, then batch them ──
+  const loanUpdates = [];
+  const borrowerUpdates = [];
+  const walletTxInserts = [];
+  const emailPromises = [];
+  let processedCount = 0;
 
   for (const loan of loans) {
     // Determine if overdue
@@ -73,28 +94,16 @@ module.exports = async (req, res) => {
     const daysLate = Math.floor((today - nextDue) / (1000 * 60 * 60 * 24));
 
     if (daysLate > 0) {
-      // 2. Robust State-Based Penalty Calculation
-      // Retrieve past penalty deductions for this specific loan
-      const { data: pastLogs } = await supabase
-        .from('wallet_transactions')
-        .select('amount')
-        .eq('loan_id', loan.id)
-        .eq('type', 'penalty_deduction');
+      // Use pre-fetched penalty data instead of per-loan query (BL-02 fix)
+      const totalPreviouslyCharged = previousChargesMap[loan.id] || 0;
 
-      let totalPreviouslyCharged = 0;
-      if (pastLogs) {
-        pastLogs.forEach(log => {
-          totalPreviouslyCharged += Math.abs(log.amount || 0);
-        });
-      }
-
-      // 3. Catch-up Penalty logic: calculate what is owed minus what was already charged
+      // Catch-up Penalty logic: calculate what is owed minus what was already charged
       const expectedTotalPenalty = daysLate * 20;
       let penalty = expectedTotalPenalty - totalPreviouslyCharged;
 
       if (penalty <= 0) {
         console.log(`[CRON] Loan ${loan.id} is up to date with penalty deductions.`);
-        continue; // skip, already billed correctly
+        continue;
       }
 
       console.log(`[CRON] Loan ${loan.id} is ${daysLate} days late. Processing catch-up penalty of ₱${penalty}...`);
@@ -106,35 +115,39 @@ module.exports = async (req, res) => {
       if (currentHold >= penalty) {
         holdToDeduct = penalty;
       } else {
-        // Hold is smaller than penalty (e.g. 0)
-        holdToDeduct = currentHold; // Deduct whatever is left
-        addedToBalance = penalty - currentHold; // Compound the rest!
+        holdToDeduct = currentHold;
+        addedToBalance = penalty - currentHold;
       }
 
-      // Update loan record
+      // Build loan update payload
       const updatePayload = {
         security_hold: currentHold - holdToDeduct,
-        // Mark as overdue if not already
         status: 'Overdue'
       };
 
       if (addedToBalance > 0) {
         updatePayload.remaining_balance = Number(loan.remaining_balance) + addedToBalance;
-        // Total repayment must optionally increase so formulas still balance
         updatePayload.total_repayment = Number(loan.total_repayment) + addedToBalance;
       }
 
-      await supabase.from('loans').update(updatePayload).eq('id', loan.id);
+      loanUpdates.push({ id: loan.id, payload: updatePayload });
 
-      // Decrement Credit Score logic (-10 points per late day)
-      const pointsToDeduct = (penalty / 20) * 10;
-      const currentScore = Number(loan.borrowers?.credit_score || 750);
-      const newScore = Math.max(300, currentScore - pointsToDeduct);
-      
-      await supabase.from('borrowers').update({ credit_score: newScore }).eq('id', loan.borrower_id);
+      // ── BL-03 FIX: Credit score deduction per INSTALLMENT, not per day ──
+      // Only deduct -10 once per catch-up cycle if this is a new penalty being applied.
+      // The penalty variable represents NEW penalty not yet charged, so if it's > 0
+      // and the previous charges were 0, this is the first penalty for this installment.
+      // We cap at -10 regardless of how many days late.
+      const SCORE_DEDUCT_PER_INSTALLMENT = -10;
+      const isFirstPenaltyForThisInstallment = totalPreviouslyCharged === 0;
+
+      if (isFirstPenaltyForThisInstallment) {
+        const currentScore = Number(loan.borrowers?.credit_score || 750);
+        const newScore = Math.max(300, currentScore + SCORE_DEDUCT_PER_INSTALLMENT);
+        borrowerUpdates.push({ id: loan.borrower_id, credit_score: newScore });
+      }
 
       // Record transaction history for portal visibility
-      await supabase.from('wallet_transactions').insert({
+      walletTxInserts.push({
         borrower_id: loan.borrower_id,
         loan_id: loan.id,
         type: 'penalty_deduction',
@@ -143,16 +156,20 @@ module.exports = async (req, res) => {
         status: 'completed'
       });
 
-      // 4. Send Email using the Supabase edge function mechanism directly to avoid importing React ES modules here.
+      // Queue email (fire-and-forget, don't block the loop)
       if (loan.borrowers?.email) {
-        // Send via edge function or direct
+        const borrowerName = loan.borrowers.full_name;
+        const borrowerEmail = loan.borrowers.email;
+        const currentScore = Number(loan.borrowers?.credit_score || 750);
+        const pointsDeducted = isFirstPenaltyForThisInstallment ? Math.abs(SCORE_DEDUCT_PER_INSTALLMENT) : 0;
+        const newScore = isFirstPenaltyForThisInstallment ? Math.max(300, currentScore + SCORE_DEDUCT_PER_INSTALLMENT) : currentScore;
+
         const subject = `🔴 Action Required: Installment is ${daysLate} days OVERDUE`;
-        
         const html = `
           <div style="font-family:sans-serif;background:#0B0F1A;padding:32px;color:#F0F4FF;border-radius:12px;">
             <div style="border-left:4px solid #EF4444;padding-left:14px;background:rgba(239,68,68,0.1);padding:14px;border-radius:0 8px 8px 0;margin-bottom:20px;">
               <h2 style="margin:0;color:#EF4444;font-size:18px;">⚠️ Account Overdue Warning</h2>
-              <p style="margin:8px 0 0;font-size:14px;line-height:1.5;">Hi <strong>${loan.borrowers.full_name}</strong>, your loan installment due on <strong>${nextDue.toLocaleDateString('en-PH')}</strong> is currently <strong>${daysLate} days overdue.</strong></p>
+              <p style="margin:8px 0 0;font-size:14px;line-height:1.5;">Hi <strong>${borrowerName}</strong>, your loan installment due on <strong>${nextDue.toLocaleDateString('en-PH')}</strong> is currently <strong>${daysLate} days overdue.</strong></p>
             </div>
             
             <div style="background:#141B2D;border:1px solid #1E2640;border-radius:8px;padding:20px;margin-bottom:20px;">
@@ -162,34 +179,53 @@ module.exports = async (req, res) => {
                 <li><strong>Amount added to Principal Balance:</strong> ₱${addedToBalance > 0 ? addedToBalance.toLocaleString() : '0'}</li>
                 <li><strong>New Total Outstanding Balance:</strong> ₱${((Number(loan.remaining_balance) + addedToBalance)).toLocaleString()}</li>
               </ul>
+              ${pointsDeducted > 0 ? `
               <div style="margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.05);">
-                <p style="margin:0;color:#F97316;font-size:13px;">⚠️ <strong>Credit Impact:</strong> Your credit score has been lowered by ${pointsToDeduct} points (Now: ${newScore}).</p>
+                <p style="margin:0;color:#F97316;font-size:13px;">⚠️ <strong>Credit Impact:</strong> Your credit score has been lowered by ${pointsDeducted} points (Now: ${newScore}).</p>
               </div>
+              ` : ''}
             </div>
             <p style="font-size:13px;color:#8892B0;">Please settle your payment immediately via your Borrower Portal to stop daily compounding penalties.</p>
             <a href="${process.env.REACT_APP_PORTAL_URL || 'https://moneyfestlending.loan/portal'}" style="display:inline-block;padding:12px 24px;background:#3B82F6;color:#FFF;text-decoration:none;font-weight:bold;border-radius:8px;margin-top:10px;">Login to Portal</a>
           </div>
         `;
 
-        // POST to Mail Edge Function
-        try {
-          await fetch(`${process.env.SUPABASE_URL}/functions/v1/send-email`, {
+        emailPromises.push(
+          fetch(`${process.env.SUPABASE_URL}/functions/v1/send-email`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
               'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`
             },
-            body: JSON.stringify({ to: loan.borrowers.email, subject, html })
-          });
-          console.log(`[CRON] Email sent to ${loan.borrowers.email}`);
-        } catch (e) {
-          console.error('[CRON] Email err:', e);
-        }
+            body: JSON.stringify({ to: borrowerEmail, subject, html })
+          }).then(() => console.log(`[CRON] Email sent to ${borrowerEmail}`))
+            .catch(e => console.error(`[CRON] Email error for ${borrowerEmail}:`, e.message))
+        );
       }
 
       processedCount++;
     }
   }
+
+  // ── BL-02 FIX: Execute all mutations in batches ──
+  // Update loans
+  for (const { id, payload } of loanUpdates) {
+    await supabase.from('loans').update(payload).eq('id', id);
+  }
+  // Update borrower credit scores
+  for (const { id, credit_score } of borrowerUpdates) {
+    await supabase.from('borrowers').update({ credit_score }).eq('id', id);
+  }
+  // Batch insert all wallet transactions
+  if (walletTxInserts.length > 0) {
+    await supabase.from('wallet_transactions').insert(walletTxInserts);
+  }
+
+  // Fire-and-forget emails (don't wait for completion to return response)
+  Promise.allSettled(emailPromises).then(results => {
+    const sent = results.filter(r => r.status === 'fulfilled').length;
+    console.log(`[CRON] Email batch complete: ${sent}/${results.length} sent`);
+  });
 
   res.status(200).json({ success: true, processed: processedCount, message: 'Daily deductions calculated.' });
 };
