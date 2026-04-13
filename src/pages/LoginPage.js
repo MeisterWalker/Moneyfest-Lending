@@ -38,23 +38,51 @@ async function logLoginAttempt({ email, success, failReason = null }) {
   }
 }
 
-function LedgerIcon({ size = 32 }) {
+function MoneyfestLogo({ size = 32 }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-      {/* Book spine */}
-      <rect x="5" y="4" width="4" height="24" rx="1.5" fill="rgba(255,255,255,0.25)" />
-      {/* Book cover */}
-      <rect x="8" y="4" width="19" height="24" rx="2" fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.35)" strokeWidth="1" />
-      {/* Spine binding line */}
-      <line x1="9" y1="4" x2="9" y2="28" stroke="rgba(255,255,255,0.4)" strokeWidth="1" />
-      {/* Lines representing ledger entries */}
-      <line x1="13" y1="10" x2="23" y2="10" stroke="rgba(255,255,255,0.7)" strokeWidth="1.2" strokeLinecap="round" />
-      <line x1="13" y1="14" x2="23" y2="14" stroke="rgba(255,255,255,0.5)" strokeWidth="1" strokeLinecap="round" />
-      <line x1="13" y1="18" x2="20" y2="18" stroke="rgba(255,255,255,0.5)" strokeWidth="1" strokeLinecap="round" />
-      {/* Peso sign at bottom of ledger */}
-      <text x="13" y="26" fontSize="7" fontWeight="bold" fill="rgba(255,255,255,0.9)" fontFamily="sans-serif">₱</text>
-      {/* Small checkmark / tick */}
-      <polyline points="21,22 23,24 26,20" stroke="rgba(255,255,255,0.8)" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+    <svg width={size} height={size} viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="logo-gradient" x1="0" y1="64" x2="64" y2="0" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#6366F1" />
+          <stop offset="1" stopColor="#8B5CF6" />
+        </linearGradient>
+      </defs>
+      {/* Abstract 'M' formed by two soaring upward strokes */}
+      <path 
+        d="M12 52L24 16L32 38" 
+        stroke="url(#logo-gradient)" 
+        strokeWidth="7" 
+        strokeLinecap="round" 
+        strokeLinejoin="round" 
+      />
+      <path 
+        d="M32 38L40 16L52 52" 
+        stroke="url(#logo-gradient)" 
+        strokeWidth="7" 
+        strokeLinecap="round" 
+        strokeLinejoin="round" 
+      />
+      {/* Manifestation energy/growth spark at the peak */}
+      <path 
+        d="M32 32V8M32 8L28 12M32 8L36 12" 
+        stroke="#F59E0B" 
+        strokeWidth="4" 
+        strokeLinecap="round" 
+        strokeLinejoin="round" 
+      />
+      <circle cx="32" cy="8" r="3" fill="#F59E0B" />
+      {/* Core currency symbol at the center of gravity */}
+      <text 
+        x="32" y="54" 
+        textAnchor="middle" 
+        fill="#F0F4FF" 
+        opacity="0.5" 
+        fontSize="12" 
+        fontWeight="bold" 
+        fontFamily="sans-serif"
+      >
+        ₱
+      </text>
     </svg>
   )
 }
@@ -137,12 +165,17 @@ export default function LoginPage() {
         <div style={{ textAlign: 'center', marginBottom: 40 }}>
           <div style={{
             width: 64, height: 64, borderRadius: 18,
-            background: 'linear-gradient(135deg, var(--blue), var(--purple))',
+            background: '#0F172A',
+            border: '1.5px solid rgba(139,92,246,0.25)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             margin: '0 auto 16px',
-            boxShadow: '0 8px 32px rgba(59,130,246,0.3)'
+            boxShadow: '0 0 30px rgba(139,92,246,0.2)',
+            position: 'relative',
+            overflow: 'hidden'
           }}>
-            <LedgerIcon size={32} />
+            {/* Subtle internal glow */}
+            <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at 50% 0%, rgba(139,92,246,0.15), transparent 70%)', pointerEvents: 'none' }} />
+            <MoneyfestLogo size={36} />
           </div>
           <h1 style={{
             fontFamily: 'Space Grotesk, sans-serif',
