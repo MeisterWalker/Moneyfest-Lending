@@ -123,7 +123,7 @@ Once Rebate Credits reach ₱500, a withdrawal button appears in the Borrower Po
 2. ID Verification (upload front & back of government ID)
 3. Loan Details (choose type, amount, purpose, term, release method, agree to T&C)
 After submitting, you receive an ACCESS CODE (e.g. LM-XXXX) — save it! Use it to log into the Borrower Portal.
-Approval time: usually within 12 hours (manual review by admin).
+Approval time: usually within 14 hours (manual review by admin).
 You can track status anytime at moneyfestlending.loan/portal
 
 === HOW-TO / PORTAL ===

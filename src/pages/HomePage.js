@@ -43,7 +43,7 @@ export default function HomePage() {
     { value: `${(interestRate * 100).toFixed(0)}%`, label: 'Monthly interest rate', sub: 'No compounding' },
     { value: '₱10K', label: 'Maximum loan', sub: 'For trusted borrowers' },
     { value: '4–6', label: 'Easy installments', sub: 'Over 2 or 3 months' },
-    { value: '48hrs', label: 'Avg. approval time', sub: 'Fast turnaround' },
+    { value: '14hrs', label: 'Avg. approval time', sub: 'Manual review by admin' },
   ]
 
   return (
@@ -267,7 +267,6 @@ export default function HomePage() {
 
             {/* QuickLoan card */}
             <div style={{ background: 'rgba(245,158,11,0.05)', border: '1px solid rgba(245,158,11,0.25)', borderRadius: 24, padding: '32px 28px', position: 'relative' }}>
-              <div style={{ position: 'absolute', top: 16, right: 16, padding: '3px 10px', borderRadius: 20, background: '#F59E0B', fontSize: 10, fontWeight: 800, color: '#000', letterSpacing: '0.06em' }}>NEW</div>
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, marginBottom: 20, padding: '5px 14px', borderRadius: 20, background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.3)' }}>
                 <span style={{ fontSize: 13 }}>⚡</span>
                 <span style={{ fontSize: 11, fontWeight: 700, color: '#F59E0B', letterSpacing: '0.08em', textTransform: 'uppercase' }}>QuickLoan</span>
@@ -276,7 +275,7 @@ export default function HomePage() {
               <div style={{ fontSize: 13, color: '#7A8AAA', marginBottom: 24 }}>10% monthly · pay any time · daily interest</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 28 }}>
                 {[
-                  'Pay anytime — interest stops when you pay',
+                  'Pay toward principal anytime — reduces your daily interest instantly',
                   'Target due: Day 15 from release',
                   '₱10/day on ₱3,000 · ₱3.33/day on ₱1,000',
                   '₱100 extension fee if Day 15 is missed',
@@ -452,7 +451,7 @@ export default function HomePage() {
             <div style={{ position: 'absolute', top: 36, left: '12.5%', right: '12.5%', height: 1, background: 'linear-gradient(90deg,transparent,rgba(99,102,241,0.3),rgba(139,92,246,0.3),transparent)', pointerEvents: 'none' }} />
             {[
               { step: '01', icon: '/list.png', title: 'Fill the form', desc: 'Enter your details, upload a valid ID, and choose your loan amount.' },
-              { step: '02', icon: '/summary-check.png', title: 'Admin reviews', desc: 'Our team checks your application — usually within 12 hours.' },
+              { step: '02', icon: '/summary-check.png', title: 'Admin reviews', desc: 'Our team checks your application — usually within 14 hours (manual review by admin).' },
               { step: '03', icon: '/payment-method.png', title: 'Funds released', desc: 'Once approved, funds are released on the next cutoff date.' },
               { step: '04', icon: '/calendar.png', title: 'Pay in 4 cuts', desc: 'Pay every 5th and 20th. Pay early on your last and earn Rebate Credits!' },
             ].map((s, i) => (
@@ -477,9 +476,6 @@ export default function HomePage() {
         <div style={{ maxWidth: 1080, margin: '0 auto' }}>
           <div style={{ background: 'linear-gradient(135deg,rgba(34,197,94,0.08),rgba(59,130,246,0.06))', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 24, padding: '48px 52px', display: 'flex', alignItems: 'center', gap: 48, flexWrap: 'wrap' }}>
             <div style={{ flex: 1, minWidth: 280 }}>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 14px', borderRadius: 20, background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.2)', marginBottom: 20 }}>
-                <span style={{ fontSize: 11, fontWeight: 700, color: '#22C55E', letterSpacing: '0.08em', textTransform: 'uppercase' }}>New Feature</span>
-              </div>
               <h2 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 900, fontSize: 'clamp(24px,3.5vw,38px)', color: '#F0F4FF', letterSpacing: -1, margin: '0 0 16px', lineHeight: 1.15 }}>
                 Pay early.<br />
                 <span style={{ color: '#22C55E' }}>Get rewarded.</span>
@@ -506,6 +502,15 @@ export default function HomePage() {
               <div style={{ marginTop: 16, fontFamily: 'Syne', fontWeight: 800, fontSize: 13, color: '#22C55E' }}>Rebate Credits</div>
               <div style={{ fontSize: 11, color: '#4B5580', marginTop: 4 }}>Min. ₱500 to withdraw</div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* AI Assistant Callout */}
+      <section style={{ padding: '0 32px', marginBottom: 20 }}>
+        <div style={{ maxWidth: 700, margin: '0 auto', background: '#0E1320', border: '1.5px solid rgba(139,92,246,0.35)', borderRadius: 24, padding: 24, textAlign: 'center' }}>
+          <div style={{ fontSize: 15, color: '#F0F4FF', fontWeight: 600, lineHeight: 1.6 }}>
+            💬 Have questions? Ask SaulX, our AI assistant — available 24/7 in the chat bubble below. Speaks English and Bisaya!
           </div>
         </div>
       </section>

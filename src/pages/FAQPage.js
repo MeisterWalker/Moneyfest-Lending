@@ -109,7 +109,7 @@ export default function FAQPage() {
     release: [
       { q: 'How will my loan be released?', a: 'Once approved, your loan will be released via your chosen method — Physical Cash, GCash, RCBC, or Other Bank Transfer. Release fees vary: Physical Cash and RCBC-to-RCBC are free, GCash is free if sending GCash to GCash — otherwise a ₱15 fee applies, and other bank transfers require the borrower to cover the transfer fee. Fees are deducted from your approved amount before release.' },
       { q: 'When will my loan be released after approval?', a: 'Your release will be scheduled on the nearest 5th or 20th cutoff date following approval. You will be able to see your scheduled release date on the Borrower Portal.' },
-      { q: 'How long does approval take?', a: 'Applications are reviewed manually by the admin — usually within 12 hours. You will be notified via email and can track your status anytime through the Borrower Portal using your access code.' },
+      { q: 'How long does approval take?', a: 'Applications are reviewed manually by the admin — usually within 14 hours (manual review by admin). You will be notified via email and can track your status anytime through the Borrower Portal using your access code.' },
     ],
     other: [
       { q: 'How do I track my application?', a: 'After submitting, you will receive an access code. Use this code to log in to the Borrower Portal at moneyfestlending.online/portal — you can track your application status, view your loan schedule, and upload payment proofs from there.' },
@@ -208,6 +208,11 @@ export default function FAQPage() {
 
           {/* FAQ list */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div style={{ background: 'rgba(139,92,246,0.06)', border: '1.5px solid rgba(139,92,246,0.3)', borderRadius: 14, padding: '16px 20px', marginBottom: 8 }}>
+              <div style={{ fontSize: 13, color: '#F0F4FF', fontWeight: 600, lineHeight: 1.6 }}>
+                💬 Can't find your answer? Ask SaulX, our AI assistant — available 24/7 in the chat bubble at the bottom right. Speaks English and Bisaya!
+              </div>
+            </div>
             {activeFAQs.map((faq, i) => (
               <FAQItem key={i} question={faq.q} answer={faq.a}>
                 {faq.children}
