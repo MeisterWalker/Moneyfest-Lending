@@ -76,7 +76,7 @@ Interest is calculated on the FULL approved amount, NOT the amount you receive.
 QuickLoans have NO security hold.
 
 === SECURITY HOLD RETURN ===
-After your final installment is confirmed and approved by the admin team, your full security hold amount is automatically converted into Rebate Credits and added to your wallet balance in the Borrower Portal. This is not instant — the admin must first confirm your final payment, which may take up to 48 hours. Once credited, you will see it reflected in your Rebate Credits balance inside the portal. You do not need to request it — it happens automatically upon admin confirmation of your last payment.
+After your final installment is confirmed and approved by the admin team, your full security hold amount is automatically converted into Rebate Credits and added to your wallet balance in the Borrower Portal. This is not instant — the admin must first confirm your final payment, which may take up to 24-48 hours. Once credited, you will see it reflected in your Rebate Credits balance inside the portal. You do not need to request it — it happens automatically upon admin confirmation of your last payment.
 
 === PAYMENT METHODS ===
 Loan repayment options:
@@ -125,7 +125,7 @@ Your in-app reward balance. Two things automatically credit here:
 Once Rebate Credits reach ₱500, a withdrawal button appears in the Borrower Portal (admin reviews and processes it).
 
 === REBATE CREDITS WITHDRAWAL ===
-Rebate Credits accumulate in your portal wallet from two sources: your security hold return and early payoff rebates. Once your balance reaches ₱500 or more, a 'Request Withdrawal' button will appear in your Borrower Portal wallet section. Click it to submit a withdrawal request. The admin team will review and manually process it — this is not an instant transfer. Processing typically takes up to 48 hours. Withdrawals are sent via your preferred payment method on file. You cannot withdraw amounts below ₱500.
+Rebate Credits accumulate in your portal wallet from two sources: your security hold return and early payoff rebates. Once your balance reaches ₱500 or more, a 'Request Withdrawal' button will appear in your Borrower Portal wallet section. Click it to submit a withdrawal request. The admin team will review and manually process it — this is not an instant transfer. Processing typically takes up to 24-48 hours. Withdrawals are sent via your preferred payment method on file. You cannot withdraw amounts below ₱500.
 
 === ELIGIBILITY ===
 - Must be an ACTIVE employee of MySource Solutions
@@ -143,7 +143,7 @@ Application Evaluation Process: MoneyfestLending evaluates each application base
 2. ID Verification (upload front & back of government ID)
 3. Loan Details (choose type, amount, purpose, term, release method, agree to T&C)
 After submitting, you receive an ACCESS CODE (e.g. LM-XXXX) — save it! Use it to log into the Borrower Portal.
-Approval time: usually within 48 hours. The admin team carefully reviews each application manually to ensure every borrower meets the program's eligibility standards and internal requirements — this personal review process is what keeps the program fair and trustworthy for everyone.
+Approval time: usually within 24-48 hours. The admin team carefully reviews each application manually to ensure every borrower meets the program's eligibility standards and internal requirements — this personal review process is what keeps the program fair and trustworthy for everyone.
 You can track status anytime at moneyfestlending.loan/portal
 
 === LOAN RENEWAL ===
@@ -159,7 +159,7 @@ Borrowers who have fully paid their current loan may immediately apply for a new
 To submit payment proof after paying: 1) Go to moneyfestlending.loan/portal and log in with your access code. 2) Find your current installment under your loan details. 3) Click the 'Upload Payment Proof' button on that installment. 4) Select your screenshot or photo of your payment receipt (GCash screenshot, bank transfer confirmation, etc.). 5) Add any notes if needed, then submit. After submitting, your proof status will show as 'Pending' while the admin reviews it. Once approved, your installment will be marked as Paid. Do not pay again while a proof is still pending review.
 
 === AFTER PAYMENT PROOF SUBMITTED ===
-After you upload your payment proof, the admin team will review it manually. This review typically takes up to 48 hours. Once approved: your installment will be marked as Paid, your credit score will be updated, and you will receive a portal notification confirming the approval. If your proof is rejected, you will also receive a portal notification explaining why — you can then re-upload the correct proof. Your loan balance and installment progress will only update after admin approval, not immediately after upload.
+After you upload your payment proof, the admin team will review it manually. This review typically takes up to 24-48 hours. Once approved: your installment will be marked as Paid, your credit score will be updated, and you will receive a portal notification confirming the approval. If your proof is rejected, you will also receive a portal notification explaining why — you can then re-upload the correct proof. Your loan balance and installment progress will only update after admin approval, not immediately after upload.
 
 === LOAN STATUS GUIDE ===
 Here is what each loan status means in your portal: 'Pending Release' — your loan has been approved and is being prepared for fund release. This is normal — funds will be sent to you shortly, no action needed. 'Active' — your loan is live and installments are running. 'Partially Paid' — you have made at least one payment, keep going. 'Overdue' — you have a missed or late installment, pay as soon as possible to avoid penalties. 'Paid' — your loan is fully settled, congratulations! You may apply for a new loan anytime.
