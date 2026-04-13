@@ -678,7 +678,8 @@ export default function BorrowerPortalPage() {
     setRenewing(true)
     try {
       // Generate tracking code like PublicApplyPage does
-      const newAppCode = 'LM-' + Math.random().toString(36).substring(2, 6).toUpperCase()
+      // FE-04 FIX: Use crypto.randomUUID for higher entropy (8 chars = 36^8 ≈ 2.8 trillion combos)
+      const newAppCode = 'LM-' + crypto.randomUUID().replace(/-/g, '').substring(0, 8).toUpperCase()
       
       const { error: appError } = await supabase.from('applications').insert({
         full_name: borrower.full_name,
@@ -706,7 +707,13 @@ export default function BorrowerPortalPage() {
       setRenewalSent(true)
       setShowReloanModal(false)
       toast('Reloan application submitted!', 'success')
-      await logAudit(borrower.id, borrower.full_name, `Reloan Application Submitted: ₱${Number(reloanAmount).toLocaleString()} for ${reloanPurpose}`)
+      // FE-03 FIX: logAudit expects a named object, not positional args
+      await logAudit({
+        action_type: 'RELOAN_SUBMITTED',
+        module: 'Portal',
+        description: `Reloan Application Submitted: ₱${Number(reloanAmount).toLocaleString()} for ${reloanPurpose}`,
+        changed_by: borrower.access_code
+      })
       fetchPortalData(borrower.access_code) // Refresh to hide banner
 
     } catch (err) {
@@ -730,11 +737,15 @@ export default function BorrowerPortalPage() {
 
     const { data: b } = await supabase.from('borrowers').select('*').eq('access_code', cleanCode).single()
     if (b) {
-      const { data: allL } = await supabase.from('loans').select('*').eq('borrower_id', b.id).order('created_at', { ascending: false })
-      const { data: p } = await supabase.from('payment_proofs').select('*').eq('borrower_id', b.id).order('created_at', { ascending: false })
-      const { data: wBal } = await supabase.from('wallet_balances').select('*').eq('borrower_id', b.id).maybeSingle()
-      const { data: wTxns } = await supabase.from('wallet_transactions').select('*').eq('borrower_id', b.id).order('created_at', { ascending: false })
-      let { data: notifs } = await supabase.from('portal_notifications').select('*').eq('borrower_id', b.id).order('created_at', { ascending: false }).limit(20)
+      // FE-02 FIX: Parallelize independent reads instead of sequential awaits
+      const [{ data: allL }, { data: p }, { data: wBal }, { data: wTxns }, { data: notifsFetched }] = await Promise.all([
+        supabase.from('loans').select('*').eq('borrower_id', b.id).order('created_at', { ascending: false }),
+        supabase.from('payment_proofs').select('*').eq('borrower_id', b.id).order('created_at', { ascending: false }),
+        supabase.from('wallet_balances').select('*').eq('borrower_id', b.id).maybeSingle(),
+        supabase.from('wallet_transactions').select('*').eq('borrower_id', b.id).order('created_at', { ascending: false }),
+        supabase.from('portal_notifications').select('*').eq('borrower_id', b.id).order('created_at', { ascending: false }).limit(20),
+      ])
+      let notifs = notifsFetched
       
       const activeLoan = (allL || []).find(l => !['Paid','Defaulted'].includes(l.status)); 
       setBorrower(b); setAllLoans(allL || []); setLoan(activeLoan || allL?.[0] || null); setProofs(p || [])
@@ -774,15 +785,16 @@ export default function BorrowerPortalPage() {
         }
       }
       // 3. Fetch latest application by email OR access_code
+      // BL-08 FIX: Use access_code only (not .or() with email) to prevent cross-application exposure
+      // Also use .maybeSingle() instead of .single() to avoid throwing on zero results
       const { data: latestApp } = await supabase
         .from('applications')
         .select('*')
-        .or(`email.eq.${b.email},access_code.eq.${cleanCode}`)
+        .eq('access_code', cleanCode)
         .order('created_at', { ascending: false })
         .limit(1)
-        .single()
+        .maybeSingle()
 
-      
       setPendingApp(latestApp || null)
       setLoading(false); return
     }

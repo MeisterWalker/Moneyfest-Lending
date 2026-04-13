@@ -296,7 +296,8 @@ export default function PublicApplyPage() {
     const err = validateStep3(); if (err) { setError(err); return }
     if (loading) return  // ← double-submit guard
     setError(''); setLoading(true)
-    const code = 'LM-' + Math.random().toString(36).substring(2, 6).toUpperCase()
+    // FE-04 FIX: Use crypto.randomUUID for higher entropy (8 chars = 36^8 ≈ 2.8 trillion combos)
+    const code = 'LM-' + crypto.randomUUID().replace(/-/g, '').substring(0, 8).toUpperCase()
     let validIdPath = null, validIdBackPath = null
     if (idFile) {
       const ext = idFile.name.split('.').pop()
@@ -494,7 +495,7 @@ export default function PublicApplyPage() {
 
                   const isQL = form.loan_type === 'quickloan'
                   const activeTerms = isQL ? quickloanTerms : installmentTerms
-                  console.log('T&C Modal Rendered for:', form.loan_type, 'isQL:', isQL)
+
 
                   return activeTerms.map((sec, i) => (
                     <div key={i} style={{ marginBottom: 20 }}>

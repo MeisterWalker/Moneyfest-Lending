@@ -531,7 +531,8 @@ export default function ApplicationsPage() {
   const handleApprove = async (app) => {
     try {
       // 1. Generate access code
-      const accessCode = app.access_code || ('LM-' + Math.random().toString(36).substring(2, 6).toUpperCase())
+      // FE-04 FIX: Use crypto.randomUUID for higher entropy
+      const accessCode = app.access_code || ('LM-' + crypto.randomUUID().replace(/-/g, '').substring(0, 8).toUpperCase())
 
       // 2. Check if borrower already exists
       const { data: existingBorrower } = await supabase.from('borrowers')
