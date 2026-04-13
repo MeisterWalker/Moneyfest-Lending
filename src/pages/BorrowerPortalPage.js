@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import { usePageVisit } from '../hooks/usePageVisit'
 import ChatBot from '../components/ChatBot'
 import { getInstallmentDates, formatDateValue, logAudit, getQuickLoanDueDates } from '../lib/helpers'
+import { PAYMENT_ACCOUNTS } from '../lib/paymentAccounts'
 import { generateBorrowerReceiptPDF, generateBorrowerLoanAgreementPDF, generateBorrowerQuickLoanPDF } from '../lib/pdfGenerator'
 import { sendLoanAgreementSignedAdminEmail } from '../lib/emailService'
 import {
@@ -123,39 +124,19 @@ function UploadModal({ installmentNum, loan, borrower, onClose, onUploaded, qlPa
           <div style={{ padding: '14px', background: 'rgba(59,130,246,0.06)', borderRadius: 12, border: '1px solid rgba(59,130,246,0.15)', marginBottom: 14, textAlign: 'left' }}>
             <div style={{ fontSize: 11, color: '#3B82F6', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Send Payment To</div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 8 }}>
-              {/* GCash Option */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: 'rgba(255,255,255,0.03)', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <img src="/gcash-logo.png" alt="GCash" style={{ width: 24, height: 24, objectFit: 'contain' }} />
-                  <div>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: '#F0F4FF' }}>GCash</div>
-                    <div style={{ fontSize: 10, color: '#7A8AAA' }}>Charlou June Ramil</div>
+              {/* FE-06 FIX: Payment accounts from centralized config */}
+              {PAYMENT_ACCOUNTS.map(acct => (
+                <div key={acct.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: 'rgba(255,255,255,0.03)', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <img src={acct.logo} alt={acct.label} style={{ width: 24, height: 24, objectFit: 'contain', borderRadius: acct.id !== 'gcash' ? 4 : 0 }} />
+                    <div>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: '#F0F4FF' }}>{acct.label}</div>
+                      <div style={{ fontSize: 10, color: '#7A8AAA' }}>{acct.holder}</div>
+                    </div>
                   </div>
+                  <div style={{ fontSize: 13, fontFamily: 'Space Grotesk, sans-serif', fontWeight: 800, color: '#60A5FA' }}>{acct.accountNumber}</div>
                 </div>
-                <div style={{ fontSize: 13, fontFamily: 'Space Grotesk, sans-serif', fontWeight: 800, color: '#60A5FA' }}>09665835179</div>
-              </div>
-              {/* RCBC Option */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: 'rgba(255,255,255,0.03)', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <img src="/rcbc-logo.png" alt="RCBC" style={{ width: 24, height: 24, objectFit: 'contain', borderRadius: 4 }} />
-                  <div>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: '#F0F4FF' }}>RCBC</div>
-                    <div style={{ fontSize: 10, color: '#7A8AAA' }}>John Paul Lacaron</div>
-                  </div>
-                </div>
-                <div style={{ fontSize: 13, fontFamily: 'Space Grotesk, sans-serif', fontWeight: 800, color: '#60A5FA' }}>9051147397</div>
-              </div>
-              {/* MariBank Option */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: 'rgba(255,255,255,0.03)', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <img src="/maribank.png" alt="MariBank" style={{ width: 24, height: 24, objectFit: 'contain', borderRadius: 4 }} />
-                  <div>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: '#F0F4FF' }}>MariBank</div>
-                    <div style={{ fontSize: 10, color: '#7A8AAA' }}>Charlou June Ramil</div>
-                  </div>
-                </div>
-                <div style={{ fontSize: 13, fontFamily: 'Space Grotesk, sans-serif', fontWeight: 800, color: '#60A5FA' }}>12476681477</div>
-              </div>
+              ))}
             </div>
           </div>
           <label style={{
@@ -344,39 +325,19 @@ function PrincipalPaymentModal({ loan, borrower, onClose, onUploaded }) {
           <div style={{ padding: '14px', background: 'rgba(59,130,246,0.06)', borderRadius: 12, border: '1px solid rgba(59,130,246,0.15)', marginBottom: 16, textAlign: 'left' }}>
             <div style={{ fontSize: 11, color: '#3B82F6', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Send Payment To</div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 8 }}>
-              {/* GCash Option */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: 'rgba(255,255,255,0.03)', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <img src="/gcash-logo.png" alt="GCash" style={{ width: 24, height: 24, objectFit: 'contain' }} />
-                  <div>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: '#F0F4FF' }}>GCash</div>
-                    <div style={{ fontSize: 10, color: '#7A8AAA' }}>Charlou June Ramil</div>
+              {/* FE-06 FIX: Payment accounts from centralized config */}
+              {PAYMENT_ACCOUNTS.map(acct => (
+                <div key={acct.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: 'rgba(255,255,255,0.03)', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <img src={acct.logo} alt={acct.label} style={{ width: 24, height: 24, objectFit: 'contain', borderRadius: acct.id !== 'gcash' ? 4 : 0 }} />
+                    <div>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: '#F0F4FF' }}>{acct.label}</div>
+                      <div style={{ fontSize: 10, color: '#7A8AAA' }}>{acct.holder}</div>
+                    </div>
                   </div>
+                  <div style={{ fontSize: 13, fontFamily: 'Space Grotesk, sans-serif', fontWeight: 800, color: '#60A5FA' }}>{acct.accountNumber}</div>
                 </div>
-                <div style={{ fontSize: 13, fontFamily: 'Space Grotesk, sans-serif', fontWeight: 800, color: '#60A5FA' }}>09665835179</div>
-              </div>
-              {/* RCBC Option */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: 'rgba(255,255,255,0.03)', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <img src="/rcbc-logo.png" alt="RCBC" style={{ width: 24, height: 24, objectFit: 'contain', borderRadius: 4 }} />
-                  <div>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: '#F0F4FF' }}>RCBC</div>
-                    <div style={{ fontSize: 10, color: '#7A8AAA' }}>John Paul Lacaron</div>
-                  </div>
-                </div>
-                <div style={{ fontSize: 13, fontFamily: 'Space Grotesk, sans-serif', fontWeight: 800, color: '#60A5FA' }}>9051147397</div>
-              </div>
-              {/* MariBank Option */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: 'rgba(255,255,255,0.03)', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <img src="/maribank.png" alt="MariBank" style={{ width: 24, height: 24, objectFit: 'contain', borderRadius: 4 }} />
-                  <div>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: '#F0F4FF' }}>MariBank</div>
-                    <div style={{ fontSize: 10, color: '#7A8AAA' }}>Charlou June Ramil</div>
-                  </div>
-                </div>
-                <div style={{ fontSize: 13, fontFamily: 'Space Grotesk, sans-serif', fontWeight: 800, color: '#60A5FA' }}>12476681477</div>
-              </div>
+              ))}
             </div>
           </div>
 
@@ -1494,9 +1455,10 @@ export default function BorrowerPortalPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {[
             { logo: '/cash-logo.png', label: 'Physical Cash', fee: 'Free', feeColor: '#10B981', accent: 'rgba(16,185,129,0.05)', glow: 'rgba(16,185,129,0.2)', desc: 'Pay your admin directly in person.', steps: ['Prepare the exact installment amount in cash', 'Coordinate with your admin via Teams Chat', 'Hand over payment and request acknowledgement', 'Upload photo of receipt or acknowledgement'] },
-            { logo: '/gcash-logo.png', label: 'GCash', fee: 'GCash Free', feeColor: '#3B82F6', accent: 'rgba(59,130,246,0.05)', glow: 'rgba(59,130,246,0.2)', desc: 'Send via GCash to Charlou June Ramil.', steps: ['Open GCash and select Send Money', { label: 'Send to: 09665835179 (Charlou June R.)', copy: '09665835179' }, 'Send the exact installment amount', '⚠️ Note: GCash to GCash is free. You must cover fees if using Bank-to-GCash or 3rd party apps.', 'Screenshot and upload the successful transaction'] },
-            { logo: '/rcbc-logo.png', label: 'RCBC to RCBC', fee: 'Free', feeColor: '#EF4444', accent: 'rgba(239,68,68,0.05)', glow: 'rgba(239,68,68,0.2)', desc: 'Same-bank RCBC transfers are completely free.', steps: ['Log in to RCBC Online or App', { label: 'Transfer to: 9051147397 (John Paul Lacaron)', copy: '9051147397' }, 'Transfer exact installment amount', 'Screenshot the transfer confirmation', 'Upload the screenshot in the portal'] },
-            { logo: '/maribank.png', label: 'MariBank', fee: 'Free', feeColor: '#F59E0B', accent: 'rgba(245,158,11,0.05)', glow: 'rgba(245,158,11,0.2)', desc: 'Send to Charlou June Ramil via MariBank.', steps: ['Open your bank app and select Transfer', 'Bank: MariBank PH', { label: 'Account: 12476681477 (Charlou June R.)', copy: '12476681477' }, 'Screenshot the transfer confirmation', 'Upload the screenshot in the portal'] },
+            // FE-06 FIX: Use centralized config for account details
+            { logo: PAYMENT_ACCOUNTS[0].logo, label: PAYMENT_ACCOUNTS[0].label, fee: PAYMENT_ACCOUNTS[0].fee, feeColor: PAYMENT_ACCOUNTS[0].feeColor, accent: PAYMENT_ACCOUNTS[0].accent, glow: PAYMENT_ACCOUNTS[0].glow, desc: `Send via GCash to ${PAYMENT_ACCOUNTS[0].holder}.`, steps: PAYMENT_ACCOUNTS[0].steps },
+            { logo: PAYMENT_ACCOUNTS[1].logo, label: 'RCBC to RCBC', fee: PAYMENT_ACCOUNTS[1].fee, feeColor: PAYMENT_ACCOUNTS[1].feeColor, accent: PAYMENT_ACCOUNTS[1].accent, glow: PAYMENT_ACCOUNTS[1].glow, desc: `Same-bank RCBC transfers are completely free.`, steps: PAYMENT_ACCOUNTS[1].steps },
+            { logo: PAYMENT_ACCOUNTS[2].logo, label: PAYMENT_ACCOUNTS[2].label, fee: PAYMENT_ACCOUNTS[2].fee, feeColor: PAYMENT_ACCOUNTS[2].feeColor, accent: PAYMENT_ACCOUNTS[2].accent, glow: PAYMENT_ACCOUNTS[2].glow, desc: `Send to ${PAYMENT_ACCOUNTS[2].holder} via MariBank.`, steps: PAYMENT_ACCOUNTS[2].steps },
             { logo: '/bank-logo.png', label: 'Other Bank', fee: 'Fee Applies', feeColor: '#8B5CF6', accent: 'rgba(139,92,246,0.05)', glow: 'rgba(139,92,246,0.2)', desc: 'Transfer from any bank via Instapay/PESONet.', steps: ['Use your bank online transfer or app', 'Choose Instapay (faster) or PESONet', 'Send exact installment amount + fee', 'Upload the screenshot in the portal'] },
           ].map((item, i) => (
             <div key={i} 

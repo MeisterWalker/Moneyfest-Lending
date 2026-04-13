@@ -12,8 +12,10 @@ export function AuthProvider({ children }) {
       setUser(session?.user ?? null)
       setLoading(false)
     })
+    // FE-07 FIX: Also set loading=false from subscription to avoid flash of login page
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null)
+      setLoading(false)
     })
     return () => subscription.unsubscribe()
   }, [])

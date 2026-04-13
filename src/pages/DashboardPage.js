@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { CREDIT_CONFIG, getBadgeFromScore } from '../lib/creditSystem'
 import { logAudit, formatCurrency, formatDate, getInstallmentDates, formatDateValue } from '../lib/helpers'
@@ -494,34 +494,44 @@ export default function DashboardPage() {
 
   useEffect(() => { fetchData() }, [fetchData])
 
+  // FE-08 FIX: Debounce realtime-triggered refetches to prevent flooding
+  // During heavy collection sessions, multiple tables fire events rapidly.
+  // Without debounce, each event triggers a full 11-table refetch.
+  const debounceRef = useRef(null)
+  const debouncedFetchData = useCallback(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => fetchData(), 800)
+  }, [fetchData])
+
   // Real-time refresh
   useEffect(() => {
     const subL = supabase
       .channel('loans-dashboard')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'loans' }, () => fetchData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'loans' }, () => debouncedFetchData())
       .subscribe()
     const subO = supabase
       .channel('others-dashboard')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'other_products' }, () => fetchData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'other_products' }, () => debouncedFetchData())
       .subscribe()
     const subPL = supabase
       .channel('product-logs-dashboard')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'product_logs' }, () => fetchData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'product_logs' }, () => debouncedFetchData())
       .subscribe()
     return () => {
       supabase.removeChannel(subL)
       supabase.removeChannel(subO)
       supabase.removeChannel(subPL)
+      if (debounceRef.current) clearTimeout(debounceRef.current)
     }
-  }, [fetchData])
+  }, [debouncedFetchData])
 
   useEffect(() => {
     const subCF = supabase
       .channel('capital-dashboard')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'capital_flow' }, () => fetchData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'capital_flow' }, () => debouncedFetchData())
       .subscribe()
     return () => supabase.removeChannel(subCF)
-  }, [fetchData])
+  }, [debouncedFetchData])
 
   // ── Computed stats (Installment) ──────────
   // DYNAMIC CAPITAL: Sum of Initial Pool + Top-ups from the Ledger
