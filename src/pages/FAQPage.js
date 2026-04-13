@@ -109,7 +109,7 @@ export default function FAQPage() {
     release: [
       { q: 'How will my loan be released?', a: 'Once approved, your loan will be released via your chosen method — Physical Cash, GCash, RCBC, or Other Bank Transfer. Release fees vary: Physical Cash and RCBC-to-RCBC are free, GCash is free if sending GCash to GCash — otherwise a ₱15 fee applies, and other bank transfers require the borrower to cover the transfer fee. Fees are deducted from your approved amount before release.' },
       { q: 'When will my loan be released after approval?', a: 'Your release will be scheduled on the nearest 5th or 20th cutoff date following approval. You will be able to see your scheduled release date on the Borrower Portal.' },
-      { q: 'How long does approval take?', a: 'Applications are reviewed manually by the admin — usually within 14 hours (manual review by admin). You will be notified via email and can track your status anytime through the Borrower Portal using your access code.' },
+      { q: 'How long does approval take?', a: 'Applications are reviewed manually by the admin — usually within 48 hours (manual review by admin). You will be notified via email and can track your status anytime through the Borrower Portal using your access code.' },
     ],
     other: [
       { q: 'How do I track my application?', a: 'After submitting, you will receive an access code. Use this code to log in to the Borrower Portal at moneyfestlending.online/portal — you can track your application status, view your loan schedule, and upload payment proofs from there.' },

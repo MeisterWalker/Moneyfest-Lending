@@ -43,7 +43,7 @@ export default function HomePage() {
     { value: `${(interestRate * 100).toFixed(0)}%`, label: 'Monthly interest rate', sub: 'No compounding' },
     { value: '₱10K', label: 'Maximum loan', sub: 'For trusted borrowers' },
     { value: '4–6', label: 'Easy installments', sub: 'Over 2 or 3 months' },
-    { value: '14hrs', label: 'Avg. approval time', sub: 'Manual review by admin' },
+    { value: '48hrs', label: 'Avg. approval time', sub: 'Fast turnaround' },
   ]
 
   return (
@@ -275,11 +275,11 @@ export default function HomePage() {
               <div style={{ fontSize: 13, color: '#7A8AAA', marginBottom: 24 }}>10% monthly · pay any time · daily interest</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 28 }}>
                 {[
-                  'Pay toward principal anytime — reduces your daily interest instantly',
+                  'Pay toward principal anytime, reduces your daily interest instantly',
                   'Target due: Day 15 from release',
                   '₱10/day on ₱3,000 · ₱3.33/day on ₱1,000',
                   '₱100 extension fee if Day 15 is missed',
-                  'No Security Hold — receive full amount',
+                  'No Security Hold - receive full amount',
                 ].map((f, i) => (
                   <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 9, fontSize: 13, color: '#8892B0' }}>
                     <div style={{ width: 16, height: 16, borderRadius: '50%', background: 'rgba(245,158,11,0.15)', border: '1px solid rgba(245,158,11,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
@@ -451,7 +451,7 @@ export default function HomePage() {
             <div style={{ position: 'absolute', top: 36, left: '12.5%', right: '12.5%', height: 1, background: 'linear-gradient(90deg,transparent,rgba(99,102,241,0.3),rgba(139,92,246,0.3),transparent)', pointerEvents: 'none' }} />
             {[
               { step: '01', icon: '/list.png', title: 'Fill the form', desc: 'Enter your details, upload a valid ID, and choose your loan amount.' },
-              { step: '02', icon: '/summary-check.png', title: 'Admin reviews', desc: 'Our team checks your application — usually within 14 hours (manual review by admin).' },
+              { step: '02', icon: '/summary-check.png', title: 'Admin reviews', desc: 'Our team checks your application — usually within 48 hours (manual review by admin).' },
               { step: '03', icon: '/payment-method.png', title: 'Funds released', desc: 'Once approved, funds are released on the next cutoff date.' },
               { step: '04', icon: '/calendar.png', title: 'Pay in 4 cuts', desc: 'Pay every 5th and 20th. Pay early on your last and earn Rebate Credits!' },
             ].map((s, i) => (
