@@ -584,3 +584,34 @@ export async function sendBulkReminders({ events, daysAhead = 2 }) {
 export const sendPendingEmail = sendApplicationReceivedEmail
 export const sendApprovalEmail = sendApplicationApprovedEmail
 export const sendReminderEmail = sendPaymentReminderEmail
+
+export async function sendTierUpgradeEmail({ to, borrowerName, accessCode, oldTier, newTier, newLimit }) {
+  const tierColors = { 'New': '#6B7280', 'Trusted': '#3B82F6', 'Reliable': '#8B5CF6', 'VIP': '#F59E0B' }
+  const tierEmojis = { 'New': '🌱', 'Trusted': '⭐', 'Reliable': '🤝', 'VIP': '👑' }
+  const color = tierColors[newTier] || '#8B5CF6'
+  const emoji = tierEmojis[newTier] || '🎉'
+  const html = emailShell({
+    accentColor: color,
+    badgeText: newTier + ' Tier',
+    badgeEmoji: emoji,
+    headerBorder: color + '60',
+    body: `
+      <tr><td style="background:#141B2D;padding:28px 36px 0;">
+        ${banner(emoji, color, 'Tier Upgraded!', `Hi <strong style="color:#F0F4FF;">${borrowerName}</strong>, your borrower tier has been upgraded!`)}
+      </td></tr>
+      <tr><td style="background:#141B2D;padding:0 36px 24px;">
+        ${infoTable([
+          { label: 'Previous Tier', value: tierEmojis[oldTier] + ' ' + oldTier, color: tierColors[oldTier] || '#6B7280' },
+          { label: 'New Tier', value: emoji + ' ' + newTier, color },
+          { label: 'New Loan Limit', value: '₱' + Number(newLimit).toLocaleString(), color: '#22C55E' },
+        ])}
+      </td></tr>
+      <tr><td style="background:#141B2D;padding:0 36px 24px;">
+        ${accessCodeBlock(accessCode, PORTAL_URL, 'View My Portal →')}
+      </td></tr>
+      <tr><td style="background:#141B2D;padding:0 36px 28px;">
+        ${note('Your new loan limit is now active. You may apply for a higher loan amount on your next application. Thank you for being a responsible borrower!')}
+      </td></tr>`
+  })
+  return sendEmail({ to, subject: `${emoji} You've been upgraded to ${newTier} Tier — MoneyfestLending`, html })
+}

@@ -4,7 +4,7 @@ import { CREDIT_CONFIG, getBadgeStatus, calcSecurityHold, getSecurityHoldRate } 
 
 import { logAudit, formatCurrency, formatDate, getInstallmentDates, getNumInstallments, calcQuickLoanBalance, getQuickLoanDueDates, QUICKLOAN_CONFIG, getQuickLoanDaysElapsed } from '../lib/helpers'
 import { notifyBorrower } from '../lib/portalNotifications'
-import { sendFundsReleasedEmail, sendPaymentConfirmedEmail } from '../lib/emailService'
+import { sendFundsReleasedEmail, sendPaymentConfirmedEmail, sendTierUpgradeEmail } from '../lib/emailService'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../components/Toast'
 import { logAutomatedPayment } from '../lib/accounting'
@@ -913,6 +913,23 @@ export default function LoansPage() {
           clean_loans: newCleanLoans,
           risk_score: CREDIT_CONFIG.riskFromScore(bonusScore)
         }).eq('id', borrower.id)
+
+        // Send tier upgrade email
+        if (borrower?.email && newLevel > (loan.loan_limit_level || 1)) {
+          const tierNames = { 1: 'New', 2: 'Trusted', 3: 'Reliable', 4: 'VIP' }
+          try {
+            await sendTierUpgradeEmail({
+              to: borrower.email,
+              borrowerName: borrower.full_name,
+              accessCode: borrower.access_code,
+              oldTier: tierNames[loan.loan_limit_level || 1],
+              newTier: tierNames[newLevel],
+              newLimit: limitMap[newLevel],
+            })
+          } catch (e) {
+            console.warn('Tier upgrade email failed:', e)
+          }
+        }
 
       }
 

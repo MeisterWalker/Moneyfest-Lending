@@ -69,6 +69,7 @@ export default function NotificationBell() {
   const [permission, setPermission] = useState(typeof Notification !== 'undefined' ? Notification.permission : 'default')
   const panelRef = useRef(null)
   const seenIds = useRef(new Set())
+  const recentEventIds = useRef(new Set())
 
   // Load persisted notifications from DB
   const loadNotifications = useCallback(async () => {
@@ -153,31 +154,44 @@ export default function NotificationBell() {
   // Real-time new applications and proofs
   useEffect(() => {
     if (!user) return
+
+    // Deduplication interval — clear every 15s
+    const clearId = setInterval(() => {
+      recentEventIds.current.clear()
+    }, 15000)
+
     const channel = supabase.channel('new-applications-bell')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'applications' },
         payload => {
+          if (recentEventIds.current.has(payload.new.id)) return
+          recentEventIds.current.add(payload.new.id)
           const app = payload.new
           const msg = app.full_name + ' applied for P' + Number(app.loan_amount).toLocaleString()
           addNotif('application', 'New Application', msg, true)
-          toast(msg, 'info')
         })
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'payment_proofs' },
         payload => {
+          if (recentEventIds.current.has(payload.new.id)) return
+          recentEventIds.current.add(payload.new.id)
           const proof = payload.new
           const msg = `Installment ${proof.installment_number} proof submitted and is pending review.`
           addNotif('proof', 'Payment Proof Submitted', msg, true)
-          toast(msg, 'info')
         })
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'principal_payments' },
         payload => {
+          if (recentEventIds.current.has(payload.new.id)) return
+          recentEventIds.current.add(payload.new.id)
           const pp = payload.new
           const msg = `Principal payment proof of P${Number(pp.payment_amount).toLocaleString()} submitted and is pending review.`
           addNotif('proof', 'Principal Payment Proof', msg, true)
-          toast(msg, 'info')
         })
       .subscribe()
-    return () => supabase.removeChannel(channel)
-  }, [user, addNotif, toast])
+
+    return () => {
+      supabase.removeChannel(channel)
+      clearInterval(clearId)
+    }
+  }, [user, addNotif])
 
   // Close on outside click
   useEffect(() => {

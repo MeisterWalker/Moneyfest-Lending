@@ -288,17 +288,22 @@ function PaymentProofsPanel({ user }) {
       const installAmt = Math.ceil(proof.loans?.installment_amount || 0)
       const remaining = Math.max(0, (proof.loans?.remaining_balance || 0) - installAmt)
       const loanFullyPaid = remaining <= 0 || proof.installment_number >= numInstallments
-      sendPaymentConfirmedEmail({
-        to: proof.borrowers.email,
-        borrowerName: proof.borrowers.full_name,
-        accessCode: proof.borrowers.access_code,
-        installmentNum: proof.installment_number,
-        numInstallments,
-        amountPaid: installAmt,
-        paymentDate: new Date().toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' }),
-        remainingBalance: remaining,
-        loanFullyPaid,
-      }).catch(e => console.warn('Payment email failed:', e))
+      try {
+        await sendPaymentConfirmedEmail({
+          to: proof.borrowers.email,
+          borrowerName: proof.borrowers.full_name,
+          accessCode: proof.borrowers.access_code,
+          installmentNum: proof.installment_number,
+          numInstallments,
+          amountPaid: installAmt,
+          paymentDate: new Date().toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' }),
+          remainingBalance: remaining,
+          loanFullyPaid,
+        })
+      } catch (e) {
+        console.warn('Payment confirmed email failed:', e)
+        toast('Payment confirmed but failed to send email notification.', 'warning')
+      }
     }
     toast('Payment proof confirmed', 'success')
     fetchProofs()
