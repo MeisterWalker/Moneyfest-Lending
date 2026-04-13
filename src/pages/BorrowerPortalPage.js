@@ -262,8 +262,17 @@ function PrincipalPaymentModal({ loan, borrower, onClose, onUploaded }) {
   }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.88)', backdropFilter: 'blur(14px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20 }}>
-      <div style={{ width: '100%', maxWidth: 480, background: '#0A0F1E', border: '1px solid rgba(99,102,241,0.3)', borderRadius: 22, overflow: 'hidden', boxShadow: '0 50px 100px rgba(0,0,0,0.7)' }}>
+    <div style={{ 
+      position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.88)', 
+      backdropFilter: 'blur(14px)', display: 'flex', alignItems: 'center', 
+      justifyContent: 'center', zIndex: 1000, padding: '20px' 
+    }}>
+      <div style={{ 
+        width: '100%', maxWidth: 480, maxHeight: '90vh', 
+        background: '#0A0F1E', border: '1px solid rgba(99,102,241,0.3)', 
+        borderRadius: 22, overflowY: 'auto', WebkitOverflowScrolling: 'touch',
+        boxShadow: '0 50px 100px rgba(0,0,0,0.7)', position: 'relative'
+      }}>
 
         {/* Header */}
         <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'linear-gradient(135deg,rgba(99,102,241,0.1),rgba(139,92,246,0.08))', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
