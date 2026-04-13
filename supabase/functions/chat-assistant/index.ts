@@ -36,7 +36,7 @@ MoneyfestLending is a PRIVATE, INTERNAL lending initiative created BY employees,
 - Day 15 = target due date (principal + 15 days of interest)
 - If Day 15 is missed: ₱100 extension fee charged, loan continues to Day 30. (Note: The ₱100 extension fee is a one-time administrative charge and is NOT added to the principal balance for interest calculations).
 - Day 30 = hard deadline. After Day 30: ₱25/day penalty on top of daily interest
-- Principal Payment Option: Borrowers may make a partial payment directly toward the QuickLoan principal at any time. This reduces the outstanding principal balance and resets the interest calculation from that day forward — meaning future daily interest accrues on the lower remaining principal. Example: If you owe ₱3,000 principal and pay ₱1,000 toward principal, your remaining principal becomes ₱2,000 and daily interest drops from ~₱10/day to ~₱6.67/day. This is separate from paying your full balance.
+- Principal Payment Option (QuickLoan only): QuickLoan borrowers may make a partial payment directly toward their outstanding principal at any time. This reduces the remaining principal balance and resets the daily interest calculation from that day forward — meaning future daily interest accrues on the lower remaining amount. Example: If you owe ₱3,000 principal and pay ₱1,000 toward principal, your remaining principal becomes ₱2,000 and daily interest drops from ~₱10/day to ~₱6.67/day. This option is exclusive to QuickLoans — Installment Loans follow a fixed payment schedule and do not support partial principal payments.
 - NO Security Hold on QuickLoans
 - Paying early saves money (less interest accrued)
 - When calculating balances: Outstanding Balance = (Current Principal + Accrued Interest) - Payment. Do NOT add the extension fee into this math; treat it as a separate charge.
@@ -123,8 +123,11 @@ Once Rebate Credits reach ₱500, a withdrawal button appears in the Borrower Po
 2. ID Verification (upload front & back of government ID)
 3. Loan Details (choose type, amount, purpose, term, release method, agree to T&C)
 After submitting, you receive an ACCESS CODE (e.g. LM-XXXX) — save it! Use it to log into the Borrower Portal.
-Approval time: usually within 48 hours (manual review by admin).
+Approval time: usually within 48 hours. The admin team carefully reviews each application manually to ensure every borrower meets the program's eligibility standards and internal requirements — this personal review process is what keeps the program fair and trustworthy for everyone.
 You can track status anytime at moneyfestlending.loan/portal
+
+=== LOAN RENEWAL ===
+Borrowers who have fully paid their current loan may immediately apply for a new one — there is no waiting period. To renew: simply go to moneyfestlending.loan/apply and submit a new application using your same details. Your credit score and tier from your previous loan carry over automatically, so if you've been a good borrower your new limit may be higher than before. You will receive a new access code for your new loan once approved. If you apply through the Borrower Portal directly, there is a Quick Reloan button available after your final payment is confirmed. Note: you cannot apply for a new loan while your current loan is still active or has an outstanding balance — you must fully settle first.
 
 === HOW-TO / PORTAL ===
 - Apply: moneyfestlending.loan/apply
@@ -138,6 +141,7 @@ You can track status anytime at moneyfestlending.loan/portal
 - Must fully settle current loan before applying for new one
 - Admin approves, rejects, or adjusts any loan at their sole discretion
 - Program is governed by Philippine law (RA 3765, RA 10173, RA 9474)
+- Principal payments are only available for QuickLoans. Installment Loan borrowers must follow their fixed payment schedule every 5th and 20th of the month.
 
 === BUILDINGS ===
 The program covers two buildings: Ng Khai and Epic.
