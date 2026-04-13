@@ -724,6 +724,10 @@ export default function BorrowerPortalPage() {
   const fetchPortalData = useCallback(async (accessCode) => {
     setLoading(true); setError('')
     const cleanCode = accessCode.toUpperCase().trim()
+
+    // SEC-01 FIX: Set portal context so RLS policies can filter by access_code
+    await supabase.rpc('set_portal_context', { code: cleanCode })
+
     const { data: b } = await supabase.from('borrowers').select('*').eq('access_code', cleanCode).single()
     if (b) {
       const { data: allL } = await supabase.from('loans').select('*').eq('borrower_id', b.id).order('created_at', { ascending: false })

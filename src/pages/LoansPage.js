@@ -795,181 +795,46 @@ export default function LoansPage() {
   }
 
   const handleRecordPayment = async (loan) => {
-    const newPaymentsMade = loan.payments_made + 1
-    const numInstallments = loan.num_installments || 4
-    const installAmt = Math.ceil(loan.installment_amount)
-    const newBalance = loan.remaining_balance - installAmt
-    const newStatus = newPaymentsMade >= numInstallments ? 'Paid' : 'Partially Paid'
-
-    const { error } = await supabase.from('loans').update({
-      payments_made: newPaymentsMade,
-      remaining_balance: Math.max(0, newBalance),
-      status: newStatus,
-      updated_at: new Date().toISOString()
-    }).eq('id', loan.id)
-
-    if (error) { toast('Failed to record payment', 'error'); return }
-
-    // Log Automated Accounting Movement
-    await logAutomatedPayment(loan, installAmt)
-
-    // ── Penalty calculation ─────────────────────────────────────
     const borrower = borrowers.find(b => b.id === loan.borrower_id)
-    const PENALTY_PER_DAY = 20
-    let penaltyAmount = 0
-    let daysLate = 0
+    const numInstallments = loan.num_installments || 4
 
+    // Calculate due date for penalty assessment (must happen client-side because
+    // getInstallmentDates is a shared JS helper not available in Postgres)
+    let dueDateStr = null
     if (loan.release_date) {
-      const allDates = getInstallmentDates(loan.release_date, loan.num_installments || 4)
+      const allDates = getInstallmentDates(loan.release_date, numInstallments)
       const dueDate = allDates[loan.payments_made]
       if (dueDate) {
-        const today2 = new Date(); today2.setHours(0,0,0,0)
-        dueDate.setHours(0,0,0,0)
-        daysLate = Math.max(0, Math.ceil((today2 - dueDate) / (1000 * 60 * 60 * 24)))
-        if (daysLate > 0) {
-          penaltyAmount = parseFloat((daysLate * PENALTY_PER_DAY).toFixed(2))
-        }
+        dueDateStr = dueDate.toISOString().slice(0, 10)  // YYYY-MM-DD
       }
     }
 
-    if (penaltyAmount > 0) {
-      // Log penalty transaction
-      await supabase.from('penalty_charges').insert({
-        borrower_id: loan.borrower_id,
-        loan_id: loan.id,
-        installment_number: newPaymentsMade,
-        days_late: daysLate,
-        penalty_per_day: PENALTY_PER_DAY,
-        penalty_amount: penaltyAmount,
-        cap_applied: false,
-        created_at: new Date().toISOString()
-      })
-
-      // ── Auto-deduct penalty from Security Hold ───────────
-      const currentHold = parseFloat(loan.security_hold || 0)
-      if (currentHold > 0 && !loan.security_hold_returned) {
-        const deductAmt = Math.min(penaltyAmount, currentHold)
-        const newHold = parseFloat((currentHold - deductAmt).toFixed(2))
-        await supabase.from('loans').update({ security_hold: newHold }).eq('id', loan.id)
-        await logAudit({
-          action_type: 'PENALTY_DEDUCTED_FROM_HOLD',
-          module: 'Loan',
-          description: `₱${deductAmt} penalty auto-deducted from Security Hold for ${borrower?.full_name} — Hold reduced from ₱${currentHold} to ₱${newHold}`,
-          changed_by: user?.email
-        })
-        toast(`⚠️ Late penalty of ₱${penaltyAmount} auto-deducted from Security Hold (${daysLate} days late)`, 'error')
-      } else {
-        toast(`⚠️ Late penalty of ₱${penaltyAmount} applied (${daysLate} days late)`, 'error')
-      }
-
-      await logAudit({
-        action_type: 'PENALTY_CHARGED',
-        module: 'Loan',
-        description: `Late penalty of ₱${penaltyAmount} charged to ${borrower?.full_name} — Installment ${newPaymentsMade} was ${daysLate} day${daysLate > 1 ? 's' : ''} late`,
-        changed_by: user?.email
-      })
-    }
-
-    // Update credit score (+15 on-time, -10 if late)
-    if (borrower) {
-      const scoreChange = daysLate > 0 ? CREDIT_CONFIG.LATE_PAYMENT : CREDIT_CONFIG.ON_TIME_PAYMENT
-      const newScore = Math.min(CREDIT_CONFIG.MAX_SCORE, Math.max(CREDIT_CONFIG.MIN_SCORE, borrower.credit_score + scoreChange))
-      const newRisk = CREDIT_CONFIG.riskFromScore(newScore)
-      const newBadgeTemp = getBadgeStatus(newScore, borrower.clean_loans || 0)
-      
-      await supabase.from('borrowers').update({
-        credit_score: newScore,
-        risk_score: newRisk,
-        loyalty_badge: newBadgeTemp
-      }).eq('id', borrower.id)
-
-    }
-
-
-    await logAudit({
-      action_type: 'INSTALLMENT_PAID',
-      module: 'Loan',
-      description: `Installment ${newPaymentsMade} of ${numInstallments} paid for ${borrower?.full_name} — ₱${installAmt?.toLocaleString('en-PH', { minimumFractionDigits: 2 })}${penaltyAmount > 0 ? ` + ₱${penaltyAmount} penalty (${daysLate} days late)` : ' (on time)'}`,
-      changed_by: user?.email
+    // ── BL-01 FIX: Single atomic RPC call for all financial mutations ──
+    const { data: result, error } = await supabase.rpc('record_installment_payment', {
+      p_loan_id: loan.id,
+      p_admin_email: user?.email || 'system',
+      p_due_date_str: dueDateStr
     })
 
-    if (newStatus === 'Paid') {
-      if (borrower) {
-        // Use already-updated score from payment recording above
-        const { data: freshBorrower } = await supabase.from('borrowers').select('credit_score').eq('id', borrower.id).single()
-        const currentScore = freshBorrower?.credit_score || borrower.credit_score
-        // +25 bonus fires on every clean loan completion
-        const bonusScore = Math.min(CREDIT_CONFIG.MAX_SCORE, currentScore + CREDIT_CONFIG.FULL_LOAN_COMPLETE)
-        const newCleanLoans = (borrower.clean_loans || 0) + 1
-        const finalBadge = getBadgeStatus(bonusScore, newCleanLoans)
-        
-        // Recalculate loan limit level based on the NEW score thresholds
-        const newLevel = bonusScore >= 1000 ? 4 : bonusScore >= 920 ? 3 : bonusScore >= 835 ? 2 : 1
-        const limitMap = { 1: 5000, 2: 7000, 3: 9000, 4: 10000 }
-        const newLimit = limitMap[newLevel]
-        await supabase.from('borrowers').update({
-          loan_limit_level: newLevel, loan_limit: newLimit,
-          loyalty_badge: finalBadge, credit_score: bonusScore,
-          clean_loans: newCleanLoans,
-          risk_score: CREDIT_CONFIG.riskFromScore(bonusScore)
-        }).eq('id', borrower.id)
+    if (error || !result?.success) {
+      toast(result?.error || error?.message || 'Failed to record payment', 'error')
+      return
+    }
 
-        // Send tier upgrade email
-        if (borrower?.email && newLevel > (loan.loan_limit_level || 1)) {
-          const tierNames = { 1: 'New', 2: 'Trusted', 3: 'Reliable', 4: 'VIP' }
-          try {
-            await sendTierUpgradeEmail({
-              to: borrower.email,
-              borrowerName: borrower.full_name,
-              accessCode: borrower.access_code,
-              oldTier: tierNames[loan.loan_limit_level || 1],
-              newTier: tierNames[newLevel],
-              newLimit: limitMap[newLevel],
-            })
-          } catch (e) {
-            console.warn('Tier upgrade email failed:', e)
-          }
-        }
+    // ── Non-transactional side effects (safe to fail independently) ──
 
+    // Penalty toast
+    if (result.penalty_amount > 0) {
+      if (result.hold_deducted > 0) {
+        toast(`⚠️ Late penalty of ₱${result.penalty_amount} auto-deducted from Security Hold (${result.days_late} days late)`, 'error')
+      } else {
+        toast(`⚠️ Late penalty of ₱${result.penalty_amount} applied (${result.days_late} days late)`, 'error')
       }
+    }
 
-
-      // ── Return Security Hold to borrower portal ─────────────
-      // Fetch fresh loan data in case security_hold was NULL on old loans
-      const { data: freshLoan } = await supabase.from('loans').select('security_hold, security_hold_returned').eq('id', loan.id).single()
-      const holdToReturn = parseFloat(freshLoan?.security_hold || loan.security_hold || 0)
-      const alreadyReturned = freshLoan?.security_hold_returned || loan.security_hold_returned
-
-      if (holdToReturn > 0 && !alreadyReturned) {
-        await supabase.from('loans').update({ security_hold_returned: true }).eq('id', loan.id)
-
-        const { data: existingCredits } = await supabase
-          .from('wallets').select('id, balance').eq('borrower_id', borrower.id).single()
-        if (existingCredits) {
-          await supabase.from('wallets').update({
-            balance: parseFloat((existingCredits.balance + holdToReturn).toFixed(2)),
-            updated_at: new Date().toISOString()
-          }).eq('id', existingCredits.id)
-        } else {
-          await supabase.from('wallets').insert({ borrower_id: borrower.id, balance: holdToReturn })
-        }
-        await supabase.from('wallet_transactions').insert({
-          borrower_id: borrower.id,
-          loan_id: loan.id,
-          type: 'rebate',
-          amount: holdToReturn,
-          description: `Security Hold of ₱${holdToReturn.toLocaleString('en-PH', { minimumFractionDigits: 2 })} returned — loan fully paid`,
-          status: 'completed'
-        })
-        await logAudit({
-          action_type: 'SECURITY_HOLD_RETURNED',
-          module: 'Loan',
-          description: `Security Hold of ₱${holdToReturn} returned to ${borrower.full_name}'s Rebate Credits`,
-          changed_by: user?.email
-        })
-      }
-
-      // ── Early payoff rebate (only on final installment) ──────
+    if (result.new_status === 'Paid') {
+      // ── Early payoff rebate (client-side, non-critical) ──
+      let earlyRebateApplied = false
       if (loan.release_date) {
         const numInst = loan.num_installments || 4
         const dates = getInstallmentDates(loan.release_date, numInst)
@@ -978,75 +843,86 @@ export default function LoansPage() {
         finalDue.setHours(0,0,0,0)
         const daysEarly = Math.ceil((finalDue - today) / (1000 * 60 * 60 * 24))
 
-        // Fixed 1% rebate regardless of how early
-        const rebateRate = daysEarly >= 7 ? 0.01 : 0
+        if (daysEarly >= 7) {
+          const rebateAmount = parseFloat((loan.loan_amount * 0.01).toFixed(2))
+          // Apply rebate to wallet (separate non-transactional call)
+          const { data: walletData } = await supabase
+            .from('wallets').select('id, balance').eq('borrower_id', loan.borrower_id).maybeSingle()
 
-        if (rebateRate > 0) {
-          const rebateAmount = parseFloat((loan.loan_amount * rebateRate).toFixed(2))
-          const rebateLabel = `Early payoff rebate (1% — ${daysEarly} day${daysEarly !== 1 ? 's' : ''} early)`
-
-          // Upsert Rebate Credits
-          const { data: existingCredits } = await supabase
-            .from('wallets').select('id, balance').eq('borrower_id', borrower.id).single()
-
-          if (existingCredits) {
+          if (walletData) {
             await supabase.from('wallets').update({
-              balance: parseFloat((existingCredits.balance + rebateAmount).toFixed(2)),
+              balance: parseFloat((walletData.balance + rebateAmount).toFixed(2)),
               updated_at: new Date().toISOString()
-            }).eq('id', existingCredits.id)
+            }).eq('id', walletData.id)
           } else {
-            await supabase.from('wallets').insert({
-              borrower_id: borrower.id,
-              balance: rebateAmount
-            })
+            await supabase.from('wallets').insert({ borrower_id: loan.borrower_id, balance: rebateAmount })
           }
 
-          // Log transaction
           await supabase.from('wallet_transactions').insert({
-            borrower_id: borrower.id,
+            borrower_id: loan.borrower_id,
             loan_id: loan.id,
             type: 'rebate',
             amount: rebateAmount,
-            description: rebateLabel,
+            description: `Early payoff rebate (1% — ${daysEarly} days early)`,
             status: 'completed'
           })
 
           await logAudit({
             action_type: 'CREDITS_REBATE',
             module: 'Loan',
-            description: `Early payoff rebate of ₱${rebateAmount} credited to ${borrower.full_name}'s Rebate Credits (${rebateLabel})`,
+            description: `Early payoff rebate of ₱${rebateAmount} credited to ${result.borrower_name}'s Rebate Credits`,
             changed_by: user?.email
           })
 
-          toast(`🎉 Loan fully paid by ${borrower?.full_name}! Early rebate of ₱${rebateAmount} added to Rebate Credits!`, 'success')
-        } else {
-          toast(`🎉 Loan fully paid by ${borrower?.full_name}!`, 'success')
+          earlyRebateApplied = true
+          toast(`🎉 Loan fully paid by ${result.borrower_name}! Early rebate of ₱${rebateAmount} added to Rebate Credits!`, 'success')
         }
-      } else {
-        toast(`🎉 Loan fully paid by ${borrower?.full_name}!`, 'success')
+      }
+
+      if (!earlyRebateApplied) {
+        toast(`🎉 Loan fully paid by ${result.borrower_name}!`, 'success')
+      }
+
+      // Send tier upgrade email if level increased
+      const oldLevel = result.old_level || 1
+      const newLevel = result.new_level || 1
+      if (result.borrower_email && newLevel > oldLevel) {
+        const tierNames = { 1: 'New', 2: 'Trusted', 3: 'Reliable', 4: 'VIP' }
+        const limitMap = { 1: 5000, 2: 7000, 3: 9000, 4: 10000 }
+        try {
+          await sendTierUpgradeEmail({
+            to: result.borrower_email,
+            borrowerName: result.borrower_name,
+            accessCode: result.borrower_access_code,
+            oldTier: tierNames[oldLevel],
+            newTier: tierNames[newLevel],
+            newLimit: limitMap[newLevel],
+          })
+        } catch (e) {
+          console.warn('Tier upgrade email failed:', e)
+        }
       }
     } else {
-      toast(`✅ Installment ${newPaymentsMade} of ${numInstallments} recorded for ${borrower?.full_name}`, 'success')
+      toast(`✅ Installment ${result.new_payments_made} of ${numInstallments} recorded for ${result.borrower_name}`, 'success')
     }
 
     // Download receipt
-    downloadReceiptPDF({ loan, borrower, installmentNum: newPaymentsMade, amount: installAmt })
+    downloadReceiptPDF({ loan, borrower, installmentNum: result.new_payments_made, amount: result.install_amount })
 
     // Send payment confirmed email
-    // FIX 4: Catch email failures and show toast instead of silently swallowing errors
-    if (borrower?.email) {
+    if (result.borrower_email) {
       const paymentDate = new Date().toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' })
-      const loanFullyPaid = newStatus === 'Paid'
+      const loanFullyPaid = result.new_status === 'Paid'
       try {
         await sendPaymentConfirmedEmail({
-          to: borrower.email,
-          borrowerName: borrower.full_name,
-          accessCode: borrower.access_code,
-          installmentNum: newPaymentsMade,
+          to: result.borrower_email,
+          borrowerName: result.borrower_name,
+          accessCode: result.borrower_access_code,
+          installmentNum: result.new_payments_made,
           numInstallments: loan.num_installments || 4,
-          amountPaid: installAmt,
+          amountPaid: result.install_amount,
           paymentDate,
-          remainingBalance: Math.max(0, loan.remaining_balance - installAmt),
+          remainingBalance: result.new_balance,
           loanFullyPaid,
         })
       } catch (e) {

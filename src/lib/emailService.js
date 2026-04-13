@@ -190,7 +190,7 @@ export async function sendApplicationReceivedAdminEmail({ borrowerName, loanAmou
 
 // ────────────────────────────────────────────────────────────────────────
 
-const SUPABASE_URL = 'https://swwedyfgbqhtavxmbmhv.supabase.co'
+const SUPABASE_URL = process.env.REACT_APP_SUPABASE_URL || ''
 const PORTAL_URL = process.env.REACT_APP_PORTAL_URL || 'https://moneyfestlending.loan/portal'
 const FROM_NAME = 'Moneyfest Lending'
 
@@ -199,11 +199,13 @@ async function sendEmail({ to, subject, html }) {
   if (!to || !to.includes('@')) return { success: false, error: 'Invalid email address' }
   try {
     const SUPABASE_ANON_KEY = process.env.REACT_APP_SUPABASE_ANON_KEY
+    const EMAIL_SECRET = process.env.REACT_APP_EMAIL_FUNCTION_SECRET || ''
     const res = await fetch(`${SUPABASE_URL}/functions/v1/send-email`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        'x-function-secret': EMAIL_SECRET
       },
       body: JSON.stringify({ to, subject, html })
     })

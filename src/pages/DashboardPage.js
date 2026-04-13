@@ -454,7 +454,7 @@ export default function DashboardPage() {
 
   const fetchData = useCallback(async () => {
     try {
-      const [{ data: l }, { data: b }, { data: s }, { data: a }, { data: apps }, { data: visits }, { data: others }, { data: logs }, { data: inv }, { data: cf }] = await Promise.all([
+      const [{ data: l }, { data: b }, { data: s }, { data: a }, { data: apps }, { data: visits }, { data: others }, { data: logs }, { data: inv }, { data: cf }, { data: pc }] = await Promise.all([
         supabase.from('loans').select('*').order('created_at', { ascending: false }),
         supabase.from('borrowers').select('*'),
         supabase.from('settings').select('*').eq('id', 1).single(),

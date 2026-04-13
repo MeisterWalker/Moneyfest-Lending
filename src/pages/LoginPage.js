@@ -92,8 +92,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [isSetup, setIsSetup] = useState(false)
-  const { signIn, signUp } = useAuth()
+  const { signIn } = useAuth()
   const { toast } = useToast()
   const navigate = useNavigate()
 
@@ -111,20 +110,6 @@ export default function LoginPage() {
       logLoginAttempt({ email, success: true })
       toast('Welcome back!', 'success')
       navigate('/dashboard')
-    }
-  }
-
-  const handleSetup = async (e) => {
-    e.preventDefault()
-    if (!email || !password) return toast('Please fill in all fields', 'error')
-    if (password.length < 8) return toast('Password must be at least 8 characters', 'error')
-    setLoading(true)
-    const { error } = await signUp(email, password)
-    setLoading(false)
-    if (error) toast(error.message, 'error')
-    else {
-      toast('Admin account created! Please sign in.', 'success')
-      setIsSetup(false)
     }
   }
 
@@ -192,13 +177,13 @@ export default function LoginPage() {
             MoneyfestLending
           </h1>
           <p style={{ color: 'var(--text-label)', fontSize: 14 }}>
-            {isSetup ? 'Create your admin account' : 'Admin access only'}
+            Admin access only
           </p>
         </div>
 
         {/* Card */}
         <div className="card" style={{ padding: 32 }}>
-          <form onSubmit={isSetup ? handleSetup : handleLogin}>
+          <form onSubmit={handleLogin}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
               <div className="form-group">
                 <label className="form-label">Email Address</label>
@@ -220,7 +205,7 @@ export default function LoginPage() {
                   <Lock size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }} />
                   <input
                     type={showPassword ? 'text' : 'password'}
-                    placeholder={isSetup ? 'Min. 8 characters' : 'Enter password'}
+                    placeholder="Enter password"
                     value={password}
                     onChange={e => setPassword(e.target.value)}
                     style={{ paddingLeft: 38, paddingRight: 38 }}
@@ -241,21 +226,10 @@ export default function LoginPage() {
                 disabled={loading}
                 style={{ width: '100%', justifyContent: 'center', padding: '12px 20px', marginTop: 4, fontSize: 15 }}
               >
-                {loading ? 'Please wait...' : isSetup ? 'Create Admin Account' : 'Sign In'}
+                {loading ? 'Please wait...' : 'Sign In'}
               </button>
             </div>
           </form>
-
-          <div className="divider" />
-
-          <div style={{ textAlign: 'center' }}>
-            <button
-              onClick={() => setIsSetup(!isSetup)}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--blue)', fontSize: 13 }}
-            >
-              {isSetup ? "← Back to sign in" : "First time? Create admin account →"}
-            </button>
-          </div>
         </div>
 
         <p style={{ textAlign: 'center', marginTop: 24, color: 'var(--text-muted)', fontSize: 12 }}>
