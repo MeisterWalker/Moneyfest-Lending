@@ -282,7 +282,7 @@ export default function HomePage() {
                   'No Security Hold — receive full amount',
                 ].map((f, i) => (
                   <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 9, fontSize: 13, color: '#8892B0' }}>
-                    <div style={{ width: 16, height: 16, borderRadius: '50%', background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
+                    <div style={{ width: 16, height: 16, borderRadius: '50%', background: 'rgba(245,158,11,0.15)', border: '1px solid rgba(245,158,11,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
                       <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#F59E0B' }} />
                     </div>
                     {f}
