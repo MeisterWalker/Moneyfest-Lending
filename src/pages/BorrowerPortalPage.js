@@ -1691,7 +1691,7 @@ export default function BorrowerPortalPage() {
           {/* ── LEFT COLUMN ── */}
           <div>
             {/* Reloan Banner (Shows if latest loan is paid and no pending app) */}
-            {borrower && (!loan || ['Paid','Defaulted'].includes(loan.status)) && (!pendingApp || pendingApp.status !== 'Pending') && !renewalSent && (
+            {borrower && (!loan || loan.status === 'Paid') && (!pendingApp || pendingApp.status !== 'Pending') && !renewalSent && (
               <div className="pc" style={{ 
                 background: 'linear-gradient(135deg, #1e1b4b, #312e81)', 
                 border: '1px solid rgba(139,92,246,0.3)', 
@@ -2286,7 +2286,7 @@ export default function BorrowerPortalPage() {
 
               {/* Payment Options in sidebar (QuickLoan only) */}
               <div id="payment-section">
-              {loan && loan.loan_type === 'quickloan' && loan.status !== 'Pending' && (
+              {loan && loan.loan_type === 'quickloan' && loan.status !== 'Pending' && loan.status !== 'Defaulted' && (
                 <div className="pc" style={{ background: '#0E1320', border: '1px solid rgba(99,102,241,0.18)', borderRadius: 16, overflow: 'hidden' }}>
                   <div style={{ padding: '12px 14px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: 7 }}>
                     <div style={{ width: 22, height: 22, borderRadius: 6, background: 'rgba(99,102,241,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -2327,7 +2327,7 @@ export default function BorrowerPortalPage() {
               )}
 
               {/* Payment Actions in sidebar (Installment Loans) */}
-              {loan && loan.loan_type !== 'quickloan' && loan.status !== 'Pending' && loan.status !== 'Paid' && (
+              {loan && loan.loan_type !== 'quickloan' && loan.status !== 'Pending' && loan.status !== 'Paid' && loan.status !== 'Defaulted' && (
                 <div className="pc" style={{ background: '#0E1320', border: '1px solid rgba(34,197,94,0.18)', borderRadius: 16, overflow: 'hidden' }}>
                   <div style={{ padding: '12px 14px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: 7 }}>
                     <div style={{ width: 22, height: 22, borderRadius: 6, background: 'rgba(34,197,94,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -2388,7 +2388,7 @@ export default function BorrowerPortalPage() {
               )}
 
               {/* Smart Rebate Calculator (Only for installment loans) */}
-              {loan && loan.status !== 'Paid' && loan.loan_type !== 'quickloan' && (
+              {loan && loan.status !== 'Paid' && loan.status !== 'Defaulted' && loan.loan_type !== 'quickloan' && (
                 <div className="pc" style={{ background: 'linear-gradient(135deg,#0E1320,#081c10)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 16, padding: 18 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
                     <div style={{ width: 28, height: 28, borderRadius: 8, background: 'rgba(34,197,94,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#22C55E' }}>
@@ -2397,7 +2397,7 @@ export default function BorrowerPortalPage() {
                     <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 13, color: '#F0F4FF', letterSpacing: '0.01em' }}>Rebate Calculator</div>
                   </div>
                   <div style={{ fontSize: 11, color: '#7A8AAA', marginBottom: 14, lineHeight: 1.5 }}>
-                    Pay off your full balance early to earn a **1% rebate** on your principal!
+                    Pay off your full balance early to earn a 1% rebate on your principal!
                   </div>
                   {(() => {
                     const principal = Number(loan.loan_amount)
