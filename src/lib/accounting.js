@@ -82,6 +82,30 @@ export const logAutomatedPayment = async (loan, amountReceived) => {
       })
     }
 
+    // ── Check if this is a Final Settlement to collect Penalties ──
+    // If the payment covers the entire remaining balance, it's a settlement.
+    if ((loan.remaining_balance || 0) > 0 && amountReceived >= (loan.remaining_balance || 0)) {
+      const { data: penalties } = await supabase
+        .from('penalty_charges')
+        .select('penalty_amount')
+        .eq('loan_id', loan.id);
+      
+      let unsettledPenalties = 0;
+      if (penalties && penalties.length > 0) {
+        unsettledPenalties = penalties.reduce((s, p) => s + (Number(p.penalty_amount) || 0), 0);
+      }
+
+      if (unsettledPenalties > 0) {
+        entries.push({
+          entry_date: new Date().toISOString().slice(0, 10),
+          type: 'CASH IN',
+          category: 'Penalty (Collected at Settlement)',
+          amount: unsettledPenalties,
+          notes: `Auto: Unsettled Penalties collected at settlement from ${loan.borrowers?.full_name || 'Borrower'} (Loan ${loan.id})`
+        });
+      }
+    }
+
     if (entries.length > 0) {
       const { error } = await supabase.from('capital_flow').insert(entries)
       if (error) throw error

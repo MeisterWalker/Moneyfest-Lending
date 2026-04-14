@@ -110,7 +110,6 @@ module.exports = async (req, res) => {
   const borrowerUpdates  = [];
   const walletTxInserts  = [];
   const penaltyInserts   = [];   // → penalty_charges
-  const capitalFlowRows  = [];   // → capital_flow
   const auditLogRows     = [];   // → audit_logs
   const emailPromises    = [];
   let processedCount     = 0;
@@ -188,16 +187,6 @@ module.exports = async (req, res) => {
       days_late:      daysLate,
       charged_date:   todayStr,
       description:    `Day ${daysLate} overdue — ₱20/day × ${daysLate} days, net new ₱${penaltyToCharge}`,
-    });
-
-    // ── capital_flow insert — this feeds the Earnings Report ──
-    capitalFlowRows.push({
-      loan_id:     loan.id,
-      type:        'CASH IN',
-      category:    'Penalty (Overdue)',
-      amount:      penaltyToCharge,
-      entry_date:  todayStr,
-      notes:       `Auto-charged Day ${daysLate} overdue penalty for loan ${loan.id}`,
     });
 
     // ── audit_logs insert ──
@@ -280,7 +269,7 @@ module.exports = async (req, res) => {
   }
 
   // ── 5. Execute all DB writes ──────────────────────────────────
-  console.log(`[CRON] Writing: ${loanUpdates.length} loan updates, ${penaltyInserts.length} penalty_charges, ${capitalFlowRows.length} capital_flow, ${auditLogRows.length} audit_logs`);
+  console.log(`[CRON] Writing: ${loanUpdates.length} loan updates, ${penaltyInserts.length} penalty_charges, ${auditLogRows.length} audit_logs`);
 
   // Loan updates (one-by-one to keep error granularity)
   for (const { id, payload } of loanUpdates) {
@@ -302,13 +291,6 @@ module.exports = async (req, res) => {
       .upsert(penaltyInserts, { onConflict: 'loan_id,charged_date', ignoreDuplicates: true });
     if (penErr) console.error('[CRON] ❌ penalty_charges upsert failed:', penErr.message);
     else        console.log(`[CRON] ✅ ${penaltyInserts.length} penalty_charges rows upserted`);
-  }
-
-  // capital_flow — one row per loan per day (feeds Earnings Report)
-  if (capitalFlowRows.length > 0) {
-    const { error: cfErr } = await supabase.from('capital_flow').insert(capitalFlowRows);
-    if (cfErr) console.error('[CRON] ❌ capital_flow insert failed:', cfErr.message);
-    else       console.log(`[CRON] ✅ ${capitalFlowRows.length} capital_flow rows inserted`);
   }
 
   // audit_logs
