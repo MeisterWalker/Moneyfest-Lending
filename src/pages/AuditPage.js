@@ -101,7 +101,7 @@ function aggregateFlow(rows = []) {
     const cat = (r.category || '').toLowerCase()
     const amt  = parseFloat(r.amount) || 0
     if (cat.includes('interest profit'))                                           interest  += amt
-    if (cat.includes('loan principal return') || cat.includes('initial pool'))     principal += amt
+    if (cat.includes('loan principal return') || cat.includes('initial pool') || cat.includes('capital top-up'))     principal += amt
     if (cat.includes('penalty'))                                                   penalties += amt
     if (r.type === 'CASH OUT')                                                     disbursed += amt
   }
@@ -281,8 +281,6 @@ function LedgerTab({ dateRange }) {
   useEffect(() => {
     setLoading(true)
     const prevRange = getPrevRange(dateRange)
-    const histStart = startOfMonth(subMonths(new Date(), 5))
-    const histEnd   = endOfMonth(new Date())
 
     Promise.all([
       supabase.from('capital_flow').select('*')
@@ -294,13 +292,11 @@ function LedgerTab({ dateRange }) {
         .lte('entry_date', format(prevRange.end,   'yyyy-MM-dd'))
         .order('entry_date', { ascending: true }),
       supabase.from('capital_flow').select('*')
-        .gte('entry_date', format(histStart, 'yyyy-MM-dd'))
-        .lte('entry_date', format(histEnd,   'yyyy-MM-dd'))
-        .order('entry_date', { ascending: true }),
-    ]).then(([{ data: curr }, { data: prev }, { data: hist }]) => {
+        .order('entry_date', { ascending: true }) // Fetch all-time for true chronological running balance
+    ]).then(([{ data: curr }, { data: prev }, { data: all }]) => {
       setFlow(curr     || [])
       setPrevFlow(prev || [])
-      setHistFlow(hist || [])
+      setHistFlow(all  || [])
       setLoading(false)
     })
   }, [dateRange])
@@ -314,33 +310,50 @@ function LedgerTab({ dateRange }) {
       const cat = (row.category || '').toLowerCase()
       const amt  = parseFloat(row.amount) || 0
       if (cat.includes('interest profit'))                                         map[k].interest  += amt
-      if (cat.includes('loan principal return') || cat.includes('initial pool'))   map[k].principal += amt
+      if (cat.includes('loan principal return') || cat.includes('initial pool') || cat.includes('capital top-up'))   map[k].principal += amt
       if (cat.includes('penalty'))                                                 map[k].penalties += amt
       if (row.type === 'CASH OUT')                                                 map[k].disbursed += amt
     }
     return Object.values(map).sort((a, b) => a.month.localeCompare(b.month))
   }, [flow])
 
+  // Compute actual ALL-TIME running balance up to the start of currently selected flow
   let runningBalance = 0
   const monthlyWithBalance = monthly.map(m => {
-    runningBalance += (m.interest + m.principal + m.penalties - m.disbursed)
+    let historicalNetBeforeThisMonth = 0
+    for(const hr of histFlow) {
+      if (monthKey(hr.entry_date || hr.created_at) < m.month) {
+         historicalNetBeforeThisMonth += (hr.type === 'CASH IN' ? parseFloat(hr.amount)||0 : -(parseFloat(hr.amount)||0))
+      }
+    }
+    runningBalance = historicalNetBeforeThisMonth + m.interest + m.principal + m.penalties - m.disbursed
     return { ...m, balance: runningBalance }
   })
 
   const curr = aggregateFlow(flow)
   const prev = aggregateFlow(prevFlow)
 
-  // Last 6 months accordion
+  // Last 6 months accordion using true running balance logic
   const monthlyHistory = useMemo(() => {
     const months = []
     for (let i = 5; i >= 0; i--) {
       const mStart = startOfMonth(subMonths(new Date(), i))
       const mEnd   = endOfMonth(subMonths(new Date(), i))
+      const mk     = format(mStart, 'yyyy-MM')
+      
       const mRows  = histFlow.filter(r => {
         const d = new Date(r.entry_date || r.created_at)
         return d >= mStart && d <= mEnd
       })
       const totals = aggregateFlow(mRows)
+      
+      let startingPoolBeforeMonth = 0
+      for(const hr of histFlow) {
+        if (format(new Date(hr.entry_date || hr.created_at), 'yyyy-MM') < mk) {
+           startingPoolBeforeMonth += (hr.type === 'CASH IN' ? parseFloat(hr.amount)||0 : -(parseFloat(hr.amount)||0))
+        }
+      }
+      
       const weekStarts = eachWeekOfInterval({ start: mStart, end: mEnd })
       const weeks = weekStarts.map(ws => {
         const we = endOfWeek(ws)
@@ -355,7 +368,11 @@ function LedgerTab({ dateRange }) {
           ...aggregateFlow(wRows),
         }
       }).filter(w => w.interest + w.principal + w.penalties + w.disbursed > 0)
-      months.push({ key: format(mStart, 'yyyy-MM'), label: format(mStart, 'MMMM yyyy'), ...totals, weeks })
+      
+      const netMonthFlow = totals.interest + totals.principal + totals.penalties - totals.disbursed
+      const finalMonthlyPoolBalance = startingPoolBeforeMonth + netMonthFlow
+      
+      months.push({ key: mk, label: format(mStart, 'MMMM yyyy'), ...totals, weeks, runningBalance: finalMonthlyPoolBalance })
     }
     return months
   }, [histFlow])
@@ -374,7 +391,6 @@ function LedgerTab({ dateRange }) {
 
   return (
     <>
-      {/* ── Snapshot comparison KPI row ── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px,1fr))', gap: 14, marginBottom: 24 }}>
         <StatCard label="Interest Collected" value={formatCurrency(curr.interest)} color="var(--green)"
           delta={<DeltaBadge current={curr.interest} previous={prev.interest} />} />
@@ -388,7 +404,6 @@ function LedgerTab({ dateRange }) {
           delta={<DeltaBadge current={curr.net} previous={prev.net} />} />
       </div>
 
-      {/* ── Monthly bar chart ── */}
       {monthly.length > 0 && (
         <div className="card" style={{ padding: '24px', marginBottom: 24 }}>
           <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 20, color: 'var(--text-secondary)' }}>Monthly Capital Flow</div>
@@ -407,7 +422,6 @@ function LedgerTab({ dateRange }) {
         </div>
       )}
 
-      {/* ── Period tabular breakdown ── */}
       {monthly.length > 0 && (
         <div className="card" style={{ padding: 0, overflow: 'hidden', marginBottom: 28 }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr 1fr', padding: '12px 22px', borderBottom: '1px solid var(--card-border)', background: 'rgba(255,255,255,0.015)' }}>
@@ -437,14 +451,12 @@ function LedgerTab({ dateRange }) {
         </div>
       )}
 
-      {/* ── Monthly History Accordion (always last 6 months, independent of period selector) ── */}
       <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
         <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--card-border)', fontSize: 13, fontWeight: 700, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 8 }}>
           <History size={14} /> Monthly History — Last 6 Months
         </div>
         {monthlyHistory.map(m => (
           <div key={m.key}>
-            {/* Month header row */}
             <div
               onClick={() => setExpanded(e => ({ ...e, [m.key]: !e[m.key] }))}
               style={{ display: 'grid', gridTemplateColumns: '32px 1.5fr 1fr 1fr 1fr 1fr', padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.04)', alignItems: 'center', cursor: 'pointer', transition: 'background 0.1s' }}
@@ -458,10 +470,8 @@ function LedgerTab({ dateRange }) {
               <div style={{ fontSize: 12, fontWeight: 700, color: m.net >= 0 ? 'var(--green)' : 'var(--red)' }}>{formatCurrency(m.net)}</div>
             </div>
 
-            {/* Weekly breakdown */}
             {expanded[m.key] && (
               <div style={{ background: 'rgba(255,255,255,0.01)', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                {/* header */}
                 <div style={{ display: 'grid', gridTemplateColumns: '32px 1.5fr 1fr 1fr 1fr 1fr', padding: '8px 20px', borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
                   {['', 'Week', 'Interest', 'Principal', 'Penalties', 'Net'].map(h => (
                     <div key={h} style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>{h}</div>
@@ -483,7 +493,6 @@ function LedgerTab({ dateRange }) {
             )}
           </div>
         ))}
-        {/* Accordion column labels */}
         <div style={{ display: 'grid', gridTemplateColumns: '32px 1.5fr 1fr 1fr 1fr 1fr', padding: '8px 20px', background: 'rgba(255,255,255,0.015)' }}>
           {['', 'Month', 'Interest', 'Penalties', 'Weeks', 'Net Flow'].map(h => (
             <div key={h} style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>{h}</div>
@@ -712,13 +721,10 @@ function CollectionTab({ dateRange }) {
   useEffect(() => {
     setLoading(true)
     Promise.all([
-      // Loans: all (for portfolio-wide default rate + dept breakdown)
       supabase.from('loans').select('id, loan_amount, status, due_date, release_date, payments_made, num_installments, remaining_balance, department').not('status', 'eq', 'Cancelled'),
-      // Installments: filter by due_date in period for on-time rate
       supabase.from('installments').select('id, loan_id, status, due_date, paid_at, amount_due')
         .gte('due_date', format(dateRange.start, 'yyyy-MM-dd'))
         .lte('due_date', format(dateRange.end,   'yyyy-MM-dd')),
-      // Penalties: filter by created_at in period
       supabase.from('penalty_charges').select('id, loan_id, amount, created_at')
         .gte('created_at', dateRange.start.toISOString())
         .lte('created_at', dateRange.end.toISOString())
