@@ -816,10 +816,27 @@ function CollectionTab({ dateRange }) {
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // TAB 6 — Earnings Report
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-const PARTNERS = [
-  { key: 'jp',      name: 'JP',      contributed: 10000 },
-  { key: 'charlou', name: 'Charlou', contributed: 34000 },
-]
+// Partner seed capitals (mirrors CapitalPage.js constants)
+const JP_INITIAL      = 10000
+const CHARLOU_INITIAL = 34000
+
+// Mirrors processLedger() in CapitalPage.js — computes live capital per partner from capital_flow
+function calcPartnerCapital(rows) {
+  let jp      = JP_INITIAL
+  let charlou = CHARLOU_INITIAL
+  for (const r of rows) {
+    const cat = r.category || ''
+    const amt = parseFloat(r.amount) || 0
+    if (r.type === 'CASH IN') {
+      if (cat === 'Capital Top-up (JP)')      jp      += amt
+      if (cat === 'Capital Top-up (Charlou)') charlou += amt
+    } else {
+      if (cat === 'Partner Withdrawal (JP)')      jp      -= amt
+      if (cat === 'Partner Withdrawal (Charlou)') charlou -= amt
+    }
+  }
+  return { jp: Math.max(0, jp), charlou: Math.max(0, charlou) }
+}
 
 function EarningsTab({ dateRange }) {
   const [allFlow,    setAllFlow]    = useState([])
@@ -989,47 +1006,55 @@ function EarningsTab({ dateRange }) {
         })()}
       </div>
 
-      {/* 5. Partner earnings split — fixed 50/50 */}
-      <div>
-        <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600, marginBottom: 14 }}>🤝 Partner Earnings Split (All-Time · Fixed 50/50)</div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
-          {PARTNERS.map(p => {
-            const share  = atNet * 0.50
-            const roi    = p.contributed > 0 ? (share / p.contributed) * 100 : 0
-            const color  = p.key === 'jp' ? 'var(--purple)' : 'var(--teal)'
-            return (
-              <div key={p.key} className="card" style={{ padding: '24px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
-                  <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 22, color }}>{p.name}</div>
-                  <span style={{ fontSize: 11, padding: '3px 10px', borderRadius: 20, background: 'rgba(255,255,255,0.05)', color: 'var(--text-muted)', fontWeight: 600 }}>50% share</span>
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
-                  <div>
-                    <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>Capital Contributed</div>
-                    <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--blue)' }}>{formatCurrency(p.contributed)}</div>
-                    <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>Info only · does not affect split</div>
+      {/* 5. Partner earnings split — fixed 50/50, capital from capital_flow */}
+      {(() => {
+        const { jp: jpCap, charlou: charlouCap } = calcPartnerCapital(allFlow)
+        const share    = atNet * 0.50
+        const partners = [
+          { key: 'jp',      name: 'JP',      capital: jpCap,      color: 'var(--purple)' },
+          { key: 'charlou', name: 'Charlou', capital: charlouCap, color: 'var(--teal)'   },
+        ]
+        return (
+          <div>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600, marginBottom: 14 }}>🤝 Partner Earnings Split (All-Time · Fixed 50/50)</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+              {partners.map(p => {
+                const roi = p.capital > 0 ? (share / p.capital) * 100 : 0
+                return (
+                  <div key={p.key} className="card" style={{ padding: '24px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
+                      <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 22, color: p.color }}>{p.name}</div>
+                      <span style={{ fontSize: 11, padding: '3px 10px', borderRadius: 20, background: 'rgba(255,255,255,0.05)', color: 'var(--text-muted)', fontWeight: 600 }}>50% share</span>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+                      <div>
+                        <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>Capital in Pool</div>
+                        <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--blue)' }}>{formatCurrency(p.capital)}</div>
+                        <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>Live from capital_flow · info only</div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>Earnings Share</div>
+                        <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--green)' }}>{formatCurrency(share)}</div>
+                        <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>Net Earnings × 50%</div>
+                      </div>
+                    </div>
+                    <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 10, padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div>
+                        <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 2 }}>ROI on Capital</div>
+                        <div style={{ fontSize: 22, fontWeight: 800, color: roi >= 0 ? 'var(--green)' : 'var(--red)' }}>{roi.toFixed(1)}%</div>
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>Profit split</div>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--gold)' }}>50/50 per agreement</div>
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>Earnings Share</div>
-                    <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--green)' }}>{formatCurrency(share)}</div>
-                    <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>Net Earnings × 50%</div>
-                  </div>
-                </div>
-                <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 10, padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <div>
-                    <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 2 }}>ROI on Capital</div>
-                    <div style={{ fontSize: 22, fontWeight: 800, color: roi >= 0 ? 'var(--green)' : 'var(--red)' }}>{roi.toFixed(1)}%</div>
-                  </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>Profit split</div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--gold)' }}>50/50 per agreement</div>
-                  </div>
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      </div>
+                )
+              })}
+            </div>
+          </div>
+        )
+      })()}
     </>
   )
 }
