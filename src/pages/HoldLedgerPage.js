@@ -106,11 +106,12 @@ export default function HoldLedgerPage() {
     setError(null)
 
     Promise.all([
-      // Active/Overdue/Partial loans
+      // Regular loans only — quickloans never have a security hold
       supabase
         .from('loans')
         .select('id, borrower_id, loan_amount, security_hold, status, release_date, due_date')
-        .in('status', [...ACTIVE_STATUSES, 'Paid']),
+        .in('status', [...ACTIVE_STATUSES, 'Paid'])
+        .eq('loan_type', 'regular'),
 
       // All penalty_charges (for per-loan deduction sums)
       supabase
