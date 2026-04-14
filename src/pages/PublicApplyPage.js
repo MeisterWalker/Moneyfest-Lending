@@ -224,7 +224,7 @@ export default function PublicApplyPage() {
   }, [])
 
   const [form, setForm] = useState({
-    full_name: '', department: '', tenure_years: '', phone: '', email: '', address: '',
+    full_name: '', department: '', custom_department: '', tenure_years: '', phone: '', email: '', address: '',
     loan_type: 'regular',
     loan_amount: '',
     loan_purpose: '',
@@ -250,6 +250,7 @@ export default function PublicApplyPage() {
   const validateStep1 = () => {
     if (!form.full_name.trim()) return 'Please enter your full name'
     if (!form.department) return 'Please enter your department'
+    if (form.department === 'Other' && !form.custom_department?.trim()) return 'Please type your custom department'
     if (!form.tenure_years) return 'Please enter your tenure'
     if (!form.phone.trim()) return 'Please enter your phone number'
     if (!form.email.trim()) return 'Please enter your email'
@@ -321,7 +322,7 @@ export default function PublicApplyPage() {
     }
     const { error: dbErr } = await supabase.from('applications').insert({
       full_name: form.full_name.trim(),
-      department: form.department,
+      department: form.department === 'Other' ? form.custom_department.trim() : form.department,
       tenure_years: parseFloat(form.tenure_years) || 0,
       phone: form.phone.trim(),
       email: form.email.trim(),
@@ -591,10 +592,14 @@ export default function PublicApplyPage() {
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
                       <div>
                         <label style={lbl}>Department *</label>
-                        <select className="apply-inp" value={form.department} onChange={e => set('department', e.target.value)} style={{ ...inp, appearance: 'none', cursor: 'pointer' }}>
+                        <select className="apply-inp" value={form.department} onChange={e => { set('department', e.target.value); set('custom_department', ''); }} style={{ ...inp, appearance: 'none', cursor: 'pointer' }}>
                           <option value="">Select Department...</option>
                           {departments.map(d => <option key={d} value={d}>{d}</option>)}
+                          <option value="Other">Other (Please specify)</option>
                         </select>
+                        {form.department === 'Other' && (
+                          <input className="apply-inp" value={form.custom_department} onChange={e => set('custom_department', e.target.value)} placeholder="Type your department" style={{ ...inp, marginTop: 8 }} />
+                        )}
                       </div>
                       <div>
                         <label style={lbl}>Assigned Building *</label>
