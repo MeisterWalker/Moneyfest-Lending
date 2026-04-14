@@ -823,13 +823,9 @@ const PARTNERS = [
 
 function EarningsTab({ dateRange }) {
   const [allFlow,    setAllFlow]    = useState([])
-  const [allPen,     setAllPen]     = useState([])
   const [periodFlow, setPeriodFlow] = useState([])
-  const [periodPen,  setPeriodPen]  = useState([])
   const [prevFlow,   setPrevFlow]   = useState([])
-  const [prevPen,    setPrevPen]    = useState([])
   const [histFlow,   setHistFlow]   = useState([])
-  const [histPen,    setHistPen]    = useState([])
   const [loading,    setLoading]    = useState(true)
 
   useEffect(() => {
@@ -839,72 +835,62 @@ function EarningsTab({ dateRange }) {
     const histEnd   = endOfMonth(new Date())
 
     Promise.all([
+      // All-time capital_flow (no date filter)
       supabase.from('capital_flow').select('amount, category, type, entry_date'),
-      supabase.from('penalty_charges').select('penalty_amount, created_at'),
+      // Period capital_flow
       supabase.from('capital_flow').select('amount, category, type, entry_date')
         .gte('entry_date', format(dateRange.start, 'yyyy-MM-dd'))
         .lte('entry_date', format(dateRange.end,   'yyyy-MM-dd')),
-      supabase.from('penalty_charges').select('penalty_amount, created_at')
-        .gte('created_at', dateRange.start.toISOString())
-        .lte('created_at', dateRange.end.toISOString()),
+      // Previous period capital_flow
       supabase.from('capital_flow').select('amount, category, type, entry_date')
         .gte('entry_date', format(prevRange.start, 'yyyy-MM-dd'))
         .lte('entry_date', format(prevRange.end,   'yyyy-MM-dd')),
-      supabase.from('penalty_charges').select('penalty_amount, created_at')
-        .gte('created_at', prevRange.start.toISOString())
-        .lte('created_at', prevRange.end.toISOString()),
+      // Last 6 months capital_flow (for chart + table)
       supabase.from('capital_flow').select('amount, category, type, entry_date')
         .gte('entry_date', format(histStart, 'yyyy-MM-dd'))
         .lte('entry_date', format(histEnd,   'yyyy-MM-dd')),
-      supabase.from('penalty_charges').select('penalty_amount, created_at')
-        .gte('created_at', histStart.toISOString())
-        .lte('created_at', histEnd.toISOString()),
-    ]).then(([af, ap, pf, pp, pvf, pvp, hf, hp]) => {
+    ]).then(([af, pf, pvf, hf]) => {
       setAllFlow(af.data    || [])
-      setAllPen(ap.data     || [])
       setPeriodFlow(pf.data || [])
-      setPeriodPen(pp.data  || [])
       setPrevFlow(pvf.data  || [])
-      setPrevPen(pvp.data   || [])
       setHistFlow(hf.data   || [])
-      setHistPen(hp.data    || [])
       setLoading(false)
     })
   }, [dateRange])
 
+  // All helpers operate on capital_flow rows — single source of truth matching Financial Ledger
   const sumInterest  = (rows) => rows.reduce((s, r) => s + ((r.category || '').toLowerCase().includes('interest profit') ? parseFloat(r.amount) || 0 : 0), 0)
   const sumCapital   = (rows) => rows.reduce((s, r) => s + (((r.category || '').toLowerCase().includes('initial pool') || (r.category || '').toLowerCase().includes('capital top-up')) ? parseFloat(r.amount) || 0 : 0), 0)
-  const sumPenalties = (rows) => rows.reduce((s, r) => s + (parseFloat(r.penalty_amount) || 0), 0)
+  const sumPenalties = (rows) => rows.reduce((s, r) => s + ((r.category || '').toLowerCase().includes('penalty') ? parseFloat(r.amount) || 0 : 0), 0)
 
   const atInterest  = sumInterest(allFlow)
   const atCapital   = sumCapital(allFlow)
-  const atPenalties = sumPenalties(allPen)
+  const atPenalties = sumPenalties(allFlow)
   const atNet       = atInterest + atPenalties
 
   const perInterest  = sumInterest(periodFlow)
-  const perPenalties = sumPenalties(periodPen)
+  const perPenalties = sumPenalties(periodFlow)
   const perNet       = perInterest + perPenalties
 
   const prevInterest  = sumInterest(prevFlow)
-  const prevPenalties = sumPenalties(prevPen)
+  const prevPenalties = sumPenalties(prevFlow)
   const prevNet       = prevInterest + prevPenalties
 
   const monthlyEarnings = useMemo(() => {
     const months = []
     for (let i = 5; i >= 0; i--) {
-      const mStart   = startOfMonth(subMonths(new Date(), i))
-      const mEnd     = endOfMonth(subMonths(new Date(), i))
-      const mLabel   = format(mStart, 'MMM yy')
+      const mStart    = startOfMonth(subMonths(new Date(), i))
+      const mEnd      = endOfMonth(subMonths(new Date(), i))
+      const mLabel    = format(mStart, 'MMM yy')
       const mFlowRows = histFlow.filter(r => { const d = new Date(r.entry_date); return d >= mStart && d <= mEnd })
-      const mPenRows  = histPen.filter(r  => { const d = new Date(r.created_at); return d >= mStart && d <= mEnd })
       const interest  = sumInterest(mFlowRows)
-      const penalties = sumPenalties(mPenRows)
+      const penalties = sumPenalties(mFlowRows)
       const topups    = sumCapital(mFlowRows)
       months.push({ label: mLabel, interest, penalties, income: interest + penalties, topups })
     }
     let running = 0
     return months.map(m => { running += m.income; return { ...m, cumulative: running } })
-  }, [histFlow, histPen])
+  }, [histFlow])
 
   const customTooltip = ({ active, payload, label }) => {
     if (!active || !payload?.length) return null
