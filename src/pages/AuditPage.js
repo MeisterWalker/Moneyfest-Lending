@@ -2,8 +2,13 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import { supabase } from '../lib/supabase'
 import { formatCurrency } from '../lib/helpers'
 import {
+  startOfMonth, endOfMonth, subMonths, format,
+  eachWeekOfInterval, endOfWeek
+} from 'date-fns'
+import {
   Search, Download, History, Filter, AlertTriangle,
-  TrendingUp, Users, BarChart2, Shield
+  TrendingUp, Users, BarChart2, Shield,
+  ChevronDown, ChevronRight, ArrowUp, ArrowDown, Calendar
 } from 'lucide-react'
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -12,13 +17,19 @@ import {
 
 // ── Constants ───────────────────────────────────────────────────
 const TABS = [
-  { key: 'activity',    label: 'Activity Log',          icon: History },
-  { key: 'ledger',      label: 'Financial Ledger',       icon: TrendingUp },
-  { key: 'anomalies',   label: 'Anomaly Flags',          icon: AlertTriangle },
-  { key: 'accountability', label: 'Admin Accountability', icon: Shield },
-  { key: 'collection',  label: 'Collection Efficiency',  icon: BarChart2 },
+  { key: 'activity',       label: 'Activity Log',           icon: History      },
+  { key: 'ledger',         label: 'Financial Ledger',        icon: TrendingUp   },
+  { key: 'anomalies',      label: 'Anomaly Flags',           icon: AlertTriangle},
+  { key: 'accountability', label: 'Admin Accountability',    icon: Shield       },
+  { key: 'collection',     label: 'Collection Efficiency',   icon: BarChart2    },
 ]
-
+const PRESETS = [
+  { key: 'this_month',  label: 'This Month'    },
+  { key: 'last_month',  label: 'Last Month'    },
+  { key: 'last_3',      label: 'Last 3 Months' },
+  { key: 'last_6',      label: 'Last 6 Months' },
+  { key: 'custom',      label: 'Custom Range'  },
+]
 const ACTION_COLORS = {
   BORROWER_ADDED:   { color: 'var(--green)',  bg: 'rgba(34,197,94,0.12)'  },
   BORROWER_EDITED:  { color: 'var(--blue)',   bg: 'rgba(59,130,246,0.12)' },
@@ -41,20 +52,37 @@ const ACTION_ICONS = {
   SETTINGS_UPDATED: '⚙️', DEPT_ADDED: '🏢', DEPT_DELETED: '🏢',
   DASHBOARD_RESET: '⚠️',
 }
-const MODULE_COLORS = { Borrower: 'var(--blue)', Loan: 'var(--purple)', Settings: 'var(--gold)' }
-const SEVERITY_CFG = {
-  High:   { color: 'var(--red)',    bg: 'rgba(239,68,68,0.08)',   border: 'rgba(239,68,68,0.25)'   },
-  Medium: { color: 'var(--gold)',   bg: 'rgba(245,158,11,0.08)',  border: 'rgba(245,158,11,0.25)'  },
-  Info:   { color: 'var(--blue)',   bg: 'rgba(59,130,246,0.08)',  border: 'rgba(59,130,246,0.25)'  },
+const MODULE_COLORS   = { Borrower: 'var(--blue)', Loan: 'var(--purple)', Settings: 'var(--gold)' }
+const SEVERITY_CFG    = {
+  High:   { color: 'var(--red)',  bg: 'rgba(239,68,68,0.08)',  border: 'rgba(239,68,68,0.25)'  },
+  Medium: { color: 'var(--gold)', bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.25)' },
+  Info:   { color: 'var(--blue)', bg: 'rgba(59,130,246,0.08)', border: 'rgba(59,130,246,0.25)' },
 }
-const PH_OFFSET = 8 // UTC+8
-const WORKING_START = 6   // 6 AM PH
-const WORKING_END   = 21  // 9 PM PH
+const DESTRUCTIVE_ACTIONS = ['LOAN_DELETED', 'BORROWER_DELETED', 'DASHBOARD_RESET']
+const SETTINGS_ACTIONS    = ['SETTINGS_UPDATED']
+const PH_OFFSET    = 8
+const WORKING_START = 6
+const WORKING_END   = 21
 
-// ── Helpers ──────────────────────────────────────────────────────
+// ── Date helpers ─────────────────────────────────────────────────
+function getPresetRange(preset) {
+  const now = new Date()
+  switch (preset) {
+    case 'this_month':  return { start: startOfMonth(now), end: endOfMonth(now) }
+    case 'last_month': { const lm = subMonths(now, 1); return { start: startOfMonth(lm), end: endOfMonth(lm) } }
+    case 'last_3':     return { start: startOfMonth(subMonths(now, 2)), end: endOfMonth(now) }
+    case 'last_6':     return { start: startOfMonth(subMonths(now, 5)), end: endOfMonth(now) }
+    default:           return { start: startOfMonth(now), end: endOfMonth(now) }
+  }
+}
+function getPrevRange({ start, end }) {
+  const duration = end.getTime() - start.getTime()
+  const prevEnd   = new Date(start.getTime() - 1)
+  const prevStart = new Date(prevEnd.getTime() - duration)
+  return { start: prevStart, end: prevEnd }
+}
 function toPhHour(utcStr) {
-  const d = new Date(utcStr)
-  return (d.getUTCHours() + PH_OFFSET) % 24
+  return (new Date(utcStr).getUTCHours() + PH_OFFSET) % 24
 }
 function monthKey(dateStr) {
   const d = new Date(dateStr)
@@ -64,9 +92,22 @@ function monthLabel(key) {
   const [y, m] = key.split('-')
   return new Date(parseInt(y), parseInt(m) - 1).toLocaleString('en-PH', { month: 'short', year: '2-digit' })
 }
-function pct(n, d) { return d > 0 ? ((n / d) * 100).toFixed(1) + '%' : '—' }
 
-// ── Sub-components ────────────────────────────────────────────────
+// aggregate a capital_flow row array → { interest, principal, penalties, disbursed, net }
+function aggregateFlow(rows = []) {
+  let interest = 0, principal = 0, penalties = 0, disbursed = 0
+  for (const r of rows) {
+    const type = (r.type || '').toLowerCase()
+    const amt  = parseFloat(r.amount) || 0
+    if (type.includes('interest'))  interest  += amt
+    if (type.includes('principal')) principal += amt
+    if (type.includes('penalty'))   penalties += amt
+    if (type.includes('disburs'))   disbursed += amt
+  }
+  return { interest, principal, penalties, disbursed, net: interest + principal + penalties - disbursed }
+}
+
+// ── UI Components ─────────────────────────────────────────────────
 function ActionBadge({ action }) {
   const cfg = ACTION_COLORS[action] || { color: 'var(--text-label)', bg: 'rgba(255,255,255,0.06)' }
   return (
@@ -75,34 +116,79 @@ function ActionBadge({ action }) {
     </span>
   )
 }
-
 function SeverityBadge({ severity }) {
   const c = SEVERITY_CFG[severity] || SEVERITY_CFG.Info
-  return (
-    <span style={{ padding: '2px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, color: c.color, background: c.bg }}>
-      {severity}
-    </span>
-  )
+  return <span style={{ padding: '2px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, color: c.color, background: c.bg }}>{severity}</span>
 }
-
-function StatCard({ label, value, color = 'var(--blue)', sub }) {
+function StatCard({ label, value, color = 'var(--blue)', sub, delta }) {
   return (
     <div className="card" style={{ padding: '14px 18px', textAlign: 'center' }}>
       <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 22, color }}>{value}</div>
       <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{label}</div>
-      {sub && <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{sub}</div>}
+      {sub   && <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{sub}</div>}
+      {delta && <div style={{ marginTop: 6 }}>{delta}</div>}
+    </div>
+  )
+}
+function DeltaBadge({ current, previous, invertColors = false }) {
+  if (previous === undefined || previous === null) return null
+  const delta = current - previous
+  if (delta === 0 && previous === 0) return null
+  const isUp   = delta >= 0
+  const isGood = invertColors ? !isUp : isUp
+  const pct    = previous !== 0 ? Math.abs((delta / previous) * 100).toFixed(1) : null
+  const Icon   = isUp ? ArrowUp : ArrowDown
+  return (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 10, color: isGood ? 'var(--green)' : 'var(--red)' }}>
+      <Icon size={10} />
+      {pct !== null ? `${pct}%` : formatCurrency(Math.abs(delta))}
+      <span style={{ color: 'var(--text-muted)', marginLeft: 1 }}>vs prev</span>
+    </span>
+  )
+}
+
+// ── Period Selector (always visible) ────────────────────────────
+function PeriodSelector({ preset, onPresetChange, customFrom, customTo, onCustomFromChange, onCustomToChange }) {
+  const sel = {
+    background: 'var(--card)', border: '1px solid var(--card-border)',
+    color: 'var(--text-primary)', borderRadius: 8, padding: '8px 12px', fontSize: 13, cursor: 'pointer',
+  }
+  const inp = {
+    background: 'var(--card)', border: '1px solid var(--card-border)',
+    color: 'var(--text-primary)', borderRadius: 8, padding: '8px 12px', fontSize: 13,
+    colorScheme: 'dark',
+  }
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', padding: '14px 18px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--card-border)', borderRadius: 12, marginBottom: 20 }}>
+      <Calendar size={14} color="var(--text-muted)" />
+      <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Period</span>
+      <select value={preset} onChange={e => onPresetChange(e.target.value)} style={sel}>
+        {PRESETS.map(p => <option key={p.key} value={p.key}>{p.label}</option>)}
+      </select>
+      {preset === 'custom' && (
+        <>
+          <input type="date" value={customFrom} onChange={e => onCustomFromChange(e.target.value)} style={inp} />
+          <span style={{ color: 'var(--text-muted)', fontSize: 13 }}>to</span>
+          <input type="date" value={customTo}   onChange={e => onCustomToChange(e.target.value)}   style={inp} />
+        </>
+      )}
+      {preset !== 'custom' && (
+        <span style={{ fontSize: 12, color: 'var(--text-muted)', marginLeft: 4 }}>
+          Showing data filtered to this period across all tabs
+        </span>
+      )}
     </div>
   )
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// TAB 1 — Activity Log (original, fully intact)
+// TAB 1 — Activity Log (unchanged logic, receives pre-filtered logs)
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 function ActivityTab({ logs, loading, onFilterJump }) {
-  const [search, setSearch] = useState('')
+  const [search, setSearch]             = useState('')
   const [moduleFilter, setModuleFilter] = useState('All')
   const [actionFilter, setActionFilter] = useState('All')
-  const [page, setPage] = useState(0)
+  const [page, setPage]                 = useState(0)
   const PER_PAGE = 25
 
   const modules = ['All', ...new Set(logs.map(l => l.module).filter(Boolean))]
@@ -113,18 +199,12 @@ function ActivityTab({ logs, loading, onFilterJump }) {
       l.description?.toLowerCase().includes(search.toLowerCase()) ||
       l.changed_by?.toLowerCase().includes(search.toLowerCase()) ||
       l.action_type?.toLowerCase().includes(search.toLowerCase())
-    const matchModule = moduleFilter === 'All' || l.module === moduleFilter
-    const matchAction = actionFilter === 'All' || l.action_type === actionFilter
-    return matchSearch && matchModule && matchAction
+    return matchSearch && (moduleFilter === 'All' || l.module === moduleFilter) && (actionFilter === 'All' || l.action_type === actionFilter)
   })
-
-  const paginated = filtered.slice(page * PER_PAGE, (page + 1) * PER_PAGE)
+  const paginated  = filtered.slice(page * PER_PAGE, (page + 1) * PER_PAGE)
   const totalPages = Math.ceil(filtered.length / PER_PAGE)
 
-  // Expose filter jump for anomaly tab "View logs" button
-  useEffect(() => {
-    if (onFilterJump) onFilterJump({ setSearch, setModuleFilter, setActionFilter, setPage })
-  }, [onFilterJump])
+  useEffect(() => { if (onFilterJump) onFilterJump({ setSearch, setModuleFilter, setActionFilter, setPage }) }, [onFilterJump])
 
   return (
     <>
@@ -147,11 +227,7 @@ function ActivityTab({ logs, loading, onFilterJump }) {
       {loading ? (
         <div className="empty-state"><p>Loading audit history...</p></div>
       ) : filtered.length === 0 ? (
-        <div className="empty-state">
-          <History size={48} />
-          <h3>No records found</h3>
-          <p>{search ? 'Try a different search term' : 'Actions will appear here as they happen'}</p>
-        </div>
+        <div className="empty-state"><History size={48} /><h3>No records found</h3><p>{search ? 'Try a different search term' : 'No activity in this period'}</p></div>
       ) : (
         <>
           <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
@@ -169,9 +245,7 @@ function ActivityTab({ logs, loading, onFilterJump }) {
                   <div style={{ fontSize: 13, color: 'var(--text-primary)', marginBottom: 3, lineHeight: 1.4 }}>{log.description}</div>
                   <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>by {log.changed_by || 'system'}</div>
                 </div>
-                <div>
-                  <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 6, color: MODULE_COLORS[log.module] || 'var(--text-label)', background: 'rgba(255,255,255,0.04)' }}>{log.module}</span>
-                </div>
+                <div><span style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 6, color: MODULE_COLORS[log.module] || 'var(--text-label)', background: 'rgba(255,255,255,0.04)' }}>{log.module}</span></div>
                 <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
                   {new Date(log.created_at).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}
                   <div style={{ fontSize: 11, marginTop: 2 }}>{new Date(log.created_at).toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit' })}</div>
@@ -193,168 +267,287 @@ function ActivityTab({ logs, loading, onFilterJump }) {
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// TAB 2 — Financial Ledger
+// TAB 2 — Financial Ledger  (receives dateRange prop — no independent full-fetch)
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-function LedgerTab() {
-  const [flow, setFlow] = useState([])
-  const [loading, setLoading] = useState(true)
+function LedgerTab({ dateRange }) {
+  const [flow,        setFlow]        = useState([])
+  const [prevFlow,    setPrevFlow]    = useState([])
+  const [histFlow,    setHistFlow]    = useState([])
+  const [loading,     setLoading]     = useState(true)
+  const [expanded,    setExpanded]    = useState({}) // month key → bool
 
+  // All three fetches are driven by dateRange
   useEffect(() => {
-    supabase.from('capital_flow').select('*').order('entry_date', { ascending: true })
-      .then(({ data }) => { setFlow(data || []); setLoading(false) })
-  }, [])
+    setLoading(true)
+    const prevRange = getPrevRange(dateRange)
+    const histStart = startOfMonth(subMonths(new Date(), 5))
+    const histEnd   = endOfMonth(new Date())
 
+    Promise.all([
+      supabase.from('capital_flow').select('*')
+        .gte('entry_date', format(dateRange.start, 'yyyy-MM-dd'))
+        .lte('entry_date', format(dateRange.end,   'yyyy-MM-dd'))
+        .order('entry_date', { ascending: true }),
+      supabase.from('capital_flow').select('*')
+        .gte('entry_date', format(prevRange.start, 'yyyy-MM-dd'))
+        .lte('entry_date', format(prevRange.end,   'yyyy-MM-dd'))
+        .order('entry_date', { ascending: true }),
+      supabase.from('capital_flow').select('*')
+        .gte('entry_date', format(histStart, 'yyyy-MM-dd'))
+        .lte('entry_date', format(histEnd,   'yyyy-MM-dd'))
+        .order('entry_date', { ascending: true }),
+    ]).then(([{ data: curr }, { data: prev }, { data: hist }]) => {
+      setFlow(curr     || [])
+      setPrevFlow(prev || [])
+      setHistFlow(hist || [])
+      setLoading(false)
+    })
+  }, [dateRange])
+
+  // Monthly grouping for current period chart
   const monthly = useMemo(() => {
     const map = {}
     for (const row of flow) {
       const k = monthKey(row.entry_date || row.created_at)
       if (!map[k]) map[k] = { month: k, label: monthLabel(k), interest: 0, principal: 0, penalties: 0, disbursed: 0 }
       const type = (row.type || '').toLowerCase()
-      const amt = parseFloat(row.amount) || 0
-      if (type.includes('interest'))   map[k].interest  += amt
-      if (type.includes('principal'))  map[k].principal += amt
-      if (type.includes('penalty'))    map[k].penalties  += amt
-      if (type.includes('disburs'))    map[k].disbursed  += amt
+      const amt  = parseFloat(row.amount) || 0
+      if (type.includes('interest'))  map[k].interest  += amt
+      if (type.includes('principal')) map[k].principal += amt
+      if (type.includes('penalty'))   map[k].penalties += amt
+      if (type.includes('disburs'))   map[k].disbursed += amt
     }
     return Object.values(map).sort((a, b) => a.month.localeCompare(b.month))
   }, [flow])
 
-  // Running balance
   let runningBalance = 0
   const monthlyWithBalance = monthly.map(m => {
     runningBalance += (m.interest + m.principal + m.penalties - m.disbursed)
     return { ...m, balance: runningBalance }
   })
 
-  const totalInterest  = monthly.reduce((s, m) => s + m.interest, 0)
-  const totalPrincipal = monthly.reduce((s, m) => s + m.principal, 0)
-  const totalPenalties = monthly.reduce((s, m) => s + m.penalties, 0)
-  const totalDisbursed = monthly.reduce((s, m) => s + m.disbursed, 0)
+  const curr = aggregateFlow(flow)
+  const prev = aggregateFlow(prevFlow)
+
+  // Last 6 months accordion
+  const monthlyHistory = useMemo(() => {
+    const months = []
+    for (let i = 5; i >= 0; i--) {
+      const mStart = startOfMonth(subMonths(new Date(), i))
+      const mEnd   = endOfMonth(subMonths(new Date(), i))
+      const mRows  = histFlow.filter(r => {
+        const d = new Date(r.entry_date || r.created_at)
+        return d >= mStart && d <= mEnd
+      })
+      const totals = aggregateFlow(mRows)
+      const weekStarts = eachWeekOfInterval({ start: mStart, end: mEnd })
+      const weeks = weekStarts.map(ws => {
+        const we = endOfWeek(ws)
+        const clampedStart = ws < mStart ? mStart : ws
+        const clampedEnd   = we > mEnd   ? mEnd   : we
+        const wRows = mRows.filter(r => {
+          const d = new Date(r.entry_date || r.created_at)
+          return d >= clampedStart && d <= clampedEnd
+        })
+        return {
+          label: `${format(clampedStart, 'MMM d')} – ${format(clampedEnd, 'MMM d')}`,
+          ...aggregateFlow(wRows),
+        }
+      }).filter(w => w.interest + w.principal + w.penalties + w.disbursed > 0)
+      months.push({ key: format(mStart, 'yyyy-MM'), label: format(mStart, 'MMMM yyyy'), ...totals, weeks })
+    }
+    return months
+  }, [histFlow])
 
   const customTooltip = ({ active, payload, label }) => {
     if (!active || !payload?.length) return null
     return (
       <div style={{ background: 'var(--card)', border: '1px solid var(--card-border)', borderRadius: 10, padding: '12px 16px', fontSize: 12 }}>
         <div style={{ fontWeight: 700, marginBottom: 8, color: 'var(--text-primary)' }}>{label}</div>
-        {payload.map(p => (
-          <div key={p.name} style={{ color: p.color, marginBottom: 3 }}>{p.name}: {formatCurrency(p.value)}</div>
-        ))}
+        {payload.map(p => <div key={p.name} style={{ color: p.color, marginBottom: 3 }}>{p.name}: {formatCurrency(p.value)}</div>)}
       </div>
     )
   }
 
   if (loading) return <div className="empty-state"><p>Loading ledger data...</p></div>
-  if (monthly.length === 0) return <div className="empty-state"><TrendingUp size={40} /><h3>No capital_flow data yet</h3><p>Data will appear as payments are recorded</p></div>
 
   return (
     <>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px,1fr))', gap: 14, marginBottom: 24 }}>
-        <StatCard label="Total Interest Collected" value={formatCurrency(totalInterest)} color="var(--green)" />
-        <StatCard label="Total Principal Returned" value={formatCurrency(totalPrincipal)} color="var(--blue)" />
-        <StatCard label="Total Penalties Charged" value={formatCurrency(totalPenalties)} color="var(--red)" />
-        <StatCard label="Total Disbursed" value={formatCurrency(totalDisbursed)} color="var(--gold)" />
+      {/* ── Snapshot comparison KPI row ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px,1fr))', gap: 14, marginBottom: 24 }}>
+        <StatCard label="Interest Collected" value={formatCurrency(curr.interest)} color="var(--green)"
+          delta={<DeltaBadge current={curr.interest} previous={prev.interest} />} />
+        <StatCard label="Principal Returned" value={formatCurrency(curr.principal)} color="var(--blue)"
+          delta={<DeltaBadge current={curr.principal} previous={prev.principal} />} />
+        <StatCard label="Penalties Charged"  value={formatCurrency(curr.penalties)} color="var(--red)"
+          delta={<DeltaBadge current={curr.penalties} previous={prev.penalties} invertColors />} />
+        <StatCard label="Total Disbursed"    value={formatCurrency(curr.disbursed)} color="var(--gold)"
+          delta={<DeltaBadge current={curr.disbursed} previous={prev.disbursed} />} />
+        <StatCard label="Net Capital Flow"   value={formatCurrency(curr.net)} color={curr.net >= 0 ? 'var(--green)' : 'var(--red)'}
+          delta={<DeltaBadge current={curr.net} previous={prev.net} />} />
       </div>
 
-      <div className="card" style={{ padding: '24px', marginBottom: 24 }}>
-        <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 20, color: 'var(--text-secondary)' }}>Monthly Capital Flow</div>
-        <ResponsiveContainer width="100%" height={280}>
-          <BarChart data={monthlyWithBalance} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-            <XAxis dataKey="label" tick={{ fill: 'var(--text-muted)', fontSize: 11 }} />
-            <YAxis tickFormatter={v => `₱${(v/1000).toFixed(0)}k`} tick={{ fill: 'var(--text-muted)', fontSize: 11 }} />
-            <Tooltip content={customTooltip} />
-            <Legend wrapperStyle={{ fontSize: 12, color: 'var(--text-muted)' }} />
-            <Bar dataKey="interest"  name="Interest Collected" fill="#22C55E" radius={[3,3,0,0]} />
-            <Bar dataKey="principal" name="Principal Returned"  fill="#3B82F6" radius={[3,3,0,0]} />
-            <Bar dataKey="penalties" name="Penalties"           fill="#EF4444" radius={[3,3,0,0]} />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
+      {/* ── Monthly bar chart ── */}
+      {monthly.length > 0 && (
+        <div className="card" style={{ padding: '24px', marginBottom: 24 }}>
+          <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 20, color: 'var(--text-secondary)' }}>Monthly Capital Flow</div>
+          <ResponsiveContainer width="100%" height={260}>
+            <BarChart data={monthlyWithBalance} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+              <XAxis dataKey="label" tick={{ fill: 'var(--text-muted)', fontSize: 11 }} />
+              <YAxis tickFormatter={v => `₱${(v/1000).toFixed(0)}k`} tick={{ fill: 'var(--text-muted)', fontSize: 11 }} />
+              <Tooltip content={customTooltip} />
+              <Legend wrapperStyle={{ fontSize: 12, color: 'var(--text-muted)' }} />
+              <Bar dataKey="interest"  name="Interest Collected" fill="#22C55E" radius={[3,3,0,0]} />
+              <Bar dataKey="principal" name="Principal Returned"  fill="#3B82F6" radius={[3,3,0,0]} />
+              <Bar dataKey="penalties" name="Penalties"           fill="#EF4444" radius={[3,3,0,0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      )}
 
-      {/* Tabular breakdown */}
-      <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr 1fr', padding: '12px 22px', borderBottom: '1px solid var(--card-border)', background: 'rgba(255,255,255,0.015)' }}>
-          {['Month', 'Interest', 'Principal', 'Penalties', 'Disbursed', 'Running Balance'].map(h => (
-            <div key={h} style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>{h}</div>
+      {/* ── Period tabular breakdown ── */}
+      {monthly.length > 0 && (
+        <div className="card" style={{ padding: 0, overflow: 'hidden', marginBottom: 28 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr 1fr', padding: '12px 22px', borderBottom: '1px solid var(--card-border)', background: 'rgba(255,255,255,0.015)' }}>
+            {['Month', 'Interest', 'Principal', 'Penalties', 'Disbursed', 'Running Balance'].map(h => (
+              <div key={h} style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>{h}</div>
+            ))}
+          </div>
+          {monthlyWithBalance.map((m, i) => (
+            <div key={m.month} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr 1fr', padding: '13px 22px', borderBottom: i < monthlyWithBalance.length - 1 ? '1px solid rgba(255,255,255,0.03)' : 'none', alignItems: 'center' }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.015)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{m.label}</div>
+              <div style={{ fontSize: 13, color: 'var(--green)' }}>{formatCurrency(m.interest)}</div>
+              <div style={{ fontSize: 13, color: 'var(--blue)' }}>{formatCurrency(m.principal)}</div>
+              <div style={{ fontSize: 13, color: m.penalties > 0 ? 'var(--red)' : 'var(--text-muted)' }}>{formatCurrency(m.penalties)}</div>
+              <div style={{ fontSize: 13, color: 'var(--gold)' }}>{formatCurrency(m.disbursed)}</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: m.balance >= 0 ? 'var(--green)' : 'var(--red)' }}>{formatCurrency(m.balance)}</div>
+            </div>
           ))}
         </div>
-        {monthlyWithBalance.map((m, i) => (
-          <div key={m.month} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr 1fr', padding: '13px 22px', borderBottom: i < monthlyWithBalance.length - 1 ? '1px solid rgba(255,255,255,0.03)' : 'none', alignItems: 'center' }}
-            onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.015)'}
-            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{m.label}</div>
-            <div style={{ fontSize: 13, color: 'var(--green)' }}>{formatCurrency(m.interest)}</div>
-            <div style={{ fontSize: 13, color: 'var(--blue)' }}>{formatCurrency(m.principal)}</div>
-            <div style={{ fontSize: 13, color: m.penalties > 0 ? 'var(--red)' : 'var(--text-muted)' }}>{formatCurrency(m.penalties)}</div>
-            <div style={{ fontSize: 13, color: 'var(--gold)' }}>{formatCurrency(m.disbursed)}</div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: m.balance >= 0 ? 'var(--green)' : 'var(--red)' }}>{formatCurrency(m.balance)}</div>
+      )}
+
+      {monthly.length === 0 && (
+        <div className="empty-state" style={{ marginBottom: 28 }}>
+          <TrendingUp size={40} /><h3>No capital flow in this period</h3>
+          <p>Try selecting a wider range</p>
+        </div>
+      )}
+
+      {/* ── Monthly History Accordion (always last 6 months, independent of period selector) ── */}
+      <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+        <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--card-border)', fontSize: 13, fontWeight: 700, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <History size={14} /> Monthly History — Last 6 Months
+        </div>
+        {monthlyHistory.map(m => (
+          <div key={m.key}>
+            {/* Month header row */}
+            <div
+              onClick={() => setExpanded(e => ({ ...e, [m.key]: !e[m.key] }))}
+              style={{ display: 'grid', gridTemplateColumns: '32px 1.5fr 1fr 1fr 1fr 1fr', padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.04)', alignItems: 'center', cursor: 'pointer', transition: 'background 0.1s' }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+              <div>{expanded[m.key] ? <ChevronDown size={14} color="var(--text-muted)" /> : <ChevronRight size={14} color="var(--text-muted)" />}</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>{m.label}</div>
+              <div style={{ fontSize: 12, color: 'var(--green)' }}>{formatCurrency(m.interest)}</div>
+              <div style={{ fontSize: 12, color: m.penalties > 0 ? 'var(--red)' : 'var(--text-muted)' }}>{formatCurrency(m.penalties)}</div>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{m.weeks.length} weeks</div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: m.net >= 0 ? 'var(--green)' : 'var(--red)' }}>{formatCurrency(m.net)}</div>
+            </div>
+
+            {/* Weekly breakdown */}
+            {expanded[m.key] && (
+              <div style={{ background: 'rgba(255,255,255,0.01)', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                {/* header */}
+                <div style={{ display: 'grid', gridTemplateColumns: '32px 1.5fr 1fr 1fr 1fr 1fr', padding: '8px 20px', borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+                  {['', 'Week', 'Interest', 'Principal', 'Penalties', 'Net'].map(h => (
+                    <div key={h} style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>{h}</div>
+                  ))}
+                </div>
+                {m.weeks.length === 0 ? (
+                  <div style={{ padding: '12px 20px 12px 52px', fontSize: 12, color: 'var(--text-muted)' }}>No entries this month</div>
+                ) : m.weeks.map((w, wi) => (
+                  <div key={wi} style={{ display: 'grid', gridTemplateColumns: '32px 1.5fr 1fr 1fr 1fr 1fr', padding: '10px 20px', borderBottom: wi < m.weeks.length - 1 ? '1px solid rgba(255,255,255,0.02)' : 'none', alignItems: 'center' }}>
+                    <div />
+                    <div style={{ fontSize: 12, color: 'var(--text-label)' }}>{w.label}</div>
+                    <div style={{ fontSize: 12, color: 'var(--green)' }}>{formatCurrency(w.interest)}</div>
+                    <div style={{ fontSize: 12, color: 'var(--blue)' }}>{formatCurrency(w.principal)}</div>
+                    <div style={{ fontSize: 12, color: w.penalties > 0 ? 'var(--red)' : 'var(--text-muted)' }}>{formatCurrency(w.penalties)}</div>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: w.net >= 0 ? 'var(--green)' : 'var(--red)' }}>{formatCurrency(w.net)}</div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         ))}
+        {/* Accordion column labels */}
+        <div style={{ display: 'grid', gridTemplateColumns: '32px 1.5fr 1fr 1fr 1fr 1fr', padding: '8px 20px', background: 'rgba(255,255,255,0.015)' }}>
+          {['', 'Month', 'Interest', 'Penalties', 'Weeks', 'Net Flow'].map(h => (
+            <div key={h} style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>{h}</div>
+          ))}
+        </div>
       </div>
     </>
   )
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// TAB 3 — Anomaly Flags
+// TAB 3 — Anomaly Flags (receives filtered logs + dateRange for sub-queries)
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-function AnomalyTab({ logs, onViewLogs }) {
-  const [proofs, setProofs]       = useState([])
+function AnomalyTab({ logs, onViewLogs, dateRange }) {
+  const [proofs,      setProofs]      = useState([])
   const [capitalFlow, setCapitalFlow] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [loading,     setLoading]     = useState(true)
 
   useEffect(() => {
+    setLoading(true)
     Promise.all([
-      supabase.from('payment_proofs').select('id, loan_id, installment_number, created_at'),
-      supabase.from('capital_flow').select('id, loan_id, type, created_at, amount'),
+      supabase.from('payment_proofs').select('id, loan_id, installment_number, created_at')
+        .gte('created_at', dateRange.start.toISOString())
+        .lte('created_at', dateRange.end.toISOString()),
+      supabase.from('capital_flow').select('id, loan_id, type, entry_date, amount')
+        .gte('entry_date', format(dateRange.start, 'yyyy-MM-dd'))
+        .lte('entry_date', format(dateRange.end,   'yyyy-MM-dd')),
     ]).then(([{ data: p }, { data: cf }]) => {
-      setProofs(p || [])
+      setProofs(p   || [])
       setCapitalFlow(cf || [])
       setLoading(false)
     })
-  }, [])
+  }, [dateRange])
 
   const flags = useMemo(() => {
     const results = []
 
-    // (a) DASHBOARD_RESET or BORROWER_DELETED outside 6AM–9PM PH
-    const afterHours = logs.filter(l =>
-      ['DASHBOARD_RESET', 'BORROWER_DELETED', 'LOAN_DELETED'].includes(l.action_type) &&
-      (toPhHour(l.created_at) < WORKING_START || toPhHour(l.created_at) >= WORKING_END)
-    )
-    for (const log of afterHours) {
+    // (a) Destructive actions outside 6AM–9PM PH
+    for (const log of logs.filter(l => ['DASHBOARD_RESET','BORROWER_DELETED','LOAN_DELETED'].includes(l.action_type))) {
       const hour = toPhHour(log.created_at)
-      results.push({
-        id: `ah-${log.id}`,
-        severity: 'High',
-        title: `After-hours destructive action: ${log.action_type.replace(/_/g, ' ')}`,
-        detail: `Performed at ${hour}:${String(new Date(log.created_at).getUTCMinutes()).padStart(2,'0')} PH time (outside 6AM–9PM) by ${log.changed_by || 'unknown'}`,
-        logSearch: log.description?.slice(0, 40),
-        timestamp: log.created_at,
-      })
-    }
-
-    // (b) Penalty in audit_logs with no matching capital_flow on same date
-    const penaltyLogs = logs.filter(l => l.action_type === 'PENALTY_CHARGED' || (l.description || '').toLowerCase().includes('penalty'))
-    for (const log of penaltyLogs) {
-      const logDate = new Date(log.created_at).toISOString().slice(0, 10)
-      const hasMatch = capitalFlow.some(cf => {
-        const cfDate = new Date(cf.created_at).toISOString().slice(0, 10)
-        return cfDate === logDate && (cf.type || '').toLowerCase().includes('penalty')
-      })
-      if (!hasMatch) {
+      if (hour < WORKING_START || hour >= WORKING_END) {
         results.push({
-          id: `pen-${log.id}`,
-          severity: 'Medium',
-          title: 'Penalty log with no capital_flow entry',
-          detail: `Audit log recorded a penalty on ${logDate} but no matching capital_flow entry found. ${log.description || ''}`,
-          logSearch: log.description?.slice(0, 40),
-          timestamp: log.created_at,
+          id: `ah-${log.id}`, severity: 'High',
+          title: `After-hours destructive action: ${log.action_type.replace(/_/g, ' ')}`,
+          detail: `Performed at ${hour}:${String(new Date(log.created_at).getUTCMinutes()).padStart(2,'0')} PH time (outside 6AM–9PM) by ${log.changed_by || 'unknown'}`,
+          logSearch: log.description?.slice(0, 40), timestamp: log.created_at,
         })
       }
     }
 
-    // (c) Duplicate payment proofs (same loan_id + installment_number)
+    // (b) Penalty in audit_logs with no matching capital_flow on same date
+    for (const log of logs.filter(l => l.action_type === 'PENALTY_CHARGED' || (l.description || '').toLowerCase().includes('penalty'))) {
+      const logDate = new Date(log.created_at).toISOString().slice(0, 10)
+      const hasMatch = capitalFlow.some(cf => (cf.entry_date || '').slice(0,10) === logDate && (cf.type || '').toLowerCase().includes('penalty'))
+      if (!hasMatch) {
+        results.push({
+          id: `pen-${log.id}`, severity: 'Medium',
+          title: 'Penalty log with no capital_flow entry',
+          detail: `Audit log recorded a penalty on ${logDate} but no matching capital_flow entry found. ${log.description || ''}`,
+          logSearch: log.description?.slice(0, 40), timestamp: log.created_at,
+        })
+      }
+    }
+
+    // (c) Duplicate payment proofs
     const proofMap = {}
     for (const p of proofs) {
       const key = `${p.loan_id}-${p.installment_number}`
@@ -364,55 +557,40 @@ function AnomalyTab({ logs, onViewLogs }) {
       if (count > 1) {
         const [loanId, instNum] = key.split('-')
         results.push({
-          id: `dup-${key}`,
-          severity: 'Medium',
-          title: `Duplicate payment proofs detected`,
-          detail: `Loan ${loanId?.slice(0, 8)}… has ${count} proofs for installment #${instNum}. Possible double-upload or double-processing.`,
-          logSearch: loanId?.slice(0, 8),
-          timestamp: null,
+          id: `dup-${key}`, severity: 'Medium',
+          title: 'Duplicate payment proofs detected',
+          detail: `Loan ${loanId?.slice(0,8)}… has ${count} proofs for installment #${instNum}. Possible double-upload or double-processing.`,
+          logSearch: loanId?.slice(0, 8), timestamp: null,
         })
       }
     }
 
-    // (d) DASHBOARD_RESET actions (always flagged for review)
-    const resets = logs.filter(l => l.action_type === 'DASHBOARD_RESET')
-    for (const log of resets) {
-      const alreadyFlagged = results.find(r => r.id === `ah-${log.id}`)
-      if (!alreadyFlagged) {
+    // (d) Dashboard resets (not already flagged as after-hours)
+    for (const log of logs.filter(l => l.action_type === 'DASHBOARD_RESET')) {
+      if (!results.find(r => r.id === `ah-${log.id}`)) {
         results.push({
-          id: `rst-${log.id}`,
-          severity: 'Info',
+          id: `rst-${log.id}`, severity: 'Info',
           title: 'Dashboard reset performed',
           detail: `${log.description || ''} — by ${log.changed_by || 'unknown'} at ${new Date(log.created_at).toLocaleString('en-PH')}`,
-          logSearch: log.description?.slice(0, 40),
-          timestamp: log.created_at,
+          logSearch: log.description?.slice(0, 40), timestamp: log.created_at,
         })
       }
     }
 
-    return results.sort((a, b) => {
-      const order = { High: 0, Medium: 1, Info: 2 }
-      return order[a.severity] - order[b.severity]
-    })
+    return results.sort((a, b) => ({ High: 0, Medium: 1, Info: 2 }[a.severity] - { High: 0, Medium: 1, Info: 2 }[b.severity]))
   }, [logs, proofs, capitalFlow])
 
   if (loading) return <div className="empty-state"><p>Running anomaly detection...</p></div>
-
   return (
     <>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px,1fr))', gap: 14, marginBottom: 24 }}>
-        <StatCard label="Total Flags" value={flags.length} color="var(--text-primary)" />
-        <StatCard label="High Severity" value={flags.filter(f => f.severity === 'High').length} color="var(--red)" />
+        <StatCard label="Total Flags"     value={flags.length}                                    color="var(--text-primary)" />
+        <StatCard label="High Severity"   value={flags.filter(f => f.severity === 'High').length}   color="var(--red)"  />
         <StatCard label="Medium Severity" value={flags.filter(f => f.severity === 'Medium').length} color="var(--gold)" />
-        <StatCard label="Info" value={flags.filter(f => f.severity === 'Info').length} color="var(--blue)" />
+        <StatCard label="Info"            value={flags.filter(f => f.severity === 'Info').length}   color="var(--blue)" />
       </div>
-
       {flags.length === 0 ? (
-        <div className="empty-state">
-          <Shield size={40} color="var(--green)" />
-          <h3 style={{ color: 'var(--green)' }}>No anomalies detected</h3>
-          <p>All financial records appear consistent</p>
-        </div>
+        <div className="empty-state"><Shield size={40} color="var(--green)" /><h3 style={{ color: 'var(--green)' }}>No anomalies detected</h3><p>All financial records in this period appear consistent</p></div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {flags.map(flag => {
@@ -425,18 +603,10 @@ function AnomalyTab({ logs, onViewLogs }) {
                     <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>{flag.title}</span>
                   </div>
                   <div style={{ fontSize: 13, color: 'var(--text-label)', lineHeight: 1.6 }}>{flag.detail}</div>
-                  {flag.timestamp && (
-                    <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 6 }}>
-                      {new Date(flag.timestamp).toLocaleString('en-PH')}
-                    </div>
-                  )}
+                  {flag.timestamp && <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 6 }}>{new Date(flag.timestamp).toLocaleString('en-PH')}</div>}
                 </div>
                 {flag.logSearch && (
-                  <button
-                    onClick={() => onViewLogs(flag.logSearch)}
-                    style={{ padding: '7px 14px', borderRadius: 8, border: `1px solid ${c.border}`, background: 'rgba(255,255,255,0.04)', color: c.color, fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                    View logs →
-                  </button>
+                  <button onClick={() => onViewLogs(flag.logSearch)} style={{ padding: '7px 14px', borderRadius: 8, border: `1px solid ${c.border}`, background: 'rgba(255,255,255,0.04)', color: c.color, fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>View logs →</button>
                 )}
               </div>
             )
@@ -448,57 +618,42 @@ function AnomalyTab({ logs, onViewLogs }) {
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// TAB 4 — Admin Accountability
+// TAB 4 — Admin Accountability (uses already-filtered logs)
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-const DESTRUCTIVE_ACTIONS = ['LOAN_DELETED', 'BORROWER_DELETED', 'DASHBOARD_RESET']
-const SETTINGS_ACTIONS    = ['SETTINGS_UPDATED']
-
 function AccountabilityTab({ logs }) {
-  const now = new Date()
-  const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2,'0')}`
-
-  const monthLogs = logs.filter(l => monthKey(l.created_at) === thisMonth)
-
   const byAdmin = useMemo(() => {
     const map = {}
-    for (const log of monthLogs) {
+    for (const log of logs) {
       const admin = log.changed_by || 'system'
       if (!map[admin]) map[admin] = { admin, total: 0, deletions: 0, settings: 0, destructiveActions: [] }
       map[admin].total++
-      if (DESTRUCTIVE_ACTIONS.includes(log.action_type)) {
-        map[admin].deletions++
-        map[admin].destructiveActions.push(log)
-      }
+      if (DESTRUCTIVE_ACTIONS.includes(log.action_type)) { map[admin].deletions++; map[admin].destructiveActions.push(log) }
       if (SETTINGS_ACTIONS.includes(log.action_type)) map[admin].settings++
     }
     return Object.values(map).sort((a, b) => b.total - a.total)
-  }, [monthLogs])
+  }, [logs])
 
   const actionBreakdown = useMemo(() => {
     const map = {}
-    for (const log of monthLogs) {
-      map[log.action_type] = (map[log.action_type] || 0) + 1
-    }
+    for (const log of logs) map[log.action_type] = (map[log.action_type] || 0) + 1
     return Object.entries(map).sort((a, b) => b[1] - a[1])
-  }, [monthLogs])
+  }, [logs])
 
   return (
     <>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px,1fr))', gap: 14, marginBottom: 24 }}>
-        <StatCard label="Total Actions This Month" value={monthLogs.length} color="var(--blue)" />
-        <StatCard label="Active Admins" value={byAdmin.length} color="var(--purple)" />
-        <StatCard label="Destructive Actions" value={monthLogs.filter(l => DESTRUCTIVE_ACTIONS.includes(l.action_type)).length} color="var(--red)" />
-        <StatCard label="Settings Changes" value={monthLogs.filter(l => SETTINGS_ACTIONS.includes(l.action_type)).length} color="var(--gold)" />
+        <StatCard label="Total Actions"       value={logs.length}                                                       color="var(--blue)"   />
+        <StatCard label="Active Admins"        value={byAdmin.length}                                                    color="var(--purple)" />
+        <StatCard label="Destructive Actions"  value={logs.filter(l => DESTRUCTIVE_ACTIONS.includes(l.action_type)).length} color="var(--red)"  />
+        <StatCard label="Settings Changes"     value={logs.filter(l => SETTINGS_ACTIONS.includes(l.action_type)).length}    color="var(--gold)" />
       </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 20 }}>
-        {/* Per-admin breakdown */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
         <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
           <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--card-border)', fontSize: 13, fontWeight: 700, color: 'var(--text-secondary)' }}>
-            <Users size={14} style={{ marginRight: 7, verticalAlign: 'middle' }} />Per Admin — {now.toLocaleString('en-PH', { month: 'long', year: 'numeric' })}
+            <Users size={14} style={{ marginRight: 7, verticalAlign: 'middle' }} />Per Admin — Selected Period
           </div>
           {byAdmin.length === 0 ? (
-            <div style={{ padding: 24, color: 'var(--text-muted)', fontSize: 13, textAlign: 'center' }}>No actions this month</div>
+            <div style={{ padding: 24, color: 'var(--text-muted)', fontSize: 13, textAlign: 'center' }}>No admin actions in this period</div>
           ) : byAdmin.map((a, i) => (
             <div key={a.admin} style={{ padding: '14px 20px', borderBottom: i < byAdmin.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}
               onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.015)'}
@@ -506,38 +661,26 @@ function AccountabilityTab({ logs }) {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                 <div>
                   <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{a.admin}</div>
-                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
-                    {a.total} actions · {a.deletions} destructive · {a.settings} settings
-                  </div>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{a.total} actions · {a.deletions} destructive · {a.settings} settings</div>
                 </div>
-                {a.deletions > 0 && (
-                  <span style={{ padding: '2px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, color: 'var(--red)', background: 'rgba(239,68,68,0.1)' }}>
-                    ⚠️ Destructive
-                  </span>
-                )}
+                {a.deletions > 0 && <span style={{ padding: '2px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, color: 'var(--red)', background: 'rgba(239,68,68,0.1)' }}>⚠️ Destructive</span>}
               </div>
               {a.deletions > 0 && (
                 <div style={{ background: 'rgba(239,68,68,0.05)', borderRadius: 8, padding: '8px 12px', fontSize: 11, color: 'var(--text-label)' }}>
-                  {a.destructiveActions.slice(0, 3).map((d, i) => (
-                    <div key={i} style={{ marginBottom: 2 }}>• {d.action_type.replace(/_/g, ' ')} — {new Date(d.created_at).toLocaleDateString('en-PH')}</div>
-                  ))}
+                  {a.destructiveActions.slice(0, 3).map((d, j) => <div key={j} style={{ marginBottom: 2 }}>• {d.action_type.replace(/_/g, ' ')} — {new Date(d.created_at).toLocaleDateString('en-PH')}</div>)}
                   {a.destructiveActions.length > 3 && <div>…and {a.destructiveActions.length - 3} more</div>}
                 </div>
               )}
             </div>
           ))}
         </div>
-
-        {/* Action type breakdown */}
         <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-          <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--card-border)', fontSize: 13, fontWeight: 700, color: 'var(--text-secondary)' }}>
-            Action Breakdown This Month
-          </div>
+          <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--card-border)', fontSize: 13, fontWeight: 700, color: 'var(--text-secondary)' }}>Action Breakdown</div>
           {actionBreakdown.length === 0 ? (
-            <div style={{ padding: 24, color: 'var(--text-muted)', fontSize: 13, textAlign: 'center' }}>No actions this month</div>
+            <div style={{ padding: 24, color: 'var(--text-muted)', fontSize: 13, textAlign: 'center' }}>No actions in this period</div>
           ) : actionBreakdown.map(([action, count], i) => {
-            const cfg = ACTION_COLORS[action] || { color: 'var(--text-muted)', bg: 'rgba(255,255,255,0.06)' }
-            const maxCount = actionBreakdown[0][1]
+            const cfg = ACTION_COLORS[action] || { color: 'var(--text-muted)' }
+            const max = actionBreakdown[0][1]
             return (
               <div key={action} style={{ padding: '12px 20px', borderBottom: i < actionBreakdown.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
@@ -545,7 +688,7 @@ function AccountabilityTab({ logs }) {
                   <span style={{ fontSize: 13, fontWeight: 700, color: cfg.color }}>{count}</span>
                 </div>
                 <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 4, height: 4, overflow: 'hidden' }}>
-                  <div style={{ width: `${(count / maxCount) * 100}%`, height: '100%', background: cfg.color, borderRadius: 4, transition: 'width 0.4s ease' }} />
+                  <div style={{ width: `${(count / max) * 100}%`, height: '100%', background: cfg.color, borderRadius: 4, transition: 'width 0.4s ease' }} />
                 </div>
               </div>
             )
@@ -557,61 +700,55 @@ function AccountabilityTab({ logs }) {
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// TAB 5 — Collection Efficiency
+// TAB 5 — Collection Efficiency (receives dateRange → filters installments/penalties)
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-function CollectionTab() {
-  const [loans, setLoans]         = useState([])
-  const [installments, setInst]   = useState([])
-  const [penalties, setPenalties] = useState([])
-  const [loading, setLoading]     = useState(true)
+function CollectionTab({ dateRange }) {
+  const [loans,       setLoans]       = useState([])
+  const [installments, setInst]       = useState([])
+  const [penalties,   setPenalties]   = useState([])
+  const [loading,     setLoading]     = useState(true)
 
   useEffect(() => {
+    setLoading(true)
     Promise.all([
+      // Loans: all (for portfolio-wide default rate + dept breakdown)
       supabase.from('loans').select('id, loan_amount, status, due_date, release_date, payments_made, num_installments, remaining_balance, department').not('status', 'eq', 'Cancelled'),
-      supabase.from('installments').select('id, loan_id, status, due_date, paid_at, amount_due'),
-      supabase.from('penalty_charges').select('id, loan_id, amount, created_at').catch(() => ({ data: [] })),
-    ]).then(([{ data: l }, { data: inst }, { data: pen }]) => {
-      setLoans(l || [])
-      setInst(inst || [])
-      setPenalties((pen?.data ?? pen) || [])
+      // Installments: filter by due_date in period for on-time rate
+      supabase.from('installments').select('id, loan_id, status, due_date, paid_at, amount_due')
+        .gte('due_date', format(dateRange.start, 'yyyy-MM-dd'))
+        .lte('due_date', format(dateRange.end,   'yyyy-MM-dd')),
+      // Penalties: filter by created_at in period
+      supabase.from('penalty_charges').select('id, loan_id, amount, created_at')
+        .gte('created_at', dateRange.start.toISOString())
+        .lte('created_at', dateRange.end.toISOString())
+        .then(r => r).catch(() => ({ data: [] })),
+    ]).then(([{ data: l }, { data: inst }, penResult]) => {
+      setLoans(l        || [])
+      setInst(inst      || [])
+      setPenalties((penResult?.data ?? penResult) || [])
       setLoading(false)
     })
-  }, [])
+  }, [dateRange])
 
   const metrics = useMemo(() => {
-    if (!loans.length || !installments.length) return null
-
+    if (!installments.length) return null
     const today = new Date()
-
-    // On-time payment rate: paid installments where paid_at <= due_date
-    const paidInst = installments.filter(i => i.status === 'Paid')
-    const onTime   = paidInst.filter(i => i.paid_at && i.due_date && new Date(i.paid_at) <= new Date(i.due_date))
-    const onTimeRate = paidInst.length > 0 ? (onTime.length / paidInst.length) * 100 : 0
-
-    // Average days overdue: overdue installments
-    const overdueInst = installments.filter(i => (i.status === 'Overdue' || (i.status === 'Pending' && new Date(i.due_date) < today)))
+    const paidInst    = installments.filter(i => i.status === 'Paid')
+    const onTime      = paidInst.filter(i => i.paid_at && i.due_date && new Date(i.paid_at) <= new Date(i.due_date))
+    const onTimeRate  = paidInst.length > 0 ? (onTime.length / paidInst.length) * 100 : 0
+    const overdueInst = installments.filter(i => i.status === 'Overdue' || (i.status === 'Pending' && new Date(i.due_date) < today))
     const avgDaysOverdue = overdueInst.length > 0
-      ? overdueInst.reduce((sum, i) => sum + Math.max(0, (today - new Date(i.due_date)) / 86400000), 0) / overdueInst.length
+      ? overdueInst.reduce((s, i) => s + Math.max(0, (today - new Date(i.due_date)) / 86400000), 0) / overdueInst.length
       : 0
-
-    // Recovery rate: overdue loans that have been paid off
-    const loansEverOverdue = loans.filter(l => {
-      const instForLoan = installments.filter(i => i.loan_id === l.id)
-      return instForLoan.some(i => i.status === 'Overdue')
-    })
-    const recovered = loansEverOverdue.filter(l => l.status === 'Paid')
-    const recoveryRate = loansEverOverdue.length > 0 ? (recovered.length / loansEverOverdue.length) * 100 : 0
-
-    // Default rate
+    const loansEverOverdue = loans.filter(l => installments.some(i => i.loan_id === l.id && i.status === 'Overdue'))
+    const recovered     = loansEverOverdue.filter(l => l.status === 'Paid')
+    const recoveryRate  = loansEverOverdue.length > 0 ? (recovered.length / loansEverOverdue.length) * 100 : 0
     const defaultedLoans = loans.filter(l => l.status === 'Defaulted')
-    const defaultRate = loans.length > 0 ? (defaultedLoans.length / loans.length) * 100 : 0
-
+    const defaultRate   = loans.length > 0 ? (defaultedLoans.length / loans.length) * 100 : 0
     return { onTimeRate, avgDaysOverdue, recoveryRate, defaultRate, defaultedLoans, loansEverOverdue, paidInst, overdueInst }
   }, [loans, installments])
 
-  // Default rate by department
   const deptBreakdown = useMemo(() => {
-    if (!loans.length) return []
     const map = {}
     for (const loan of loans) {
       const dept = loan.department || 'Unknown'
@@ -623,25 +760,27 @@ function CollectionTab() {
   }, [loans])
 
   if (loading) return <div className="empty-state"><p>Loading collection data...</p></div>
-  if (!metrics) return <div className="empty-state"><BarChart2 size={40} /><h3>Insufficient data</h3><p>Collection metrics will appear as loans are processed</p></div>
+  if (!metrics) return (
+    <div className="empty-state">
+      <BarChart2 size={40} /><h3>No installments due in this period</h3>
+      <p>Try selecting a wider date range</p>
+    </div>
+  )
 
   return (
     <>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px,1fr))', gap: 14, marginBottom: 24 }}>
-        <StatCard label="On-Time Payment Rate" value={`${metrics.onTimeRate.toFixed(1)}%`} color={metrics.onTimeRate >= 80 ? 'var(--green)' : metrics.onTimeRate >= 60 ? 'var(--gold)' : 'var(--red)'} sub={`${metrics.paidInst.length} paid installments`} />
-        <StatCard label="Avg Days Overdue" value={metrics.avgDaysOverdue.toFixed(1)} color={metrics.avgDaysOverdue < 7 ? 'var(--green)' : metrics.avgDaysOverdue < 14 ? 'var(--gold)' : 'var(--red)'} sub={`${metrics.overdueInst.length} overdue installments`} />
-        <StatCard label="Recovery Rate" value={`${metrics.recoveryRate.toFixed(1)}%`} color={metrics.recoveryRate >= 70 ? 'var(--green)' : metrics.recoveryRate >= 40 ? 'var(--gold)' : 'var(--red)'} sub={`${metrics.loansEverOverdue.length} loans ever overdue`} />
-        <StatCard label="Default Rate" value={`${metrics.defaultRate.toFixed(1)}%`} color={metrics.defaultRate < 5 ? 'var(--green)' : metrics.defaultRate < 10 ? 'var(--gold)' : 'var(--red)'} sub={`${metrics.defaultedLoans.length} of ${loans.length} loans`} />
+        <StatCard label="On-Time Payment Rate"  value={`${metrics.onTimeRate.toFixed(1)}%`}     color={metrics.onTimeRate >= 80 ? 'var(--green)' : metrics.onTimeRate >= 60 ? 'var(--gold)' : 'var(--red)'}     sub={`${metrics.paidInst.length} paid installments`} />
+        <StatCard label="Avg Days Overdue"       value={metrics.avgDaysOverdue.toFixed(1)}        color={metrics.avgDaysOverdue < 7 ? 'var(--green)' : metrics.avgDaysOverdue < 14 ? 'var(--gold)' : 'var(--red)'} sub={`${metrics.overdueInst.length} overdue`} />
+        <StatCard label="Recovery Rate"          value={`${metrics.recoveryRate.toFixed(1)}%`}    color={metrics.recoveryRate >= 70 ? 'var(--green)' : metrics.recoveryRate >= 40 ? 'var(--gold)' : 'var(--red)'} sub={`${metrics.loansEverOverdue.length} ever overdue`} />
+        <StatCard label="Default Rate"           value={`${metrics.defaultRate.toFixed(1)}%`}     color={metrics.defaultRate < 5 ? 'var(--green)' : metrics.defaultRate < 10 ? 'var(--gold)' : 'var(--red)'}     sub={`${metrics.defaultedLoans.length} of ${loans.length} loans`} />
       </div>
 
-      {/* Default rate by department */}
       {deptBreakdown.length > 0 && (
         <div className="card" style={{ padding: 0, overflow: 'hidden', marginBottom: 20 }}>
-          <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--card-border)', fontSize: 13, fontWeight: 700, color: 'var(--text-secondary)' }}>
-            Default Rate by Department
-          </div>
+          <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--card-border)', fontSize: 13, fontWeight: 700, color: 'var(--text-secondary)' }}>Default Rate by Department</div>
           {deptBreakdown.map((d, i) => {
-            const rate = (d.defaulted / d.total) * 100
+            const rate  = (d.defaulted / d.total) * 100
             const color = rate === 0 ? 'var(--green)' : rate < 10 ? 'var(--gold)' : 'var(--red)'
             return (
               <div key={d.dept} style={{ display: 'grid', gridTemplateColumns: '200px 1fr 80px 80px', padding: '13px 20px', borderBottom: i < deptBreakdown.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none', alignItems: 'center', gap: 12 }}
@@ -649,7 +788,7 @@ function CollectionTab() {
                 onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                 <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.dept}</div>
                 <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 4, height: 8, overflow: 'hidden' }}>
-                  <div style={{ width: `${Math.min(100, rate || 0)}%`, height: '100%', background: color, borderRadius: 4, transition: 'width 0.5s ease' }} />
+                  <div style={{ width: `${Math.min(100, rate)}%`, height: '100%', background: color, borderRadius: 4, transition: 'width 0.5s ease' }} />
                 </div>
                 <div style={{ fontSize: 12, color: 'var(--text-muted)', textAlign: 'right' }}>{d.total} loans</div>
                 <div style={{ fontSize: 13, fontWeight: 700, color, textAlign: 'right' }}>{rate.toFixed(1)}%</div>
@@ -659,27 +798,13 @@ function CollectionTab() {
         </div>
       )}
 
-      {/* Penalties summary */}
       {penalties.length > 0 && (
         <div className="card" style={{ padding: '20px 22px' }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 14 }}>Penalty Charges Summary</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 14 }}>Penalty Charges — Selected Period</div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px,1fr))', gap: 14 }}>
-            <div>
-              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>Total Penalty Records</div>
-              <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--red)' }}>{penalties.length}</div>
-            </div>
-            <div>
-              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>Total Penalties Charged</div>
-              <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--red)' }}>
-                {formatCurrency(penalties.reduce((s, p) => s + (parseFloat(p.amount) || 0), 0))}
-              </div>
-            </div>
-            <div>
-              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>Unique Loans Penalized</div>
-              <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--gold)' }}>
-                {new Set(penalties.map(p => p.loan_id)).size}
-              </div>
-            </div>
+            <div><div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>Total Penalty Records</div><div style={{ fontSize: 20, fontWeight: 800, color: 'var(--red)' }}>{penalties.length}</div></div>
+            <div><div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>Total Penalties Charged</div><div style={{ fontSize: 20, fontWeight: 800, color: 'var(--red)' }}>{formatCurrency(penalties.reduce((s, p) => s + (parseFloat(p.amount) || 0), 0))}</div></div>
+            <div><div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>Unique Loans Penalized</div><div style={{ fontSize: 20, fontWeight: 800, color: 'var(--gold)' }}>{new Set(penalties.map(p => p.loan_id)).size}</div></div>
           </div>
         </div>
       )}
@@ -688,23 +813,52 @@ function CollectionTab() {
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// MAIN PAGE
+// MAIN PAGE — owns dateRange state, lifts it to all tabs
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 export default function AuditPage() {
-  const [activeTab, setActiveTab] = useState('activity')
-  const [logs, setLogs]   = useState([])
-  const [loading, setLoading] = useState(true)
+  const [activeTab, setActiveTab]   = useState('activity')
+  const [logs,      setLogs]        = useState([])
+  const [loading,   setLoading]     = useState(true)
   const [activityRef, setActivityRef] = useState(null)
 
+  // ── Period selector state ──
+  const [preset,     setPreset]     = useState('this_month')
+  const [customFrom, setCustomFrom] = useState(format(startOfMonth(new Date()), 'yyyy-MM-dd'))
+  const [customTo,   setCustomTo]   = useState(format(endOfMonth(new Date()),   'yyyy-MM-dd'))
+  const [dateRange,  setDateRange]  = useState(() => getPresetRange('this_month'))
+
+  const handlePresetChange = (p) => {
+    setPreset(p)
+    if (p !== 'custom') setDateRange(getPresetRange(p))
+  }
+  const handleCustomFromChange = (v) => {
+    setCustomFrom(v)
+    if (v && customTo && v <= customTo) {
+      setDateRange({ start: new Date(v + 'T00:00:00'), end: new Date(customTo + 'T23:59:59') })
+    }
+  }
+  const handleCustomToChange = (v) => {
+    setCustomTo(v)
+    if (customFrom && v && customFrom <= v) {
+      setDateRange({ start: new Date(customFrom + 'T00:00:00'), end: new Date(v + 'T23:59:59') })
+    }
+  }
+
+  // ── fetch audit_logs filtered by dateRange ──
   const fetchLogs = useCallback(async () => {
-    const { data } = await supabase.from('audit_logs').select('*').order('created_at', { ascending: false })
+    setLoading(true)
+    const { data } = await supabase
+      .from('audit_logs')
+      .select('*')
+      .gte('created_at', dateRange.start.toISOString())
+      .lte('created_at', dateRange.end.toISOString())
+      .order('created_at', { ascending: false })
     setLogs(data || [])
     setLoading(false)
-  }, [])
+  }, [dateRange])
 
   useEffect(() => { fetchLogs() }, [fetchLogs])
 
-  // Called from AnomalyTab "View logs" button — jumps to activity tab + filters
   const handleViewLogs = useCallback((searchTerm) => {
     setActiveTab('activity')
     if (activityRef?.setSearch) activityRef.setSearch(searchTerm)
@@ -718,15 +872,15 @@ export default function AuditPage() {
     ])
     const csv = [headers, ...rows].map(r => r.join(',')).join('\n')
     const blob = new Blob([csv], { type: 'text/csv' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a'); a.href = url
-    a.download = `MoneyfestLending_Audit_${new Date().toISOString().slice(0,10)}.csv`
+    const url  = URL.createObjectURL(blob)
+    const a    = document.createElement('a'); a.href = url
+    a.download = `MoneyfestLending_Audit_${format(dateRange.start, 'yyyyMMdd')}_${format(dateRange.end, 'yyyyMMdd')}.csv`
     a.click(); URL.revokeObjectURL(url)
   }
 
   const tabStyle = (key) => ({
     display: 'flex', alignItems: 'center', gap: 7,
-    padding: '9px 18px', borderRadius: 9, border: 'none', cursor: 'pointer',
+    padding: '9px 16px', borderRadius: 9, border: 'none', cursor: 'pointer',
     fontSize: 13, fontWeight: activeTab === key ? 700 : 500,
     background: activeTab === key ? 'rgba(255,255,255,0.1)' : 'transparent',
     color: activeTab === key ? 'var(--text-primary)' : 'var(--text-muted)',
@@ -739,20 +893,27 @@ export default function AuditPage() {
       <div className="page-header">
         <div>
           <h1 className="page-title">Audit History</h1>
-          <p className="page-subtitle">{logs.length} total records — permanent, read-only</p>
+          <p className="page-subtitle">{logs.length} records · {format(dateRange.start, 'MMM d, yyyy')} – {format(dateRange.end, 'MMM d, yyyy')}</p>
         </div>
         <button onClick={exportCSV} className="btn-edit" style={{ gap: 6 }}>
           <Download size={15} /> Export CSV
         </button>
       </div>
 
-      {/* Stats row (always visible) */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 14, marginBottom: 22 }}>
+      {/* ── Period Selector — always visible ── */}
+      <PeriodSelector
+        preset={preset}           onPresetChange={handlePresetChange}
+        customFrom={customFrom}   onCustomFromChange={handleCustomFromChange}
+        customTo={customTo}       onCustomToChange={handleCustomToChange}
+      />
+
+      {/* Stats row */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px,1fr))', gap: 14, marginBottom: 22 }}>
         {[
-          { label: 'Total Actions',      value: logs.length,                                                       color: 'var(--blue)'   },
-          { label: 'Loan Actions',        value: logs.filter(l => l.module === 'Loan').length,                    color: 'var(--purple)' },
-          { label: 'Borrower Actions',    value: logs.filter(l => l.module === 'Borrower').length,                color: 'var(--green)'  },
-          { label: 'Payments Recorded',   value: logs.filter(l => l.action_type === 'INSTALLMENT_PAID').length,   color: 'var(--teal)'   },
+          { label: 'Total Actions',    value: logs.length,                                                     color: 'var(--blue)'   },
+          { label: 'Loan Actions',     value: logs.filter(l => l.module === 'Loan').length,                   color: 'var(--purple)' },
+          { label: 'Borrower Actions', value: logs.filter(l => l.module === 'Borrower').length,               color: 'var(--green)'  },
+          { label: 'Payments Recorded',value: logs.filter(l => l.action_type === 'INSTALLMENT_PAID').length,  color: 'var(--teal)'   },
         ].map(s => (
           <div key={s.label} className="card" style={{ padding: '14px 18px', textAlign: 'center' }}>
             <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 22, color: s.color }}>{s.value}</div>
@@ -765,22 +926,16 @@ export default function AuditPage() {
       <div style={{ display: 'flex', gap: 4, marginBottom: 24, background: 'rgba(255,255,255,0.03)', borderRadius: 12, padding: 5, flexWrap: 'wrap' }}>
         {TABS.map(tab => {
           const Icon = tab.icon
-          return (
-            <button key={tab.key} onClick={() => setActiveTab(tab.key)} style={tabStyle(tab.key)}>
-              <Icon size={14} />{tab.label}
-            </button>
-          )
+          return <button key={tab.key} onClick={() => setActiveTab(tab.key)} style={tabStyle(tab.key)}><Icon size={14} />{tab.label}</button>
         })}
       </div>
 
-      {/* Tab content */}
-      {activeTab === 'activity' && (
-        <ActivityTab logs={logs} loading={loading} onFilterJump={setActivityRef} />
-      )}
-      {activeTab === 'ledger' && <LedgerTab />}
-      {activeTab === 'anomalies' && <AnomalyTab logs={logs} onViewLogs={handleViewLogs} />}
+      {/* Tab content — all tabs receive dateRange */}
+      {activeTab === 'activity'       && <ActivityTab       logs={logs} loading={loading} onFilterJump={setActivityRef} />}
+      {activeTab === 'ledger'         && <LedgerTab         dateRange={dateRange} />}
+      {activeTab === 'anomalies'      && <AnomalyTab        logs={logs} onViewLogs={handleViewLogs} dateRange={dateRange} />}
       {activeTab === 'accountability' && <AccountabilityTab logs={logs} />}
-      {activeTab === 'collection' && <CollectionTab />}
+      {activeTab === 'collection'     && <CollectionTab     dateRange={dateRange} />}
     </div>
   )
 }
