@@ -200,14 +200,14 @@ function LedgerTab() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    supabase.from('capital_flow').select('*').order('created_at', { ascending: true })
+    supabase.from('capital_flow').select('*').order('entry_date', { ascending: true })
       .then(({ data }) => { setFlow(data || []); setLoading(false) })
   }, [])
 
   const monthly = useMemo(() => {
     const map = {}
     for (const row of flow) {
-      const k = monthKey(row.created_at)
+      const k = monthKey(row.entry_date || row.created_at)
       if (!map[k]) map[k] = { month: k, label: monthLabel(k), interest: 0, principal: 0, penalties: 0, disbursed: 0 }
       const type = (row.type || '').toLowerCase()
       const amt = parseFloat(row.amount) || 0
@@ -567,7 +567,7 @@ function CollectionTab() {
 
   useEffect(() => {
     Promise.all([
-      supabase.from('loans').select('id, loan_amount, status, due_date, release_date, payments_made, num_installments, remaining_balance').not('status', 'eq', 'Cancelled'),
+      supabase.from('loans').select('id, loan_amount, status, due_date, release_date, payments_made, num_installments, remaining_balance, department').not('status', 'eq', 'Cancelled'),
       supabase.from('installments').select('id, loan_id, status, due_date, paid_at, amount_due'),
       supabase.from('penalty_charges').select('id, loan_id, amount, created_at').catch(() => ({ data: [] })),
     ]).then(([{ data: l }, { data: inst }, { data: pen }]) => {
