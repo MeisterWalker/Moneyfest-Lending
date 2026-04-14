@@ -898,7 +898,7 @@ function EarningsTab({ dateRange }) {
     for (let i = 5; i >= 0; i--) {
       const mStart    = startOfMonth(subMonths(new Date(), i))
       const mEnd      = endOfMonth(subMonths(new Date(), i))
-      const mLabel    = format(mStart, 'MMM yy')
+      const mLabel    = format(mStart, 'MMM yyyy')
       const mFlowRows = histFlow.filter(r => { const d = new Date(r.entry_date); return d >= mStart && d <= mEnd })
       const interest  = sumInterest(mFlowRows)
       const penalties = sumPenalties(mFlowRows)
