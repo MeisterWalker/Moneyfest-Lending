@@ -97,12 +97,12 @@ function monthLabel(key) {
 function aggregateFlow(rows = []) {
   let interest = 0, principal = 0, penalties = 0, disbursed = 0
   for (const r of rows) {
-    const type = (r.type || '').toLowerCase()
+    const cat = (r.category || '').toLowerCase()
     const amt  = parseFloat(r.amount) || 0
-    if (type.includes('interest'))  interest  += amt
-    if (type.includes('principal')) principal += amt
-    if (type.includes('penalty'))   penalties += amt
-    if (type.includes('disburs'))   disbursed += amt
+    if (cat.includes('interest profit'))                                           interest  += amt
+    if (cat.includes('loan principal return') || cat.includes('initial pool'))     principal += amt
+    if (cat.includes('penalty'))                                                   penalties += amt
+    if (r.type === 'CASH OUT')                                                     disbursed += amt
   }
   return { interest, principal, penalties, disbursed, net: interest + principal + penalties - disbursed }
 }
@@ -310,12 +310,12 @@ function LedgerTab({ dateRange }) {
     for (const row of flow) {
       const k = monthKey(row.entry_date || row.created_at)
       if (!map[k]) map[k] = { month: k, label: monthLabel(k), interest: 0, principal: 0, penalties: 0, disbursed: 0 }
-      const type = (row.type || '').toLowerCase()
+      const cat = (row.category || '').toLowerCase()
       const amt  = parseFloat(row.amount) || 0
-      if (type.includes('interest'))  map[k].interest  += amt
-      if (type.includes('principal')) map[k].principal += amt
-      if (type.includes('penalty'))   map[k].penalties += amt
-      if (type.includes('disburs'))   map[k].disbursed += amt
+      if (cat.includes('interest profit'))                                         map[k].interest  += amt
+      if (cat.includes('loan principal return') || cat.includes('initial pool'))   map[k].principal += amt
+      if (cat.includes('penalty'))                                                 map[k].penalties += amt
+      if (row.type === 'CASH OUT')                                                 map[k].disbursed += amt
     }
     return Object.values(map).sort((a, b) => a.month.localeCompare(b.month))
   }, [flow])
@@ -536,7 +536,7 @@ function AnomalyTab({ logs, onViewLogs, dateRange }) {
     // (b) Penalty in audit_logs with no matching capital_flow on same date
     for (const log of logs.filter(l => l.action_type === 'PENALTY_CHARGED' || (l.description || '').toLowerCase().includes('penalty'))) {
       const logDate = new Date(log.created_at).toISOString().slice(0, 10)
-      const hasMatch = capitalFlow.some(cf => (cf.entry_date || '').slice(0,10) === logDate && (cf.type || '').toLowerCase().includes('penalty'))
+      const hasMatch = capitalFlow.some(cf => (cf.entry_date || '').slice(0,10) === logDate && (cf.category || '').toLowerCase().includes('penalty'))
       if (!hasMatch) {
         results.push({
           id: `pen-${log.id}`, severity: 'Medium',
