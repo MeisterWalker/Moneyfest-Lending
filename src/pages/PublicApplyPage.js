@@ -213,10 +213,14 @@ export default function PublicApplyPage() {
   const [disclaimerCountdown, setDisclaimerCountdown] = useState(4)
   const [pendingAmount, setPendingAmount] = useState(null)
   const [interestRate, setInterestRate] = useState(0.07)
+  const [departments, setDepartments] = useState([])  // Dynamic Departments
 
   useEffect(() => {
     supabase.from('settings').select('interest_rate').eq('id', 1).single()
       .then(({ data }) => { if (data?.interest_rate) setInterestRate(data.interest_rate) })
+    // Fetch departments from DB
+    supabase.from('departments').select('name').eq('active', true).order('sort_order')
+      .then(({ data }) => { if (data) setDepartments(data.map(d => d.name)) })
   }, [])
 
   const [form, setForm] = useState({
@@ -587,7 +591,10 @@ export default function PublicApplyPage() {
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
                       <div>
                         <label style={lbl}>Department *</label>
-                        <input className="apply-inp" value={form.department} onChange={e => set('department', e.target.value)} placeholder="e.g. Minto Money, Greyhound..." style={{ ...inp }} />
+                        <select className="apply-inp" value={form.department} onChange={e => set('department', e.target.value)} style={{ ...inp, appearance: 'none', cursor: 'pointer' }}>
+                          <option value="">Select Department...</option>
+                          {departments.map(d => <option key={d} value={d}>{d}</option>)}
+                        </select>
                       </div>
                       <div>
                         <label style={lbl}>Assigned Building *</label>
