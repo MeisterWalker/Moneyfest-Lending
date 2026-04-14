@@ -8,11 +8,11 @@ import {
 import {
   Search, Download, History, Filter, AlertTriangle,
   TrendingUp, Users, BarChart2, Shield,
-  ChevronDown, ChevronRight, ArrowUp, ArrowDown, Calendar
+  ChevronDown, ChevronRight, ArrowUp, ArrowDown, Calendar, DollarSign
 } from 'lucide-react'
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  CartesianGrid, Legend
+  CartesianGrid, Legend, ComposedChart, Line
 } from 'recharts'
 
 // ── Constants ───────────────────────────────────────────────────
@@ -22,6 +22,7 @@ const TABS = [
   { key: 'anomalies',      label: 'Anomaly Flags',           icon: AlertTriangle},
   { key: 'accountability', label: 'Admin Accountability',    icon: Shield       },
   { key: 'collection',     label: 'Collection Efficiency',   icon: BarChart2    },
+  { key: 'earnings',       label: 'Earnings Report',         icon: DollarSign   },
 ]
 const PRESETS = [
   { key: 'this_month',  label: 'This Month'    },
@@ -813,6 +814,241 @@ function CollectionTab({ dateRange }) {
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// TAB 6 — Earnings Report
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+const PARTNERS = [
+  { key: 'jp',      name: 'JP',      contributed: 10000 },
+  { key: 'charlou', name: 'Charlou', contributed: 34000 },
+]
+
+function EarningsTab({ dateRange }) {
+  const [allFlow,    setAllFlow]    = useState([])
+  const [allPen,     setAllPen]     = useState([])
+  const [periodFlow, setPeriodFlow] = useState([])
+  const [periodPen,  setPeriodPen]  = useState([])
+  const [prevFlow,   setPrevFlow]   = useState([])
+  const [prevPen,    setPrevPen]    = useState([])
+  const [histFlow,   setHistFlow]   = useState([])
+  const [histPen,    setHistPen]    = useState([])
+  const [loading,    setLoading]    = useState(true)
+
+  useEffect(() => {
+    setLoading(true)
+    const prevRange = getPrevRange(dateRange)
+    const histStart = startOfMonth(subMonths(new Date(), 5))
+    const histEnd   = endOfMonth(new Date())
+
+    Promise.all([
+      supabase.from('capital_flow').select('amount, category, type, entry_date'),
+      supabase.from('penalty_charges').select('penalty_amount, created_at'),
+      supabase.from('capital_flow').select('amount, category, type, entry_date')
+        .gte('entry_date', format(dateRange.start, 'yyyy-MM-dd'))
+        .lte('entry_date', format(dateRange.end,   'yyyy-MM-dd')),
+      supabase.from('penalty_charges').select('penalty_amount, created_at')
+        .gte('created_at', dateRange.start.toISOString())
+        .lte('created_at', dateRange.end.toISOString()),
+      supabase.from('capital_flow').select('amount, category, type, entry_date')
+        .gte('entry_date', format(prevRange.start, 'yyyy-MM-dd'))
+        .lte('entry_date', format(prevRange.end,   'yyyy-MM-dd')),
+      supabase.from('penalty_charges').select('penalty_amount, created_at')
+        .gte('created_at', prevRange.start.toISOString())
+        .lte('created_at', prevRange.end.toISOString()),
+      supabase.from('capital_flow').select('amount, category, type, entry_date')
+        .gte('entry_date', format(histStart, 'yyyy-MM-dd'))
+        .lte('entry_date', format(histEnd,   'yyyy-MM-dd')),
+      supabase.from('penalty_charges').select('penalty_amount, created_at')
+        .gte('created_at', histStart.toISOString())
+        .lte('created_at', histEnd.toISOString()),
+    ]).then(([af, ap, pf, pp, pvf, pvp, hf, hp]) => {
+      setAllFlow(af.data    || [])
+      setAllPen(ap.data     || [])
+      setPeriodFlow(pf.data || [])
+      setPeriodPen(pp.data  || [])
+      setPrevFlow(pvf.data  || [])
+      setPrevPen(pvp.data   || [])
+      setHistFlow(hf.data   || [])
+      setHistPen(hp.data    || [])
+      setLoading(false)
+    })
+  }, [dateRange])
+
+  const sumInterest  = (rows) => rows.reduce((s, r) => s + ((r.category || '').toLowerCase().includes('interest profit') ? parseFloat(r.amount) || 0 : 0), 0)
+  const sumCapital   = (rows) => rows.reduce((s, r) => s + (((r.category || '').toLowerCase().includes('initial pool') || (r.category || '').toLowerCase().includes('capital top-up')) ? parseFloat(r.amount) || 0 : 0), 0)
+  const sumPenalties = (rows) => rows.reduce((s, r) => s + (parseFloat(r.penalty_amount) || 0), 0)
+
+  const atInterest  = sumInterest(allFlow)
+  const atCapital   = sumCapital(allFlow)
+  const atPenalties = sumPenalties(allPen)
+  const atNet       = atInterest + atPenalties
+
+  const perInterest  = sumInterest(periodFlow)
+  const perPenalties = sumPenalties(periodPen)
+  const perNet       = perInterest + perPenalties
+
+  const prevInterest  = sumInterest(prevFlow)
+  const prevPenalties = sumPenalties(prevPen)
+  const prevNet       = prevInterest + prevPenalties
+
+  const monthlyEarnings = useMemo(() => {
+    const months = []
+    for (let i = 5; i >= 0; i--) {
+      const mStart   = startOfMonth(subMonths(new Date(), i))
+      const mEnd     = endOfMonth(subMonths(new Date(), i))
+      const mLabel   = format(mStart, 'MMM yy')
+      const mFlowRows = histFlow.filter(r => { const d = new Date(r.entry_date); return d >= mStart && d <= mEnd })
+      const mPenRows  = histPen.filter(r  => { const d = new Date(r.created_at); return d >= mStart && d <= mEnd })
+      const interest  = sumInterest(mFlowRows)
+      const penalties = sumPenalties(mPenRows)
+      const topups    = sumCapital(mFlowRows)
+      months.push({ label: mLabel, interest, penalties, income: interest + penalties, topups })
+    }
+    let running = 0
+    return months.map(m => { running += m.income; return { ...m, cumulative: running } })
+  }, [histFlow, histPen])
+
+  const customTooltip = ({ active, payload, label }) => {
+    if (!active || !payload?.length) return null
+    return (
+      <div style={{ background: 'var(--card)', border: '1px solid var(--card-border)', borderRadius: 10, padding: '12px 16px', fontSize: 12 }}>
+        <div style={{ fontWeight: 700, marginBottom: 8, color: 'var(--text-primary)' }}>{label}</div>
+        {payload.map(p => <div key={p.name} style={{ color: p.color || 'var(--text-label)', marginBottom: 3 }}>{p.name}: {formatCurrency(p.value)}</div>)}
+      </div>
+    )
+  }
+
+  if (loading) return <div className="empty-state"><p>Loading earnings data...</p></div>
+
+  return (
+    <>
+      {/* 1. All-time KPI strip */}
+      <div style={{ marginBottom: 6 }}>
+        <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600, marginBottom: 10 }}>📊 All-Time Totals (no date filter)</div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px,1fr))', gap: 14, marginBottom: 24 }}>
+          <StatCard label="Total Interest Earned"    value={formatCurrency(atInterest)}  color="var(--green)" />
+          <StatCard label="Penalties Collected"      value={formatCurrency(atPenalties)} color="var(--red)"   />
+          <StatCard label="Capital in Pool"          value={formatCurrency(atCapital)}   color="var(--blue)"  />
+          <StatCard label="Net Earnings (All-Time)"  value={formatCurrency(atNet)}       color="var(--teal)"  />
+        </div>
+      </div>
+
+      {/* 2. Period earnings with delta */}
+      <div style={{ marginBottom: 24 }}>
+        <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600, marginBottom: 10 }}>📅 Selected Period</div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px,1fr))', gap: 14 }}>
+          <StatCard label="Interest Earned" value={formatCurrency(perInterest)}  color="var(--green)" delta={<DeltaBadge current={perInterest}  previous={prevInterest}  />} />
+          <StatCard label="Penalties"       value={formatCurrency(perPenalties)} color="var(--red)"   delta={<DeltaBadge current={perPenalties} previous={prevPenalties} invertColors />} />
+          <StatCard label="Net Earnings"    value={formatCurrency(perNet)}       color="var(--teal)"  delta={<DeltaBadge current={perNet}       previous={prevNet}       />} />
+        </div>
+      </div>
+
+      {/* 4. Earnings growth chart */}
+      {monthlyEarnings.length > 0 && (
+        <div className="card" style={{ padding: '24px', marginBottom: 24 }}>
+          <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 20, color: 'var(--text-secondary)' }}>Earnings Growth — Last 6 Months</div>
+          <ResponsiveContainer width="100%" height={280}>
+            <ComposedChart data={monthlyEarnings} margin={{ top: 5, right: 50, left: 10, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+              <XAxis dataKey="label" tick={{ fill: 'var(--text-muted)', fontSize: 11 }} />
+              <YAxis yAxisId="left"  tickFormatter={v => `₱${(v/1000).toFixed(0)}k`} tick={{ fill: 'var(--text-muted)', fontSize: 11 }} />
+              <YAxis yAxisId="right" orientation="right" tickFormatter={v => `₱${(v/1000).toFixed(0)}k`} tick={{ fill: '#2DD4BF', fontSize: 11 }} />
+              <Tooltip content={customTooltip} />
+              <Legend wrapperStyle={{ fontSize: 12, color: 'var(--text-muted)' }} />
+              <Bar  yAxisId="left"  dataKey="interest"   name="Interest Earned" fill="#22C55E" radius={[3,3,0,0]} />
+              <Bar  yAxisId="left"  dataKey="penalties"  name="Penalties"       fill="#F59E0B" radius={[3,3,0,0]} />
+              <Line yAxisId="right" type="monotone" dataKey="cumulative" name="Cumulative Total" stroke="#2DD4BF" strokeWidth={2} dot={{ fill: '#2DD4BF', r: 4 }} />
+            </ComposedChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+
+      {/* 3. Month-by-month table */}
+      <div className="card" style={{ padding: 0, overflow: 'hidden', marginBottom: 28 }}>
+        <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--card-border)', fontSize: 13, fontWeight: 700, color: 'var(--text-secondary)' }}>Month-by-Month Breakdown — Last 6 Months</div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr 1.2fr', padding: '10px 20px', borderBottom: '1px solid var(--card-border)', background: 'rgba(255,255,255,0.015)' }}>
+          {['Month', 'Interest', 'Penalties', 'Total Income', 'Capital Top-ups', 'Running Total'].map(h => (
+            <div key={h} style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>{h}</div>
+          ))}
+        </div>
+        {monthlyEarnings.map((m, i) => {
+          const isLast = i === monthlyEarnings.length - 1
+          return (
+            <div key={m.label} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr 1.2fr', padding: '13px 20px', borderBottom: i < monthlyEarnings.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none', alignItems: 'center', background: isLast ? 'rgba(255,255,255,0.02)' : 'transparent' }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.015)'}
+              onMouseLeave={e => e.currentTarget.style.background = isLast ? 'rgba(255,255,255,0.02)' : 'transparent'}>
+              <div style={{ fontSize: 13, fontWeight: isLast ? 800 : 600, color: 'var(--text-primary)' }}>{m.label}</div>
+              <div style={{ fontSize: 13, fontWeight: isLast ? 700 : 400, color: 'var(--green)' }}>{formatCurrency(m.interest)}</div>
+              <div style={{ fontSize: 13, fontWeight: isLast ? 700 : 400, color: m.penalties > 0 ? 'var(--red)' : 'var(--text-muted)' }}>{formatCurrency(m.penalties)}</div>
+              <div style={{ fontSize: 13, fontWeight: isLast ? 700 : 400, color: 'var(--text-primary)' }}>{formatCurrency(m.income)}</div>
+              <div style={{ fontSize: 13, color: m.topups > 0 ? 'var(--blue)' : 'var(--text-muted)' }}>{formatCurrency(m.topups)}</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--green)' }}>{formatCurrency(m.cumulative)}</div>
+            </div>
+          )
+        })}
+        {monthlyEarnings.length > 0 && (() => {
+          const totInt = monthlyEarnings.reduce((s, m) => s + m.interest, 0)
+          const totPen = monthlyEarnings.reduce((s, m) => s + m.penalties, 0)
+          const totInc = monthlyEarnings.reduce((s, m) => s + m.income, 0)
+          const totTop = monthlyEarnings.reduce((s, m) => s + m.topups, 0)
+          const lastCu = monthlyEarnings[monthlyEarnings.length - 1]?.cumulative || 0
+          return (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr 1.2fr', padding: '14px 20px', background: 'rgba(255,255,255,0.04)', borderTop: '2px solid var(--card-border)' }}>
+              <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--text-primary)' }}>6-Month Total</div>
+              <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--green)' }}>{formatCurrency(totInt)}</div>
+              <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--red)' }}>{formatCurrency(totPen)}</div>
+              <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--text-primary)' }}>{formatCurrency(totInc)}</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--blue)' }}>{formatCurrency(totTop)}</div>
+              <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--green)' }}>{formatCurrency(lastCu)}</div>
+            </div>
+          )
+        })()}
+      </div>
+
+      {/* 5. Partner earnings split — fixed 50/50 */}
+      <div>
+        <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600, marginBottom: 14 }}>🤝 Partner Earnings Split (All-Time · Fixed 50/50)</div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+          {PARTNERS.map(p => {
+            const share  = atNet * 0.50
+            const roi    = p.contributed > 0 ? (share / p.contributed) * 100 : 0
+            const color  = p.key === 'jp' ? 'var(--purple)' : 'var(--teal)'
+            return (
+              <div key={p.key} className="card" style={{ padding: '24px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
+                  <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 22, color }}>{p.name}</div>
+                  <span style={{ fontSize: 11, padding: '3px 10px', borderRadius: 20, background: 'rgba(255,255,255,0.05)', color: 'var(--text-muted)', fontWeight: 600 }}>50% share</span>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+                  <div>
+                    <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>Capital Contributed</div>
+                    <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--blue)' }}>{formatCurrency(p.contributed)}</div>
+                    <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>Info only · does not affect split</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>Earnings Share</div>
+                    <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--green)' }}>{formatCurrency(share)}</div>
+                    <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>Net Earnings × 50%</div>
+                  </div>
+                </div>
+                <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 10, padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div>
+                    <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 2 }}>ROI on Capital</div>
+                    <div style={{ fontSize: 22, fontWeight: 800, color: roi >= 0 ? 'var(--green)' : 'var(--red)' }}>{roi.toFixed(1)}%</div>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>Profit split</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--gold)' }}>50/50 per agreement</div>
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    </>
+  )
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // MAIN PAGE — owns dateRange state, lifts it to all tabs
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 export default function AuditPage() {
@@ -936,6 +1172,7 @@ export default function AuditPage() {
       {activeTab === 'anomalies'      && <AnomalyTab        logs={logs} onViewLogs={handleViewLogs} dateRange={dateRange} />}
       {activeTab === 'accountability' && <AccountabilityTab logs={logs} />}
       {activeTab === 'collection'     && <CollectionTab     dateRange={dateRange} />}
+      {activeTab === 'earnings'       && <EarningsTab       dateRange={dateRange} />}
     </div>
   )
 }
