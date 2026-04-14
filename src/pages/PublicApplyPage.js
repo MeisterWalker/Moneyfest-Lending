@@ -218,8 +218,8 @@ export default function PublicApplyPage() {
   useEffect(() => {
     supabase.from('settings').select('interest_rate').eq('id', 1).single()
       .then(({ data }) => { if (data?.interest_rate) setInterestRate(data.interest_rate) })
-    // Fetch departments from DB
-    supabase.from('departments').select('name').eq('active', true).order('sort_order')
+    // Fetch departments from DB alphabetically
+    supabase.from('departments').select('name').eq('active', true).order('name')
       .then(({ data }) => { if (data) setDepartments(data.map(d => d.name)) })
   }, [])
 
