@@ -40,7 +40,8 @@ const AdminToolsPage     = lazy(() => import('./pages/AdminToolsPage'))
 const InboxPage          = lazy(() => import('./pages/InboxPage'))
 const CapitalPage        = lazy(() => import('./pages/CapitalPage'))
 const CapitalForecastPage = lazy(() => import('./pages/CapitalForecastPage'))
-
+const LedgerPage          = lazy(() => import('./pages/LedgerPage'))
+const EarningsPage        = lazy(() => import('./pages/EarningsPage'))
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
@@ -115,6 +116,8 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         />
+        <Route path="/admin/ledger"          element={<ProtectedRoute><AppLayout><LedgerPage /></AppLayout></ProtectedRoute>} />
+        <Route path="/admin/earnings"        element={<ProtectedRoute><AppLayout><EarningsPage /></AppLayout></ProtectedRoute>} />
         <Route path="/terms"            element={<TermsPage />} />
         <Route path="/contact"          element={<ContactPage />} />
         <Route path="/partners"         element={<PartnersPage />} />

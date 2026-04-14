@@ -1,7 +1,7 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, Users, FileText, TrendingUp, BarChart,
-  Calendar, History, Settings, LogOut, ClipboardList, Shield, CheckSquare, Briefcase, Brain, Moon, Sun, Wallet, Wrench, Mail
+  Calendar, History, Settings, LogOut, ClipboardList, Shield, CheckSquare, Briefcase, Brain, Moon, Sun, Wallet, Wrench, Mail, DollarSign
 } from 'lucide-react'
 
 function LedgerIcon({ size = 20 }) {
@@ -43,6 +43,8 @@ const navGroups = [
     label: 'FINANCE',
     items: [
       { to: '/admin/capital', icon: Wallet, label: 'Capital' },
+      { to: '/admin/ledger', icon: TrendingUp, label: 'Financial Ledger' },
+      { to: '/admin/earnings', icon: DollarSign, label: 'Earnings Report' },
       { to: '/admin/forecast-capital', icon: BarChart, label: 'Cash Forecast' },
       { to: '/admin/forecast', icon: TrendingUp, label: 'Profit Forecast' },
       // { to: '/admin/investors', icon: Wallet, label: 'Investors' },
