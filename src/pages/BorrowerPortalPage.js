@@ -914,12 +914,15 @@ export default function BorrowerPortalPage() {
             Moneyfest<span style={{ background: 'linear-gradient(90deg,#60a5fa,#a78bfa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Lending</span>
           </div>
         </a>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <a href="/portal" onClick={(e) => { e.preventDefault(); setLoginType(loginType === 'borrower' ? 'partner' : 'borrower') }} 
-             style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 14px', borderRadius: 8, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', color: '#7A8AAA', fontSize: 12, fontWeight: 600, textDecoration: 'none' }}>
-            Switch to {loginType === 'borrower' ? 'Partner' : 'Borrower'}
-          </a>
-        </div>
+        {/* Partner toggle hidden — future feature */}
+        {false && (
+          <div style={{ display: 'flex', gap: 8 }}>
+            <a href="/portal" onClick={(e) => { e.preventDefault(); setLoginType(loginType === 'borrower' ? 'partner' : 'borrower') }}
+               style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 14px', borderRadius: 8, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', color: '#7A8AAA', fontSize: 12, fontWeight: 600, textDecoration: 'none' }}>
+              Switch to {loginType === 'borrower' ? 'Partner' : 'Borrower'}
+            </a>
+          </div>
+        )}
       </header>
 
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
@@ -927,36 +930,38 @@ export default function BorrowerPortalPage() {
           
           {/* Logo/Icon */}
           <div style={{ textAlign: 'center', marginBottom: 32 }}>
-            <div style={{ width: 72, height: 72, borderRadius: 22, background: loginType === 'borrower' ? 'linear-gradient(135deg,rgba(99,102,241,0.2),rgba(139,92,246,0.2))' : 'linear-gradient(135deg,rgba(139,92,246,0.2),rgba(245,158,11,0.2))', border: `1px solid ${loginType === 'borrower' ? 'rgba(99,102,241,0.3)' : 'rgba(245,158,11,0.3)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', animation: 'float 3s ease-in-out infinite', boxShadow: '0 20px 40px rgba(0,0,0,0.3)' }}>
-              <img src={loginType === 'borrower' ? "/padlock.png" : "/handshake.png"} alt="icon" style={{ width: 32, height: 32, objectFit: 'contain' }} />
+            <div style={{ width: 72, height: 72, borderRadius: 22, background: 'linear-gradient(135deg,rgba(99,102,241,0.2),rgba(139,92,246,0.2))', border: '1px solid rgba(99,102,241,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', animation: 'float 3s ease-in-out infinite', boxShadow: '0 20px 40px rgba(0,0,0,0.3)' }}>
+              <img src="/padlock.png" alt="icon" style={{ width: 32, height: 32, objectFit: 'contain' }} />
             </div>
             <h1 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 900, fontSize: 28, color: '#F0F4FF', letterSpacing: -0.5, marginBottom: 8 }}>
-              {loginType === 'borrower' ? 'Borrower Portal' : 'Partner Portal'}
+              Borrower Portal
             </h1>
             <p style={{ fontSize: 14, color: '#4B5580', margin: 0 }}>
-              {loginType === 'borrower' ? 'Access your loan details and repayment plan' : 'Track your capital, ROI, and active deployments'}
+              Access your loan details and repayment plan
             </p>
           </div>
 
           <div style={{ background: '#0E1320', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 24, padding: '32px 28px', boxShadow: '0 40px 80px rgba(0,0,0,0.5)' }}>
             
-            {/* Toggle Segment */}
-            <div style={{ display: 'flex', background: 'rgba(0,0,0,0.2)', padding: 4, borderRadius: 14, marginBottom: 28, border: '1px solid rgba(255,255,255,0.04)' }}>
-              <button 
-                onClick={() => setLoginType('borrower')}
-                className="type-btn"
-                style={{ flex: 1, padding: '10px', borderRadius: 11, border: 'none', background: loginType === 'borrower' ? 'rgba(255,255,255,0.06)' : 'transparent', color: loginType === 'borrower' ? '#F0F4FF' : '#4B5580', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
-              >
-                Borrower
-              </button>
-              <button 
-                onClick={() => setLoginType('partner')}
-                className="type-btn"
-                style={{ flex: 1, padding: '10px', borderRadius: 11, border: 'none', background: loginType === 'partner' ? 'rgba(255,255,255,0.06)' : 'transparent', color: loginType === 'partner' ? '#F0F4FF' : '#4B5580', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
-              >
-                Partner
-              </button>
-            </div>
+            {/* Tab toggle — partner tab hidden until future release */}
+            {false && (
+              <div style={{ display: 'flex', background: 'rgba(0,0,0,0.2)', padding: 4, borderRadius: 14, marginBottom: 28, border: '1px solid rgba(255,255,255,0.04)' }}>
+                <button
+                  onClick={() => setLoginType('borrower')}
+                  className="type-btn"
+                  style={{ flex: 1, padding: '10px', borderRadius: 11, border: 'none', background: loginType === 'borrower' ? 'rgba(255,255,255,0.06)' : 'transparent', color: loginType === 'borrower' ? '#F0F4FF' : '#4B5580', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
+                >
+                  Borrower
+                </button>
+                <button
+                  onClick={() => setLoginType('partner')}
+                  className="type-btn"
+                  style={{ flex: 1, padding: '10px', borderRadius: 11, border: 'none', background: loginType === 'partner' ? 'rgba(255,255,255,0.06)' : 'transparent', color: loginType === 'partner' ? '#F0F4FF' : '#4B5580', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
+                >
+                  Partner
+                </button>
+              </div>
+            )}
 
             {loginType === 'borrower' ? (
               /* Borrower Form */
@@ -1007,11 +1012,7 @@ export default function BorrowerPortalPage() {
             )}
 
             <div style={{ marginTop: 24, padding: '16px', background: 'rgba(255,255,255,0.02)', borderRadius: 14, fontSize: 12, color: '#4B5580', lineHeight: 1.6, textAlign: 'center', border: '1px solid rgba(255,255,255,0.04)' }}>
-              {loginType === 'borrower' ? (
-                <>💡 Your LM code is found in your approval email.<br />Need a loan? <a href="/apply" style={{ color: '#7A8AAA', fontWeight: 700, textDecoration: 'none' }}>Apply here →</a></>
-              ) : (
-                <>Interested in becoming a funding partner?<br /><a href="/admin/investor-pitch" style={{ color: '#F59E0B', fontWeight: 700, textDecoration: 'none' }}>View our Investor Pitch →</a></>
-              )}
+              <>💡 Your LM code is found in your approval email.<br />Need a loan? <a href="/apply" style={{ color: '#7A8AAA', fontWeight: 700, textDecoration: 'none' }}>Apply here →</a></>
             </div>
           </div>
         </div>

@@ -99,7 +99,8 @@ function AppRoutes() {
         <Route path="/admin/forecast"     element={<ProtectedRoute><AppLayout><ForecastPage /></AppLayout></ProtectedRoute>} />
         <Route path="/admin/audit"        element={<ProtectedRoute><AppLayout><AuditPage /></AppLayout></ProtectedRoute>} />
         <Route path="/admin/settings"     element={<ProtectedRoute><AppLayout><SettingsPage /></AppLayout></ProtectedRoute>} />
-        <Route path="/admin/applications" element={<ProtectedRoute><AppLayout><ApplicationsPage /></AppLayout></ProtectedRoute>} />
+        {/* /admin/applications hidden — replaced by /admin/applicants (ApplicantsPage) */}
+        {/* <Route path="/admin/applications" element={<ProtectedRoute><AppLayout><ApplicationsPage /></AppLayout></ProtectedRoute>} /> */}
         <Route path="/admin/applicants"   element={<ProtectedRoute><AppLayout><ApplicantsPage /></AppLayout></ProtectedRoute>} />
         <Route path="/admin/assessments"  element={<ProtectedRoute><AppLayout><AssessmentPage /></AppLayout></ProtectedRoute>} />
         <Route path="/admin/assessment/:id" element={<ProtectedRoute><AppLayout><AssessmentForm /></AppLayout></ProtectedRoute>} />

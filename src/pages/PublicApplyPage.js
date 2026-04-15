@@ -323,7 +323,7 @@ export default function PublicApplyPage() {
       ? dupByEmail
       : await supabase.from('applications').select('id').ilike('full_name', name).limit(1).then(r => r.data)
     if (dupApp && dupApp.length > 0) {
-      setError('You already have an application on file. Please use your access code at the portal to check your status or reapply.')
+      setError('You already have an application on file. Please use your access code at the Application Status page to view your denial reason and reapply from there.')
       setLoading(false); return
     }
     // ── End duplicate check ──────────────────────────────────────────────

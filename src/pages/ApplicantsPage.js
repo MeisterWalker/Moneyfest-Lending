@@ -130,6 +130,85 @@ function Row({ label, value, accent }) {
   )
 }
 
+// ── ID Viewer ─────────────────────────────────────────────────
+function IdViewer({ app }) {
+  const [open, setOpen] = useState(false)
+  const [frontUrl, setFrontUrl] = useState(null)
+  const [backUrl, setBackUrl] = useState(null)
+  const [loadingUrls, setLoadingUrls] = useState(false)
+
+  const hasId = app.valid_id_path || app.valid_id_back_path
+  if (!hasId) return null
+
+  const handleOpen = async () => {
+    if (open) { setOpen(false); return }
+    setOpen(true)
+    if (frontUrl || backUrl) return // already loaded
+    setLoadingUrls(true)
+    if (app.valid_id_path) {
+      const { data } = await supabase.storage.from('valid-ids').createSignedUrl(app.valid_id_path, 3600)
+      if (data?.signedUrl) setFrontUrl(data.signedUrl)
+    }
+    if (app.valid_id_back_path) {
+      const { data } = await supabase.storage.from('valid-ids').createSignedUrl(app.valid_id_back_path, 3600)
+      if (data?.signedUrl) setBackUrl(data.signedUrl)
+    }
+    setLoadingUrls(false)
+  }
+
+  const renderImg = (url, path, label) => {
+    if (!path) return null
+    const isImage = /\.(jpg|jpeg|png|webp)$/i.test(path)
+    return (
+      <div style={{ flex: 1, minWidth: 140 }}>
+        <div style={{ fontSize: 10, color: '#4B5580', fontWeight: 700, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</div>
+        {loadingUrls ? (
+          <div style={{ height: 120, borderRadius: 8, background: 'rgba(255,255,255,0.03)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: '#4B5580' }}>Loading…</div>
+        ) : !url ? (
+          <div style={{ height: 120, borderRadius: 8, background: 'rgba(255,255,255,0.03)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: '#4B5580' }}>Not available</div>
+        ) : isImage ? (
+          <div style={{ position: 'relative', borderRadius: 8, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.07)' }}>
+            <img src={url} alt={label} style={{ width: '100%', height: 140, objectFit: 'cover', display: 'block' }} />
+            <a href={url} target="_blank" rel="noreferrer"
+              style={{ position: 'absolute', bottom: 6, right: 6, padding: '4px 10px', borderRadius: 6, background: 'rgba(0,0,0,0.75)', color: '#fff', fontSize: 10, fontWeight: 700, textDecoration: 'none' }}>
+              ↗ Full
+            </a>
+          </div>
+        ) : (
+          <a href={url} target="_blank" rel="noreferrer"
+            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 12px', borderRadius: 8, background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.2)', color: '#a78bfa', fontSize: 12, fontWeight: 600, textDecoration: 'none' }}>
+            📄 View PDF
+          </a>
+        )}
+      </div>
+    )
+  }
+
+  return (
+    <div style={{ marginBottom: 14 }}>
+      <button
+        onClick={handleOpen}
+        style={{
+          display: 'inline-flex', alignItems: 'center', gap: 6,
+          padding: '6px 12px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)',
+          background: open ? 'rgba(99,102,241,0.08)' : 'rgba(255,255,255,0.03)',
+          color: open ? '#818CF8' : '#7A8AAA', fontSize: 12, fontWeight: 600,
+          cursor: 'pointer', transition: 'all 0.15s', marginBottom: open ? 10 : 0,
+        }}
+      >
+        🪪 {open ? 'Hide' : 'View'} Submitted ID{backUrl || app.valid_id_back_path ? 's' : ''}
+        <span style={{ fontSize: 10 }}>{open ? '▲' : '▼'}</span>
+      </button>
+      {open && (
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', padding: '12px 14px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 10 }}>
+          {renderImg(frontUrl, app.valid_id_path, 'Front')}
+          {renderImg(backUrl, app.valid_id_back_path, 'Back')}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── Applicant card ─────────────────────────────────────────────
 function ApplicantCard({ app, tab, onMarkReview, onApprove, onDeny }) {
   const [expanded, setExpanded] = useState(false)
@@ -234,6 +313,9 @@ function ApplicantCard({ app, tab, onMarkReview, onApprove, onDeny }) {
               {app.is_reapplication && <Row label="Type" value="🔄 Re-application" accent="#a78bfa" />}
             </div>
           </div>
+
+          {/* ── ID Viewer ── */}
+          <IdViewer app={app} />
 
           {/* Rejection reason (Denied tab) */}
           {app.status === 'Denied' && app.rejection_reason && (

@@ -35,7 +35,6 @@ const navGroups = [
       { to: '/admin/borrowers', icon: Users, label: 'Borrowers' },
       { to: '/admin/loans', icon: FileText, label: 'Loans' },
       { to: '/admin/collection', icon: Calendar, label: 'Collection Schedule' },
-      { to: '/admin/applications', icon: ClipboardList, label: 'Applications' },
       { to: '/admin/approvals', icon: CheckSquare, label: 'Approvals' },
       { to: '/admin/assessments', icon: Brain, label: 'Assessments' },
     ]
