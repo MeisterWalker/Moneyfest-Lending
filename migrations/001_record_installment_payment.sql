@@ -88,9 +88,28 @@ BEGIN
   v_new_balance := GREATEST(0, v_loan.remaining_balance - v_install_amt);
   v_new_status := CASE WHEN v_new_payments >= v_num_inst THEN 'Paid' ELSE 'Partially Paid' END;
 
+  -- ── Step 3.5: Determine Effective Payment Date from Proofs ───────
+  DECLARE
+    v_proof_date DATE;
+  BEGIN
+    SELECT created_at::DATE INTO v_proof_date 
+    FROM payment_proofs 
+    WHERE loan_id = p_loan_id AND installment_number = (v_loan.payments_made + 1)
+    ORDER BY created_at ASC LIMIT 1;
+    
+    IF v_proof_date IS NOT NULL THEN
+      -- Freeze penalty to the date the proof was uploaded
+      v_days_late := GREATEST(0, v_proof_date - p_due_date_str::DATE);
+    ELSE
+      -- No proof found, calculate based on current date
+      v_days_late := GREATEST(0, CURRENT_DATE - p_due_date_str::DATE);
+    END IF;
+  EXCEPTION WHEN OTHERS THEN
+    v_days_late := GREATEST(0, CURRENT_DATE - p_due_date_str::DATE);
+  END;
+
   -- ── Step 4: Calculate penalty if late ───────────────────────────────
   IF p_due_date_str IS NOT NULL THEN
-    v_days_late := GREATEST(0, CURRENT_DATE - p_due_date_str::DATE);
     IF v_days_late > 0 THEN
       v_penalty := v_days_late * v_penalty_per_day;
     END IF;

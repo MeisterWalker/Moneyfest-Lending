@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { CREDIT_CONFIG, BADGE_TIERS, SECURITY_HOLD_TIERS, getBadgeConfig, getBadgeFromScore, getSecurityHoldRate } from '../lib/creditSystem'
 import { supabase } from '../lib/supabase'
 import { usePageVisit } from '../hooks/usePageVisit'
@@ -76,11 +77,11 @@ function UploadModal({ installmentNum, loan, borrower, onClose, onUploaded, qlPa
     const path = `${borrower.access_code}/${Date.now()}-installment${installmentNum}.${ext}`
     const { error: upErr } = await supabase.storage.from('payment-proofs').upload(path, file, { upsert: false })
     if (upErr) { setError('Upload failed: ' + upErr.message); setUploading(false); return }
-    const { error: dbErr } = await supabase.from('payment_proofs').insert({
+    const { data: dbData, error: dbErr } = await supabase.from('payment_proofs').insert({
       borrower_id: borrower.id, loan_id: loan.id,
       installment_number: installmentNum, file_path: path,
       file_name: file.name, notes: notes.trim() || null, status: 'Pending'
-    })
+    }).select('id').single()
     if (dbErr) { setError('Failed to save proof: ' + dbErr.message); setUploading(false); return }
     await supabase.from('portal_notifications').insert({
       borrower_id: borrower.id, type: 'payment_submitted',
@@ -91,6 +92,22 @@ function UploadModal({ installmentNum, loan, borrower, onClose, onUploaded, qlPa
             : 'Your QuickLoan full pay-off proof has been submitted and is awaiting admin review.')
         : `Your payment proof for installment ${installmentNum} has been submitted and is awaiting admin review.`
     })
+    
+    // Auto-verify via AI in the background for regular installments
+    if (!isQL && dbData) {
+      supabase.storage.from('payment-proofs').createSignedUrl(path, 3600).then(({ data: signed }) => {
+        if (signed?.signedUrl) {
+          supabase.functions.invoke('verify-receipt', {
+            body: {
+              proof_id: dbData.id,
+              file_url: signed.signedUrl,
+              expected_amount: loan.installment_amount
+            }
+          }).catch(e => console.error("AI verify failed", e))
+        }
+      })
+    }
+
     setUploading(false)
     onUploaded()
   }
@@ -576,6 +593,7 @@ function PortalHeader({ borrower, notifications, showNotifs, setShowNotifs, mark
 
 export default function BorrowerPortalPage() {
   const { toast } = useToast()
+  const navigate = useNavigate()
   usePageVisit('portal')
   const [code, setCode] = useState('')
   const [inputCode, setInputCode] = useState('')
@@ -769,7 +787,10 @@ export default function BorrowerPortalPage() {
         localStorage.setItem('lm_portal_code', bByEmail.access_code)
         return fetchPortalData(bByEmail.access_code)
       }
-      setPendingApp(app); setLoading(false); return 
+      // Route to ApplicantStatusPage with application data in state
+      setLoading(false)
+      navigate('/application-status', { state: { app }, replace: true })
+      return
     }
     setError('Invalid access code. Please check and try again.')
     setLoading(false)
@@ -864,92 +885,15 @@ export default function BorrowerPortalPage() {
 
 
 
-  // ── PENDING APP SCREEN ───────────────────────────────────────
-  if (!borrower && pendingApp) return (
-    <div style={{ minHeight: '100dvh', background: '#080B14', fontFamily: 'DM Sans, sans-serif', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
-      <PortalHeader />
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', minHeight: 'calc(100dvh - 60px)', padding: '20px 16px' }}>
-        <div style={{ maxWidth: 520, width: '100%' }}>
-
-          {/* Status card */}
-          <div style={{
-            background: pendingApp.status === 'Rejected' ? 'rgba(239,68,68,0.04)' : 'rgba(245,158,11,0.04)',
-            border: `1px solid ${pendingApp.status === 'Rejected' ? 'rgba(239,68,68,0.2)' : 'rgba(245,158,11,0.2)'}`,
-            borderRadius: 20, padding: '32px 28px', marginBottom: 16
-          }}>
-            {/* Icon + Title */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 20 }}>
-              <div style={{
-                width: 52, height: 52, borderRadius: 14, flexShrink: 0,
-                background: pendingApp.status === 'Rejected' ? 'rgba(239,68,68,0.1)' : 'rgba(245,158,11,0.1)',
-                border: `1px solid ${pendingApp.status === 'Rejected' ? 'rgba(239,68,68,0.25)' : 'rgba(245,158,11,0.25)'}`,
-                display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24
-              }}>
-                {pendingApp.status === 'Rejected' ? '❌' : '⏳'}
-              </div>
-              <div>
-                <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 800, fontSize: 20, color: '#F0F4FF', marginBottom: 3 }}>
-                  {pendingApp.status === 'Rejected' ? 'Application Not Approved' : pendingApp.status === 'Approved' ? 'Application Approved!' : 'Application Under Review'}
-                </div>
-                <div style={{ fontSize: 12, color: pendingApp.status === 'Rejected' ? '#EF4444' : pendingApp.status === 'Approved' ? '#22C55E' : '#F59E0B', fontWeight: 600 }}>
-                  {pendingApp.status === 'Rejected' ? 'Status: Rejected' : pendingApp.status === 'Approved' ? 'Status: Approved' : 'Status: Pending Review'}
-                </div>
-
-              </div>
-            </div>
-
-            {/* Reason / message */}
-            <div style={{
-              background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)',
-              borderRadius: 12, padding: '16px 18px', marginBottom: 20,
-              fontSize: 13.5, color: '#9AA4BC', lineHeight: 1.8
-            }}>
-              {pendingApp.status === 'Rejected'
-                ? (pendingApp.reject_reason || 'Your application was not approved. Please contact an admin for more information.')
-                : pendingApp.status === 'Approved'
-                ? 'Your application has been approved! Our team is preparing your documents. You can now use your main access code to access the portal.'
-                : 'Your application is currently being reviewed by our admin team. Please check back later or reach out directly via Microsoft Teams for updates.'}
-
-            </div>
-
-            {/* Application details */}
-            <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 16 }}>
-              <div style={{ fontSize: 10, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700, marginBottom: 12 }}>Application Details</div>
-              {[
-                { label: 'Applicant', value: pendingApp.full_name },
-                { label: 'Department', value: pendingApp.department },
-                { label: 'Tenurity', value: (pendingApp.tenure_years || 0) + ' Year' + (pendingApp.tenure_years > 1 ? 's' : '') },
-                { label: 'Requested Amount', value: '₱' + Number(pendingApp.loan_amount).toLocaleString() },
-                { label: 'Reference Code', value: pendingApp.access_code },
-                { label: 'Submitted', value: new Date(pendingApp.created_at).toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' }) },
-              ].map((r, i, arr) => (
-                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '9px 0', borderBottom: i < arr.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
-                  <span style={{ fontSize: 12, color: '#4B5580' }}>{r.label}</span>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: '#CBD5F0', fontFamily: 'Space Grotesk, sans-serif' }}>{r.value}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Contact admins */}
-          <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, padding: '20px 22px', marginBottom: 16 }}>
-            <div style={{ fontSize: 10, color: '#4B5580', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700, marginBottom: 12 }}>Need help? Contact your admin</div>
-            <p style={{ fontSize: 13, color: '#7A8AAA', lineHeight: 1.7, margin: '0 0 14px' }}>Our team is ready to assist with any questions about your application.</p>
-            <a href="/contact" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '11px 20px', borderRadius: 11, background: 'linear-gradient(135deg,rgba(59,130,246,0.12),rgba(139,92,246,0.12))', border: '1px solid rgba(139,92,246,0.25)', color: '#a78bfa', textDecoration: 'none', fontSize: 13, fontWeight: 700, fontFamily: 'Space Grotesk, sans-serif' }}>
-              💬 Contact Us →
-            </a>
-          </div>
-
-          <button onClick={() => { setPendingApp(null); setInputCode(''); setCode('') }}
-            style={{ width: '100%', padding: '12px', borderRadius: 12, border: '1px solid rgba(255,255,255,0.08)', background: 'transparent', color: '#7A8AAA', fontSize: 13, fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.color = '#F0F4FF' }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#7A8AAA' }}
-          >← Back to Portal</button>
-
-        </div>
-      </div>
-    </div>
-  )
+  // ── PENDING APP REDIRECT ─────────────────────────────────────
+  // Non-borrower applicants are now handled by /application-status.
+  // This effect handles the edge case where data was already set via
+  // fetchPortalData before navigate() was available (e.g. cached code on mount).
+  useEffect(() => {
+    if (!borrower && pendingApp) {
+      navigate('/application-status', { state: { app: pendingApp }, replace: true })
+    }
+  }, [borrower, pendingApp, navigate])
 
   if (!borrower) return (
     <div style={{ minHeight: '100dvh', background: '#080B14', fontFamily: 'DM Sans, sans-serif', display: 'flex', flexDirection: 'column', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>

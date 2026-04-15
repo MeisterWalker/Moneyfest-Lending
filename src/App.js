@@ -43,6 +43,8 @@ const CapitalForecastPage = lazy(() => import('./pages/CapitalForecastPage'))
 const LedgerPage          = lazy(() => import('./pages/LedgerPage'))
 const EarningsPage        = lazy(() => import('./pages/EarningsPage'))
 const HoldLedgerPage      = lazy(() => import('./pages/HoldLedgerPage'))
+const ApplicantStatusPage = lazy(() => import('./pages/ApplicantStatusPage'))
+const ApplicantsPage      = lazy(() => import('./pages/ApplicantsPage'))
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
@@ -81,6 +83,7 @@ function AppRoutes() {
         <Route path="/"              element={<HomePage />} />
         <Route path="/apply"         element={<PublicApplyPage />} />
         <Route path="/portal"        element={<BorrowerPortalPage />} />
+        <Route path="/application-status" element={<ApplicantStatusPage />} />
         <Route path="/faq"           element={<FAQPage />} />
         <Route path="/investor/dashboard" element={<InvestorDashboard />} />
 
@@ -97,6 +100,7 @@ function AppRoutes() {
         <Route path="/admin/audit"        element={<ProtectedRoute><AppLayout><AuditPage /></AppLayout></ProtectedRoute>} />
         <Route path="/admin/settings"     element={<ProtectedRoute><AppLayout><SettingsPage /></AppLayout></ProtectedRoute>} />
         <Route path="/admin/applications" element={<ProtectedRoute><AppLayout><ApplicationsPage /></AppLayout></ProtectedRoute>} />
+        <Route path="/admin/applicants"   element={<ProtectedRoute><AppLayout><ApplicantsPage /></AppLayout></ProtectedRoute>} />
         <Route path="/admin/assessments"  element={<ProtectedRoute><AppLayout><AssessmentPage /></AppLayout></ProtectedRoute>} />
         <Route path="/admin/assessment/:id" element={<ProtectedRoute><AppLayout><AssessmentForm /></AppLayout></ProtectedRoute>} />
         <Route path="/admin/login-logs"    element={<ProtectedRoute><AppLayout><LoginLogsPage /></AppLayout></ProtectedRoute>} />

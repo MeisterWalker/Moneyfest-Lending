@@ -31,6 +31,7 @@ const navGroups = [
   {
     label: 'LENDING',
     items: [
+      { to: '/admin/applicants',   icon: ClipboardList, label: 'Applicants' },
       { to: '/admin/borrowers', icon: Users, label: 'Borrowers' },
       { to: '/admin/loans', icon: FileText, label: 'Loans' },
       { to: '/admin/collection', icon: Calendar, label: 'Collection Schedule' },

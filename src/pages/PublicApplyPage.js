@@ -301,6 +301,33 @@ export default function PublicApplyPage() {
     const err = validateStep3(); if (err) { setError(err); return }
     if (loading) return  // ← double-submit guard
     setError(''); setLoading(true)
+
+    // ── Duplicate check ──────────────────────────────────────────────────
+    // 1. Borrowers table: block if email OR name already registered
+    const email   = form.email.trim()
+    const name    = form.full_name.trim()
+    const { data: dupBorrower } = await supabase
+      .from('borrowers').select('id')
+      .or(`email.ilike.${email},full_name.ilike.${name}`)
+      .limit(1)
+    if (dupBorrower && dupBorrower.length > 0) {
+      setError('You are already a registered borrower. Please log in to your Borrower Portal to request a new loan.')
+      setLoading(false); return
+    }
+    // 2. Applications table: check email first, then name (separate to avoid false-positive ORs)
+    const { data: dupByEmail } = await supabase
+      .from('applications').select('id')
+      .ilike('email', email)
+      .limit(1)
+    const dupApp = dupByEmail && dupByEmail.length > 0
+      ? dupByEmail
+      : await supabase.from('applications').select('id').ilike('full_name', name).limit(1).then(r => r.data)
+    if (dupApp && dupApp.length > 0) {
+      setError('You already have an application on file. Please use your access code at the portal to check your status or reapply.')
+      setLoading(false); return
+    }
+    // ── End duplicate check ──────────────────────────────────────────────
+
     // FE-04 FIX: Use crypto.randomUUID for higher entropy (8 chars = 36^8 ≈ 2.8 trillion combos)
     const code = 'LM-' + crypto.randomUUID().replace(/-/g, '').substring(0, 8).toUpperCase()
     let validIdPath = null, validIdBackPath = null
