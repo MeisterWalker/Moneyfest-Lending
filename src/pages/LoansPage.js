@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { CREDIT_CONFIG, getBadgeStatus, calcSecurityHold, getSecurityHoldRate } from '../lib/creditSystem'
 
-import { logAudit, formatCurrency, formatDate, getInstallmentDates, getNumInstallments, calcQuickLoanBalance, getQuickLoanDueDates, QUICKLOAN_CONFIG, getQuickLoanDaysElapsed } from '../lib/helpers'
+import { logAudit, formatCurrency, formatDate, getInstallmentDates, getNumInstallments, calcQuickLoanBalance, getQuickLoanDueDates, QUICKLOAN_CONFIG, getQuickLoanDaysElapsed, formatDateValue } from '../lib/helpers'
 import { notifyBorrower } from '../lib/portalNotifications'
 import { sendFundsReleasedEmail, sendPaymentConfirmedEmail, sendTierUpgradeEmail } from '../lib/emailService'
 import { useAuth } from '../context/AuthContext'
@@ -663,6 +663,8 @@ export default function LoansPage() {
   const [loanTypeTab, setLoanTypeTab] = useState('all')
   const { user } = useAuth()
   const { toast } = useToast()
+  const overdueAppliedRef = useRef(false)
+  const [syncingPenalties, setSyncingPenalties] = useState(false)
 
   const fetchData = useCallback(async () => {
     const [{ data: l }, { data: b }, { data: s }, { data: apps }, { data: inv }] = await Promise.all([
@@ -681,6 +683,58 @@ export default function LoansPage() {
   }, [])
 
   useEffect(() => { fetchData() }, [fetchData])
+
+  // ── Auto-apply overdue penalties once per page visit ────────────────
+  // Fires after the first data load. Scans all active installment loans and
+  // calls apply_overdue_penalties for any installment that is past its due date.
+  // Idempotent: same-day calls are no-ops in the SQL function (zero delta days).
+  useEffect(() => {
+    if (!loading && !overdueAppliedRef.current && loans.length > 0) {
+      overdueAppliedRef.current = true
+      handleSyncOverduePenalties({ silent: true })
+    }
+  }, [loading])
+
+  // ── Sync overdue penalties for all active installment loans ─────────
+  const handleSyncOverduePenalties = async ({ silent = false } = {}) => {
+    if (syncingPenalties) return
+    setSyncingPenalties(true)
+    const today = new Date(); today.setHours(0, 0, 0, 0)
+    const candidates = loans.filter(l =>
+      ['Active', 'Partially Paid', 'Overdue'].includes(l.status) &&
+      l.loan_type !== 'quickloan' &&
+      l.release_date
+    )
+    let penaltyCount = 0
+    let scoreCount = 0
+    for (const loan of candidates) {
+      const numInst = loan.num_installments || 4
+      const allDates = getInstallmentDates(loan.release_date, numInst)
+      const nextDueDate = allDates[loan.payments_made] // 0-indexed = next unpaid
+      if (!nextDueDate) continue
+      nextDueDate.setHours(0, 0, 0, 0)
+      if (nextDueDate >= today) continue // not yet overdue
+      const dueDateStr = formatDateValue(nextDueDate) // YYYY-MM-DD (local time, no UTC shift)
+      const instNum = loan.payments_made + 1
+      const { data } = await supabase.rpc('apply_overdue_penalties', {
+        p_loan_id:         loan.id,
+        p_due_date_str:    dueDateStr,
+        p_installment_num: instNum,
+        p_admin_email:     user?.email || 'system'
+      })
+      if (data?.success && !data?.skipped) {
+        if ((data.net_penalty || 0) > 0) penaltyCount++
+        if ((data.score_change || 0) < 0) scoreCount++
+      }
+    }
+    setSyncingPenalties(false)
+    if (!silent && (penaltyCount > 0 || scoreCount > 0)) {
+      toast(`⚠️ Penalties synced: ${penaltyCount} loan(s) charged, ${scoreCount} credit score(s) updated`, 'info')
+    } else if (!silent) {
+      toast('Penalties up to date — no new charges', 'success')
+    }
+    if (penaltyCount > 0 || scoreCount > 0) fetchData()
+  }
 
   const handleSave = async (form, isEdit) => {
     if (isEdit) {
@@ -726,6 +780,7 @@ export default function LoansPage() {
         loan_purpose: form.loan_purpose,
         notes: form.notes,
         security_hold: form.loan_type === 'quickloan' ? 0 : hold,
+        security_hold_original: form.loan_type === 'quickloan' ? 0 : hold, // ← tracks original for penalty delta calc
         funds_released: form.loan_type === 'quickloan' ? form.loan_amount : released,
         security_hold_returned: false,
         extension_fee_charged: false
@@ -1199,6 +1254,21 @@ export default function LoansPage() {
             <Search size={15} />
             <input placeholder="Search by borrower..." value={search} onChange={e => setSearch(e.target.value)} />
           </div>
+          <button
+            onClick={() => { overdueAppliedRef.current = true; handleSyncOverduePenalties({ silent: false }) }}
+            disabled={syncingPenalties}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              padding: '8px 14px', borderRadius: 9, fontSize: 13, fontWeight: 600,
+              border: '1px solid rgba(245,158,11,0.35)',
+              background: syncingPenalties ? 'rgba(245,158,11,0.05)' : 'rgba(245,158,11,0.1)',
+              color: '#F59E0B', cursor: syncingPenalties ? 'not-allowed' : 'pointer',
+              opacity: syncingPenalties ? 0.6 : 1, transition: 'all 0.15s'
+            }}
+          >
+            <AlertTriangle size={14} />
+            {syncingPenalties ? 'Syncing...' : 'Sync Penalties'}
+          </button>
           <button className="btn-primary" onClick={() => { setEditingLoan(null); setPrefillLoan(null); setModalOpen(true) }} style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
             <Plus size={16} /> New Loan
           </button>

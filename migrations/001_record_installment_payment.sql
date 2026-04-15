@@ -50,6 +50,7 @@ DECLARE
   v_hold_deducted NUMERIC := 0;
   v_hold_remaining NUMERIC;
   v_hold_to_return NUMERIC;
+  v_preapplied_penalty NUMERIC := 0;
   v_rebate_amount NUMERIC := 0;
   v_new_level   INTEGER;
   v_new_limit   INTEGER;
@@ -112,15 +113,24 @@ BEGIN
   IF p_due_date_str IS NOT NULL THEN
     IF v_days_late > 0 THEN
       v_penalty := v_days_late * v_penalty_per_day;
+      -- Subtract any penalty ALREADY deducted from the security hold
+      -- (by apply_overdue_penalties or any previous mechanism).
+      -- Derived from the hold delta — self-correcting, no extra column needed.
+      v_preapplied_penalty := GREATEST(0,
+        COALESCE(v_loan.security_hold_original, v_loan.security_hold, 0) -
+        COALESCE(v_loan.security_hold, 0)
+      );
+      v_penalty := GREATEST(0, v_penalty - v_preapplied_penalty);
     END IF;
   END IF;
 
   -- ── Step 5: Update the loan ─────────────────────────────────────────
   UPDATE loans SET
-    payments_made = v_new_payments,
-    remaining_balance = v_new_balance,
-    status = v_new_status,
-    updated_at = NOW()
+    payments_made           = v_new_payments,
+    remaining_balance       = v_new_balance,
+    status                  = v_new_status,
+    overdue_credit_deducted = FALSE, -- reset: next installment tracks its own credit hit
+    updated_at              = NOW()
   WHERE id = p_loan_id;
 
   -- ── Step 6: Record penalty if applicable ────────────────────────────
@@ -156,10 +166,14 @@ BEGIN
   END IF;
 
   -- ── Step 7: Update credit score ─────────────────────────────────────
-  IF v_days_late > 0 THEN
-    v_score_change := -10;  -- CREDIT_CONFIG.LATE_PAYMENT
-  ELSE
+  -- Skip the -10 if apply_overdue_penalties already applied it during the overdue
+  -- period — prevents double-penalizing the same missed installment.
+  IF v_days_late = 0 THEN
     v_score_change := 15;   -- CREDIT_CONFIG.ON_TIME_PAYMENT
+  ELSIF COALESCE(v_loan.overdue_credit_deducted, FALSE) THEN
+    v_score_change := 0;    -- Already deducted during overdue period — no double hit
+  ELSE
+    v_score_change := -10;  -- CREDIT_CONFIG.LATE_PAYMENT (first penalty for this installment)
   END IF;
 
   v_new_score := LEAST(1000, GREATEST(300, v_borrower.credit_score + v_score_change));
