@@ -314,17 +314,27 @@ export default function PublicApplyPage() {
       setError('You are already a registered borrower. Please log in to your Borrower Portal to request a new loan.')
       setLoading(false); return
     }
-    // 2. Applications table: check email first, then name (separate to avoid false-positive ORs)
-    const { data: dupByEmail } = await supabase
-      .from('applications').select('id')
+    // 2. Applications table: check for existing record by email or name
+    // We need the status so we can give a targeted message
+    const { data: appsByEmail } = await supabase
+      .from('applications').select('id, status')
       .ilike('email', email)
       .limit(1)
-    const dupApp = dupByEmail && dupByEmail.length > 0
-      ? dupByEmail
-      : await supabase.from('applications').select('id').ilike('full_name', name).limit(1).then(r => r.data)
-    if (dupApp && dupApp.length > 0) {
-      setError('You already have an application on file. Please use your access code at the Application Status page to view your denial reason and reapply from there.')
-      setLoading(false); return
+    const existingApp = (appsByEmail && appsByEmail.length > 0)
+      ? appsByEmail[0]
+      : await supabase.from('applications').select('id, status').ilike('full_name', name).limit(1).then(r => r.data?.[0] || null)
+
+    if (existingApp) {
+      if (existingApp.status === 'Pending' || existingApp.status === 'Under Review') {
+        setError('You already have an application currently under review. Please wait for a decision before submitting a new one.')
+        setLoading(false); return
+      }
+      if (existingApp.status === 'Denied') {
+        setError('You have a previous denied application on file. Please visit the Application Status page and use your original access code to reapply from there — your previous information has been saved for you.')
+        setLoading(false); return
+      }
+      // status === 'Approved' falls through — they're now a borrower (caught by the check above)
+      // Any other status: allow the new application
     }
     // ── End duplicate check ──────────────────────────────────────────────
 
