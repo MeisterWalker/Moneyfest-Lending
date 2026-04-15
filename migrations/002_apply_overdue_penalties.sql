@@ -50,7 +50,7 @@ ALTER TABLE loans
 -- dropped slightly (e.g., 750 → 720) still give the same 10% rate.
 -- QuickLoans always have security_hold = 0, so they are excluded.
 UPDATE loans l SET
-  security_hold_original = ROUND(l.loan_amount * (
+  security_hold_original = ROUND(l.loan_amount::NUMERIC * (
     SELECT CASE
       WHEN b.credit_score >= 1000 THEN 0.05   -- VIP
       WHEN b.credit_score >= 920  THEN 0.06   -- Reliable
