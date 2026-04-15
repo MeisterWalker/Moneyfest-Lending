@@ -66,7 +66,7 @@ WHERE b2.id = l.borrower_id
 
 -- ── Step 3: Create apply_overdue_penalties function ─────────────────────────
 CREATE OR REPLACE FUNCTION public.apply_overdue_penalties(
-  p_loan_id         UUID,
+  p_loan_id         TEXT,
   p_due_date_str    TEXT,      -- YYYY-MM-DD: due date of the missed installment
   p_installment_num INTEGER,   -- 1-based; = loan.payments_made + 1
   p_admin_email     TEXT DEFAULT 'system'
@@ -217,5 +217,5 @@ BEGIN
 END;
 $$;
 
-GRANT EXECUTE ON FUNCTION public.apply_overdue_penalties(UUID, TEXT, INTEGER, TEXT) TO authenticated;
-REVOKE EXECUTE ON FUNCTION public.apply_overdue_penalties(UUID, TEXT, INTEGER, TEXT) FROM anon;
+GRANT EXECUTE ON FUNCTION public.apply_overdue_penalties(TEXT, TEXT, INTEGER, TEXT) TO authenticated;
+REVOKE EXECUTE ON FUNCTION public.apply_overdue_penalties(TEXT, TEXT, INTEGER, TEXT) FROM anon;
