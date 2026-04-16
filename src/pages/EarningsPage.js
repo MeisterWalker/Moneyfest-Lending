@@ -353,7 +353,7 @@ export default function EarningsPage() {
                           </div>
                           <div style={{ textAlign: 'right' }}>
                             <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>Profit split</div>
-                            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--gold)' }}>50/50 per agreement</div>
+                            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--gold)' }}>50/50 Split</div>
                           </div>
                         </div>
                       </div>
