@@ -157,6 +157,15 @@ BEGIN
       ROUND(v_net_penalty / v_daily_penalty), v_daily_penalty, v_net_penalty, false
     );
 
+    -- Realize penalty income into capital_flow immediately (daily, as it accrues)
+    INSERT INTO capital_flow (entry_date, type, category, amount, notes) VALUES (
+      CURRENT_DATE, 'CASH IN', 'Penalty (Daily Accrual)',
+      v_net_penalty,
+      'Auto: Overdue penalty from ' || v_borrower.full_name ||
+      ' — ' || ROUND(v_net_penalty / v_daily_penalty) || ' day(s) × ₱' || v_daily_penalty ||
+      ' (Installment ' || p_installment_num || ', ' || v_days_late || ' total days late)'
+    );
+
     INSERT INTO audit_logs (action_type, module, description, changed_by) VALUES (
       'OVERDUE_PENALTY_APPLIED', 'Loan',
       'Overdue penalty ₱' || v_net_penalty || ' applied (' ||

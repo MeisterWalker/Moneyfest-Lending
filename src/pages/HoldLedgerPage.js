@@ -118,11 +118,11 @@ export default function HoldLedgerPage() {
         .from('penalty_charges')
         .select('id, loan_id, penalty_amount, created_at'),
 
-      // Realized PnL entries from capital_flow
+      // Realized penalty entries from capital_flow (any penalty category)
       supabase
         .from('capital_flow')
-        .select('id, entry_date, category, type, amount')
-        .eq('category', 'Penalty (Collected at Settlement)')
+        .select('id, entry_date, category, type, amount, notes')
+        .ilike('category', 'Penalty%')
         .order('entry_date', { ascending: false }),
 
       // Borrower names
