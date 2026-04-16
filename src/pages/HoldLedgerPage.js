@@ -372,7 +372,9 @@ export default function HoldLedgerPage() {
               {/* Hold Collected (original = 10% of loan) */}
               <div style={{ fontSize: 13, color: 'var(--blue)' }}>
                 {formatCurrency(loan.holdOriginal)}
-                <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>10% of loan</div>
+                <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>
+                  {loan.loanAmt > 0 ? Math.round((loan.holdOriginal / loan.loanAmt) * 100) : 10}% of loan
+                </div>
               </div>
 
               {/* Penalties Deducted */}
