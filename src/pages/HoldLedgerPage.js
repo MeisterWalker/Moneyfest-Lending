@@ -109,7 +109,7 @@ export default function HoldLedgerPage() {
       // Regular loans only — quickloans never have a security hold
       supabase
         .from('loans')
-        .select('id, borrower_id, loan_amount, security_hold, status, release_date, due_date')
+        .select('id, borrower_id, loan_amount, security_hold, security_hold_original, status, release_date, due_date')
         .in('status', [...ACTIVE_STATUSES, 'Paid'])
         .eq('loan_type', 'regular'),
 
@@ -186,7 +186,7 @@ export default function HoldLedgerPage() {
     return activeLoans.map(l => {
       const loanAmt      = parseFloat(l.loan_amount)   || 0
       const secHold      = parseFloat(l.security_hold) || 0
-      const holdOriginal = loanAmt * 0.10
+      const holdOriginal = parseFloat(l.security_hold_original) || loanAmt * 0.10  // prefer stored original; fallback for pre-migration loans
       const deducted     = parseFloat(penaltyByLoan[l.id]) || 0
       const daysOut      = l.release_date
         ? differenceInDays(new Date(), parseISO(l.release_date))
