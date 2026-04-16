@@ -466,21 +466,39 @@ function LoanCard({ loan: rawLoan, borrowers, applications, investors, onEdit, o
                   Cancel
                 </button>
               </div>
-            ) : (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 8, padding: '6px 12px', fontSize: 12 }}>
-                <span style={{ color: 'var(--text-label)' }}>
-                  Confirm {formatCurrency(loan.installment_amount)} — Installment {nextInstallment} of {loan.num_installments || 4}?
-                </span>
-                <button onClick={() => { onRecordPayment(loan); setConfirming(false) }}
-                  style={{ background: 'var(--green)', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 10px', cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>
-                  Yes
-                </button>
-                <button onClick={() => setConfirming(false)}
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 12 }}>
-                  Cancel
-                </button>
-              </div>
-            )
+            ) : (() => {
+              const numInst = loan.num_installments || 4
+              const isFinalInstallment = nextInstallment === numInst
+              const holdAmt = loan.security_hold || 0
+              const shouldNet = isFinalInstallment && holdAmt > 0 && !loan.security_hold_returned
+              const collectAmount = shouldNet
+                ? Math.ceil(loan.installment_amount) - holdAmt
+                : Math.ceil(loan.installment_amount)
+              return (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 8, padding: '6px 12px', fontSize: 12 }}>
+                  <span style={{ color: 'var(--text-label)' }}>
+                    {shouldNet ? (
+                      <>
+                        Collect {formatCurrency(collectAmount)} — Final Installment {nextInstallment}/{numInst}
+                        <span style={{ color: 'var(--text-muted)', fontSize: 10, marginLeft: 4 }}>
+                          (₱{holdAmt} hold netted)
+                        </span>
+                      </>
+                    ) : (
+                      <>Confirm {formatCurrency(loan.installment_amount)} — Installment {nextInstallment} of {numInst}?</>
+                    )}
+                  </span>
+                  <button onClick={() => { onRecordPayment(loan); setConfirming(false) }}
+                    style={{ background: 'var(--green)', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 10px', cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>
+                    Yes
+                  </button>
+                  <button onClick={() => setConfirming(false)}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 12 }}>
+                    Cancel
+                  </button>
+                </div>
+              )
+            })()
           )}
 
           {/* QuickLoan Record Extension confirmation */}
@@ -864,11 +882,17 @@ export default function LoansPage() {
       }
     }
 
+    // Determine if hold netting applies on this final installment
+    const nextInstNum = loan.payments_made + 1
+    const isFinal = nextInstNum >= numInstallments
+    const shouldNet = isFinal && (loan.security_hold || 0) > 0 && !loan.security_hold_returned
+
     // ── BL-01 FIX: Single atomic RPC call for all financial mutations ──
     const { data: result, error } = await supabase.rpc('record_installment_payment', {
       p_loan_id: loan.id,
       p_admin_email: user?.email || 'system',
-      p_due_date_str: dueDateStr
+      p_due_date_str: dueDateStr,
+      p_net_hold: shouldNet   // TRUE only on final installment when hold exists and not yet returned
     })
 
     if (error || !result?.success) {
@@ -935,7 +959,14 @@ export default function LoansPage() {
       }
 
       if (!earlyRebateApplied) {
-        toast(`🎉 Loan fully paid by ${result.borrower_name}!`, 'success')
+        if (result.hold_netted) {
+          toast(
+            `🎉 Loan fully paid by ${result.borrower_name}! ₱${result.hold_for_netting} hold netted & redeployed. Rebate credit posted to wallet.`,
+            'success'
+          )
+        } else {
+          toast(`🎉 Loan fully paid by ${result.borrower_name}!`, 'success')
+        }
       }
 
       // Send tier upgrade email if level increased
