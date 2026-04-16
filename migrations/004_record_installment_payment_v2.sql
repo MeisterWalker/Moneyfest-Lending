@@ -175,17 +175,7 @@ BEGIN
         || ' — Installment ' || v_new_payments || ' was ' || v_days_late || ' day(s) late',
       p_admin_email
     );
-
-    -- Realize any remaining payment-day penalty into capital_flow
-    -- (covers days not yet caught by apply_overdue_penalties daily sync)
-    IF v_penalty > 0 THEN
-      INSERT INTO capital_flow (entry_date, type, category, amount, notes) VALUES (
-        CURRENT_DATE, 'CASH IN', 'Penalty (Daily Accrual)',
-        v_penalty,
-        'Auto: Remaining overdue penalty from ' || v_borrower.full_name ||
-        ' at payment time — Installment ' || v_new_payments || ' (' || v_days_late || ' days late)'
-      );
-    END IF;
+    -- NOTE: penalty NOT written to capital_flow (see apply_overdue_penalties for rationale).
   END IF;
 
   -- ── Step 7: Update credit score ─────────────────────────────────────
