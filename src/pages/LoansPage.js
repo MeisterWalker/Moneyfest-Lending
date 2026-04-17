@@ -148,9 +148,10 @@ function StatusBadge({ status }) {
   )
 }
 
-function LoanCard({ loan: rawLoan, borrowers, applications, investors, onEdit, onDelete, onRecordPayment, onDefault, onRenew, onQuickLoanPayoff, onQuickLoanDay15Missed, onConfirmRelease, onRecordPrincipalPayment, onAssignInvestor }) {
+function LoanCard({ loan: rawLoan, borrowers, applications, investors, onEdit, onDelete, onRecordPayment, onDefault, onRenew, onQuickLoanPayoff, onQuickLoanDay15Missed, onConfirmRelease, onRecordPrincipalPayment, onAssignInvestor, onFullPayoff }) {
   const [expanded, setExpanded] = useState(false)
   const [confirming, setConfirming] = useState(false)
+  const [confirmingFullPayoff, setConfirmingFullPayoff] = useState(false)
   const [confirmingExtension, setConfirmingExtension] = useState(false)
   const [confirmingPrincipal, setConfirmingPrincipal] = useState(false)
   const [confirmingRenew, setConfirmingRenew] = useState(false)
@@ -440,7 +441,7 @@ function LoanCard({ loan: rawLoan, borrowers, applications, investors, onEdit, o
             )}
 
             {/* Installment loan record payment button */}
-            {!isQuickLoan && canPay && !confirming && (
+            {!isQuickLoan && canPay && !confirming && !confirmingFullPayoff && (
               <button
                 onClick={() => setConfirming(true)}
                 className="btn-primary"
@@ -449,6 +450,57 @@ function LoanCard({ loan: rawLoan, borrowers, applications, investors, onEdit, o
                 <CheckCircle size={13} /> Record Payment {nextInstallment} of {loan.num_installments || 4}
               </button>
             )}
+
+            {/* Full Payoff button — only for installment loans with remaining installments */}
+            {!isQuickLoan && canPay && !confirming && !confirmingFullPayoff && (
+              <button
+                onClick={() => setConfirmingFullPayoff(true)}
+                style={{
+                  fontSize: 12, padding: '6px 14px', borderRadius: 8,
+                  border: '1px solid rgba(34,197,94,0.4)',
+                  background: 'rgba(34,197,94,0.1)',
+                  color: '#4ADE80', cursor: 'pointer', fontWeight: 600,
+                  display: 'inline-flex', alignItems: 'center', gap: 5
+                }}
+              >
+                💰 Full Payoff
+              </button>
+            )}
+
+            {/* Full Payoff confirmation inline */}
+            {confirmingFullPayoff && (() => {
+              const numInst = loan.num_installments || 4
+              const remaining = numInst - loan.payments_made
+              const holdAmt = loan.security_hold || 0
+              const holdLabel = holdAmt > 0 && !loan.security_hold_returned ? ` + ₱${holdAmt} hold returned` : ''
+              const remainingBalance = Math.ceil(loan.remaining_balance ?? 0)
+              return (
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap',
+                  background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.25)',
+                  borderRadius: 8, padding: '8px 12px', fontSize: 12, width: '100%'
+                }}>
+                  <span style={{ color: 'var(--text-label)', flex: 1 }}>
+                    💰 Record full payoff of {formatCurrency(remainingBalance)}{holdLabel}?
+                    <span style={{ color: 'var(--text-muted)', marginLeft: 4 }}>
+                      ({remaining} installment{remaining !== 1 ? 's' : ''} remaining)
+                    </span>
+                  </span>
+                  <button
+                    onClick={() => { onFullPayoff(loan); setConfirmingFullPayoff(false) }}
+                    style={{ background: 'var(--green)', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 12px', cursor: 'pointer', fontSize: 12, fontWeight: 700 }}
+                  >
+                    Confirm
+                  </button>
+                  <button
+                    onClick={() => setConfirmingFullPayoff(false)}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 12 }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              )
+            })()}
 
           {/* Payment confirmation inline */}
           {confirming && (
@@ -867,6 +919,51 @@ export default function LoansPage() {
     fetchData()
   }
 
+  // ── Shared early-rebate helper ──────────────────────────────────────
+  // Returns true if a rebate was applied. Call after the loan reaches Paid status.
+  const applyEarlyRebate = async (loan, resultBorrowerName) => {
+    if (!loan.release_date) return false
+    const numInst = loan.num_installments || 4
+    const dates = getInstallmentDates(loan.release_date, numInst)
+    const finalDue = dates[numInst - 1]
+    if (!finalDue) return false
+    const today = new Date(); today.setHours(0, 0, 0, 0)
+    finalDue.setHours(0, 0, 0, 0)
+    const daysEarly = Math.ceil((finalDue - today) / (1000 * 60 * 60 * 24))
+    if (daysEarly < 7) return false
+
+    const rebateAmount = parseFloat((loan.loan_amount * 0.01).toFixed(2))
+    const { data: walletData } = await supabase
+      .from('wallets').select('id, balance').eq('borrower_id', loan.borrower_id).maybeSingle()
+
+    if (walletData) {
+      await supabase.from('wallets').update({
+        balance: parseFloat((walletData.balance + rebateAmount).toFixed(2)),
+        updated_at: new Date().toISOString()
+      }).eq('id', walletData.id)
+    } else {
+      await supabase.from('wallets').insert({ borrower_id: loan.borrower_id, balance: rebateAmount })
+    }
+
+    await supabase.from('wallet_transactions').insert({
+      borrower_id: loan.borrower_id,
+      loan_id: loan.id,
+      type: 'rebate',
+      amount: rebateAmount,
+      description: `Early payoff rebate (1% — ${daysEarly} days early)`,
+      status: 'completed'
+    })
+
+    await logAudit({
+      action_type: 'CREDITS_REBATE',
+      module: 'Loan',
+      description: `Early payoff rebate of ₱${rebateAmount} credited to ${resultBorrowerName}'s Rebate Credits`,
+      changed_by: user?.email
+    })
+
+    return { rebateAmount, daysEarly }
+  }
+
   const handleRecordPayment = async (loan) => {
     const borrower = borrowers.find(b => b.id === loan.borrower_id)
     const numInstallments = loan.num_installments || 4
@@ -913,49 +1010,10 @@ export default function LoansPage() {
 
     if (result.new_status === 'Paid') {
       // ── Early payoff rebate (client-side, non-critical) ──
-      let earlyRebateApplied = false
-      if (loan.release_date) {
-        const numInst = loan.num_installments || 4
-        const dates = getInstallmentDates(loan.release_date, numInst)
-        const finalDue = dates[numInst - 1]
-        const today = new Date(); today.setHours(0,0,0,0)
-        finalDue.setHours(0,0,0,0)
-        const daysEarly = Math.ceil((finalDue - today) / (1000 * 60 * 60 * 24))
-
-        if (daysEarly >= 7) {
-          const rebateAmount = parseFloat((loan.loan_amount * 0.01).toFixed(2))
-          // Apply rebate to wallet (separate non-transactional call)
-          const { data: walletData } = await supabase
-            .from('wallets').select('id, balance').eq('borrower_id', loan.borrower_id).maybeSingle()
-
-          if (walletData) {
-            await supabase.from('wallets').update({
-              balance: parseFloat((walletData.balance + rebateAmount).toFixed(2)),
-              updated_at: new Date().toISOString()
-            }).eq('id', walletData.id)
-          } else {
-            await supabase.from('wallets').insert({ borrower_id: loan.borrower_id, balance: rebateAmount })
-          }
-
-          await supabase.from('wallet_transactions').insert({
-            borrower_id: loan.borrower_id,
-            loan_id: loan.id,
-            type: 'rebate',
-            amount: rebateAmount,
-            description: `Early payoff rebate (1% — ${daysEarly} days early)`,
-            status: 'completed'
-          })
-
-          await logAudit({
-            action_type: 'CREDITS_REBATE',
-            module: 'Loan',
-            description: `Early payoff rebate of ₱${rebateAmount} credited to ${result.borrower_name}'s Rebate Credits`,
-            changed_by: user?.email
-          })
-
-          earlyRebateApplied = true
-          toast(`🎉 Loan fully paid by ${result.borrower_name}! Early rebate of ₱${rebateAmount} added to Rebate Credits!`, 'success')
-        }
+      const rebateResult = await applyEarlyRebate(loan, result.borrower_name)
+      const earlyRebateApplied = !!rebateResult
+      if (earlyRebateApplied) {
+        toast(`🎉 Loan fully paid by ${result.borrower_name}! Early rebate of ₱${rebateResult.rebateAmount} added to Rebate Credits!`, 'success')
       }
 
       if (!earlyRebateApplied) {
@@ -1096,6 +1154,107 @@ export default function LoansPage() {
       await logAudit({ action_type: 'INVESTOR_UNASSIGNED', module: 'Loan', description: `Investor unassigned from loan for ${borrower?.full_name || 'Unknown'}`, changed_by: user?.email })
       toast('Investor unassigned from loan', 'info')
     }
+    fetchData()
+  }
+
+  // ── Installment Loan: Full Payoff (all remaining installments in one go) ──
+  const handleFullPayoff = async (loan) => {
+    const borrower = borrowers.find(b => b.id === loan.borrower_id)
+    const numInstallments = loan.num_installments || 4
+    const allDates = getInstallmentDates(loan.release_date, numInstallments)
+    const remaining = numInstallments - loan.payments_made
+    const holdAmt = loan.security_hold || 0
+    const holdNotReturned = !loan.security_hold_returned
+
+    let lastResult = null
+    // Process each remaining installment sequentially
+    for (let i = 0; i < remaining; i++) {
+      const installmentIndex = loan.payments_made + i // 0-based index into allDates
+      const dueDate = allDates[installmentIndex]
+      const dueDateStr = dueDate ? formatDateValue(dueDate) : null
+
+      // p_net_hold = true only on the very last installment when hold has not yet been returned
+      const isLast = i === remaining - 1
+      const shouldNet = isLast && holdAmt > 0 && holdNotReturned
+
+      const { data: result, error } = await supabase.rpc('record_installment_payment', {
+        p_loan_id: loan.id,
+        p_admin_email: user?.email || 'system',
+        p_due_date_str: dueDateStr,
+        p_net_hold: shouldNet
+      })
+
+      if (error || !result?.success) {
+        toast(result?.error || error?.message || `Failed at installment ${installmentIndex + 1}`, 'error')
+        fetchData()
+        return
+      }
+
+      lastResult = result
+    }
+
+    if (!lastResult) return
+
+    // ── Early rebate check (same logic as per-installment path) ──
+    const rebateResult = await applyEarlyRebate(loan, lastResult.borrower_name || borrower?.full_name)
+
+    // ── Tier upgrade email ──
+    const oldLevel = lastResult.old_level || 1
+    const newLevel = lastResult.new_level || 1
+    if (lastResult.borrower_email && newLevel > oldLevel) {
+      const tierNames = { 1: 'New', 2: 'Trusted', 3: 'Reliable', 4: 'VIP' }
+      const limitMap = { 1: 5000, 2: 7000, 3: 9000, 4: 10000 }
+      try {
+        await sendTierUpgradeEmail({
+          to: lastResult.borrower_email,
+          borrowerName: lastResult.borrower_name,
+          accessCode: lastResult.borrower_access_code,
+          oldTier: tierNames[oldLevel],
+          newTier: tierNames[newLevel],
+          newLimit: limitMap[newLevel],
+        })
+      } catch (e) {
+        console.warn('Tier upgrade email failed:', e)
+      }
+    }
+
+    // ── Send payment confirmed email for final installment ──
+    if (lastResult.borrower_email) {
+      const paymentDate = new Date().toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' })
+      try {
+        await sendPaymentConfirmedEmail({
+          to: lastResult.borrower_email,
+          borrowerName: lastResult.borrower_name,
+          accessCode: lastResult.borrower_access_code,
+          installmentNum: numInstallments,
+          numInstallments,
+          amountPaid: lastResult.install_amount,
+          paymentDate,
+          remainingBalance: 0,
+          loanFullyPaid: true,
+        })
+      } catch (e) {
+        console.warn('Payment confirmed email failed:', e)
+      }
+    }
+
+    // ── Audit log ──
+    await logAudit({
+      action_type: 'FULL_PAYOFF_RECORDED',
+      module: 'Loan',
+      description: `Full payoff recorded for ${borrower?.full_name} — ${remaining} installment(s) processed.${holdAmt > 0 && holdNotReturned ? ` ₱${holdAmt} security hold returned.` : ''}${rebateResult ? ` Early rebate ₱${rebateResult.rebateAmount} credited.` : ''}`,
+      changed_by: user?.email
+    })
+
+    // ── Single success toast ──
+    const parts = []
+    if (holdAmt > 0 && holdNotReturned) parts.push('Hold returned')
+    if (rebateResult) parts.push(`₱${rebateResult.rebateAmount} rebate credited`)
+    toast(
+      `✅ Full payoff recorded for ${borrower?.full_name}!${parts.length ? ' ' + parts.join(' + ') + '.' : ''}`,
+      'success'
+    )
+
     fetchData()
   }
 
@@ -1397,6 +1556,7 @@ export default function LoansPage() {
               onDelete={setDeleteTarget}
               onDefault={setDefaultTarget}
               onRecordPayment={handleRecordPayment}
+              onFullPayoff={handleFullPayoff}
               onRenew={handleRenew}
               onConfirmRelease={handleConfirmRelease}
               onQuickLoanPayoff={handleQuickLoanPayoff}
