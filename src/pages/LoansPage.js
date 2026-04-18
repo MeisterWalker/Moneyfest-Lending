@@ -938,7 +938,7 @@ export default function LoansPage() {
 
   // ── Shared early-rebate helper ──────────────────────────────────────
   // Returns true if a rebate was applied. Call after the loan reaches Paid status.
-  const applyEarlyRebate = async (loan, resultBorrowerName) => {
+  const applyEarlyRebate = async (loan, resultBorrowerName, isFullPayoff = false) => {
     if (!loan.release_date) return false
     const numInst = loan.num_installments || 4
     const dates = getInstallmentDates(loan.release_date, numInst)
@@ -970,6 +970,20 @@ export default function LoansPage() {
       description: `Early payoff rebate (1% — ${daysEarly} days early)`,
       status: 'completed'
     })
+
+    if (loan.loan_type !== 'quickloan') {
+      const notes = isFullPayoff
+        ? `1% early completion rebate (full payoff) — ${resultBorrowerName} (₱${loan.loan_amount?.toLocaleString()} loan, ${daysEarly} days early)`
+        : `1% early completion rebate — ${resultBorrowerName} (₱${loan.loan_amount?.toLocaleString()} loan, ${daysEarly} days early)`
+
+      await supabase.from('capital_flow').insert({
+        entry_date: new Date().toISOString().slice(0, 10),
+        type: 'CASH OUT',
+        category: 'Rebate Issued',
+        amount: rebateAmount,
+        notes
+      })
+    }
 
     await logAudit({
       action_type: 'CREDITS_REBATE',
@@ -1213,7 +1227,7 @@ export default function LoansPage() {
     if (!lastResult) return
 
     // ── Early rebate check (same logic as per-installment path) ──
-    const rebateResult = await applyEarlyRebate(loan, lastResult.borrower_name || borrower?.full_name)
+    const rebateResult = await applyEarlyRebate(loan, lastResult.borrower_name || borrower?.full_name, true)
 
     // ── Tier upgrade email ──
     const oldLevel = lastResult.old_level || 1

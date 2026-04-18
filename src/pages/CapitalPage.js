@@ -90,7 +90,7 @@ export default function CapitalPage() {
       .reduce((sum, e) => sum + parseFloat(e.amount), 0)
     
     const totalExpenses = entries
-      .filter(e => e.type === 'CASH OUT' && ['Subscription / Hosting', 'Operating Expense'].includes(e.category))
+      .filter(e => e.type === 'CASH OUT' && ['Subscription / Hosting', 'Operating Expense', 'Rebate Issued'].includes(e.category))
       .reduce((sum, e) => sum + parseFloat(e.amount), 0)
 
     return { ledger, jpCapital, charlouCapital, currentTotal, jpShare, charlouShare, totalIncome, totalExpenses }

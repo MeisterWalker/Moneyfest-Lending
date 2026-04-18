@@ -172,19 +172,23 @@ export default function EarningsPage() {
   const sumInterest  = (rows) => rows.reduce((s, r) => s + ((r.category || '').toLowerCase().includes('interest profit') ? parseFloat(r.amount) || 0 : 0), 0)
   const sumCapital   = (rows) => rows.reduce((s, r) => s + (((r.category || '').toLowerCase().includes('initial pool') || (r.category || '').toLowerCase().includes('capital top-up')) ? parseFloat(r.amount) || 0 : 0), 0)
   const sumPenalties = (rows) => rows.reduce((s, r) => s + ((r.category || '').toLowerCase().includes('penalty') ? parseFloat(r.amount) || 0 : 0), 0)
+  const sumRebates   = (rows) => rows.reduce((s, r) => s + (((r.category || '').toLowerCase() === 'rebate issued' && r.type === 'CASH OUT') ? parseFloat(r.amount) || 0 : 0), 0)
 
   const atInterest  = sumInterest(allFlow)
   const atCapital   = sumCapital(allFlow)
   const atPenalties = sumPenalties(allFlow)
-  const atNet       = atInterest + atPenalties
+  const atRebates   = sumRebates(allFlow)
+  const atNet       = atInterest + atPenalties - atRebates
 
   const perInterest  = sumInterest(periodFlow)
   const perPenalties = sumPenalties(periodFlow)
-  const perNet       = perInterest + perPenalties
+  const perRebates   = sumRebates(periodFlow)
+  const perNet       = perInterest + perPenalties - perRebates
 
   const prevInterest  = sumInterest(prevFlow)
   const prevPenalties = sumPenalties(prevFlow)
-  const prevNet       = prevInterest + prevPenalties
+  const prevRebates   = sumRebates(prevFlow)
+  const prevNet       = prevInterest + prevPenalties - prevRebates
 
   const monthlyEarnings = useMemo(() => {
     const months = []
@@ -195,8 +199,9 @@ export default function EarningsPage() {
       const mFlowRows = histFlow.filter(r => { const d = new Date(r.entry_date); return d >= mStart && d <= mEnd })
       const interest  = sumInterest(mFlowRows)
       const penalties = sumPenalties(mFlowRows)
+      const rebates   = sumRebates(mFlowRows)
       const topups    = sumCapital(mFlowRows)
-      months.push({ label: mLabel, interest, penalties, income: interest + penalties, topups })
+      months.push({ label: mLabel, interest, penalties, rebates, income: interest + penalties - rebates, topups })
     }
     let running = 0
     return months.map(m => { running += m.income; return { ...m, cumulative: running } })
@@ -237,6 +242,7 @@ export default function EarningsPage() {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px,1fr))', gap: 14, marginBottom: 24 }}>
               <StatCard label="Total Interest Earned"    value={formatCurrency(atInterest)}  color="var(--green)" />
               <StatCard label="Penalties Collected"      value={formatCurrency(atPenalties)} color="var(--red)"   />
+              <StatCard label="Rebates Paid Out"         value={`-${formatCurrency(atRebates)}`} color="var(--blue-light)" />
               <StatCard label="Capital in Pool"          value={formatCurrency(atCapital)}   color="var(--blue)"  />
               <StatCard label="Net Earnings (All-Time)"  value={formatCurrency(atNet)}       color="var(--teal)"  />
             </div>
@@ -248,6 +254,7 @@ export default function EarningsPage() {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px,1fr))', gap: 14 }}>
               <StatCard label="Interest Earned" value={formatCurrency(perInterest)}  color="var(--green)" delta={<DeltaBadge current={perInterest}  previous={prevInterest}  />} />
               <StatCard label="Penalties"       value={formatCurrency(perPenalties)} color="var(--red)"   delta={<DeltaBadge current={perPenalties} previous={prevPenalties} invertColors />} />
+              <StatCard label="Rebates Paid Out" value={`-${formatCurrency(perRebates)}`} color="var(--blue-light)" delta={<DeltaBadge current={perRebates} previous={prevRebates} invertColors />} />
               <StatCard label="Net Earnings"    value={formatCurrency(perNet)}       color="var(--teal)"  delta={<DeltaBadge current={perNet}       previous={prevNet}       />} />
             </div>
           </div>
@@ -275,20 +282,21 @@ export default function EarningsPage() {
           {/* 3. Month-by-month table */}
           <div className="card" style={{ padding: 0, overflow: 'hidden', marginBottom: 28 }}>
             <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--card-border)', fontSize: 13, fontWeight: 700, color: 'var(--text-secondary)' }}>Month-by-Month Breakdown — Last 6 Months</div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr 1.2fr', padding: '10px 20px', borderBottom: '1px solid var(--card-border)', background: 'rgba(255,255,255,0.015)' }}>
-              {['Month', 'Interest', 'Penalties', 'Total Income', 'Capital Top-ups', 'Running Total'].map(h => (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr 1fr 1.2fr', padding: '10px 20px', borderBottom: '1px solid var(--card-border)', background: 'rgba(255,255,255,0.015)' }}>
+              {['Month', 'Interest', 'Penalties', 'Rebates', 'Net Earnings', 'Capital Top-ups', 'Running Total'].map(h => (
                 <div key={h} style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>{h}</div>
               ))}
             </div>
             {monthlyEarnings.map((m, i) => {
               const isLast = i === monthlyEarnings.length - 1
               return (
-                <div key={m.label} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr 1.2fr', padding: '13px 20px', borderBottom: i < monthlyEarnings.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none', alignItems: 'center', background: isLast ? 'rgba(255,255,255,0.02)' : 'transparent' }}
+                <div key={m.label} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr 1fr 1.2fr', padding: '13px 20px', borderBottom: i < monthlyEarnings.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none', alignItems: 'center', background: isLast ? 'rgba(255,255,255,0.02)' : 'transparent' }}
                   onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.015)'}
                   onMouseLeave={e => e.currentTarget.style.background = isLast ? 'rgba(255,255,255,0.02)' : 'transparent'}>
                   <div style={{ fontSize: 13, fontWeight: isLast ? 800 : 600, color: 'var(--text-primary)' }}>{m.label}</div>
                   <div style={{ fontSize: 13, fontWeight: isLast ? 700 : 400, color: 'var(--green)' }}>{formatCurrency(m.interest)}</div>
                   <div style={{ fontSize: 13, fontWeight: isLast ? 700 : 400, color: m.penalties > 0 ? 'var(--red)' : 'var(--text-muted)' }}>{formatCurrency(m.penalties)}</div>
+                  <div style={{ fontSize: 13, fontWeight: isLast ? 700 : 400, color: m.rebates > 0 ? 'var(--blue-light)' : 'var(--text-muted)' }}>{m.rebates > 0 ? `-${formatCurrency(m.rebates)}` : formatCurrency(0)}</div>
                   <div style={{ fontSize: 13, fontWeight: isLast ? 700 : 400, color: 'var(--text-primary)' }}>{formatCurrency(m.income)}</div>
                   <div style={{ fontSize: 13, color: m.topups > 0 ? 'var(--blue)' : 'var(--text-muted)' }}>{formatCurrency(m.topups)}</div>
                   <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--green)' }}>{formatCurrency(m.cumulative)}</div>
@@ -298,14 +306,16 @@ export default function EarningsPage() {
             {monthlyEarnings.length > 0 && (() => {
               const totInt = monthlyEarnings.reduce((s, m) => s + m.interest, 0)
               const totPen = monthlyEarnings.reduce((s, m) => s + m.penalties, 0)
+              const totReb = monthlyEarnings.reduce((s, m) => s + m.rebates, 0)
               const totInc = monthlyEarnings.reduce((s, m) => s + m.income, 0)
               const totTop = monthlyEarnings.reduce((s, m) => s + m.topups, 0)
               const lastCu = monthlyEarnings[monthlyEarnings.length - 1]?.cumulative || 0
               return (
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr 1.2fr', padding: '14px 20px', background: 'rgba(255,255,255,0.04)', borderTop: '2px solid var(--card-border)' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr 1fr 1.2fr', padding: '14px 20px', background: 'rgba(255,255,255,0.04)', borderTop: '2px solid var(--card-border)' }}>
                   <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--text-primary)' }}>6-Month Total</div>
                   <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--green)' }}>{formatCurrency(totInt)}</div>
                   <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--red)' }}>{formatCurrency(totPen)}</div>
+                  <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--blue-light)' }}>{totReb > 0 ? `-${formatCurrency(totReb)}` : formatCurrency(0)}</div>
                   <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--text-primary)' }}>{formatCurrency(totInc)}</div>
                   <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--blue)' }}>{formatCurrency(totTop)}</div>
                   <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--green)' }}>{formatCurrency(lastCu)}</div>

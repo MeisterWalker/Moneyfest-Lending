@@ -446,8 +446,8 @@
 <body>
 
 <div class="logo-mark">Money<span>fest</span></div>
-<div class="slide-label" id="slideLabel">01 / 18</div>
-<div class="progress-bar" id="progressBar" style="width: 5.55%;"></div>
+<div class="slide-label" id="slideLabel">01 / 19</div>
+<div class="progress-bar" id="progressBar" style="width: 5.26%;"></div>
 
 <div class="kbd-hint">
   <span class="kbd">←</span><span class="kbd">→</span> to navigate
@@ -587,10 +587,10 @@
       <div class="eyebrow">Accounting Error #1 · Fixed</div>
       <h2>Our profit reports were showing money that didn't exist.</h2>
 
-      <p style="margin-bottom:16px;">Here is what was happening with overdue borrowers: When a borrower went late, our system was supposed to deduct ₱20/day from their ₱500 security deposit. Correct so far.</p>
-      <p style="margin-bottom:16px;">But when the deposit ran out — say after 25 days — and the borrower still hadn't paid, the system kept going. It added the extra penalty on top of what the borrower owed. Fine.</p>
-      <p style="margin-bottom:16px;">The problem: it also added that extra penalty to our income records — labeling it as "Interest Profit Earned." So our books were showing ₱175 interest earned this installment. But in reality, ₱140 was real interest and ₱35 was a penalty we hadn't actually collected yet.</p>
-      <p style="margin-bottom:24px;"><strong>The borrower still owed it.</strong></p>
+      <p style="margin-bottom:16px;">Here is exactly what was happening: When a borrower gives us a ₱500 security deposit, that ₱500 cash goes into our GCash and is logged in our Capital Pool. Correct so far.</p>
+      <p style="margin-bottom:16px;">When they are 13 days late, they incur a ₱260 penalty. This penalty is supposed to simply eat into that ₱500 deposit. We don't get new cash; we just keep more of the deposit we already hold.</p>
+      <p style="margin-bottom:16px;"><strong>The bug:</strong> Our system was adding that ₱260 into our Earnings as if it was <i>brand-new cash</i> coming in from the outside. It treated the penalty as extra income on top of the original deposit, inflating our books.</p>
+      <p style="margin-bottom:24px;"><strong>This created Double-Counting.</strong> The books showed ₱435 earned (₱175 normal interest + ₱260 "new" penalty cash). But the ₱260 was a total illusion — it was just a slice of the ₱500 deposit we already had.</p>
 
       <div class="card" style="padding:0; overflow:hidden; margin-bottom: 24px;">
         <table>
@@ -602,12 +602,12 @@
           </thead>
           <tbody>
             <tr>
-              <td><i class="fa-solid fa-ghost" style="color:var(--red); margin-right:8px;"></i> ₱175 Interest Earned</td>
-              <td><span class="verdict pass" style="padding: 4px 8px;">₱140 Real</span> + <span class="verdict fail" style="padding: 4px 8px;">₱35 Uncollected</span></td>
+              <td><i class="fa-solid fa-ghost" style="color:var(--red); margin-right:8px;"></i> ₱435 Profit Earned</td>
+              <td><span class="verdict pass" style="padding: 4px 8px;">₱175 Real</span> + <span class="verdict fail" style="padding: 4px 8px;">₱260 Uncollected</span></td>
             </tr>
             <tr>
-              <td><i class="fa-solid fa-ghost" style="color:var(--red); margin-right:8px;"></i> ₱700 profit this cycle</td>
-              <td><span class="verdict pass" style="padding: 4px 8px;">₱560 confirmed</span> + <span class="verdict fail" style="padding: 4px 8px;">₱140 pending</span></td>
+              <td><i class="fa-solid fa-ghost" style="color:var(--red); margin-right:8px;"></i> ₱1,740 profit across 4 loans</td>
+              <td><span class="verdict pass" style="padding: 4px 8px;">₱700 confirmed</span> + <span class="verdict fail" style="padding: 4px 8px;">₱1,040 pending</span></td>
             </tr>
           </tbody>
         </table>
@@ -729,15 +729,15 @@
           <div class="card" style="margin-bottom:16px;">
             <h3 style="margin-bottom:12px;"><i class="fa-solid fa-timeline" style="color:var(--gold);margin-right:8px;"></i>What Happened</h3>
             <ul class="step-list">
-              <li><span class="step-num" style="background:var(--gold);">1</span>Fritz paid ₱500 security deposit on his loan</li>
-              <li><span class="step-num" style="background:var(--gold);">2</span>Fritz went overdue. System charged ₱20/day penalty.</li>
-              <li><span class="step-num" style="background:var(--gold);">3</span>The deposit absorbed the loss until it reached ₱0.</li>
-              <li><span class="step-num red">4</span>System kept charging ₱20 and logged ₱180 as <strong>CASH IN</strong></li>
-              <li><span class="step-num red">5</span>But the cash was never collected. That ₱180 didn't exist.</li>
+              <li><span class="step-num" style="background:var(--gold);">1</span>Fritz paid ₱500 security deposit on his loan.</li>
+              <li><span class="step-num" style="background:var(--gold);">2</span>Fritz went 13 days overdue. Incurred ₱260 penalty.</li>
+              <li><span class="step-num red">3</span>The system deducted the ₱260 from the deposit.</li>
+              <li><span class="step-num red">4</span>System erroneously logged the ₱260 as brand new <strong>PROFIT</strong>.</li>
+              <li><span class="step-num red">5</span>The books effectively double-counted our own deposit.</li>
             </ul>
           </div>
           <div class="ghost-money" style="width:100%;justify-content:center;margin-top:8px;">
-            <i class="fa-solid fa-ghost"></i> ₱180 shown as earned · ₱0 physically received
+            <i class="fa-solid fa-ghost"></i> ₱260 shown as earned · ₱0 physically received
           </div>
         </div>
 
@@ -748,25 +748,29 @@
               <tbody>
                 <tr>
                   <td style="color:#94A3B8;border-color:rgba(255,255,255,0.08)">System showed on hand</td>
-                  <td style="text-align:right;color:#F2C96A;font-family:'DM Mono',monospace;border-color:rgba(255,255,255,0.08);font-weight:600;">₱780</td>
+                  <td style="text-align:right;color:#F2C96A;font-family:'DM Mono',monospace;border-color:rgba(255,255,255,0.08);font-weight:600;">₱935</td>
                 </tr>
                 <tr>
-                  <td style="color:#94A3B8;border-color:rgba(255,255,255,0.08)">QuickLoan profit (real)</td>
-                  <td style="text-align:right;color:#22C55E;font-family:'DM Mono',monospace;border-color:rgba(255,255,255,0.08);font-weight:600;">₱600 ✓</td>
+                  <td style="color:#94A3B8;border-color:rgba(255,255,255,0.08)">Original Deposit (real)</td>
+                  <td style="text-align:right;color:#22C55E;font-family:'DM Mono',monospace;border-color:rgba(255,255,255,0.08);font-weight:600;">₱500 ✓</td>
+                </tr>
+                <tr>
+                  <td style="color:#94A3B8;border-color:rgba(255,255,255,0.08)">Interest Profit (real)</td>
+                  <td style="text-align:right;color:#22C55E;font-family:'DM Mono',monospace;border-color:rgba(255,255,255,0.08);font-weight:600;">₱175 ✓</td>
                 </tr>
                 <tr>
                   <td style="color:#94A3B8;border-color:rgba(255,255,255,0.08)">Penalty income (ghost)</td>
-                  <td style="text-align:right;color:#EF4444;font-family:'DM Mono',monospace;border-color:rgba(255,255,255,0.08);font-weight:600;">₱180 ✗</td>
+                  <td style="text-align:right;color:#EF4444;font-family:'DM Mono',monospace;border-color:rgba(255,255,255,0.08);font-weight:600;">₱260 ✗</td>
                 </tr>
                 <tr>
                   <td style="color:white;font-weight:600;border-color:rgba(255,255,255,0.08)">Actually in GCash</td>
-                  <td style="text-align:right;color:white;font-family:'DM Mono',monospace;border-color:rgba(255,255,255,0.08);font-weight:700;font-size:1.1em;">₱600</td>
+                  <td style="text-align:right;color:white;font-family:'DM Mono',monospace;border-color:rgba(255,255,255,0.08);font-weight:700;font-size:1.1em;">₱675</td>
                 </tr>
               </tbody>
             </table>
           </div>
           <div class="card red-accent">
-            <p style="font-size:0.85em;"><strong>The Danger:</strong> I had to manually run SQL to delete 9 ghost entries from the database. The books showed profit that wasn't there.</p>
+            <p style="font-size:0.85em;"><strong>The Danger:</strong> The system was treating internal deposit deductions as brand-new revenue. The books showed profit that wasn't there.</p>
           </div>
         </div>
       </div>
@@ -791,21 +795,21 @@
         <strong style="font-size:0.95em; color:var(--ink); margin-bottom:8px; display:inline-block;">2. How it was being created:</strong>
         <div style="display:flex;flex-direction:column;gap:8px; width:100%;">
           <div class="flow-box highlight-box" style="padding:10px;">
-            <p style="font-size:0.82em;font-weight:500;"><span class="step-num gold" style="display:inline-flex; width:20px; height:20px; font-size:0.8em; margin-right:8px;">1</span>Borrower has ₱500 security deposit held by us</p>
+            <p style="font-size:0.82em;font-weight:500;"><span class="step-num gold" style="display:inline-flex; width:20px; height:20px; font-size:0.8em; margin-right:8px;">1</span>Borrower provides ₱500 security deposit. We physically hold this cash.</p>
           </div>
           <div class="flow-arrow" style="font-size: 1em; margin:2px 0;">↓</div>
           <div class="flow-box highlight-box" style="padding:10px;">
-            <p style="font-size:0.82em;font-weight:500;"><span class="step-num gold" style="display:inline-flex; width:20px; height:20px; font-size:0.8em; margin-right:8px;">2</span>Borrower goes 30+ days overdue — deposit used up</p>
+            <p style="font-size:0.82em;font-weight:500;"><span class="step-num gold" style="display:inline-flex; width:20px; height:20px; font-size:0.8em; margin-right:8px;">2</span>Borrower goes 13 days late. Incurs ₱260 penalty against deposit.</p>
           </div>
           <div class="flow-arrow" style="font-size: 1em; margin:2px 0;">↓</div>
           <div class="flow-box bad" style="padding:10px;">
-            <p style="font-size:0.82em;font-weight:600;color:var(--red);"><span class="step-num red" style="display:inline-flex; width:20px; height:20px; font-size:0.8em; margin-right:8px;">3</span>System continued adding daily penalty to our income records labeled as 'Interest Profit' — even though we hadn't collected it. The borrower still owed it.</p>
+            <p style="font-size:0.82em;font-weight:600;color:var(--red);"><span class="step-num red" style="display:inline-flex; width:20px; height:20px; font-size:0.8em; margin-right:8px;">3</span>BUG: System incorrectly logged the ₱260 penalty as brand new 'Interest Profit' arriving outside the deposit.</p>
           </div>
           <div class="flow-arrow" style="font-size: 1em; margin:2px 0;">↓</div>
           <div class="flow-box bad" style="padding:12px; display:flex; justify-content:center; gap: 16px; align-items:center;">
             <span class="step-num red" style="display:inline-flex; width:20px; height:20px; font-size:0.8em;">4</span>
-            <p style="font-size:0.85em;font-weight:600;color:var(--red);">Books showed ₱175 profit per payment. Actual cash received: ₱140.</p>
-            <div class="ghost-money" style="padding: 4px 12px; font-size: 0.75em;"><i class="fa-solid fa-ghost"></i> ₱35 was ghost</div>
+            <p style="font-size:0.85em;font-weight:600;color:var(--red);">Books showed ₱435 profit. Actual cash received: ₱175.</p>
+            <div class="ghost-money" style="padding: 4px 12px; font-size: 0.75em;"><i class="fa-solid fa-ghost"></i> ₱260 was double-counted ghost</div>
           </div>
         </div>
       </div>
@@ -975,8 +979,40 @@
     </div>
   </div>
 
-  <!-- ══ SLIDE 17: Reassurance ══ -->
+  <!-- ══ SLIDE 17: Finance Module Overview ══ -->
   <div class="slide" id="s17">
+    <div class="bg-grid"></div>
+    <div class="deco-circle" style="width:500px;height:500px;background:radial-gradient(circle,rgba(201,151,58,0.08),transparent 70%);bottom:-100px;left:-100px;"></div>
+    
+    <div style="max-width:900px;width:100%;">
+      <div class="eyebrow">Admin Dashboard · Finance Module</div>
+      <h2>The New Financial Control Room</h2>
+      <p class="lead" style="margin-bottom:32px;">To ensure the ghost money bug never happens again, I built a suite of dedicated tools that give you a real-time, accurate view of exactly where every peso is.</p>
+      
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+        <div class="card gold-accent" style="padding:20px;">
+          <h3 style="margin-bottom:8px; font-size:1.1em;"><i class="fa-solid fa-scale-balanced" style="margin-right:8px; color:var(--gold);"></i>Capital & Financial Ledger</h3>
+          <p style="font-size:0.85em; margin-bottom:8px; line-height:1.5;"><strong>Capital Page:</strong> Shows Partner Ownership Shares and provides forms to manually add or delete capital entries.</p>
+          <p style="font-size:0.85em; line-height:1.5;"><strong>Financial Ledger:</strong> The dedicated analytics page featuring automated monthly charts and granular Net Flow statistics.</p>
+        </div>
+        <div class="card blue-accent" style="padding:20px;">
+          <h3 style="margin-bottom:8px; font-size:1.1em;"><i class="fa-solid fa-chart-line" style="margin-right:8px; color:var(--blue-light);"></i>Earnings Report</h3>
+          <p style="font-size:0.85em; line-height:1.5;">Shows exactly how much profit was earned per cutoff, strictly split between real Interest, verified Penalty Cash, and Rebates.</p>
+        </div>
+        <div class="card red-accent" style="padding:20px;">
+          <h3 style="margin-bottom:8px; font-size:1.1em;"><i class="fa-solid fa-lock" style="margin-right:8px; color:var(--red-light);"></i>Hold Ledger</h3>
+          <p style="font-size:0.85em; line-height:1.5;">A dedicated tracking system to monitor every borrower's ₱500 security deposit separately from operating capital.</p>
+        </div>
+        <div class="card ink-fill" style="padding:20px;">
+          <h3 style="margin-bottom:8px; font-size:1.1em; color:var(--gold-light);"><i class="fa-solid fa-chart-simple" style="margin-right:8px;"></i>Cash Forecast</h3>
+          <p style="font-size:0.85em; color:var(--paper); line-height:1.5;">Projects your expected upcoming cash flow based on the active loan schedule. Know exactly what to expect in GCash before the 5th and 20th arrive.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 18: Reassurance ══ -->
+  <div class="slide" id="s18">
     <div style="max-width:900px;width:100%;">
       <div class="eyebrow">What the Audit Confirmed</div>
       <h2>16 things were independently verified as correct.</h2>
@@ -1005,8 +1041,8 @@
     </div>
   </div>
 
-  <!-- ══ SLIDE 18: Summary ══ -->
-  <div class="slide" id="s18">
+  <!-- ══ SLIDE 19: Summary ══ -->
+  <div class="slide" id="s19">
     <div class="bg-grid"></div>
     <div style="max-width:920px;width:100%;">
       <div class="eyebrow">Where The Platform Stands Today</div>

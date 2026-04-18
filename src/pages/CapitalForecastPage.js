@@ -120,9 +120,8 @@ export default function CapitalForecastPage() {
   // Calculate Next Cutoff Totals (Optimistic vs Conservative)
   const nextCutoffLoans = activeInstallmentLoans.filter(l => {
     const dates = getInstallmentDates(l.release_date, l.num_installments || 4)
-    const nextIdx = l.payments_made || 0
-    if (nextIdx >= dates.length) return false
-    return formatDateValue(dates[nextIdx]) === nextCutoffStr
+    const unpaidDates = dates.slice(l.payments_made || 0)
+    return unpaidDates.some(d => formatDateValue(d) === nextCutoffStr)
   })
   
   const nextOptimisticTotal = nextCutoffLoans.reduce((sum, l) => sum + (l.installment_amount || 0), 0)
@@ -231,7 +230,8 @@ export default function CapitalForecastPage() {
                 const cutoffStr = formatDateValue(cutoff)
                 const dueLoans = activeInstallmentLoans.filter(l => {
                   const dates = getInstallmentDates(l.release_date, l.num_installments || 4)
-                  return dates.some(d => formatDateValue(d) === cutoffStr)
+                  const unpaidDates = dates.slice(l.payments_made || 0)
+                  return unpaidDates.some(d => formatDateValue(d) === cutoffStr)
                 })
                 
                 const expectedOptimistic = dueLoans.reduce((sum, l) => sum + (l.installment_amount || 0), 0)
