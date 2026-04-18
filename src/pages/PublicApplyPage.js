@@ -303,38 +303,62 @@ export default function PublicApplyPage() {
     setError(''); setLoading(true)
 
     // ── Duplicate check ──────────────────────────────────────────────────
-    // 1. Borrowers table: block if email OR name already registered
+    // 1. Borrowers table: block if email, name, OR phone already registered
     const email   = form.email.trim()
     const name    = form.full_name.trim()
+    const phone   = form.phone.trim()
+
     const { data: dupBorrower } = await supabase
       .from('borrowers').select('id')
-      .or(`email.ilike.${email},full_name.ilike.${name}`)
+      .or(`email.ilike.${email},full_name.ilike.${name},phone.eq.${phone}`)
       .limit(1)
+
     if (dupBorrower && dupBorrower.length > 0) {
       setError('You are already a registered borrower. Please log in to your Borrower Portal to request a new loan.')
       setLoading(false); return
     }
-    // 2. Applications table: check for existing record by email or name
-    // We need the status so we can give a targeted message
-    const { data: appsByEmail } = await supabase
-      .from('applications').select('id, status')
-      .ilike('email', email)
-      .limit(1)
-    const existingApp = (appsByEmail && appsByEmail.length > 0)
-      ? appsByEmail[0]
-      : await supabase.from('applications').select('id, status').ilike('full_name', name).limit(1).then(r => r.data?.[0] || null)
+
+    // 2. Applications table: check for existing record
+    const [{ data: appsByEmail }, { data: appsByPhone }] = await Promise.all([
+      supabase.from('applications').select('id, status')
+        .ilike('email', email)
+        .order('created_at', { ascending: false })
+        .limit(5),
+      supabase.from('applications').select('id, status')
+        .eq('phone', phone)
+        .order('created_at', { ascending: false })
+        .limit(5)
+    ])
+
+    const allMatches = [
+      ...(appsByEmail || []),
+      ...(appsByPhone || [])
+    ]
+
+    // Priority: active statuses first, Denied last
+    const existingApp =
+      allMatches.find(a => ['Pending', 'Under Review'].includes(a.status)) ||
+      allMatches.find(a => a.status === 'Approved') ||
+      allMatches.find(a => a.status === 'Denied') ||
+      null
 
     if (existingApp) {
-      if (existingApp.status === 'Pending' || existingApp.status === 'Under Review') {
+      if (existingApp.status === 'Pending' || 
+          existingApp.status === 'Under Review') {
         setError('You already have an application currently under review. Please wait for a decision before submitting a new one.')
+        setLoading(false); return
+      }
+      if (existingApp.status === 'Approved') {
+        setError('You are already a registered borrower. Please log in to your Borrower Portal to request a new loan.')
         setLoading(false); return
       }
       if (existingApp.status === 'Denied') {
         setError('You have a previous denied application on file. Please visit the Application Status page and use your original access code to reapply from there — your previous information has been saved for you.')
         setLoading(false); return
       }
-      // status === 'Approved' falls through — they're now a borrower (caught by the check above)
-      // Any other status: allow the new application
+      // Any other unknown status — block to be safe
+      setError('A previous application was found under your details. Please contact admin for assistance.')
+      setLoading(false); return
     }
     // ── End duplicate check ──────────────────────────────────────────────
 
