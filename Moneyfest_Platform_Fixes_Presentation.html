@@ -1,0 +1,1095 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Moneyfest — Audit & Resolutions Report</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    :root {
+      --ink: #0A0E1A;
+      --paper: #F5F0E8;
+      --gold: #C9973A;
+      --gold-light: #F2C96A;
+      --green: #1A6B4A;
+      --green-light: #22C55E;
+      --red: #8B1A1A;
+      --red-light: #EF4444;
+      --blue: #1A3A6B;
+      --blue-light: #3B82F6;
+      --muted: #6B7280;
+      --card: rgba(10,14,26,0.04);
+      --border: rgba(10,14,26,0.1);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--paper);
+      color: var(--ink);
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+    }
+
+    /* Grain texture overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 1000;
+      opacity: 0.4;
+    }
+
+    /* Slide system */
+    .deck { position: relative; width: 100vw; height: 100vh; }
+    .slide {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 60px 80px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.5s ease, transform 0.5s ease;
+      transform: translateY(20px);
+    }
+    .slide.active {
+      opacity: 1;
+      pointer-events: all;
+      transform: translateY(0);
+    }
+
+    /* Navigation */
+    .nav {
+      position: fixed;
+      bottom: 36px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      z-index: 100;
+      background: rgba(10,14,26,0.08);
+      backdrop-filter: blur(10px);
+      padding: 10px 24px;
+      border-radius: 50px;
+      border: 1px solid var(--border);
+    }
+    .nav button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--ink);
+      font-size: 0.85em;
+      font-family: 'DM Mono', monospace;
+      font-weight: 500;
+      padding: 6px 16px;
+      border-radius: 30px;
+      transition: all 0.2s;
+      letter-spacing: 0.03em;
+    }
+    .nav button:hover { background: var(--ink); color: var(--paper); }
+    .nav .slide-counter {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.75em;
+      color: var(--muted);
+      min-width: 60px;
+      text-align: center;
+    }
+    .nav .dots {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+    .nav .dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: rgba(10,14,26,0.2);
+      transition: all 0.3s;
+      cursor: pointer;
+    }
+    .nav .dot.active {
+      background: var(--gold);
+      width: 20px;
+      border-radius: 3px;
+    }
+
+    /* Slide label */
+    .slide-label {
+      position: fixed;
+      top: 32px;
+      right: 40px;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.7em;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    /* Typography */
+    .eyebrow {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.72em;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .eyebrow::before {
+      content: '';
+      display: inline-block;
+      width: 28px;
+      height: 2px;
+      background: var(--gold);
+    }
+
+    h1 {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 4em;
+      line-height: 1.0;
+      letter-spacing: -0.03em;
+      color: var(--ink);
+    }
+    h2 {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 2.4em;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+      margin-bottom: 8px;
+    }
+    h3 {
+      font-family: 'Syne', sans-serif;
+      font-weight: 600;
+      font-size: 1.1em;
+      color: var(--ink);
+    }
+    p { font-size: 0.95em; line-height: 1.65; color: #374151; }
+    .lead { font-size: 1.15em; line-height: 1.6; color: #374151; max-width: 600px; }
+    .muted { color: var(--muted); font-size: 0.85em; }
+
+    /* Layout helpers */
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; width: 100%; }
+    .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; width: 100%; }
+    .full-width { width: 100%; }
+
+    /* Cards */
+    .card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px 32px;
+      box-shadow: 0 2px 12px rgba(10,14,26,0.06);
+    }
+    .card.gold-accent { border-left: 4px solid var(--gold); }
+    .card.green-accent { border-left: 4px solid var(--green-light); }
+    .card.red-accent { border-left: 4px solid var(--red-light); }
+    .card.ink-fill {
+      background: var(--ink);
+      border-color: var(--ink);
+      color: var(--paper);
+    }
+    .card.ink-fill p, .card.ink-fill h3 { color: var(--paper); }
+
+    /* Tags / badges */
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.72em;
+      font-family: 'DM Mono', monospace;
+      font-weight: 500;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+    .tag.green { background: rgba(34,197,94,0.12); color: var(--green); border: 1px solid rgba(34,197,94,0.25); }
+    .tag.red { background: rgba(239,68,68,0.1); color: var(--red); border: 1px solid rgba(239,68,68,0.25); }
+    .tag.gold { background: rgba(201,151,58,0.12); color: var(--gold); border: 1px solid rgba(201,151,58,0.3); }
+    .tag.blue { background: rgba(59,130,246,0.1); color: var(--blue); border: 1px solid rgba(59,130,246,0.25); }
+
+    /* Big number stat */
+    .stat-big {
+      font-family: 'Syne', sans-serif;
+      font-size: 3em;
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: -0.03em;
+    }
+    .stat-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.72em;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    /* Table */
+    table { width: 100%; border-collapse: collapse; font-size: 0.88em; }
+    th {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.75em;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding: 10px 16px;
+      text-align: left;
+      border-bottom: 2px solid var(--border);
+    }
+    td {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+    tr:last-child td { border-bottom: none; }
+
+    /* Decorative elements */
+    .deco-circle {
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    /* Flow diagram */
+    .flow-box {
+      background: white;
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      padding: 16px 20px;
+      text-align: center;
+      position: relative;
+    }
+    .flow-box.highlight-box {
+      border-color: var(--gold);
+      background: rgba(201,151,58,0.06);
+    }
+    .flow-box.bad { border-color: var(--red-light); background: rgba(239,68,68,0.05); }
+    .flow-box.good { border-color: var(--green-light); background: rgba(34,197,94,0.06); }
+    .flow-arrow {
+      text-align: center;
+      font-size: 1.4em;
+      color: var(--muted);
+      line-height: 1;
+      margin: 4px 0;
+    }
+
+    /* Timeline / step list */
+    .step-list { list-style: none; padding: 0; }
+    .step-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.9em;
+      color: #374151;
+      line-height: 1.5;
+    }
+    .step-list li:last-child { border-bottom: none; }
+    .step-num {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.75em;
+      font-weight: 500;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--ink);
+      color: var(--paper);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .step-num.gold { background: var(--gold); color: white; }
+    .step-num.green { background: var(--green-light); color: white; }
+    .step-num.red { background: var(--red-light); color: white; }
+
+    /* Slide-specific decorations */
+    .bg-grid {
+      position: absolute;
+      inset: 0;
+      background-image: 
+        linear-gradient(rgba(10,14,26,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(10,14,26,0.04) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+    }
+
+    /* Animated ghost money indicator */
+    @keyframes ghost-float {
+      0%, 100% { transform: translateY(0px); opacity: 0.6; }
+      50% { transform: translateY(-8px); opacity: 0.3; }
+    }
+    .ghost-money {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.85em;
+      color: var(--red-light);
+      background: rgba(239,68,68,0.08);
+      border: 1px dashed rgba(239,68,68,0.4);
+      padding: 8px 16px;
+      border-radius: 8px;
+      animation: ghost-float 2.5s ease-in-out infinite;
+    }
+
+    /* Highlight quote box */
+    .quote-box {
+      border-left: 4px solid var(--gold);
+      padding: 20px 24px;
+      background: rgba(201,151,58,0.06);
+      border-radius: 0 12px 12px 0;
+      margin: 16px 0;
+    }
+    .quote-box p {
+      font-size: 1.05em;
+      font-style: italic;
+      color: var(--ink);
+      font-weight: 500;
+    }
+
+    /* Verdict pill */
+    .verdict {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 20px;
+      border-radius: 30px;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.78em;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .verdict.pass { background: rgba(34,197,94,0.12); color: var(--green); border: 1.5px solid rgba(34,197,94,0.3); }
+    .verdict.fail { background: rgba(239,68,68,0.1); color: var(--red); border: 1.5px solid rgba(239,68,68,0.3); }
+
+    /* Logo mark */
+    .logo-mark {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 0.9em;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+      position: fixed;
+      top: 32px;
+      left: 40px;
+      z-index: 100;
+    }
+    .logo-mark span { color: var(--gold); }
+
+    /* Divider line */
+    .divider {
+      width: 48px;
+      height: 3px;
+      background: var(--gold);
+      border-radius: 2px;
+      margin: 20px 0;
+    }
+
+    /* Progress bar on top */
+    .progress-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 3px;
+      background: var(--gold);
+      transition: width 0.4s ease;
+      z-index: 200;
+    }
+
+    /* Keyboard hint */
+    .kbd-hint {
+      position: fixed;
+      bottom: 36px;
+      right: 40px;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.68em;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .kbd {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 2px 7px;
+      font-size: 0.9em;
+      box-shadow: 0 1px 3px rgba(10,14,26,0.1);
+    }
+
+    /* Centered content */
+    .center { text-align: center; }
+    .center .eyebrow { justify-content: center; }
+    .center .eyebrow::before { display: none; }
+
+  </style>
+</head>
+<body>
+
+<div class="logo-mark">Money<span>fest</span></div>
+<div class="slide-label" id="slideLabel">01 / 18</div>
+<div class="progress-bar" id="progressBar" style="width: 5.55%;"></div>
+
+<div class="kbd-hint">
+  <span class="kbd">←</span><span class="kbd">→</span> to navigate
+</div>
+
+<div class="deck" id="deck">
+
+  <!-- ══ SLIDE 1: Title ══ -->
+  <div class="slide active" id="s1">
+    <div class="bg-grid"></div>
+    <div class="deco-circle" style="width:500px;height:500px;background:radial-gradient(circle,rgba(201,151,58,0.08),transparent 70%);top:-100px;right:-100px;"></div>
+
+    <div style="max-width:820px;width:100%;">
+      <div class="eyebrow">Internal Operations Report · Moneyfest Lending</div>
+      <h1 style="font-size: 3.2em;">Platform Security, Algorithm Audit,<br>and a Financial Discussion</h1>
+      <div class="divider"></div>
+      <p style="font-family: 'DM Mono', monospace; font-size: 0.9em; font-weight: 500; color: var(--gold); letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 24px;">By John Paul Lacaron</p>
+      <p class="lead">A full account of every risk, bug, and security gap discovered in the Moneyfest platform — and how each was resolved.</p>
+      <div style="margin-top:36px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+        <span class="tag gold"><i class="fa-solid fa-shield-halved"></i> Security</span>
+        <span class="tag blue"><i class="fa-solid fa-calculator"></i> Accounting</span>
+        <span class="tag green"><i class="fa-solid fa-handshake"></i> Borrower Trust</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 2: The Big Picture ══ -->
+  <div class="slide" id="s2">
+    <div class="bg-grid"></div>
+    <div style="max-width:900px;width:100%;">
+      <div class="eyebrow">What I Discovered</div>
+      <h2>An independent audit of our platform found 3 categories of risk.</h2>
+      <p class="muted" style="margin-bottom:28px;">Protecting our financial and platform security means addressing the truth.</p>
+      
+      <div class="three-col" style="margin-bottom:28px;">
+        <div class="card red-accent">
+          <i class="fa-solid fa-unlock-keyhole" style="color:var(--red-light);font-size:1.5em;margin-bottom:12px;display:block;"></i>
+          <h3 style="margin-bottom:8px;">Security Gaps</h3>
+          <p style="font-size:0.85em;">Borrower data and loan records were accessible to anyone who knew where to look.</p>
+        </div>
+        <div class="card gold-accent">
+          <i class="fa-solid fa-calculator-circle-exclamation" style="color:var(--gold);font-size:1.5em;margin-bottom:12px;display:block;"></i>
+          <h3 style="margin-bottom:8px;">Accounting Errors</h3>
+          <p style="font-size:0.85em;">Money was being recorded incorrectly — phantom income, wrong penalties, corrupted profit reports.</p>
+        </div>
+        <div class="card blue-accent" style="border-left: 4px solid var(--blue-light);">
+          <i class="fa-solid fa-bug" style="color:var(--blue-light);font-size:1.5em;margin-bottom:12px;display:block;"></i>
+          <h3 style="margin-bottom:8px;">System Crashes</h3>
+          <p style="font-size:0.85em;">Two critical admin tools were completely broken and silently failing every time they were used.</p>
+        </div>
+      </div>
+
+      <div class="card ink-fill center" style="padding: 24px; display: flex; justify-content: center; gap: 32px;">
+        <span style="font-family: 'DM Mono', monospace; font-size: 1em; color: var(--gold-light);">9 critical issues found</span>
+        <span style="color: rgba(255,255,255,0.2);">·</span>
+        <span style="font-family: 'DM Mono', monospace; font-size: 1em; color: var(--green-light);">All 9 resolved</span>
+        <span style="color: rgba(255,255,255,0.2);">·</span>
+        <span style="font-family: 'DM Mono', monospace; font-size: 1em; color: var(--blue-light);">0 active risks remaining</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 3: Security Issue #1 ══ -->
+  <div class="slide" id="s3">
+    <div style="max-width:900px;width:100%;">
+      <div class="eyebrow">Security Gap #1 · Fixed</div>
+      <h2>Our borrower records were visible to anyone.</h2>
+      
+      <p style="margin-bottom:16px;">Imagine your office filing cabinet — containing every borrower's name, phone number, loan amount, payment history, and account PIN — was left unlocked in a public lobby. Anyone who walked in could open it, read everything, and even change the numbers inside.</p>
+      <p style="margin-bottom:32px;">That is exactly what our system was doing online. The records were protected by a lock that had no combination set — anyone who tried the handle could walk right in.</p>
+
+      <div class="two-col" style="margin-bottom:24px;">
+        <div class="card red-accent">
+          <div class="tag red" style="margin-bottom:12px;">BEFORE</div>
+          <p style="font-size:0.85em;">Any person on the internet could look up any borrower's personal details, loan balances, and access codes. They could also modify loan records — marking loans as paid without actually paying.</p>
+        </div>
+        <div class="card green-accent">
+          <div class="tag green" style="margin-bottom:12px;">AFTER</div>
+          <p style="font-size:0.85em;">Every borrower can now only see their own records. Admins see everything. No one else sees anything.</p>
+        </div>
+      </div>
+      
+      <div class="tag green">FIXED — April 2026</div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 4: Security Issue #2 ══ -->
+  <div class="slide" id="s4">
+    <div style="max-width:900px;width:100%;">
+      <div class="eyebrow">Security Gap #2 · Fixed</div>
+      <h2>Our daily penalty processor had no lock on the door.</h2>
+
+      <p style="margin-bottom:16px;">Every morning, our system runs an automatic process that checks which borrowers are late and applies ₱20/day penalties. Think of it like a daily clerk who goes through all accounts and stamps overdue notices.</p>
+      <p style="margin-bottom:32px;">The problem: that clerk's office had no door lock. Anyone who found the address could walk in and trigger the process manually — applying penalties to all borrowers, sending overdue notices to everyone, and deducting credit scores — even when no one was actually late.</p>
+
+      <div class="two-col" style="margin-bottom:24px;">
+        <div class="card red-accent">
+          <div class="tag red" style="margin-bottom:12px;">BEFORE</div>
+          <p style="font-size:0.85em;">Anyone who discovered the system address could trigger mass penalty application at any time of day or night.</p>
+        </div>
+        <div class="card green-accent">
+          <div class="tag green" style="margin-bottom:12px;">AFTER</div>
+          <p style="font-size:0.85em;">The process now requires a secret key that only our server knows. No key, no entry. External triggers are rejected immediately.</p>
+        </div>
+      </div>
+      
+      <div class="tag green">FIXED — April 2026</div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 5: Security Issue #3 ══ -->
+  <div class="slide" id="s5">
+    <div style="max-width:900px;width:100%;">
+      <div class="eyebrow">Security Gap #3 · Fixed</div>
+      <h2>Anyone could submit, read, or modify payment records.</h2>
+
+      <p style="margin-bottom:32px; max-width:800px;">Our principal payment records — the logs of every peso a borrower has paid toward their loan — were stored in a folder with no access rules at all. Not even a basic lock. Anyone could read every payment ever made, submit fake payments, or modify existing payment entries without logging in.</p>
+
+      <div class="two-col" style="margin-bottom:24px;">
+        <div class="card red-accent">
+          <div class="tag red" style="margin-bottom:12px;">BEFORE</div>
+          <p style="font-size:0.85em;">Payment records were fully accessible to the public — readable, writable, and modifiable by anyone.</p>
+        </div>
+        <div class="card green-accent">
+          <div class="tag green" style="margin-bottom:12px;">AFTER</div>
+          <p style="font-size:0.85em;">Only the borrower who made the payment can submit their own record. Only admins can update or review. No one else has access.</p>
+        </div>
+      </div>
+      
+      <div class="tag green">FIXED — April 2026</div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 6: Accounting Bug #1 ══ -->
+  <div class="slide" id="s6">
+    <div style="max-width:900px;width:100%;">
+      <div class="eyebrow">Accounting Error #1 · Fixed</div>
+      <h2>Our profit reports were showing money that didn't exist.</h2>
+
+      <p style="margin-bottom:16px;">Here is what was happening with overdue borrowers: When a borrower went late, our system was supposed to deduct ₱20/day from their ₱500 security deposit. Correct so far.</p>
+      <p style="margin-bottom:16px;">But when the deposit ran out — say after 25 days — and the borrower still hadn't paid, the system kept going. It added the extra penalty on top of what the borrower owed. Fine.</p>
+      <p style="margin-bottom:16px;">The problem: it also added that extra penalty to our income records — labeling it as "Interest Profit Earned." So our books were showing ₱175 interest earned this installment. But in reality, ₱140 was real interest and ₱35 was a penalty we hadn't actually collected yet.</p>
+      <p style="margin-bottom:24px;"><strong>The borrower still owed it.</strong></p>
+
+      <div class="card" style="padding:0; overflow:hidden; margin-bottom: 24px;">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:50%;">What the books showed</th>
+              <th style="width:50%;">What was actually true</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><i class="fa-solid fa-ghost" style="color:var(--red); margin-right:8px;"></i> ₱175 Interest Earned</td>
+              <td><span class="verdict pass" style="padding: 4px 8px;">₱140 Real</span> + <span class="verdict fail" style="padding: 4px 8px;">₱35 Uncollected</span></td>
+            </tr>
+            <tr>
+              <td><i class="fa-solid fa-ghost" style="color:var(--red); margin-right:8px;"></i> ₱700 profit this cycle</td>
+              <td><span class="verdict pass" style="padding: 4px 8px;">₱560 confirmed</span> + <span class="verdict fail" style="padding: 4px 8px;">₱140 pending</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card green-accent" style="padding: 16px 32px;">
+        <span class="tag green" style="margin-right: 12px;">AFTER</span>
+        <span style="font-size: 0.85em; font-weight: 500;">Penalties are no longer mixed into interest income. Only confirmed collected cash is logged as profit.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 7: Accounting Bug #2 ══ -->
+  <div class="slide" id="s7">
+    <div style="max-width:900px;width:100%;">
+      <div class="eyebrow">Accounting Error #2 · Fixed</div>
+      <h2>When one loan went overdue, all of a borrower's loans were affected.</h2>
+
+      <p style="margin-bottom:16px;">When a borrower has two loans — say Loan A is overdue and Loan B is being paid on time — our system was supposed to mark only Loan A as "credit penalty applied."</p>
+      <p style="margin-bottom:28px;">Instead, it was marking BOTH loans. So when the borrower later paid Loan B on time, the system saw the flag and skipped the credit score improvement they had earned. Even worse, it could prevent the overdue warning from being re-applied if Loan A got worse.</p>
+
+      <div class="quote-box" style="margin-bottom: 32px;">
+        <p>"It was like putting a 'delinquent' sticker on the wrong file folder."</p>
+      </div>
+
+      <div class="two-col" style="margin-bottom:24px;">
+        <div class="card red-accent">
+          <div class="tag red" style="margin-bottom:12px;">BEFORE</div>
+          <p style="font-size:0.85em;">One late loan caused flags to appear on ALL of that borrower's loans — including ones paid perfectly on time.</p>
+        </div>
+        <div class="card green-accent">
+          <div class="tag green" style="margin-bottom:12px;">AFTER</div>
+          <p style="font-size:0.85em;">The flag is now applied to the exact loan that is late. Other loans are completely unaffected.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 8: Accounting Bug #3 ══ -->
+  <div class="slide" id="s8">
+    <div style="max-width:900px;width:100%;">
+      <div class="eyebrow">Accounting Error #3 · Fixed</div>
+      <h2>Borrowers who paid on time were being charged a late penalty.</h2>
+
+      <div class="card" style="background: rgba(10,14,26,0.02); margin-bottom: 28px;">
+        <p style="margin-bottom:16px;">Our payment due dates are the 5th and 20th of every month. A borrower who paid on May 5th was doing everything right.</p>
+        <p style="margin-bottom:16px;">But our system was reading dates in a different timezone — the international standard time — which meant midnight on May 5th in the Philippines was being recorded as 11:59pm on May 4th internationally.</p>
+        <p><strong>Result:</strong> the system thought the payment came in one day late. It automatically charged ₱20 penalty. It deducted 10 credit score points. All for a borrower who paid exactly on time.</p>
+      </div>
+
+      <div class="two-col" style="margin-bottom:24px;">
+        <div class="card red-accent">
+          <div class="tag red" style="margin-bottom:12px;">BEFORE</div>
+          <p style="font-size:0.85em;">On-time payments on the 5th or 20th were being recorded as 1 day late. ₱20 wrongful penalty + 10 credit score points wrongfully deducted.</p>
+        </div>
+        <div class="card green-accent">
+          <div class="tag green" style="margin-bottom:12px;">AFTER</div>
+          <p style="font-size:0.85em;">All dates now use Philippine local time. An on-time payment is recorded as on time. Always.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 9: System Crash #1 ══ -->
+  <div class="slide" id="s9">
+    <div style="max-width:900px;width:100%;">
+      <div class="eyebrow">System Crash #1 · Fixed</div>
+      <h2>Borrowers could not cash out their rebate credits. Ever.</h2>
+
+      <p style="margin-bottom:16px;">When a borrower earns rebate credits — from paying early, completing their loan, or receiving their security deposit back — those credits sit in their account wallet.</p>
+      <p style="margin-bottom:16px;">When they request a withdrawal of those credits, an admin reviews and approves the request. Simple process.</p>
+      <p style="margin-bottom:28px;">Except: every single time an admin clicked Approve, the system crashed silently in the background. The admin saw no error. The borrower saw no result. The money never moved. The request sat there forever. This was happening because of a single mislabeled record in the approval process — like a teller who kept reaching for the wrong drawer every time.</p>
+
+      <div class="two-col" style="margin-bottom:24px;">
+        <div class="card red-accent">
+          <div class="tag red" style="margin-bottom:12px;">BEFORE</div>
+          <p style="font-size:0.85em;">100% of withdrawal approval attempts failed silently. No borrower could access their rebate credits.</p>
+        </div>
+        <div class="card green-accent">
+          <div class="tag green" style="margin-bottom:12px;">AFTER</div>
+          <p style="font-size:0.85em;">Withdrawal approvals process correctly. Borrowers receive their credits as expected.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 10: System Crash #2 ══ -->
+  <div class="slide" id="s10">
+    <div style="max-width:900px;width:100%;">
+      <div class="eyebrow">System Crash #2 · Fixed</div>
+      <h2>Confirming or rejecting payment proof crashed the admin dashboard.</h2>
+
+      <p style="margin-bottom:16px; max-width:800px;">When a borrower submits proof of payment — a GCash screenshot for example — the admin reviews it and clicks either Confirm or Reject.</p>
+      <p style="margin-bottom:16px; max-width:800px;">Both buttons were broken. Every click caused a silent crash. The admin dashboard would freeze or appear to do nothing. No confirmation was sent to the borrower. No record was updated. No notification was triggered.</p>
+      <p style="margin-bottom:32px; max-width:800px;">The borrower would be left waiting indefinitely, with no idea whether their payment was accepted.</p>
+
+      <div class="two-col" style="margin-bottom:24px;">
+        <div class="card red-accent">
+          <div class="tag red" style="margin-bottom:12px;">BEFORE</div>
+          <p style="font-size:0.85em;">Clicking Confirm or Reject on any payment proof caused an immediate crash. Borrowers never received confirmation of their payments.</p>
+        </div>
+        <div class="card green-accent">
+          <div class="tag green" style="margin-bottom:12px;">AFTER</div>
+          <p style="font-size:0.85em;">Both actions now work correctly. Borrower receives an instant portal notification upon admin decision.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 11: Real Case (The Fritz Effect) ══ -->
+  <div class="slide" id="s11">
+    <div style="max-width:920px;width:100%;">
+      <div class="eyebrow">What We Already Lived Through</div>
+      <h2>The Ghost Money Problem — Fritz's Case</h2>
+      <p class="muted" style="margin-bottom:24px;">This isn't a hypothetical. It happened to us. Here's exactly what went wrong.</p>
+
+      <div class="two-col" style="align-items:start;">
+        <div>
+          <div class="card" style="margin-bottom:16px;">
+            <h3 style="margin-bottom:12px;"><i class="fa-solid fa-timeline" style="color:var(--gold);margin-right:8px;"></i>What Happened</h3>
+            <ul class="step-list">
+              <li><span class="step-num" style="background:var(--gold);">1</span>Fritz paid ₱500 security deposit on his loan</li>
+              <li><span class="step-num" style="background:var(--gold);">2</span>Fritz went overdue. System charged ₱20/day penalty.</li>
+              <li><span class="step-num" style="background:var(--gold);">3</span>The deposit absorbed the loss until it reached ₱0.</li>
+              <li><span class="step-num red">4</span>System kept charging ₱20 and logged ₱180 as <strong>CASH IN</strong></li>
+              <li><span class="step-num red">5</span>But the cash was never collected. That ₱180 didn't exist.</li>
+            </ul>
+          </div>
+          <div class="ghost-money" style="width:100%;justify-content:center;margin-top:8px;">
+            <i class="fa-solid fa-ghost"></i> ₱180 shown as earned · ₱0 physically received
+          </div>
+        </div>
+
+        <div>
+          <div class="card ink-fill" style="margin-bottom:16px;">
+            <h3 style="margin-bottom:14px;color:var(--gold-light);"><i class="fa-solid fa-calculator" style="margin-right:8px;"></i>The Math That Lied to Us</h3>
+            <table style="font-size:0.82em;">
+              <tbody>
+                <tr>
+                  <td style="color:#94A3B8;border-color:rgba(255,255,255,0.08)">System showed on hand</td>
+                  <td style="text-align:right;color:#F2C96A;font-family:'DM Mono',monospace;border-color:rgba(255,255,255,0.08);font-weight:600;">₱780</td>
+                </tr>
+                <tr>
+                  <td style="color:#94A3B8;border-color:rgba(255,255,255,0.08)">QuickLoan profit (real)</td>
+                  <td style="text-align:right;color:#22C55E;font-family:'DM Mono',monospace;border-color:rgba(255,255,255,0.08);font-weight:600;">₱600 ✓</td>
+                </tr>
+                <tr>
+                  <td style="color:#94A3B8;border-color:rgba(255,255,255,0.08)">Penalty income (ghost)</td>
+                  <td style="text-align:right;color:#EF4444;font-family:'DM Mono',monospace;border-color:rgba(255,255,255,0.08);font-weight:600;">₱180 ✗</td>
+                </tr>
+                <tr>
+                  <td style="color:white;font-weight:600;border-color:rgba(255,255,255,0.08)">Actually in GCash</td>
+                  <td style="text-align:right;color:white;font-family:'DM Mono',monospace;border-color:rgba(255,255,255,0.08);font-weight:700;font-size:1.1em;">₱600</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="card red-accent">
+            <p style="font-size:0.85em;"><strong>The Danger:</strong> I had to manually run SQL to delete 9 ghost entries from the database. The books showed profit that wasn't there.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 12: The Ghost Money Issue (Centerpiece) ══ -->
+  <div class="slide" id="s12">
+    <div class="bg-grid"></div>
+    <div class="deco-circle" style="width:600px;height:600px;background:radial-gradient(circle,rgba(239,68,68,0.04),transparent 70%);top:-150px;right:-100px;"></div>
+
+    <div style="max-width:920px;width:100%;">
+      <div class="eyebrow">The Core Accounting Problem · Fully Solved</div>
+      <h2 style="margin-bottom: 24px;">How I Prevented Ghost Money From Corrupting Our Books.</h2>
+
+      <!-- SECTION 1 -->
+      <p style="margin-bottom:20px; font-weight:500;"><strong>1. What is ghost money?</strong><br>
+      <span class="muted" style="font-weight:400; line-height:1.5; display:inline-block; margin-top:8px;">Ghost money is when our accounting system records income that does not physically exist in our GCash. The books say we earned it. Our wallet says we don't have it. This has happened to us before and required manual cleanup.</span></p>
+
+      <!-- SECTION 2 -->
+      <div style="margin-bottom: 28px;">
+        <strong style="font-size:0.95em; color:var(--ink); margin-bottom:8px; display:inline-block;">2. How it was being created:</strong>
+        <div style="display:flex;flex-direction:column;gap:8px; width:100%;">
+          <div class="flow-box highlight-box" style="padding:10px;">
+            <p style="font-size:0.82em;font-weight:500;"><span class="step-num gold" style="display:inline-flex; width:20px; height:20px; font-size:0.8em; margin-right:8px;">1</span>Borrower has ₱500 security deposit held by us</p>
+          </div>
+          <div class="flow-arrow" style="font-size: 1em; margin:2px 0;">↓</div>
+          <div class="flow-box highlight-box" style="padding:10px;">
+            <p style="font-size:0.82em;font-weight:500;"><span class="step-num gold" style="display:inline-flex; width:20px; height:20px; font-size:0.8em; margin-right:8px;">2</span>Borrower goes 30+ days overdue — deposit used up</p>
+          </div>
+          <div class="flow-arrow" style="font-size: 1em; margin:2px 0;">↓</div>
+          <div class="flow-box bad" style="padding:10px;">
+            <p style="font-size:0.82em;font-weight:600;color:var(--red);"><span class="step-num red" style="display:inline-flex; width:20px; height:20px; font-size:0.8em; margin-right:8px;">3</span>System continued adding daily penalty to our income records labeled as 'Interest Profit' — even though we hadn't collected it. The borrower still owed it.</p>
+          </div>
+          <div class="flow-arrow" style="font-size: 1em; margin:2px 0;">↓</div>
+          <div class="flow-box bad" style="padding:12px; display:flex; justify-content:center; gap: 16px; align-items:center;">
+            <span class="step-num red" style="display:inline-flex; width:20px; height:20px; font-size:0.8em;">4</span>
+            <p style="font-size:0.85em;font-weight:600;color:var(--red);">Books showed ₱175 profit per payment. Actual cash received: ₱140.</p>
+            <div class="ghost-money" style="padding: 4px 12px; font-size: 0.75em;"><i class="fa-solid fa-ghost"></i> ₱35 was ghost</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION 3 -->
+      <div style="margin-bottom:12px;"></div>
+      <p style="font-weight:500; margin-bottom:8px;"><strong>3. How it was solved:</strong></p>
+      <div class="two-col" style="gap: 20px;">
+        <p class="muted" style="line-height:1.5;">I engineered a permanent separation between penalties and interest. Interest profit is now only logged when an installment payment is physically received. Penalties are only logged when they are actually collected — not when they are applied.</p>
+        <p class="muted" style="line-height:1.5;">The security deposit is now tracked separately from income. When it absorbs a penalty, it is recorded as a deduction from the deposit — not as income earned. Only the leftover penalty that exceeds the deposit gets logged — and only at the moment the borrower pays it.</p>
+      </div>
+
+      <div class="quote-box" style="border-color:var(--green-light);background:rgba(34,197,94,0.06);">
+        <p style="color:var(--green);">"Our books now only show money we actually have. Not money we are owed. Not money we hope to collect. Only money in hand."</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 13: Capital Rotation & Forecasting ══ -->
+  <div class="slide" id="s13">
+    <div style="max-width:920px;width:100%;">
+      <div class="eyebrow">The Financial Engine</div>
+      <h2>Capital Rotation & Profit Splitting</h2>
+      <p class="muted" style="margin-bottom:28px;">A scheduled ₱1,425 payment is not ₱1,425 of profit. Here is how our automated system splits every transaction to protect our capital pool.</p>
+
+      <div class="two-col" style="margin-bottom:32px;">
+        <div class="card blue-accent" style="border-left: 4px solid var(--blue-light);">
+          <i class="fa-solid fa-arrows-rotate" style="color:var(--blue-light);font-size:1.5em;margin-bottom:12px;display:block;"></i>
+          <h3 style="margin-bottom:8px;">Bucket A: Capital Rotation (Principal)</h3>
+          <p style="font-size:0.85em; line-height: 1.6;">This is the money we originally lent out. When it comes back, it immediately returns to the 'Vault'. This money is physically rotated and scheduled to be lent out again to the next borrower to keep the business supply moving.</p>
+        </div>
+        <div class="card green-accent">
+          <i class="fa-solid fa-money-bill-trend-up" style="color:var(--green-light);font-size:1.5em;margin-bottom:12px;display:block;"></i>
+          <h3 style="margin-bottom:8px;">Bucket B: True Profit (Interest)</h3>
+          <p style="font-size:0.85em; line-height: 1.6;">This is the actual fee we earned over time. Our system strictly isolates this portion from the principal. <strong>This is the only money that counts as our profit.</strong> By keeping it separate, we never accidentally cannibalize our lending capability.</p>
+        </div>
+      </div>
+
+      <div class="card ink-fill">
+        <h3 style="margin-bottom:14px;color:var(--gold-light);"><i class="fa-solid fa-chart-pie" style="margin-right:8px;"></i>How The Capital Forecast Works</h3>
+        <p style="font-size:0.85em;color:rgba(255,255,255,0.85); line-height: 1.6;">Because we strictly separate Principal from Profit, our forecasting engine can perfectly predict our future lending capacity. It securely scans all active loans, plots the exact due dates of expected <strong>Principal returns</strong>, and calculates exactly how much pure capital will be available to rotate into new loans next week. This guarantees we can issue approvals to new borrowers without over-committing our GCash balance.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 14: The Math in Action ══ -->
+  <div class="slide" id="s14">
+    <div style="max-width:920px;width:100%;">
+      <div class="eyebrow">The System Logic</div>
+      <h2>The Math in Action: Real Borrower Data</h2>
+      <p class="muted" style="margin-bottom:28px;">Let's look at exactly how the system calculates this split using a real, active loan from Borrower <strong>Rechielyne Chiu Juico</strong> (Ref: LM-7D9ACC).</p>
+
+      <div class="two-col" style="align-items:start; margin-bottom: 24px;">
+        <div class="card" style="padding: 24px;">
+          <h3 style="margin-bottom:12px;color:var(--ink);"><i class="fa-solid fa-file-contract" style="color:var(--gold);margin-right:8px;"></i>The Verified Loan</h3>
+          <table style="font-size:0.85em;">
+            <tbody>
+              <tr><td style="color:#6B7280;padding:8px 0;border-bottom:1px solid var(--border);">Principal (Capital)</td><td style="text-align:right;font-weight:600;padding:8px 0;border-bottom:1px solid var(--border);">₱5,000.00</td></tr>
+              <tr><td style="color:#6B7280;padding:8px 0;border-bottom:1px solid var(--border);">Total Interest</td><td style="text-align:right;font-weight:600;padding:8px 0;border-bottom:1px solid var(--border);">₱1,054.00</td></tr>
+              <tr><td style="color:#6B7280;padding:8px 0;border-bottom:1px solid var(--border);">Number of Installments</td><td style="text-align:right;font-weight:600;padding:8px 0;border-bottom:1px solid var(--border);">6 payments</td></tr>
+              <tr><td style="color:var(--ink);font-weight:600;padding:8px 0;border-bottom:none;">Calculated Installment</td><td style="text-align:right;color:var(--green);font-family:'DM Mono',monospace;font-weight:700;font-size:1.1em;padding:8px 0;border-bottom:none;">₱1,009.00</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div>
+          <div class="card ink-fill" style="padding: 24px; margin-bottom: 16px;">
+            <h3 style="margin-bottom:12px;color:var(--gold-light);"><i class="fa-solid fa-calculator" style="margin-right:8px;"></i>The Backend Formula</h3>
+            <div style="font-family:'DM Mono',monospace; font-size: 0.75em; color: #94A3B8; margin-bottom:12px; background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px;">
+              <div style="margin-bottom:8px;"><span style="color:white;">Interest Profit:</span><br>Total Interest ÷ Installments</div>
+              <div><span style="color:white;">Capital Rotation:</span><br>Installment Payment - Interest Profit</div>
+            </div>
+            <p style="font-size: 0.85em; font-family: 'DM Mono', monospace; line-height: 1.6; color: white;">
+              Interest = <span style="color:var(--gold-light);">₱1,054 ÷ 6 = ₱175.67</span><br>
+              Capital = <span style="color:var(--green-light);">₱1,009 - ₱175.67 = ₱833.33</span>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card green-accent" style="padding: 20px 24px; border-left: 4px solid var(--green-light);">
+        <p style="font-size: 0.95em; line-height: 1.5;"><strong>What happens on Payday?</strong><br>
+        <span class="muted">Every time Rechielyne pays her ₱1,009 installment on the 20th: <br>
+        • Our system silently routes <strong>₱833.33 directly back to the vault</strong> to fund the next borrower.<br>
+        • Exactly <strong>₱175.67 is safely unlocked as pure, deployable profit</strong> for us.</span></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 15: The Macro Formula ══ -->
+  <div class="slide" id="s15">
+    <div style="max-width:920px;width:100%;">
+      <div class="eyebrow">Production Portfolio Forecasting</div>
+      <h2>The Macro Formula: April 20 Forecast</h2>
+      <p class="muted" style="margin-bottom:28px;">How does this algorithm scale across the dashboard? Looking at our live production system for <strong>Monday, April 20, 2026</strong>, we have exactly <strong>8 active borrowers</strong> due. Here is how the system safely dissects the incoming cash.</p>
+
+      <div class="two-col" style="margin-bottom:28px;">
+        <div class="card ink-fill" style="padding: 24px;">
+          <h3 style="margin-bottom:12px;color:var(--paper);"><i class="fa-solid fa-layer-group" style="color:var(--gold);margin-right:8px;"></i>Total Expected Collection</h3>
+          <div class="stat-big" style="color:white; font-size:3.5em; margin-bottom:8px;">₱10,566<span style="font-size: 0.5em;">.67</span></div>
+          <p style="font-size:0.85em;color:rgba(255,255,255,0.7); line-height: 1.5;">This is the gross amount of cash expected to be paid collectively by the 8 scheduled borrowers.</p>
+        </div>
+        
+        <div>
+          <div class="card" style="padding: 16px 24px; border-left: 4px solid var(--blue-light); margin-bottom:16px;">
+            <p style="font-family:'DM Mono', monospace; font-size:0.7em; color:var(--muted); text-transform:uppercase;">Algorithm Bucket A</p>
+            <div style="font-family:'Syne', sans-serif; font-size:1.8em; font-weight:700; color:var(--ink);">₱9,166.67 <span style="font-size:0.4em; color:var(--muted); font-weight:500; font-family:'DM Sans';">(86.8%)</span></div>
+            <p style="font-size:0.8em; color:var(--ink); margin-top:4px;"><strong>Capital Rotation:</strong> Earmarked directly for the Vault.</p>
+          </div>
+          <div class="card" style="padding: 16px 24px; border-left: 4px solid var(--green-light);">
+            <p style="font-family:'DM Mono', monospace; font-size:0.7em; color:var(--muted); text-transform:uppercase;">Algorithm Bucket B</p>
+            <div style="font-family:'Syne', sans-serif; font-size:1.8em; font-weight:700; color:var(--ink);">₱1,400.00 <span style="font-size:0.4em; color:var(--green); font-weight:500; font-family:'DM Sans';">(13.2%)</span></div>
+            <p style="font-size:0.8em; color:var(--ink); margin-top:4px;"><strong>True Profit:</strong> Unlocked for us as the owners.</p>
+          </div>
+        </div>
+      </div>
+
+      <div style="background: rgba(10,14,26,0.03); border: 1px dashed var(--border); border-radius: 12px; padding: 16px 24px; margin-bottom: 24px; font-family: 'DM Mono', monospace; font-size: 0.8em; color: var(--muted); line-height: 1.6;">
+        <strong style="color:var(--gold);"><i class="fa-solid fa-code" style="margin-right:6px;"></i>BACKEND ALGORITHM FORMULA:</strong><br>
+        <span style="color:var(--green);">Σ Bucket B (Profit)</span> = Sum of (Total Interest ÷ Total Installments) exactly calculated across all 8 individual active loans.<br>
+        <span style="color:var(--blue-light);">Σ Bucket A (Capital)</span> = Total Expected Collection (₱10,566.67) - Σ Bucket B (₱1,400.00).
+      </div>
+
+      <div class="quote-box" style="border-color:var(--gold);background:rgba(201,151,58,0.06); padding: 18px 24px;">
+        <p style="color:var(--ink); font-size: 0.95em;">"Even when ₱10,566.67 drops into GCash on Monday, the dashboard mathematically protects your lending power. Exactly <strong>₱1,400.00</strong> is flagged as pure profit to distribute. The algorithm safely isolates the remaining <strong>₱9,166.67</strong> to immediately fund nearly two brand new ₱5,000 loans — guaranteeing the capital cycle continues without you needing to inject fresh funds."</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 16: Risk-Adjusted Forecast ══ -->
+  <div class="slide" id="s16">
+    <div style="max-width:920px;width:100%;">
+      <div class="eyebrow">Real-World Adjustments</div>
+      <h2>Risk-Adjusted Forecast: The Fritz Default</h2>
+      <p class="muted" style="margin-bottom:24px;">The system knows that borrower <strong>Fritz</strong> is high risk and historically overdue. The algorithm automatically computes a secondary "Worst-Case" scenario for April 20, assuming his ₱1,425 payment completely fails, to ensure we don't accidentally over-promise capital.</p>
+
+      <div class="two-col" style="margin-bottom:24px;">
+        <div class="card red-accent" style="padding: 24px;">
+          <h3 style="margin-bottom:12px;color:var(--ink);"><i class="fa-solid fa-triangle-exclamation" style="color:var(--red-light);margin-right:8px;"></i>High-Risk Deduction Formula</h3>
+          <div style="font-family:'DM Mono',monospace; font-size: 0.8em; color: #64748B; margin-bottom:16px; line-height: 1.6;">
+            <strong>Adjusted Cash</strong> = Total Gross (₱10,566) - Fritz Due (₱1,425)<br>
+            <strong>Adjusted Profit</strong> = Total Profit (₱1,400) - Fritz Profit (₱175)<br>
+            <strong>Adjusted Capital</strong> = Total Capital (₱9,166) - Fritz Capital (₱1,250)
+          </div>
+          <div class="stat-big" style="color:var(--red-light); font-size:2.8em;">₱9,141<span style="font-size: 0.5em;">.67</span></div>
+          <p style="font-size:0.85em;color:var(--muted); font-weight:600; margin-top:6px;">NEW GROSS INFLOW</p>
+        </div>
+
+        <div>
+           <div class="card" style="padding: 16px 24px; border-left: 4px solid var(--blue-light); margin-bottom:16px;">
+            <p style="font-family:'DM Mono', monospace; font-size:0.7em; color:var(--muted); text-transform:uppercase;">Surviving Vault Capital</p>
+            <div style="font-family:'Syne', sans-serif; font-size:1.6em; font-weight:700; color:var(--ink);">₱7,916.67</div>
+            <p style="font-size:0.8em; color:var(--ink); margin-top:4px;">Safely protected to rotate to next borrowers.</p>
+          </div>
+          <div class="card" style="padding: 16px 24px; border-left: 4px solid var(--green-light);">
+            <p style="font-family:'DM Mono', monospace; font-size:0.7em; color:var(--muted); text-transform:uppercase;">Surviving True Profit</p>
+            <div style="font-family:'Syne', sans-serif; font-size:1.6em; font-weight:700; color:var(--ink);">₱1,225.00</div>
+            <p style="font-size:0.8em; color:var(--ink); margin-top:4px;">Guaranteed payout from the other 7 borrowers.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card ink-fill" style="padding: 18px 24px;">
+        <h3 style="color:var(--gold-light); margin-bottom: 8px;"><i class="fa-solid fa-shield" style="margin-right:8px;"></i>Why This Mathematical Isolation Saves Us</h3>
+        <p style="font-size: 0.85em; color:rgba(255,255,255,0.8); line-height: 1.6;">By mathematically isolating the profit and capital of every individual loan, Fritz's default <strong>only hurts his own specific line item</strong>. The remaining ₱7,916 of rotating capital is entirely uncorrupted. The GCash vault still has the exact funds it needs to survive the cycle without triggering a system-wide liquidity collapse.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 17: Reassurance ══ -->
+  <div class="slide" id="s17">
+    <div style="max-width:900px;width:100%;">
+      <div class="eyebrow">What the Audit Confirmed</div>
+      <h2>16 things were independently verified as correct.</h2>
+
+      <div class="two-col" style="margin-top: 24px; margin-bottom:32px;">
+        <ul class="step-list" style="border-top:1px solid var(--border);">
+          <li><i class="fa-solid fa-check" style="color:var(--green-light); margin-top:2px;"></i> Full loan payoff correctly processes all installments</li>
+          <li><i class="fa-solid fa-check" style="color:var(--green-light); margin-top:2px;"></i> Security deposit netting works without double-returning funds</li>
+          <li><i class="fa-solid fa-check" style="color:var(--green-light); margin-top:2px;"></i> Borrower credit scores match correctly across all systems</li>
+          <li><i class="fa-solid fa-check" style="color:var(--green-light); margin-top:2px;"></i> Loan limit upgrades match between portal and database</li>
+          <li><i class="fa-solid fa-check" style="color:var(--green-light); margin-top:2px;"></i> QuickLoan interest calculations use the right baseline</li>
+        </ul>
+        <ul class="step-list" style="border-top:1px solid var(--border);">
+          <li><i class="fa-solid fa-check" style="color:var(--green-light); margin-top:2px;"></i> Overdue payment buttons now available for all loan states</li>
+          <li><i class="fa-solid fa-check" style="color:var(--green-light); margin-top:2px;"></i> Duplicate payment proof prevention is in place</li>
+          <li><i class="fa-solid fa-check" style="color:var(--green-light); margin-top:2px;"></i> Early rebate (1% for paying 7+ days ahead) works correctly</li>
+          <li><i class="fa-solid fa-check" style="color:var(--green-light); margin-top:2px;"></i> All loan limit levels (₱5K / ₱7K / ₱9K / ₱10K) are consistent</li>
+          <li><i class="fa-solid fa-check" style="color:var(--green-light); margin-top:2px;"></i> No existing loan records were corrupted before fixes were applied</li>
+        </ul>
+      </div>
+
+      <div class="card ink-fill" style="text-align: center; padding: 24px 32px;">
+        <h3 style="color: var(--gold-light); margin-bottom: 8px;">The core is solid.</h3>
+        <p style="color: rgba(255,255,255,0.8); font-size: 0.9em; max-width: 600px; margin: 0 auto;">The audit was not just about finding problems. It confirmed that the foundation of the platform — the payment engine, the profit split, the credit system — was built correctly. These fixes close the gaps.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 18: Summary ══ -->
+  <div class="slide" id="s18">
+    <div class="bg-grid"></div>
+    <div style="max-width:920px;width:100%;">
+      <div class="eyebrow">Where The Platform Stands Today</div>
+      <h2>The platform is clean, secure, and production-ready.</h2>
+
+      <div class="three-col" style="margin-bottom: 32px; margin-top: 24px;">
+        <div class="card center" style="padding: 20px;">
+          <div class="stat-big" style="color:var(--green-light);">0</div>
+          <div class="stat-label">Active security vulnerabilities</div>
+        </div>
+        <div class="card center" style="padding: 20px;">
+          <div class="stat-big" style="color:var(--blue-light);">0</div>
+          <div class="stat-label">Accounts with corrupted data</div>
+        </div>
+        <div class="card center" style="padding: 20px;">
+          <div class="stat-big" style="color:var(--gold);">100%</div>
+          <div class="stat-label">Critical issues resolved</div>
+        </div>
+      </div>
+
+      <div class="two-col" style="margin-bottom: 32px;">
+        <ul class="step-list">
+          <li><span class="step-num green">1</span> <span>Borrower data is now fully isolated — no cross-access possible</span></li>
+          <li><span class="step-num green">2</span> <span>Payment records protected — only owners can submit</span></li>
+          <li><span class="step-num green">3</span> <span>Admin tools secured — external triggering blocked</span></li>
+          <li><span class="step-num green">4</span> <span>Profit reporting cleaned — only real cash logged as income</span></li>
+        </ul>
+        <ul class="step-list">
+          <li><span class="step-num green">5</span> <span>Penalty system corrected — applies to the right loan only</span></li>
+          <li><span class="step-num green">6</span> <span>Date handling fixed — on-time is recorded as on-time</span></li>
+          <li><span class="step-num green">7</span> <span>Withdrawal approvals restored — borrowers can access credits</span></li>
+          <li><span class="step-num green">8</span> <span>Payment confirmation restored — borrowers receive notifications</span></li>
+        </ul>
+      </div>
+
+      <div class="card" style="background:var(--gold); border:none; text-align:center; padding: 24px;">
+        <p style="color:white; font-weight:600; font-size:1.1em; line-height:1.5;">"I did not wait for something to go wrong.<br>I systematically locked down the risks before the business felt them.<br>That is what responsible engineering looks like."</p>
+      </div>
+
+    </div>
+  </div>
+
+</div><!-- end deck -->
+
+<nav class="nav">
+  <button onclick="prevSlide()">← Prev</button>
+  <div class="dots" id="dots"></div>
+  <button onclick="nextSlide()">Next →</button>
+</nav>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const totalSlides = slides.length;
+  let current = 0;
+
+  // Build dots
+  const dotsEl = document.getElementById('dots');
+  slides.forEach((_, i) => {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i === 0 ? ' active' : '');
+    d.onclick = () => goTo(i);
+    dotsEl.appendChild(d);
+  });
+
+  function goTo(n) {
+    slides[current].classList.remove('active');
+    dotsEl.children[current].classList.remove('active');
+    current = Math.max(0, Math.min(n, totalSlides - 1));
+    slides[current].classList.add('active');
+    dotsEl.children[current].classList.add('active');
+    document.getElementById('slideLabel').textContent =
+      String(current + 1).padStart(2, '0') + ' / ' + String(totalSlides).padStart(2, '0');
+    document.getElementById('progressBar').style.width =
+      ((current + 1) / totalSlides * 100) + '%';
+  }
+
+  function nextSlide() { goTo(current + 1); }
+  function prevSlide() { goTo(current - 1); }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') nextSlide();
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') prevSlide();
+  });
+</script>
+</body>
+</html>

@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext'
 import { useToast } from '../components/Toast'
 import { logAudit } from '../lib/helpers'
 import { sendApplicationApprovedEmail, sendApplicationRejectedEmail, sendPaymentConfirmedEmail } from '../lib/emailService'
+import { notifyBorrower } from '../lib/portalNotifications'
 import { ClipboardList, Check, X, Clock, ChevronDown, ChevronUp, User, Phone, Mail, MapPin, Users, DollarSign, ExternalLink, Image, Brain } from 'lucide-react'
 
 const STATUS_COLORS = {
@@ -450,7 +451,7 @@ function WithdrawalPanel({ supabase, user, logAudit }) {
     // Deduct from Rebate Credits
     const { data: creditsRecord } = await supabase.from('wallets').select('id, balance').eq('borrower_id', txn.borrower_id).single()
     if (creditsRecord) {
-      const newBalance = Math.max(0, rebateCredits.balance - txn.amount)
+      const newBalance = Math.max(0, creditsRecord.balance - txn.amount)
       await supabase.from('wallets').update({ balance: newBalance, updated_at: new Date().toISOString() }).eq('id', creditsRecord.id)
     }
     await supabase.from('wallet_transactions').update({ status: 'completed' }).eq('id', txn.id)
@@ -631,6 +632,7 @@ export default function ApplicationsPage() {
             release_date: releaseDateStr,
             status: 'Pending',
             security_hold: holdAmt,
+            security_hold_original: holdAmt,
             funds_released: released,
             loan_purpose: app.loan_purpose,
             security_hold_returned: false

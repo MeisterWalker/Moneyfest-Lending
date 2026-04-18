@@ -90,17 +90,30 @@ export const logAutomatedPayment = async (loan, amountReceived) => {
         .select('penalty_amount')
         .eq('loan_id', loan.id);
       
+      const { data: loanRecord } = await supabase
+        .from('loans')
+        .select('security_hold, security_hold_original')
+        .eq('id', loan.id)
+        .single();
+      
+      const holdAbsorbed = Math.max(0,
+        (loanRecord?.security_hold_original || 0) - 
+        (loanRecord?.security_hold || 0)
+      );
+
       let unsettledPenalties = 0;
       if (penalties && penalties.length > 0) {
         unsettledPenalties = penalties.reduce((s, p) => s + (Number(p.penalty_amount) || 0), 0);
       }
+      
+      const cashPenalty = Math.max(0, unsettledPenalties - holdAbsorbed);
 
-      if (unsettledPenalties > 0) {
+      if (cashPenalty > 0) {
         entries.push({
           entry_date: new Date().toISOString().slice(0, 10),
           type: 'CASH IN',
           category: 'Penalty (Collected at Settlement)',
-          amount: unsettledPenalties,
+          amount: cashPenalty,
           notes: `Auto: Unsettled Penalties collected at settlement from ${loan.borrowers?.full_name || 'Borrower'} (Loan ${loan.id})`
         });
       }

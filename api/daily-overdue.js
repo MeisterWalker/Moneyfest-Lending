@@ -45,6 +45,14 @@ module.exports = async (req, res) => {
   console.log('[CRON] ═══════════════════════════════════════════');
   console.log('[CRON] Starting daily-overdue at', new Date().toISOString());
 
+  // ── Auth guard: Vercel sends CRON_SECRET as Authorization: Bearer <secret>
+  // when invoking cron jobs. Reject any request that doesn't carry it.
+  const authHeader = req.headers['authorization'];
+  if (!process.env.CRON_SECRET || authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    console.warn('[CRON] ⛔ Unauthorized request — missing or invalid Authorization header');
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
   const supabase = createClient(
     process.env.SUPABASE_URL,
     process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -166,7 +174,6 @@ module.exports = async (req, res) => {
     };
     if (addToBalance > 0) {
       loanUpdatePayload.remaining_balance = Number(loan.remaining_balance || 0) + addToBalance;
-      loanUpdatePayload.total_repayment   = Number(loan.total_repayment   || 0) + addToBalance;
     }
     loanUpdates.push({ id: loan.id, payload: loanUpdatePayload });
 
@@ -175,7 +182,7 @@ module.exports = async (req, res) => {
     if (isFirstPenalty) {
       const currentScore = Number(loan.borrowers?.credit_score || 750);
       const newScore     = Math.max(300, currentScore - 10);
-      borrowerUpdates.push({ id: loan.borrower_id, credit_score: newScore });
+      borrowerUpdates.push({ id: loan.borrower_id, loan_id: loan.id, credit_score: newScore });
       console.log(`[CRON] Loan ${loan.id}: credit score ${currentScore} → ${newScore}`);
     }
 
@@ -279,9 +286,15 @@ module.exports = async (req, res) => {
   }
 
   // Borrower credit score updates
-  for (const { id, credit_score } of borrowerUpdates) {
+  for (const { id, loan_id, credit_score } of borrowerUpdates) {
     const { error: buErr } = await supabase.from('borrowers').update({ credit_score }).eq('id', id);
     if (buErr) console.error(`[CRON] ❌ Borrower update failed for ${id}:`, buErr.message);
+    else {
+      await supabase
+        .from('loans')
+        .update({ overdue_credit_deducted: true })
+        .eq('id', loan_id);
+    }
   }
 
   // penalty_charges — upsert on (loan_id, charged_date) to prevent duplicates
@@ -313,7 +326,12 @@ module.exports = async (req, res) => {
     console.log(`[CRON] Email batch: ${sent}/${results.length} sent`);
   });
 
+  const totalProfit = penaltyInserts.reduce((sum, p) => sum + Number(p.penalty_amount), 0);
+
   console.log(`[CRON] Done. Processed: ${processedCount}, Skipped: ${skippedCount}`);
+  console.log(`[CRON] Performance Summary:`);
+  console.log(`       - Total Principal Rotate: ₱0.00 (Daily Penalty Run)`);
+  console.log(`       - Total Profit Earned:    ₱${totalProfit.toLocaleString('en-PH', { minimumFractionDigits: 2 })}`);
   console.log('[CRON] ═══════════════════════════════════════════');
 
   return res.status(200).json({

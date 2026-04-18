@@ -173,7 +173,7 @@ function LoanCard({ loan: rawLoan, borrowers, applications, investors, onEdit, o
   const isQuickLoan = loan.loan_type === 'quickloan'
 
   const nextInstallment = loan.payments_made + 1
-  const canPay = loan.status === 'Active' || loan.status === 'Partially Paid'
+  const canPay = loan.status === 'Active' || loan.status === 'Partially Paid' || loan.status === 'Overdue'
   const isPaid = loan.status === 'Paid'
   const daysUntilDue = loan.release_date
     ? Math.ceil((new Date(loan.release_date) - today) / (1000 * 60 * 60 * 24))
@@ -716,6 +716,7 @@ function LoanCard({ loan: rawLoan, borrowers, applications, investors, onEdit, o
 }
 
 export default function LoansPage() {
+  const processingRef = useRef(false)
   const [loans, setLoans] = useState([])
   const [borrowers, setBorrowers] = useState([])
   const [investors, setInvestors] = useState([])
@@ -735,20 +736,36 @@ export default function LoansPage() {
   const { toast } = useToast()
   const overdueAppliedRef = useRef(false)
   const [syncingPenalties, setSyncingPenalties] = useState(false)
+  const [systemStatus, setSystemStatus] = useState('loading') // loading, healthy, failing
 
-  const fetchData = useCallback(async () => {
-    const [{ data: l }, { data: b }, { data: s }, { data: apps }, { data: inv }] = await Promise.all([
+    const [{ data: l }, { data: b }, { data: s }, { data: apps }, { data: inv }, { data: lastAudit }] = await Promise.all([
       supabase.from('loans').select('*').order('created_at', { ascending: false }),
       supabase.from('borrowers').select('*'),
       supabase.from('settings').select('*').eq('id', 1).single(),
       supabase.from('applications').select('id,release_method,gcash_number,gcash_name,bank_account_number,bank_name,bank_account_holder,full_name,email').eq('status', 'Approved').order('created_at', { ascending: false }),
-      supabase.from('investors').select('id,full_name,tier,total_capital,access_code')
+      supabase.from('investors').select('id,full_name,tier,total_capital,access_code'),
+      supabase.from('audit_logs').select('created_at').in('action_type', ['PENALTY_CHARGED', 'INSTALLMENT_PAID']).order('created_at', { ascending: false }).limit(1)
     ])
     setLoans(l || [])
     setBorrowers(b || [])
     setInvestors(inv || [])
     setSettings(s)
     setApplications(apps || [])
+
+    // Heartbeat Logic
+    const overdueLoans = (l || []).filter(loan => loan.status === 'Overdue')
+    if (overdueLoans.length > 0) {
+      if (!lastAudit || lastAudit.length === 0) {
+        setSystemStatus('failing')
+      } else {
+        const lastRun = new Date(lastAudit[0].created_at)
+        const diffHours = (new Date() - lastRun) / (1000 * 60 * 60)
+        setSystemStatus(diffHours > 24 ? 'failing' : 'healthy')
+      }
+    } else {
+      setSystemStatus('healthy')
+    }
+
     setLoading(false)
   }, [])
 
@@ -975,7 +992,7 @@ export default function LoansPage() {
       const allDates = getInstallmentDates(loan.release_date, numInstallments)
       const dueDate = allDates[loan.payments_made]
       if (dueDate) {
-        dueDateStr = dueDate.toISOString().slice(0, 10)  // YYYY-MM-DD
+        dueDateStr = formatDateValue(dueDate)  // YYYY-MM-DD (local time, no UTC shift)
       }
     }
 
@@ -1317,7 +1334,10 @@ export default function LoansPage() {
   }
 
   const handleQuickLoanPayoff = async (loan) => {
-    const balance = calcQuickLoanBalance(loan)
+    if (processingRef.current) return
+    processingRef.current = true
+    try {
+      const balance = calcQuickLoanBalance(loan)
     const borrower = borrowers.find(b => b.id === loan.borrower_id)
     const totalCollected = balance.totalOwed
 
@@ -1356,12 +1376,16 @@ export default function LoansPage() {
       const newRisk = CREDIT_CONFIG.riskFromScore(newScore)
       const newCleanLoans = (borrower.clean_loans || 0) + 1
       const newBadge = getBadgeStatus(newScore, newCleanLoans) 
+      const newLevel = newScore >= 1000 ? 4 : newScore >= 920 ? 3 : newScore >= 835 ? 2 : 1
+      const newLimit = newLevel === 4 ? 10000 : newLevel === 3 ? 9000 : newLevel === 2 ? 7000 : 5000
       
       await supabase.from('borrowers').update({
         credit_score: newScore,
         risk_score: newRisk,
         loyalty_badge: newBadge,
-        clean_loans: newCleanLoans
+        clean_loans: newCleanLoans,
+        loan_limit_level: newLevel,
+        loan_limit: newLimit
       }).eq('id', borrower.id)
     }
 
@@ -1374,8 +1398,11 @@ export default function LoansPage() {
       changed_by: user?.email
     })
 
-    toast(`✅ QuickLoan paid — ${formatCurrency(totalCollected)} collected · Credit score +${CREDIT_CONFIG.FULL_LOAN_COMPLETE}`, 'success')
-    fetchData()
+      toast(`✅ QuickLoan paid — ${formatCurrency(totalCollected)} collected · Credit score +${CREDIT_CONFIG.FULL_LOAN_COMPLETE}`, 'success')
+      fetchData()
+    } finally {
+      processingRef.current = false
+    }
   }
 
   // ── QuickLoan Day 15 missed: collect interest + extension fee, roll principal ──
@@ -1444,20 +1471,32 @@ export default function LoansPage() {
             <Search size={15} />
             <input placeholder="Search by borrower..." value={search} onChange={e => setSearch(e.target.value)} />
           </div>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: 'rgba(255,255,255,0.03)', borderRadius: 9, border: '1px solid rgba(255,255,255,0.05)'
+          }}>
+            <div style={{
+              width: 8, height: 8, borderRadius: '50%',
+              background: systemStatus === 'healthy' ? 'var(--green)' : systemStatus === 'failing' ? 'var(--red)' : '#ccc',
+              boxShadow: systemStatus === 'healthy' ? '0 0 8px var(--green)' : systemStatus === 'failing' ? '0 0 8px var(--red)' : 'none'
+            }} />
+            <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              {systemStatus === 'healthy' ? 'System Live' : systemStatus === 'failing' ? 'Cron Failure' : 'Checking...'}
+            </span>
+          </div>
           <button
             onClick={() => { overdueAppliedRef.current = true; handleSyncOverduePenalties({ silent: false }) }}
             disabled={syncingPenalties}
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 6,
               padding: '8px 14px', borderRadius: 9, fontSize: 13, fontWeight: 600,
-              border: '1px solid rgba(245,158,11,0.35)',
-              background: syncingPenalties ? 'rgba(245,158,11,0.05)' : 'rgba(245,158,11,0.1)',
-              color: '#F59E0B', cursor: syncingPenalties ? 'not-allowed' : 'pointer',
+              border: syncingPenalties ? '1px solid rgba(59,130,246,0.3)' : '1px solid var(--blue)',
+              background: syncingPenalties ? 'rgba(59,130,246,0.05)' : 'var(--blue)',
+              color: syncingPenalties ? 'var(--blue)' : '#fff', cursor: syncingPenalties ? 'not-allowed' : 'pointer',
               opacity: syncingPenalties ? 0.6 : 1, transition: 'all 0.15s'
             }}
           >
-            <AlertTriangle size={14} />
-            {syncingPenalties ? 'Syncing...' : 'Sync Penalties'}
+            <RefreshCw size={14} className={syncingPenalties ? 'spin' : ''} />
+            {syncingPenalties ? 'Syncing...' : 'Sync Financials'}
           </button>
           <button className="btn-primary" onClick={() => { setEditingLoan(null); setPrefillLoan(null); setModalOpen(true) }} style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
             <Plus size={16} /> New Loan
