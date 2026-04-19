@@ -3,6 +3,7 @@ import { Bell, X, CheckCheck, FileText, Clock, BellOff, Eye } from 'lucide-react
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from './Toast'
+import { getInstallmentDates, getQuickLoanDueDates, getNumInstallments } from '../lib/helpers'
 
 const VAPID_PUBLIC = 'BH38yVjqloXzB2UF9aDXCV8qdOiKhPoQ1rRTYSyRtWZiDe8qOcFFW8ZNOMA-yw0xlf0O0jcPBnrK99xyZsjzpRE'
 
@@ -124,27 +125,39 @@ export default function NotificationBell() {
 
       loans.forEach(loan => {
         if (!loan.release_date) return
-        const release = new Date(loan.release_date + 'T00:00:00')
-        for (let i = 1; i <= 4 - (loan.payments_made || 0); i++) {
-          const cutoff = new Date(release)
-          if (release.getDate() <= 5) {
-            cutoff.setMonth(cutoff.getMonth() + Math.floor((i - 1) / 2))
-            cutoff.setDate(i % 2 === 1 ? 20 : 5)
-          } else {
-            cutoff.setMonth(cutoff.getMonth() + Math.ceil(i / 2))
-            cutoff.setDate(i % 2 === 1 ? 5 : 20)
-          }
-          const cs = cutoff.getFullYear() + '-' + String(cutoff.getMonth()+1).padStart(2,'0') + '-' + String(cutoff.getDate()).padStart(2,'0')
-          if (cs === tomorrowStr) {
+        
+        if (loan.loan_type === 'quick') {
+          const { day15, day30 } = getQuickLoanDueDates(loan.release_date)
+          const d15Str = day15 ? `${day15.getFullYear()}-${String(day15.getMonth()+1).padStart(2,'0')}-${String(day15.getDate()).padStart(2,'0')}` : null
+          const d30Str = day30 ? `${day30.getFullYear()}-${String(day30.getMonth()+1).padStart(2,'0')}-${String(day30.getDate()).padStart(2,'0')}` : null
+          
+          if (d15Str === tomorrowStr || d30Str === tomorrowStr) {
+            const isDay30 = d30Str === tomorrowStr
             const name = loan.borrowers?.full_name || 'Unknown'
-            const msg = name + ' - P' + Number(loan.installment_amount).toLocaleString() + ' installment due tomorrow'
-            // Only add if not already notified today
+            const msg = `${name} – QuickLoan ${isDay30 ? 'final deadline' : 'target date'} is tomorrow`
             const todayKey = 'due-' + loan.id + '-' + tomorrowStr
             if (!seenIds.current.has(todayKey)) {
               seenIds.current.add(todayKey)
               addNotif('due', 'Due Tomorrow', msg, false)
             }
           }
+        } else {
+          const installments = getNumInstallments(loan.loan_term)
+          const dates = getInstallmentDates(loan.release_date, installments)
+          const upcomingDates = dates.slice(loan.payments_made || 0)
+          
+          upcomingDates.forEach(cutoff => {
+            const cs = cutoff.getFullYear() + '-' + String(cutoff.getMonth() + 1).padStart(2, '0') + '-' + String(cutoff.getDate()).padStart(2, '0')
+            if (cs === tomorrowStr) {
+              const name = loan.borrowers?.full_name || 'Unknown'
+              const msg = `${name} – ₱${Number(loan.installment_amount).toLocaleString()} installment due tomorrow`
+              const todayKey = 'due-' + loan.id + '-' + tomorrowStr
+              if (!seenIds.current.has(todayKey)) {
+                seenIds.current.add(todayKey)
+                addNotif('due', 'Due Tomorrow', msg, false)
+              }
+            }
+          })
         }
       })
     }
