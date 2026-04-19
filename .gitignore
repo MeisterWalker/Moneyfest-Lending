@@ -5,3 +5,16 @@ build/
 .env*.local
 *.exe
 *.crdownload
+
+# Scratch / one-off audit scripts — never commit
+scratch/
+audit_queries.mjs
+audit_script.mjs
+audit_output.txt
+*.audit.mjs
+*.scratch.mjs
+
+# Environment secrets — belt and suspenders
+.env.local
+.env*.local
+*.env
