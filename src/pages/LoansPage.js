@@ -737,7 +737,7 @@ export default function LoansPage() {
   const overdueAppliedRef = useRef(false)
   const [syncingPenalties, setSyncingPenalties] = useState(false)
   const [systemStatus, setSystemStatus] = useState('loading') // loading, healthy, failing
-
+  const fetchData = useCallback(async () => {
     const [{ data: l }, { data: b }, { data: s }, { data: apps }, { data: inv }, { data: lastAudit }] = await Promise.all([
       supabase.from('loans').select('*').order('created_at', { ascending: false }),
       supabase.from('borrowers').select('*'),
