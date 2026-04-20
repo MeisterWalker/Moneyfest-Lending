@@ -1427,7 +1427,7 @@ export default function LoansPage() {
     const collectNow = parseFloat((accruedInterest + EXTENSION_FEE).toFixed(2))
     const borrower = borrowers.find(b => b.id === loan.borrower_id)
 
-    const todayStr = new Date().toISOString().slice(0, 10)
+    const todayStr = formatDateValue(new Date())
     const { error } = await supabase.from('loans').update({
       extension_fee_charged: true,
       status: 'Active',
