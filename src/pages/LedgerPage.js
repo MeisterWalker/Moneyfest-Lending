@@ -6,7 +6,7 @@ import {
   eachDayOfInterval
 } from 'date-fns'
 import {
-  Calendar, TrendingUp, ChevronDown, ChevronRight, ArrowUp, ArrowDown, History
+  Calendar, TrendingUp, ChevronDown, ChevronRight, ArrowUp, ArrowDown, History, Info
 } from 'lucide-react'
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -76,9 +76,14 @@ function aggregateFlow(rows = []) {
 }
 
 // ── Shared UI ────────────────────────────────────────────────────
-function StatCard({ label, value, color = 'var(--blue)', sub, delta }) {
+function StatCard({ label, value, color = 'var(--blue)', sub, delta, tooltip }) {
   return (
-    <div className="card" style={{ padding: '14px 18px', textAlign: 'center' }}>
+    <div className="card" style={{ padding: '14px 18px', textAlign: 'center', position: 'relative' }}>
+      {tooltip && (
+        <div style={{ position: 'absolute', top: 12, right: 12 }} title={tooltip}>
+          <Info size={14} color="var(--text-muted)" style={{ cursor: 'help' }} />
+        </div>
+      )}
       <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 22, color }}>{value}</div>
       <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{label}</div>
       {sub   && <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{sub}</div>}
@@ -298,14 +303,19 @@ export default function LedgerPage() {
         <>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px,1fr))', gap: 14, marginBottom: 24 }}>
             <StatCard label="Interest Collected" value={formatCurrency(curr.interest)} color="var(--green)"
+              tooltip="Total pure profit/interest collected from borrowers during this period."
               delta={<DeltaBadge current={curr.interest} previous={prev.interest} />} />
             <StatCard label="Principal Returned" value={formatCurrency(curr.principal)} color="var(--blue)"
+              tooltip="Total loan capital that safely returned home from borrowers. (Excludes your own capital top-ups)"
               delta={<DeltaBadge current={curr.principal} previous={prev.principal} />} />
             <StatCard label="Penalties Charged"  value={formatCurrency(curr.penalties)} color="var(--red)"
+              tooltip="Total late fees/penalties collected from borrowers."
               delta={<DeltaBadge current={curr.penalties} previous={prev.penalties} invertColors />} />
             <StatCard label="Total Disbursed"    value={formatCurrency(curr.disbursed)} color="var(--gold)"
+              tooltip="Total actual physical cash sent out to borrowers for new loans. (Excludes partner withdrawals)"
               delta={<DeltaBadge current={curr.disbursed} previous={prev.disbursed} />} />
             <StatCard label="Net Capital Flow"   value={formatCurrency(curr.net)} color={curr.net >= 0 ? 'var(--green)' : 'var(--red)'}
+              tooltip="Your operations cash flow. Negative means you are lending out cash faster than it's coming back (which is healthy for growth!)."
               delta={<DeltaBadge current={curr.net} previous={prev.net} />} />
           </div>
 
