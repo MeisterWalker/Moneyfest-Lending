@@ -1126,6 +1126,7 @@ export default function DashboardPage() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {activeQuickLoans.map(loan => {
                   const b = borrowers.find(x => x.id === loan.borrower_id)
+                  const dailyInterest = parseFloat((loan.loan_amount * 0.1 / 30).toFixed(2))
                   const { 
                     accruedInterest, 
                     extensionFee, 
