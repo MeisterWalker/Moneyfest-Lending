@@ -4,7 +4,7 @@ import { CREDIT_CONFIG, BADGE_TIERS, SECURITY_HOLD_TIERS, getBadgeConfig, getBad
 import { supabase } from '../lib/supabase'
 import { usePageVisit } from '../hooks/usePageVisit'
 import ChatBot from '../components/ChatBot'
-import { getInstallmentDates, formatDateValue, logAudit, getQuickLoanDueDates } from '../lib/helpers'
+import { getInstallmentDates, formatDateValue, logAudit, getQuickLoanDueDates, calcQuickLoanBalance } from '../lib/helpers'
 import { PAYMENT_ACCOUNTS } from '../lib/paymentAccounts'
 import { generateBorrowerReceiptPDF, generateBorrowerLoanAgreementPDF, generateBorrowerQuickLoanPDF } from '../lib/pdfGenerator'
 import { sendLoanAgreementSignedAdminEmail } from '../lib/emailService'
@@ -1767,15 +1767,8 @@ export default function BorrowerPortalPage() {
                     const isQL = loan.loan_type === 'quickloan'
                     if (isQL) {
                       const principal = Number(loan.loan_amount)
-                      const releaseDate = loan.release_date ? (() => { const [y,m,d] = loan.release_date.split('-').map(Number); return new Date(y,m-1,d) })() : null
-                      const daysElapsed = releaseDate && loan.status !== 'Pending' ? Math.max(0, Math.floor((new Date() - releaseDate) / 86400000)) : 0
-                      const dailyInterest = parseFloat((principal * 0.1 / 30).toFixed(2))
-                      const accrued = parseFloat((dailyInterest * daysElapsed).toFixed(2))
-                      const extensionFee = loan.extension_fee_charged ? 100 : 0
-                      const penaltyDays = Math.max(0, daysElapsed - 30)
-                      const penalty = penaltyDays * 25
-                      const liveTotal = loan.status === 'Paid' ? 0 : parseFloat((principal + accrued + extensionFee + penalty).toFixed(2))
-                      const phase = daysElapsed > 30 ? 'penalty' : daysElapsed > 15 ? 'extended' : 'active'
+                      const { accruedInterest: accrued, extensionFee, penaltyAccrued: penalty, daysElapsed, phase } = loan.status === 'Pending' ? { accruedInterest: 0, extensionFee: 0, penaltyAccrued: 0, daysElapsed: 0, phase: 'active' } : calcQuickLoanBalance(loan)
+                      const liveTotal = loan.status === 'Paid' ? 0 : loan.status === 'Pending' ? principal : parseFloat((principal + accrued + extensionFee + penalty).toFixed(2))
                       const balColor = loan.status === 'Paid' ? '#22C55E' : phase === 'penalty' ? '#EF4444' : phase === 'extended' ? '#F59E0B' : '#F0F4FF'
                       return (
                         <>

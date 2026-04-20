@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
-import { formatCurrency, getInstallmentDates, formatDateValue } from '../lib/helpers'
+import { formatCurrency, getInstallmentDates, formatDateValue, calcQuickLoanBalance } from '../lib/helpers'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../components/Toast'
 import { 
@@ -133,12 +133,9 @@ export default function CapitalForecastPage() {
   const quickLoanData = activeQuickLoans.map(l => {
     const borrower = borrowers.find(b => b.id === l.borrower_id)
     const releaseDate = new Date(l.release_date)
-    const daysElapsed = Math.floor((new Date() - releaseDate) / (1000 * 60 * 60 * 24))
     const principal = l.loan_amount || 0
-    const interest = parseFloat((principal * 0.1 / 30 * daysElapsed).toFixed(2))
-    const fee = l.extension_fee_charged ? 100 : 0
-    const penalty = daysElapsed > 30 ? (daysElapsed - 30) * 25 : 0
-    const totalOwed = principal + interest + fee + penalty
+    
+    const { accruedInterest: interest, extensionFee: fee, penaltyAccrued: penalty, totalOwed, phase: calcPhase, daysElapsed } = calcQuickLoanBalance(l)
     
     const day15 = new Date(releaseDate)
     day15.setDate(day15.getDate() + 15)
@@ -147,8 +144,8 @@ export default function CapitalForecastPage() {
 
     let phase = 'Active'
     let phaseColor = 'var(--green)'
-    if (daysElapsed > 30) { phase = 'Penalty'; phaseColor = 'var(--red)' }
-    else if (daysElapsed > 15) { phase = 'Extended'; phaseColor = '#F59E0B' }
+    if (calcPhase === 'penalty') { phase = 'Penalty'; phaseColor = 'var(--red)' }
+    else if (calcPhase === 'extended') { phase = 'Extended'; phaseColor = '#F59E0B' }
 
     return { 
       id: l.id, 
