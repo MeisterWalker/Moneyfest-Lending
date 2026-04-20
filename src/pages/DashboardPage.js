@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { CREDIT_CONFIG, getBadgeFromScore } from '../lib/creditSystem'
-import { logAudit, formatCurrency, formatDate, getInstallmentDates, formatDateValue } from '../lib/helpers'
+import { logAudit, formatCurrency, formatDate, getInstallmentDates, formatDateValue, calcQuickLoanBalance } from '../lib/helpers'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../components/Toast'
@@ -1126,14 +1126,16 @@ export default function DashboardPage() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {activeQuickLoans.map(loan => {
                   const b = borrowers.find(x => x.id === loan.borrower_id)
-                  const days = Math.max(0, Math.floor((new Date() - new Date(loan.release_date)) / (1000 * 60 * 60 * 24)))
-                  const dailyInterest = parseFloat((loan.loan_amount * 0.1 / 30).toFixed(2))
-                  const accruedInterest = parseFloat((dailyInterest * days).toFixed(2))
-                  const extensionFee = loan.extension_fee_charged ? 100 : 0
-                  const penaltyDays = Math.max(0, days - 30)
-                  const penalty = penaltyDays * 25
-                  const totalOwed = parseFloat((loan.loan_amount + accruedInterest + extensionFee + penalty).toFixed(2))
-                  const phase = days > 30 ? 'penalty' : days > 15 ? 'extended' : 'active'
+                  const { 
+                    accruedInterest, 
+                    extensionFee, 
+                    penaltyAccrued: penalty, 
+                    totalOwed, 
+                    phase, 
+                    daysElapsed: days,
+                    daysForInterest
+                  } = calcQuickLoanBalance(loan)
+
                   const phaseColor = phase === 'penalty' ? 'var(--red)' : phase === 'extended' ? '#F59E0B' : 'var(--green)'
                   const phaseBg = phase === 'penalty' ? 'rgba(239,68,68,0.06)' : phase === 'extended' ? 'rgba(245,158,11,0.06)' : 'rgba(34,197,94,0.04)'
                   const phaseBorder = phase === 'penalty' ? 'rgba(239,68,68,0.2)' : phase === 'extended' ? 'rgba(245,158,11,0.2)' : 'rgba(34,197,94,0.15)'
