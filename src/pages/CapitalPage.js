@@ -346,6 +346,7 @@ export default function CapitalPage() {
                   </>
                 ) : (
                   <>
+                    <option value="Loan Disbursed">Loan Disbursed</option>
                     <option value="Subscription / Hosting">Subscription / Hosting</option>
                     <option value="Partner Withdrawal (JP)">Partner Withdrawal (JP)</option>
                     <option value="Partner Withdrawal (Charlou)">Partner Withdrawal (Charlou)</option>
