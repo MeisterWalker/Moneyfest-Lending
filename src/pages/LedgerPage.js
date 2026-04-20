@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase'
 import { formatCurrency } from '../lib/helpers'
 import {
   startOfMonth, endOfMonth, subMonths, format,
-  eachWeekOfInterval, endOfWeek
+  eachDayOfInterval
 } from 'date-fns'
 import {
   Calendar, TrendingUp, ChevronDown, ChevronRight, ArrowUp, ArrowDown, History
@@ -218,25 +218,23 @@ export default function LedgerPage() {
         }
       }
       
-      const weekStarts = eachWeekOfInterval({ start: mStart, end: mEnd })
-      const weeks = weekStarts.map(ws => {
-        const we = endOfWeek(ws)
-        const clampedStart = ws < mStart ? mStart : ws
-        const clampedEnd   = we > mEnd   ? mEnd   : we
-        const wRows = mRows.filter(r => {
-          const d = new Date(r.entry_date || r.created_at)
-          return d >= clampedStart && d <= clampedEnd
+      const allDays = eachDayOfInterval({ start: mStart, end: mEnd })
+      const days = allDays.map(d => {
+        const dStr = format(d, 'yyyy-MM-dd')
+        const dRows = mRows.filter(r => {
+          const rowDt = new Date(r.entry_date || r.created_at)
+          return format(rowDt, 'yyyy-MM-dd') === dStr
         })
         return {
-          label: `${format(clampedStart, 'MMM d')} – ${format(clampedEnd, 'MMM d')}`,
-          ...aggregateFlow(wRows),
+          label: format(d, 'MMM d (EEE)'),
+          ...aggregateFlow(dRows),
         }
-      }).filter(w => w.interest + w.principal + w.penalties + w.disbursed > 0)
+      }).filter(d => d.interest + d.principal + d.penalties + d.disbursed > 0)
       
       const netMonthFlow = totals.interest + totals.principal + totals.penalties - totals.disbursed
       const finalMonthlyPoolBalance = startingPoolBeforeMonth + netMonthFlow
       
-      months.push({ key: mk, label: format(mStart, 'MMMM yyyy'), ...totals, weeks, runningBalance: finalMonthlyPoolBalance })
+      months.push({ key: mk, label: format(mStart, 'MMMM yyyy'), ...totals, days, runningBalance: finalMonthlyPoolBalance })
     }
     return months
   }, [histFlow])
@@ -345,27 +343,27 @@ export default function LedgerPage() {
                   <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>{m.label}</div>
                   <div style={{ fontSize: 12, color: 'var(--green)' }}>{formatCurrency(m.interest)}</div>
                   <div style={{ fontSize: 12, color: m.penalties > 0 ? 'var(--red)' : 'var(--text-muted)' }}>{formatCurrency(m.penalties)}</div>
-                  <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{m.weeks.length} weeks</div>
+                  <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{m.days.length} entries</div>
                   <div style={{ fontSize: 12, fontWeight: 700, color: m.net >= 0 ? 'var(--green)' : 'var(--red)' }}>{formatCurrency(m.net)}</div>
                 </div>
 
                 {expanded[m.key] && (
                   <div style={{ background: 'rgba(255,255,255,0.01)', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
                     <div style={{ display: 'grid', gridTemplateColumns: '32px 1.5fr 1fr 1fr 1fr 1fr', padding: '8px 20px', borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
-                      {['', 'Week', 'Interest', 'Principal', 'Penalties', 'Net'].map(h => (
+                      {['', 'Date', 'Interest', 'Principal', 'Penalties', 'Net'].map(h => (
                         <div key={h} style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>{h}</div>
                       ))}
                     </div>
-                    {m.weeks.length === 0 ? (
+                    {m.days.length === 0 ? (
                       <div style={{ padding: '12px 20px 12px 52px', fontSize: 12, color: 'var(--text-muted)' }}>No entries this month</div>
-                    ) : m.weeks.map((w, wi) => (
-                      <div key={wi} style={{ display: 'grid', gridTemplateColumns: '32px 1.5fr 1fr 1fr 1fr 1fr', padding: '10px 20px', borderBottom: wi < m.weeks.length - 1 ? '1px solid rgba(255,255,255,0.02)' : 'none', alignItems: 'center' }}>
+                    ) : m.days.map((d, di) => (
+                      <div key={di} style={{ display: 'grid', gridTemplateColumns: '32px 1.5fr 1fr 1fr 1fr 1fr', padding: '10px 20px', borderBottom: di < m.days.length - 1 ? '1px solid rgba(255,255,255,0.02)' : 'none', alignItems: 'center' }}>
                         <div />
-                        <div style={{ fontSize: 12, color: 'var(--text-label)' }}>{w.label}</div>
-                        <div style={{ fontSize: 12, color: 'var(--green)' }}>{formatCurrency(w.interest)}</div>
-                        <div style={{ fontSize: 12, color: 'var(--blue)' }}>{formatCurrency(w.principal)}</div>
-                        <div style={{ fontSize: 12, color: w.penalties > 0 ? 'var(--red)' : 'var(--text-muted)' }}>{formatCurrency(w.penalties)}</div>
-                        <div style={{ fontSize: 12, fontWeight: 600, color: w.net >= 0 ? 'var(--green)' : 'var(--red)' }}>{formatCurrency(w.net)}</div>
+                        <div style={{ fontSize: 12, color: 'var(--text-label)' }}>{d.label}</div>
+                        <div style={{ fontSize: 12, color: 'var(--green)' }}>{formatCurrency(d.interest)}</div>
+                        <div style={{ fontSize: 12, color: 'var(--blue)' }}>{formatCurrency(d.principal)}</div>
+                        <div style={{ fontSize: 12, color: d.penalties > 0 ? 'var(--red)' : 'var(--text-muted)' }}>{formatCurrency(d.penalties)}</div>
+                        <div style={{ fontSize: 12, fontWeight: 600, color: d.net >= 0 ? 'var(--green)' : 'var(--red)' }}>{formatCurrency(d.net)}</div>
                       </div>
                     ))}
                   </div>
@@ -373,7 +371,7 @@ export default function LedgerPage() {
               </div>
             ))}
             <div style={{ display: 'grid', gridTemplateColumns: '32px 1.5fr 1fr 1fr 1fr 1fr', padding: '8px 20px', background: 'rgba(255,255,255,0.015)' }}>
-              {['', 'Month', 'Interest', 'Penalties', 'Weeks', 'Net Flow'].map(h => (
+              {['', 'Month', 'Interest', 'Penalties', 'Entries', 'Net Flow'].map(h => (
                 <div key={h} style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>{h}</div>
               ))}
             </div>
