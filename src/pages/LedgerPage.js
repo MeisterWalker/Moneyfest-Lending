@@ -65,7 +65,10 @@ function aggregateFlow(rows = []) {
     }
     
     if (r.type === 'CASH OUT') {
-      if (cat.includes('expense') || cat.includes('partner withdrawal') || cat.includes('rebate')) {
+      // Capital Reconciliation write-downs are NOT operating expenses — exclude from Net Profit
+      if (cat.includes('capital reconciliation')) {
+        // intentionally ignored — these are ghost-money corrections, not real expenses
+      } else if (cat.includes('expense') || cat.includes('partner withdrawal') || cat.includes('rebate')) {
         expenses += amt
       } else {
         disbursed += amt

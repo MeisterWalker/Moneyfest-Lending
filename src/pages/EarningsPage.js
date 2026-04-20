@@ -94,8 +94,11 @@ function PeriodSelector({ preset, onPresetChange, customFrom, customTo, onCustom
 }
 
 // ── Earnings Logic ──────────────────────────────────────────────
-const JP_INITIAL      = 10000
-const CHARLOU_INITIAL = 34000
+// Capital constants — set to 0 since ALL contributions are tracked via capital_flow ledger
+// JP: "Capital Top-up (JP)" entries = ₱10,200
+// Charlou: "Initial Pool (Installment)" + "Capital Top-up (Charlou)" entries = ₱37,525
+const JP_INITIAL      = 0
+const CHARLOU_INITIAL = 0
 
 function calcPartnerCapital(rows) {
   let jp      = JP_INITIAL
@@ -105,7 +108,8 @@ function calcPartnerCapital(rows) {
     const amt = parseFloat(r.amount) || 0
     if (r.type === 'CASH IN') {
       if (cat === 'Capital Top-up (JP)')      jp      += amt
-      if (cat === 'Capital Top-up (Charlou)') charlou += amt
+      // Initial Pool entries are Charlou's original capital investment
+      if (cat === 'Capital Top-up (Charlou)' || cat === 'Initial Pool (Installment)' || cat === 'Initial Pool (QuickLoan)') charlou += amt
     } else {
       if (cat === 'Partner Withdrawal (JP)')      jp      -= amt
       if (cat === 'Partner Withdrawal (Charlou)') charlou -= amt
@@ -113,6 +117,7 @@ function calcPartnerCapital(rows) {
   }
   return { jp: Math.max(0, jp), charlou: Math.max(0, charlou) }
 }
+
 
 export default function EarningsPage() {
   const [preset,     setPreset]     = useState('this_month')
