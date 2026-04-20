@@ -426,7 +426,10 @@ export default function CapitalPage() {
                       <td style={{ padding: '16px 24px', fontSize: 15, fontWeight: 700, color: item.type === 'CASH IN' ? 'var(--green)' : 'var(--red)' }}>
                         {item.type === 'CASH IN' ? '+' : '-'}{formatCurrency(item.amount)}
                       </td>
-                      <td style={{ padding: '16px 24px', fontSize: 13, color: 'var(--text-muted)', maxWidth: 200, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      <td 
+                        title={item.notes}
+                        style={{ padding: '16px 24px', fontSize: 13, color: 'var(--text-muted)', maxWidth: 200, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', cursor: item.notes ? 'help' : 'default' }}
+                      >
                         {item.notes || '—'}
                       </td>
                       <td style={{ padding: '16px 24px', fontSize: 14, fontWeight: 800, fontFamily: 'Space Grotesk' }}>
