@@ -49,13 +49,20 @@ function monthLabel(key) {
 }
 
 function aggregateFlow(rows = []) {
-  let interest = 0, principal = 0, penalties = 0, disbursed = 0, expenses = 0
+  let interest = 0, principal = 0, penalties = 0, disbursed = 0, expenses = 0, topups = 0
   for (const r of rows) {
     const cat = (r.category || '').toLowerCase()
     const amt  = parseFloat(r.amount) || 0
     if (cat.includes('interest profit'))                                           interest  += amt
-    if (cat.includes('loan principal return') || cat.includes('initial pool') || cat.includes('capital top-up'))     principal += amt
     if (cat.includes('penalty'))                                                   penalties += amt
+    
+    if (r.type === 'CASH IN') {
+      if (cat.includes('initial pool') || cat.includes('capital top-up')) {
+        topups += amt
+      } else if (cat.includes('loan principal return')) {
+        principal += amt
+      }
+    }
     
     if (r.type === 'CASH OUT') {
       if (cat.includes('expense') || cat.includes('partner withdrawal') || cat.includes('rebate')) {
@@ -65,7 +72,7 @@ function aggregateFlow(rows = []) {
       }
     }
   }
-  return { interest, principal, penalties, disbursed, expenses, net: interest + principal + penalties - disbursed - expenses }
+  return { interest, principal, penalties, topups, disbursed, expenses, net: interest + principal + penalties + topups - disbursed - expenses }
 }
 
 // ── Shared UI ────────────────────────────────────────────────────
@@ -179,12 +186,20 @@ export default function LedgerPage() {
     const map = {}
     for (const row of flow) {
       const k = monthKey(row.entry_date || row.created_at)
-      if (!map[k]) map[k] = { month: k, label: monthLabel(k), interest: 0, principal: 0, penalties: 0, disbursed: 0, expenses: 0 }
+      if (!map[k]) map[k] = { month: k, label: monthLabel(k), interest: 0, principal: 0, penalties: 0, topups: 0, disbursed: 0, expenses: 0 }
       const cat = (row.category || '').toLowerCase()
       const amt  = parseFloat(row.amount) || 0
       if (cat.includes('interest profit'))                                         map[k].interest  += amt
-      if (cat.includes('loan principal return') || cat.includes('initial pool') || cat.includes('capital top-up'))   map[k].principal += amt
       if (cat.includes('penalty'))                                                 map[k].penalties += amt
+      
+      if (row.type === 'CASH IN') {
+        if (cat.includes('initial pool') || cat.includes('capital top-up')) {
+          map[k].topups += amt
+        } else if (cat.includes('loan principal return')) {
+          map[k].principal += amt
+        }
+      }
+
       if (row.type === 'CASH OUT') {
         if (cat.includes('expense') || cat.includes('partner withdrawal') || cat.includes('rebate')) {
           map[k].expenses += amt
@@ -204,7 +219,7 @@ export default function LedgerPage() {
          historicalNetBeforeThisMonth += (hr.type === 'CASH IN' ? parseFloat(hr.amount)||0 : -(parseFloat(hr.amount)||0))
       }
     }
-    runningBalance = historicalNetBeforeThisMonth + m.interest + m.principal + m.penalties - m.disbursed - m.expenses
+    runningBalance = historicalNetBeforeThisMonth + m.interest + m.principal + m.penalties + m.topups - m.disbursed - m.expenses
     return { ...m, balance: runningBalance }
   })
 
@@ -244,7 +259,7 @@ export default function LedgerPage() {
         }
       }).filter(d => d.interest + d.principal + d.penalties + d.disbursed > 0)
       
-      const netMonthFlow = totals.interest + totals.principal + totals.penalties - totals.disbursed - totals.expenses
+      const netMonthFlow = totals.interest + totals.principal + totals.penalties + totals.topups - totals.disbursed - totals.expenses
       const finalMonthlyPoolBalance = startingPoolBeforeMonth + netMonthFlow
       
       months.push({ key: mk, label: format(mStart, 'MMMM yyyy'), ...totals, days, runningBalance: finalMonthlyPoolBalance })
