@@ -14,8 +14,8 @@ import {
 } from 'lucide-react'
 
 // Constants
-const JP_INITIAL = 10000
-const CHARLOU_INITIAL = 34000
+const JP_INITIAL = 0
+const CHARLOU_INITIAL = 0
 const TOTAL_INITIAL = JP_INITIAL + CHARLOU_INITIAL
 
 export default function CapitalPage() {
