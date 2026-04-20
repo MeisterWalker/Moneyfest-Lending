@@ -1028,6 +1028,9 @@ export default function LoansPage() {
       return
     }
 
+    // ── Auto-log to capital_flow ledger ──
+    await logAutomatedPayment(loan, result.install_amount || Math.ceil(loan.installment_amount))
+
     // ── Non-transactional side effects (safe to fail independently) ──
 
     // Penalty toast

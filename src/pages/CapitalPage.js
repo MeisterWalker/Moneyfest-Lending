@@ -24,6 +24,7 @@ export default function CapitalPage() {
   const [entries, setEntries] = useState([])
   const [loading, setLoading] = useState(true)
   const [adding, setAdding] = useState(false)
+  const [notesPopup, setNotesPopup] = useState(null) // holds the note text to display
   
   // Form State
   const [formData, setFormData] = useState({
@@ -426,9 +427,9 @@ export default function CapitalPage() {
                       <td style={{ padding: '16px 24px', fontSize: 15, fontWeight: 700, color: item.type === 'CASH IN' ? 'var(--green)' : 'var(--red)' }}>
                         {item.type === 'CASH IN' ? '+' : '-'}{formatCurrency(item.amount)}
                       </td>
-                      <td 
-                        title={item.notes}
-                        style={{ padding: '16px 24px', fontSize: 13, color: 'var(--text-muted)', maxWidth: 200, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', cursor: item.notes ? 'help' : 'default' }}
+                      <td
+                        onClick={() => item.notes && setNotesPopup(item.notes)}
+                        style={{ padding: '16px 24px', fontSize: 13, color: item.notes ? 'var(--text-primary)' : 'var(--text-muted)', maxWidth: 200, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', cursor: item.notes ? 'pointer' : 'default', textDecoration: item.notes ? 'underline dotted' : 'none' }}
                       >
                         {item.notes || '—'}
                       </td>
@@ -504,6 +505,35 @@ export default function CapitalPage() {
           </div>
         </div>
       </div>
+
+      {/* Notes Popup Overlay */}
+      {notesPopup && (
+        <div
+          onClick={() => setNotesPopup(null)}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 999,
+            background: 'rgba(0,0,0,0.6)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            backdropFilter: 'blur(4px)'
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              background: 'var(--card)', border: '1px solid var(--card-border)',
+              borderRadius: 16, padding: '28px 32px', maxWidth: 480, width: '90%',
+              boxShadow: '0 24px 60px rgba(0,0,0,0.5)'
+            }}
+          >
+            <div style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', marginBottom: 12, letterSpacing: '0.08em' }}>Note</div>
+            <div style={{ fontSize: 15, color: 'var(--text-primary)', lineHeight: 1.7, wordBreak: 'break-word' }}>{notesPopup}</div>
+            <button
+              onClick={() => setNotesPopup(null)}
+              style={{ marginTop: 24, padding: '9px 24px', borderRadius: 8, border: 'none', background: 'var(--blue)', color: '#fff', fontWeight: 600, cursor: 'pointer', fontSize: 13 }}
+            >Close</button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
