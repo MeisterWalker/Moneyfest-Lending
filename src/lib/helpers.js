@@ -184,7 +184,7 @@ export function calcQuickLoanBalance(loan, asOfDateStr = null) {
   const extensionFeeCharged = loan.extension_fee_charged || false
 
   let accruedInterest = calcQuickLoanAccruedInterest(principal, daysForInterest)
-  let extensionFee = extensionFeeCharged ? QUICKLOAN_CONFIG.EXTENSION_FEE : 0
+  let extensionFee = 0 // Admins collect the 100 extension fee upfront, so it shouldn't inflate ongoing balance.
   let penaltyAccrued = 0
   let phase = 'active'
 

@@ -1167,7 +1167,7 @@ export default function DashboardPage() {
                         {[
                           { label: 'Principal', value: formatCurrency(loan.loan_amount), color: 'var(--text-primary)' },
                           { label: 'Accrued Interest', value: formatCurrency(accruedInterest), color: '#a78bfa' },
-                          { label: 'Extension Fee', value: extensionFee > 0 ? formatCurrency(extensionFee) : '—', color: '#F59E0B' },
+                          { label: 'Extension Fee', value: loan.extension_fee_charged ? 'Paid ₱100' : '—', color: loan.extension_fee_charged ? 'var(--green)' : '#F59E0B' },
                           { label: 'Penalty', value: penalty > 0 ? formatCurrency(penalty) : '—', color: 'var(--red)' },
                           { label: 'Total Owed Now', value: formatCurrency(totalOwed), color: phaseColor },
                         ].map(item => (
