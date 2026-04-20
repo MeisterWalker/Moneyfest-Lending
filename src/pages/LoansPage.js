@@ -1304,6 +1304,18 @@ export default function LoansPage() {
 
     if (error) { toast('Failed to confirm release', 'error'); return }
 
+    // BL-08 FIX: Log the exact physical CASH OUT (funds actually handed to borrower)
+    const amountReleased = loan.funds_released || loan.loan_amount || 0;
+    if (amountReleased > 0) {
+      await supabase.from('capital_flow').insert({
+        entry_date: todayStr,
+        type: 'CASH OUT',
+        category: 'Loan Disbursed',
+        amount: amountReleased,
+        notes: `Loan Disbursed — ${borrower?.full_name || 'Borrower'} (${loan.loan_type === 'quickloan' ? 'QuickLoan' : 'Installment'})`
+      });
+    }
+
     await notifyBorrower({
       borrower_id: loan.borrower_id,
       type: 'funds_released',
