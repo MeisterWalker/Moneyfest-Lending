@@ -22,7 +22,6 @@ export default function CapitalPage() {
   const { user } = useAuth()
   const { toast } = useToast()
   const [entries, setEntries] = useState([])
-  const [loans, setLoans] = useState([])
   const [loading, setLoading] = useState(true)
   const [adding, setAdding] = useState(false)
   const [notesPopup, setNotesPopup] = useState(null)
@@ -35,19 +34,16 @@ export default function CapitalPage() {
     type: 'CASH IN',
     category: 'Interest Profit',
     amount: '',
-    notes: ''
+    notes: '',
+    cash_location: 'hand'
   })
 
   const fetchData = useCallback(async () => {
     try {
-      const [{ data: cfData, error: cfError }, { data: loanData, error: loanError }] = await Promise.all([
-        supabase.from('capital_flow').select('*').order('entry_date', { ascending: true }),
-        supabase.from('loans').select('loan_amount, remaining_balance, security_hold, status, loan_type')
-      ])
+      const { data: cfData, error: cfError } = await supabase
+        .from('capital_flow').select('*').order('entry_date', { ascending: true })
       if (cfError) throw cfError
-      if (loanError) throw loanError
       setEntries(cfData || [])
-      setLoans(loanData || [])
     } catch (err) {
       console.error('Fetch error:', err)
       toast('Failed to load ledger', 'error')
@@ -117,12 +113,22 @@ export default function CapitalPage() {
       .filter(e => e.type === 'CASH IN' && LOAN_IN_CATS.includes(e.category))
       .reduce((s, e) => s + (parseFloat(e.amount) || 0), 0)
 
-    // Available cash = simple net of all capital_flow entries
-    // This correctly handles capital recycling across multiple lending cycles
-    const availableCash = entries.reduce((s, e) => {
+    // Physical cash on hand = net of all entries where cash_location = 'hand'
+    const cashOnHand = entries.reduce((s, e) => {
       const amt = parseFloat(e.amount) || 0
+      if (e.cash_location === 'maribank') return s  // exclude Maribank entries from hand count
       return e.type === 'CASH IN' ? s + amt : s - amt
     }, 0)
+
+    // Maribank balance = net of all entries where cash_location = 'maribank'
+    const maribank = entries
+      .filter(e => e.cash_location === 'maribank')
+      .reduce((s, e) => {
+        const amt = parseFloat(e.amount) || 0
+        return e.type === 'CASH IN' ? s + amt : s - amt
+      }, 0)
+
+    const availableCash = cashOnHand + maribank  // total liquid position
 
     const jpShare      = (jpCapital / ((jpCapital + charlouCapital) || 1)) * 100
     const charlouShare = (charlouCapital / ((jpCapital + charlouCapital) || 1)) * 100
@@ -134,7 +140,7 @@ export default function CapitalPage() {
       totalIncome: totalProfit, totalExpenses,
       totalCapital, totalProfit, totalDisbursed,
       totalPrincipalReturned,
-      availableCash
+      cashOnHand, maribank, availableCash
     }
   }
 
@@ -144,7 +150,7 @@ export default function CapitalPage() {
     totalIncome, totalExpenses,
     totalCapital, totalProfit, totalDisbursed,
     totalPrincipalReturned,
-    availableCash
+    cashOnHand, maribank, availableCash
   } = processLedger()
 
   // Chart Data
@@ -161,16 +167,22 @@ export default function CapitalPage() {
     
     setAdding(true)
     try {
+      const insertPayload = {
+        entry_date: formData.entry_date,
+        type: formData.type,
+        category: formData.category,
+        amount: parseFloat(formData.amount),
+        notes: formData.notes,
+        created_by: user?.email || 'admin'
+      }
+      // Only include cash_location for CASH IN entries
+      if (formData.type === 'CASH IN') {
+        insertPayload.cash_location = formData.cash_location || 'hand'
+      }
+
       const { data, error } = await supabase
         .from('capital_flow')
-        .insert({
-          entry_date: formData.entry_date,
-          type: formData.type,
-          category: formData.category,
-          amount: parseFloat(formData.amount),
-          notes: formData.notes,
-          created_by: user?.email || 'admin'
-        })
+        .insert(insertPayload)
         .select()
 
       if (error) throw error
@@ -188,7 +200,8 @@ export default function CapitalPage() {
         type: 'CASH IN',
         category: 'Interest Profit (Installment)',
         amount: '',
-        notes: ''
+        notes: '',
+        cash_location: 'hand'
       })
       fetchData()
     } catch (err) {
@@ -375,10 +388,24 @@ export default function CapitalPage() {
               <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--red)', fontFamily: 'Space Grotesk' }}>{formatCurrency(totalExpenses)}</div>
               <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>Operating costs + rebates</div>
             </div>
+          </div>
+
+          {/* Liquidity Breakdown */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 20 }}>
+            <div className="card" style={{ padding: '16px 20px', borderLeft: '4px solid var(--blue)', background: 'rgba(59,130,246,0.04)' }}>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 4 }}>Total Liquid Position</div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--blue)', fontFamily: 'Space Grotesk' }}>{formatCurrency(Math.max(0, availableCash))}</div>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>Cash on hand + Maribank</div>
+            </div>
             <div className="card" style={{ padding: '16px 20px', borderLeft: '4px solid var(--green)', background: 'rgba(34,197,94,0.04)' }}>
-              <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 4 }}>Available Cash</div>
-              <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--green)', fontFamily: 'Space Grotesk' }}>{formatCurrency(Math.max(0, availableCash))}</div>
-              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>Net of all cash flows</div>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 4 }}>Physical Cash (Hand)</div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--green)', fontFamily: 'Space Grotesk' }}>{formatCurrency(Math.max(0, cashOnHand))}</div>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>What you can deploy now</div>
+            </div>
+            <div className="card" style={{ padding: '16px 20px', borderLeft: '4px solid #A855F7', background: 'rgba(168,85,247,0.04)' }}>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 4 }}>Charlou's Maribank</div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: '#A855F7', fontFamily: 'Space Grotesk' }}>{formatCurrency(Math.max(0, maribank))}</div>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>Pending transfer</div>
             </div>
           </div>
 
@@ -457,6 +484,7 @@ export default function CapitalPage() {
                   <th style={{ padding: '12px 20px', fontSize: 12, color: 'var(--text-label)', fontWeight: 600 }}>Date</th>
                   <th style={{ padding: '12px 20px', fontSize: 12, color: 'var(--text-label)', fontWeight: 600 }}>Category</th>
                   <th style={{ padding: '12px 20px', fontSize: 12, color: 'var(--text-label)', fontWeight: 600 }}>Amount</th>
+                  <th style={{ padding: '12px 20px', fontSize: 12, color: 'var(--text-label)', fontWeight: 600 }}>Location</th>
                   <th style={{ padding: '12px 20px', fontSize: 12, color: 'var(--text-label)', fontWeight: 600 }}>Notes</th>
                   <th style={{ padding: '12px 20px', fontSize: 12, color: 'var(--text-label)', fontWeight: 600 }}>Total Pool</th>
                   <th style={{ padding: '12px 20px', fontSize: 12, color: 'var(--text-label)', fontWeight: 600, textAlign: 'right' }}>Actions</th>
@@ -464,7 +492,7 @@ export default function CapitalPage() {
               </thead>
               <tbody>
                 {filteredLedger.length === 0 ? (
-                  <tr><td colSpan={6} style={{ padding: '32px 24px', textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>No entries match your search.</td></tr>
+                  <tr><td colSpan={7} style={{ padding: '32px 24px', textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>No entries match your search.</td></tr>
                 ) : filteredLedger.map((item) => (
                   <tr key={item.id} style={{ borderBottom: '1px solid var(--card-border)' }}>
                     <td style={{ padding: '13px 20px', fontSize: 13, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{formatDate(item.entry_date)}</td>
@@ -474,6 +502,17 @@ export default function CapitalPage() {
                     </td>
                     <td style={{ padding: '13px 20px', fontSize: 14, fontWeight: 700, color: item.type === 'CASH IN' ? 'var(--green)' : 'var(--red)', whiteSpace: 'nowrap' }}>
                       {item.type === 'CASH IN' ? '+' : '-'}{formatCurrency(item.amount)}
+                    </td>
+                    <td style={{ padding: '13px 20px' }}>
+                      {item.type === 'CASH IN' ? (
+                        <span style={{
+                          display: 'inline-block', padding: '2px 8px', borderRadius: 6, fontSize: 11, fontWeight: 700,
+                          background: item.cash_location === 'maribank' ? 'rgba(168,85,247,0.15)' : 'rgba(34,197,94,0.15)',
+                          color: item.cash_location === 'maribank' ? '#A855F7' : 'var(--green)'
+                        }}>
+                          {item.cash_location === 'maribank' ? 'Maribank' : 'Hand'}
+                        </span>
+                      ) : '—'}
                     </td>
                     <td
                       onClick={() => item.notes && setNotesPopup(item.notes)}
@@ -559,6 +598,17 @@ export default function CapitalPage() {
                   )}
                 </select>
               </div>
+              {formData.type === 'CASH IN' && (
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, color: 'var(--text-label)', marginBottom: 6 }}>Where is this cash?</label>
+                  <select className="input" style={{ width: '100%' }} value={formData.cash_location}
+                    onChange={e => setFormData({ ...formData, cash_location: e.target.value })}
+                  >
+                    <option value="hand">Physical Cash (on hand)</option>
+                    <option value="maribank">Charlou's Maribank</option>
+                  </select>
+                </div>
+              )}
               <div>
                 <label style={{ display: 'block', fontSize: 12, color: 'var(--text-label)', marginBottom: 6 }}>Amount (₱)</label>
                 <input
