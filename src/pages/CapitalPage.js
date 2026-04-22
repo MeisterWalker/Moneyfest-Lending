@@ -113,22 +113,12 @@ export default function CapitalPage() {
       .filter(e => e.type === 'CASH IN' && LOAN_IN_CATS.includes(e.category))
       .reduce((s, e) => s + (parseFloat(e.amount) || 0), 0)
 
-    // Physical cash on hand = net of all entries where cash_location = 'hand'
-    const cashOnHand = entries.reduce((s, e) => {
+    // Available cash = simple net of all capital_flow entries
+    // Both hand and maribank are our money — one clean number
+    const availableCash = entries.reduce((s, e) => {
       const amt = parseFloat(e.amount) || 0
-      if (e.cash_location === 'maribank') return s  // exclude Maribank entries from hand count
       return e.type === 'CASH IN' ? s + amt : s - amt
     }, 0)
-
-    // Maribank balance = net of all entries where cash_location = 'maribank'
-    const maribank = entries
-      .filter(e => e.cash_location === 'maribank')
-      .reduce((s, e) => {
-        const amt = parseFloat(e.amount) || 0
-        return e.type === 'CASH IN' ? s + amt : s - amt
-      }, 0)
-
-    const availableCash = cashOnHand + maribank  // total liquid position
 
     const jpShare      = (jpCapital / ((jpCapital + charlouCapital) || 1)) * 100
     const charlouShare = (charlouCapital / ((jpCapital + charlouCapital) || 1)) * 100
@@ -140,7 +130,7 @@ export default function CapitalPage() {
       totalIncome: totalProfit, totalExpenses,
       totalCapital, totalProfit, totalDisbursed,
       totalPrincipalReturned,
-      cashOnHand, maribank, availableCash
+      availableCash
     }
   }
 
@@ -150,7 +140,7 @@ export default function CapitalPage() {
     totalIncome, totalExpenses,
     totalCapital, totalProfit, totalDisbursed,
     totalPrincipalReturned,
-    cashOnHand, maribank, availableCash
+    availableCash
   } = processLedger()
 
   // Chart Data
@@ -388,24 +378,10 @@ export default function CapitalPage() {
               <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--red)', fontFamily: 'Space Grotesk' }}>{formatCurrency(totalExpenses)}</div>
               <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>Operating costs + rebates</div>
             </div>
-          </div>
-
-          {/* Liquidity Breakdown */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 20 }}>
-            <div className="card" style={{ padding: '16px 20px', borderLeft: '4px solid var(--blue)', background: 'rgba(59,130,246,0.04)' }}>
-              <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 4 }}>Total Liquid Position</div>
-              <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--blue)', fontFamily: 'Space Grotesk' }}>{formatCurrency(Math.max(0, availableCash))}</div>
-              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>Cash on hand + Maribank</div>
-            </div>
             <div className="card" style={{ padding: '16px 20px', borderLeft: '4px solid var(--green)', background: 'rgba(34,197,94,0.04)' }}>
-              <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 4 }}>Physical Cash (Hand)</div>
-              <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--green)', fontFamily: 'Space Grotesk' }}>{formatCurrency(Math.max(0, cashOnHand))}</div>
-              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>What you can deploy now</div>
-            </div>
-            <div className="card" style={{ padding: '16px 20px', borderLeft: '4px solid #A855F7', background: 'rgba(168,85,247,0.04)' }}>
-              <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 4 }}>Charlou's Maribank</div>
-              <div style={{ fontSize: 18, fontWeight: 800, color: '#A855F7', fontFamily: 'Space Grotesk' }}>{formatCurrency(Math.max(0, maribank))}</div>
-              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>Pending transfer</div>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 4 }}>Available Cash</div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--green)', fontFamily: 'Space Grotesk' }}>{formatCurrency(Math.max(0, availableCash))}</div>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>Net of all cash flows</div>
             </div>
           </div>
 
