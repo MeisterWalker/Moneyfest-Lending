@@ -455,7 +455,7 @@ export default function CollectionPage() {
           continue
         }
 
-        await logAutomatedPayment(loan, installAmt)
+        await logAutomatedPayment(loan, installAmt, 'hand')
         await logAudit({
           action_type: 'INSTALLMENT_PAID',
           module: 'Collection (Bulk)',

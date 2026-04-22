@@ -5,7 +5,7 @@ import { QUICKLOAN_CONFIG } from './helpers'
  * Automatically splits a loan payment into Interest Profit and Principal Return
  * and logs them in the capital_flow ledger.
  */
-export const logAutomatedPayment = async (loan, amountReceived) => {
+export const logAutomatedPayment = async (loan, amountReceived, cashLocation = 'hand') => {
   try {
     const isQuickLoan = loan.loan_type === 'quickloan'
     let interestProfit = 0
@@ -67,7 +67,8 @@ export const logAutomatedPayment = async (loan, amountReceived) => {
         type: 'CASH IN',
         category: isQuickLoan ? 'Interest Profit (QuickLoan)' : 'Interest Profit (Installment)',
         amount: interestProfit,
-        notes: `Auto: Interest Profit from ${loan.borrowers?.full_name || 'Borrower'} payment`
+        notes: `Auto: Interest Profit from ${loan.borrowers?.full_name || 'Borrower'} payment`,
+        cash_location: cashLocation
       })
     }
 
@@ -78,7 +79,8 @@ export const logAutomatedPayment = async (loan, amountReceived) => {
         type: 'CASH IN',
         category: 'Loan Principal Return',
         amount: principalReturn,
-        notes: `Auto: Principal Return from ${loan.borrowers?.full_name || 'Borrower'} installment`
+        notes: `Auto: Principal Return from ${loan.borrowers?.full_name || 'Borrower'} installment`,
+        cash_location: cashLocation
       })
     }
 
@@ -114,7 +116,8 @@ export const logAutomatedPayment = async (loan, amountReceived) => {
           type: 'CASH IN',
           category: 'Penalty (Collected at Settlement)',
           amount: cashPenalty,
-          notes: `Auto: Unsettled Penalties collected at settlement from ${loan.borrowers?.full_name || 'Borrower'} (Loan ${loan.id})`
+          notes: `Auto: Unsettled Penalties collected at settlement from ${loan.borrowers?.full_name || 'Borrower'} (Loan ${loan.id})`,
+          cash_location: cashLocation
         });
       }
     }

@@ -156,6 +156,7 @@ function LoanCard({ loan: rawLoan, borrowers, applications, investors, onEdit, o
   const [confirmingPrincipal, setConfirmingPrincipal] = useState(false)
   const [confirmingRenew, setConfirmingRenew] = useState(false)
   const [principalInput, setPrincipalInput] = useState('')
+  const [paymentCashLocation, setPaymentCashLocation] = useState('hand')
   const [showInvestorPicker, setShowInvestorPicker] = useState(false)
   // Normalize installment to whole peso — handles loans created before rounding was added
   const loan = {
@@ -509,7 +510,12 @@ function LoanCard({ loan: rawLoan, borrowers, applications, investors, onEdit, o
                 <span style={{ color: 'var(--text-label)' }}>
                   Collect {qlBalance ? formatCurrency(qlBalance.totalOwed) : '—'} (day {qlBalance?.daysElapsed})?
                 </span>
-                <button onClick={() => { onQuickLoanPayoff(loan); setConfirming(false) }}
+                <select value={paymentCashLocation} onChange={e => setPaymentCashLocation(e.target.value)}
+                  style={{ background: 'var(--card)', color: 'var(--text-primary)', border: '1px solid var(--card-border)', borderRadius: 6, padding: '3px 6px', fontSize: 11 }}>
+                  <option value="hand">Hand</option>
+                  <option value="maribank">Maribank</option>
+                </select>
+                <button onClick={() => { onQuickLoanPayoff(loan, paymentCashLocation); setConfirming(false) }}
                   style={{ background: '#F59E0B', color: '#000', border: 'none', borderRadius: 6, padding: '4px 10px', cursor: 'pointer', fontSize: 12, fontWeight: 700 }}>
                   Yes
                 </button>
@@ -540,7 +546,12 @@ function LoanCard({ loan: rawLoan, borrowers, applications, investors, onEdit, o
                       <>Confirm {formatCurrency(loan.installment_amount)} — Installment {nextInstallment} of {numInst}?</>
                     )}
                   </span>
-                  <button onClick={() => { onRecordPayment(loan); setConfirming(false) }}
+                  <select value={paymentCashLocation} onChange={e => setPaymentCashLocation(e.target.value)}
+                    style={{ background: 'var(--card)', color: 'var(--text-primary)', border: '1px solid var(--card-border)', borderRadius: 6, padding: '3px 6px', fontSize: 11 }}>
+                    <option value="hand">Hand</option>
+                    <option value="maribank">Maribank</option>
+                  </select>
+                  <button onClick={() => { onRecordPayment(loan, paymentCashLocation); setConfirming(false) }}
                     style={{ background: 'var(--green)', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 10px', cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>
                     Yes
                   </button>
@@ -559,7 +570,12 @@ function LoanCard({ loan: rawLoan, borrowers, applications, investors, onEdit, o
               <span style={{ color: 'var(--text-label)' }}>
                 Record ₱{QUICKLOAN_CONFIG.EXTENSION_FEE + parseFloat((loan.loan_amount * QUICKLOAN_CONFIG.DAILY_RATE * QUICKLOAN_CONFIG.DAY15_THRESHOLD).toFixed(2))} (Fee + Day 15 Interest)?
               </span>
-              <button onClick={() => { onQuickLoanDay15Missed(loan); setConfirmingExtension(false) }}
+              <select value={paymentCashLocation} onChange={e => setPaymentCashLocation(e.target.value)}
+                style={{ background: 'var(--card)', color: 'var(--text-primary)', border: '1px solid var(--card-border)', borderRadius: 6, padding: '3px 6px', fontSize: 11 }}>
+                <option value="hand">Hand</option>
+                <option value="maribank">Maribank</option>
+              </select>
+              <button onClick={() => { onQuickLoanDay15Missed(loan, paymentCashLocation); setConfirmingExtension(false) }}
                 style={{ background: '#F59E0B', color: '#000', border: 'none', borderRadius: 6, padding: '4px 10px', cursor: 'pointer', fontSize: 12, fontWeight: 700 }}>
                 Yes
               </button>
@@ -995,7 +1011,7 @@ export default function LoansPage() {
     return { rebateAmount, daysEarly }
   }
 
-  const handleRecordPayment = async (loan) => {
+  const handleRecordPayment = async (loan, cashLocation = 'hand') => {
     const borrower = borrowers.find(b => b.id === loan.borrower_id)
     const numInstallments = loan.num_installments || 4
 
@@ -1029,7 +1045,7 @@ export default function LoansPage() {
     }
 
     // ── Auto-log to capital_flow ledger ──
-    await logAutomatedPayment(loan, result.install_amount || Math.ceil(loan.installment_amount))
+    await logAutomatedPayment(loan, result.install_amount || Math.ceil(loan.installment_amount), cashLocation)
 
     // ── Non-transactional side effects (safe to fail independently) ──
 
@@ -1362,7 +1378,7 @@ export default function LoansPage() {
     fetchData()
   }
 
-  const handleQuickLoanPayoff = async (loan) => {
+  const handleQuickLoanPayoff = async (loan, cashLocation = 'hand') => {
     if (processingRef.current) return
     processingRef.current = true
     try {
@@ -1381,7 +1397,7 @@ export default function LoansPage() {
     if (error) { toast('Failed to record QuickLoan payoff', 'error'); return }
 
     // Log Automated Accounting Movement
-    await logAutomatedPayment(loan, totalCollected)
+    await logAutomatedPayment(loan, totalCollected, cashLocation)
 
     // Log penalty if in penalty phase
     if (balance.penaltyAccrued > 0) {
@@ -1435,7 +1451,7 @@ export default function LoansPage() {
   }
 
   // ── QuickLoan Day 15 missed: collect interest + extension fee, roll principal ──
-  const handleQuickLoanDay15Missed = async (loan) => {
+  const handleQuickLoanDay15Missed = async (loan, cashLocation = 'hand') => {
     if (loan.extension_fee_charged) { toast('Extension fee already charged', 'info'); return }
     const { EXTENSION_FEE, DAY15_THRESHOLD, DAILY_RATE } = QUICKLOAN_CONFIG
     const accruedInterest = parseFloat((loan.loan_amount * DAILY_RATE * DAY15_THRESHOLD).toFixed(2))
@@ -1453,7 +1469,7 @@ export default function LoansPage() {
     if (error) { toast('Failed to record extension', 'error'); return }
 
     // Log Automated Accounting Movement (Interest + Extension Fee)
-    await logAutomatedPayment(loan, collectNow)
+    await logAutomatedPayment(loan, collectNow, cashLocation)
 
     await logAudit({
       action_type: 'QUICKLOAN_DAY15_MISSED',
