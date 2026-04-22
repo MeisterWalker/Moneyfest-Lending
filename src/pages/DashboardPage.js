@@ -533,31 +533,28 @@ export default function DashboardPage() {
     return () => supabase.removeChannel(subCF)
   }, [debouncedFetchData])
 
-  // ── Pool calculation: matches CapitalPage formula exactly ──
-  // Only counts capital contributions + profit − expenses/withdrawals.
-  // Loan disbursements and principal returns are EXCLUDED because
-  // historical entries are incomplete (causes inflation).
-  const POOL_IN_CATS  = ['Capital Top-up (JP)', 'Capital Top-up (Charlou)',
-    'Initial Pool (Installment)', 'Initial Pool (QuickLoan)',
-    'Interest Profit (Installment)', 'Interest Profit (QuickLoan)', 'Interest Profit']
-  const POOL_OUT_CATS = ['Partner Withdrawal (JP)', 'Partner Withdrawal (Charlou)',
-    'Subscription / Hosting', 'Operating Expense', 'Rebate Issued', 'Other Expense']
+  // ── Pool calculation: matches CapitalPage availableCash exactly ──
+  // Simple net of ALL capital_flow entries (CASH IN − CASH OUT).
+  // No category filtering — this is the real cash position.
+  const isQuickLoanEntry = (entry) => {
+    const cat = entry.category || ''
+    if (cat === 'Initial Pool (QuickLoan)' || cat === 'Interest Profit (QuickLoan)' || cat === 'Loan Disbursed QL') return true
+    if (cat === 'Loan Principal Return' && (entry.notes || '').includes('QuickLoan')) return true
+    return false
+  }
 
-  // Total pool (= CapitalPage Available Cash)
   const totalPool = capitalEntries.reduce((sum, e) => {
     const amt = parseFloat(e.amount) || 0
-    const cat = e.category || ''
-    if (e.type === 'CASH IN'  && POOL_IN_CATS.includes(cat))  return sum + amt
-    if (e.type === 'CASH OUT' && POOL_OUT_CATS.includes(cat)) return sum - amt
-    return sum
+    return e.type === 'CASH IN' ? sum + amt : sum - amt
   }, 0)
 
-  // QuickLoan's share = its own capital + its own profit (no shared expenses)
-  const qlPoolValue = capitalEntries
-    .filter(e => e.type === 'CASH IN' && ['Initial Pool (QuickLoan)', 'Interest Profit (QuickLoan)'].includes(e.category))
-    .reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0)
+  // QuickLoan's share (net of QL-only entries)
+  const qlPoolValue = capitalEntries.filter(e => isQuickLoanEntry(e)).reduce((sum, e) => {
+    const amt = parseFloat(e.amount) || 0
+    return e.type === 'CASH IN' ? sum + amt : sum - amt
+  }, 0)
 
-  // Installment gets everything else (total minus QL share)
+  // Installment gets everything else
   const availableLiquidity = totalPool - qlPoolValue
 
   // ── Computed stats (Installment) ──────────
@@ -804,7 +801,7 @@ export default function DashboardPage() {
     .filter(c => c.type === 'CASH IN' && c.category === 'Initial Pool (QuickLoan)')
     .reduce((sum, c) => sum + (c.amount || 0), 0)
 
-  // QL liquidity = its share of the total pool
+  // QL liquidity = net of QL-only capital_flow entries
   const qlAvailableLiquidity = qlPoolValue
 
   const qlAmountLentOut = activeQuickLoans.reduce((sum, l) => sum + (l.loan_amount || 0), 0)
