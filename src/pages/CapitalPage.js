@@ -117,14 +117,12 @@ export default function CapitalPage() {
       .filter(e => e.type === 'CASH IN' && LOAN_IN_CATS.includes(e.category))
       .reduce((s, e) => s + (parseFloat(e.amount) || 0), 0)
 
-    // Active loans: capital currently deployed with borrowers
-    const activeLoans   = loans.filter(l => ['Active', 'Partially Paid', 'Overdue'].includes(l.status))
-    const deployedCapital = activeLoans.reduce((s, l) => s + (parseFloat(l.remaining_balance) || parseFloat(l.loan_amount) || 0), 0)
-    const securityHolds   = activeLoans.reduce((s, l) => s + (parseFloat(l.security_hold) || 0), 0)
-
-    // Available cash = capital contributed + profit earned − expenses − capital currently with borrowers
-    // Security holds are in your physical possession but earmarked — shown separately
-    const availableCash = totalCapital + totalProfit - totalExpenses - deployedCapital
+    // Available cash = simple net of all capital_flow entries
+    // This correctly handles capital recycling across multiple lending cycles
+    const availableCash = entries.reduce((s, e) => {
+      const amt = parseFloat(e.amount) || 0
+      return e.type === 'CASH IN' ? s + amt : s - amt
+    }, 0)
 
     const jpShare      = (jpCapital / ((jpCapital + charlouCapital) || 1)) * 100
     const charlouShare = (charlouCapital / ((jpCapital + charlouCapital) || 1)) * 100
@@ -135,8 +133,8 @@ export default function CapitalPage() {
       jpShare, charlouShare,
       totalIncome: totalProfit, totalExpenses,
       totalCapital, totalProfit, totalDisbursed,
-      totalPrincipalReturned, deployedCapital,
-      securityHolds, availableCash
+      totalPrincipalReturned,
+      availableCash
     }
   }
 
@@ -145,8 +143,8 @@ export default function CapitalPage() {
     jpShare, charlouShare,
     totalIncome, totalExpenses,
     totalCapital, totalProfit, totalDisbursed,
-    totalPrincipalReturned, deployedCapital,
-    securityHolds, availableCash
+    totalPrincipalReturned,
+    availableCash
   } = processLedger()
 
   // Chart Data
@@ -360,7 +358,7 @@ export default function CapitalPage() {
           </div>
 
           {/* Stat Cards — real business position */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 20 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16, marginBottom: 20 }}>
             <div className="card" style={{ padding: '16px 20px', borderLeft: '4px solid var(--blue)' }}>
               <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 4 }}>Total Capital Contributed</div>
               <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--blue)', fontFamily: 'Space Grotesk' }}>{formatCurrency(totalCapital)}</div>
@@ -371,16 +369,7 @@ export default function CapitalPage() {
               <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--green)', fontFamily: 'Space Grotesk' }}>{formatCurrency(totalIncome)}</div>
               <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>Interest collected to date</div>
             </div>
-            <div className="card" style={{ padding: '16px 20px', borderLeft: '4px solid var(--red)' }}>
-              <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 4 }}>Capital Deployed</div>
-              <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--red)', fontFamily: 'Space Grotesk' }}>{formatCurrency(deployedCapital)}</div>
-              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>Currently with borrowers</div>
-            </div>
-            <div className="card" style={{ padding: '16px 20px', borderLeft: '4px solid var(--gold)' }}>
-              <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 4 }}>Security Holds</div>
-              <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--gold)', fontFamily: 'Space Grotesk' }}>{formatCurrency(securityHolds)}</div>
-              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>In your pocket, earmarked</div>
-            </div>
+
             <div className="card" style={{ padding: '16px 20px', borderLeft: '4px solid var(--red)' }}>
               <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 4 }}>Total Expenses</div>
               <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--red)', fontFamily: 'Space Grotesk' }}>{formatCurrency(totalExpenses)}</div>
@@ -389,7 +378,7 @@ export default function CapitalPage() {
             <div className="card" style={{ padding: '16px 20px', borderLeft: '4px solid var(--green)', background: 'rgba(34,197,94,0.04)' }}>
               <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 4 }}>Available Cash</div>
               <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--green)', fontFamily: 'Space Grotesk' }}>{formatCurrency(Math.max(0, availableCash))}</div>
-              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>Capital + profit − deployed</div>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>Net of all cash flows</div>
             </div>
           </div>
 
