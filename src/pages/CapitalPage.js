@@ -22,6 +22,7 @@ export default function CapitalPage() {
   const { user } = useAuth()
   const { toast } = useToast()
   const [entries, setEntries] = useState([])
+  const [loans, setLoans] = useState([])
   const [loading, setLoading] = useState(true)
   const [adding, setAdding] = useState(false)
   const [notesPopup, setNotesPopup] = useState(null)
@@ -39,13 +40,14 @@ export default function CapitalPage() {
 
   const fetchData = useCallback(async () => {
     try {
-      const { data, error } = await supabase
-        .from('capital_flow')
-        .select('*')
-        .order('entry_date', { ascending: true })
-      
-      if (error) throw error
-      setEntries(data || [])
+      const [{ data: cfData, error: cfError }, { data: loanData, error: loanError }] = await Promise.all([
+        supabase.from('capital_flow').select('*').order('entry_date', { ascending: true }),
+        supabase.from('loans').select('loan_amount, remaining_balance, security_hold, status, loan_type')
+      ])
+      if (cfError) throw cfError
+      if (loanError) throw loanError
+      setEntries(cfData || [])
+      setLoans(loanData || [])
     } catch (err) {
       console.error('Fetch error:', err)
       toast('Failed to load ledger', 'error')
@@ -56,50 +58,96 @@ export default function CapitalPage() {
 
   useEffect(() => { fetchData() }, [fetchData])
 
-  // Calculations
+  // ── Category constants ────────────────────────────────────
+  const CAPITAL_IN_CATS  = ['Capital Top-up (JP)', 'Capital Top-up (Charlou)', 'Initial Pool (Installment)', 'Initial Pool (QuickLoan)']
+  const CAPITAL_OUT_CATS = ['Partner Withdrawal (JP)', 'Partner Withdrawal (Charlou)']
+  const PROFIT_CATS      = ['Interest Profit (Installment)', 'Interest Profit (QuickLoan)', 'Interest Profit', 'Other Income']
+  const EXPENSE_CATS     = ['Subscription / Hosting', 'Operating Expense', 'Rebate Issued', 'Other Expense']
+  const LOAN_OUT_CATS    = ['Loan Disbursed', 'Loan Disbursed QL']
+  const LOAN_IN_CATS     = ['Loan Principal Return']
+
+  // ── processLedger ─────────────────────────────────────────
+  // Builds the ledger table with a running "pool" column that
+  // only counts capital contributions, profit, and expenses —
+  // NOT principal cycling. Loan disbursements / returns are
+  // shown in the ledger for the paper trail but don't inflate
+  // the "available cash" figure.
   const processLedger = () => {
-    let runningTotal = 0
-    let jpCapital = JP_INITIAL
+    let runningPool = 0   // capital + profit − expenses (no principal cycling)
+    let jpCapital   = JP_INITIAL
     let charlouCapital = CHARLOU_INITIAL
-    
+
     const ledger = entries.map(entry => {
       const isCashIn = entry.type === 'CASH IN'
-      const amount = parseFloat(entry.amount)
-      
-      if (isCashIn) {
-        runningTotal += amount
-        if (entry.category === 'Capital Top-up (JP)') jpCapital += amount
-        if (entry.category === 'Capital Top-up (Charlou)') charlouCapital += amount
-      } else {
-        runningTotal -= amount
-        if (entry.category === 'Partner Withdrawal (JP)') jpCapital -= amount
-        if (entry.category === 'Partner Withdrawal (Charlou)') charlouCapital -= amount
-      }
+      const amount   = parseFloat(entry.amount) || 0
+      const cat      = entry.category || ''
 
-      return {
-        ...entry,
-        runningTotal,
-        jpCapital,
-        charlouCapital
-      }
+      // Partner capital tracking
+      if (isCashIn  && CAPITAL_IN_CATS.includes(cat))  { jpCapital     += cat.includes('JP') ? amount : 0; charlouCapital += cat.includes('Charlou') ? amount : 0 }
+      if (!isCashIn && CAPITAL_OUT_CATS.includes(cat)) { jpCapital     -= cat.includes('JP') ? amount : 0; charlouCapital -= cat.includes('Charlou') ? amount : 0 }
+
+      // Running pool: capital in/out + profit + expenses only
+      // Loan disbursements and principal returns are tracked for
+      // the paper trail but intentionally excluded from the pool
+      // balance — they represent capital rotation, not new money.
+      if (isCashIn  && (CAPITAL_IN_CATS.includes(cat) || PROFIT_CATS.includes(cat))) runningPool += amount
+      if (!isCashIn && (CAPITAL_OUT_CATS.includes(cat) || EXPENSE_CATS.includes(cat))) runningPool -= amount
+
+      return { ...entry, runningTotal: runningPool, jpCapital, charlouCapital }
     })
 
-    const currentTotal = runningTotal
-    const jpShare = (jpCapital / (jpCapital + charlouCapital || 1)) * 100
-    const charlouShare = (charlouCapital / (jpCapital + charlouCapital || 1)) * 100
+    // ── Summary figures ───────────────────────────────────────
+    const totalCapital = entries
+      .filter(e => e.type === 'CASH IN' && CAPITAL_IN_CATS.includes(e.category))
+      .reduce((s, e) => s + (parseFloat(e.amount) || 0), 0)
 
-    const totalIncome = entries
-      .filter(e => e.type === 'CASH IN' && ['Interest Profit (Installment)', 'Interest Profit (QuickLoan)', 'Interest Profit', 'Other Income'].includes(e.category))
-      .reduce((sum, e) => sum + parseFloat(e.amount), 0)
-    
+    const totalProfit = entries
+      .filter(e => e.type === 'CASH IN' && PROFIT_CATS.includes(e.category))
+      .reduce((s, e) => s + (parseFloat(e.amount) || 0), 0)
+
     const totalExpenses = entries
-      .filter(e => e.type === 'CASH OUT' && ['Subscription / Hosting', 'Operating Expense', 'Rebate Issued', 'Other Expense'].includes(e.category))
-      .reduce((sum, e) => sum + parseFloat(e.amount), 0)
+      .filter(e => e.type === 'CASH OUT' && EXPENSE_CATS.includes(e.category))
+      .reduce((s, e) => s + (parseFloat(e.amount) || 0), 0)
 
-    return { ledger, jpCapital, charlouCapital, currentTotal, jpShare, charlouShare, totalIncome, totalExpenses }
+    const totalDisbursed = entries
+      .filter(e => e.type === 'CASH OUT' && LOAN_OUT_CATS.includes(e.category))
+      .reduce((s, e) => s + (parseFloat(e.amount) || 0), 0)
+
+    const totalPrincipalReturned = entries
+      .filter(e => e.type === 'CASH IN' && LOAN_IN_CATS.includes(e.category))
+      .reduce((s, e) => s + (parseFloat(e.amount) || 0), 0)
+
+    // Active loans: capital currently deployed with borrowers
+    const activeLoans   = loans.filter(l => ['Active', 'Partially Paid', 'Overdue'].includes(l.status))
+    const deployedCapital = activeLoans.reduce((s, l) => s + (parseFloat(l.remaining_balance) || parseFloat(l.loan_amount) || 0), 0)
+    const securityHolds   = activeLoans.reduce((s, l) => s + (parseFloat(l.security_hold) || 0), 0)
+
+    // Available cash = capital contributed + profit earned − expenses − capital currently with borrowers
+    // Security holds are in your physical possession but earmarked — shown separately
+    const availableCash = totalCapital + totalProfit - totalExpenses - deployedCapital
+
+    const jpShare      = (jpCapital / ((jpCapital + charlouCapital) || 1)) * 100
+    const charlouShare = (charlouCapital / ((jpCapital + charlouCapital) || 1)) * 100
+    const currentTotal = runningPool  // capital + profit only (for chart continuity)
+
+    return {
+      ledger, jpCapital, charlouCapital, currentTotal,
+      jpShare, charlouShare,
+      totalIncome: totalProfit, totalExpenses,
+      totalCapital, totalProfit, totalDisbursed,
+      totalPrincipalReturned, deployedCapital,
+      securityHolds, availableCash
+    }
   }
 
-  const { ledger, jpCapital, charlouCapital, currentTotal, jpShare, charlouShare, totalIncome, totalExpenses } = processLedger()
+  const {
+    ledger, jpCapital, charlouCapital, currentTotal,
+    jpShare, charlouShare,
+    totalIncome, totalExpenses,
+    totalCapital, totalProfit, totalDisbursed,
+    totalPrincipalReturned, deployedCapital,
+    securityHolds, availableCash
+  } = processLedger()
 
   // Chart Data
   const chartData = ledger.map(item => ({
@@ -311,19 +359,37 @@ export default function CapitalPage() {
             </div>
           </div>
 
-          {/* Stat Cards */}
+          {/* Stat Cards — real business position */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 20 }}>
+            <div className="card" style={{ padding: '16px 20px', borderLeft: '4px solid var(--blue)' }}>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 4 }}>Total Capital Contributed</div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--blue)', fontFamily: 'Space Grotesk' }}>{formatCurrency(totalCapital)}</div>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>JP + Charlou combined</div>
+            </div>
             <div className="card" style={{ padding: '16px 20px', borderLeft: '4px solid var(--green)' }}>
-              <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 4 }}>Total Income (Profit)</div>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 4 }}>Total Profit Earned</div>
               <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--green)', fontFamily: 'Space Grotesk' }}>{formatCurrency(totalIncome)}</div>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>Interest collected to date</div>
+            </div>
+            <div className="card" style={{ padding: '16px 20px', borderLeft: '4px solid var(--red)' }}>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 4 }}>Capital Deployed</div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--red)', fontFamily: 'Space Grotesk' }}>{formatCurrency(deployedCapital)}</div>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>Currently with borrowers</div>
+            </div>
+            <div className="card" style={{ padding: '16px 20px', borderLeft: '4px solid var(--gold)' }}>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 4 }}>Security Holds</div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--gold)', fontFamily: 'Space Grotesk' }}>{formatCurrency(securityHolds)}</div>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>In your pocket, earmarked</div>
             </div>
             <div className="card" style={{ padding: '16px 20px', borderLeft: '4px solid var(--red)' }}>
               <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 4 }}>Total Expenses</div>
               <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--red)', fontFamily: 'Space Grotesk' }}>{formatCurrency(totalExpenses)}</div>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>Operating costs + rebates</div>
             </div>
-            <div className="card" style={{ padding: '16px 20px', borderLeft: '4px solid var(--blue)' }}>
-              <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 4 }}>Net Business Profit</div>
-              <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--blue)', fontFamily: 'Space Grotesk' }}>{formatCurrency(totalIncome - totalExpenses)}</div>
+            <div className="card" style={{ padding: '16px 20px', borderLeft: '4px solid var(--green)', background: 'rgba(34,197,94,0.04)' }}>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 4 }}>Available Cash</div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--green)', fontFamily: 'Space Grotesk' }}>{formatCurrency(Math.max(0, availableCash))}</div>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>Capital + profit − deployed</div>
             </div>
           </div>
 
@@ -388,8 +454,9 @@ export default function CapitalPage() {
               />
             </div>
             <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Current Pool Balance</div>
-              <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--green)', fontFamily: 'Space Grotesk' }}>{formatCurrency(currentTotal)}</div>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Available Cash</div>
+              <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--green)', fontFamily: 'Space Grotesk' }}>{formatCurrency(Math.max(0, availableCash))}</div>
+              <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>Capital + profit − deployed loans</div>
             </div>
           </div>
 
