@@ -548,11 +548,11 @@ export default function DashboardPage() {
     return e.type === 'CASH IN' ? sum + amt : sum - amt
   }, 0)
 
-  // QuickLoan's share (net of QL-only entries)
-  const qlPoolValue = capitalEntries.filter(e => isQuickLoanEntry(e)).reduce((sum, e) => {
-    const amt = parseFloat(e.amount) || 0
-    return e.type === 'CASH IN' ? sum + amt : sum - amt
-  }, 0)
+  // QuickLoan's share of cash = QL profit sitting in the pool
+  // (QL initial capital is deployed in active loans, not in the cash pool)
+  const qlPoolValue = capitalEntries
+    .filter(e => e.type === 'CASH IN' && e.category === 'Interest Profit (QuickLoan)')
+    .reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0)
 
   // Installment gets everything else
   const availableLiquidity = totalPool - qlPoolValue
