@@ -533,8 +533,22 @@ export default function DashboardPage() {
     return () => supabase.removeChannel(subCF)
   }, [debouncedFetchData])
 
+  // ── Pool splitter: classify each capital_flow entry as QL or Installment ──
+  const isQuickLoanEntry = (entry) => {
+    const cat = entry.category || ''
+    if (cat === 'Initial Pool (QuickLoan)' || cat === 'Interest Profit (QuickLoan)' || cat === 'Loan Disbursed QL') return true
+    if (cat === 'Loan Principal Return' && (entry.notes || '').includes('QuickLoan')) return true
+    return false
+  }
+
+  // ── Installment-only liquidity from capital_flow ──
+  const installmentEntries = capitalEntries.filter(e => !isQuickLoanEntry(e))
+  const availableLiquidity = installmentEntries.reduce((sum, e) => {
+    const amt = parseFloat(e.amount) || 0
+    return e.type === 'CASH IN' ? sum + amt : sum - amt
+  }, 0)
+
   // ── Computed stats (Installment) ──────────
-  // DYNAMIC CAPITAL: Sum of Initial Pool + Top-ups from the Ledger
   const ledgerCapital = capitalEntries
     .filter(c => c.type === 'CASH IN' && (
       c.category === 'Initial Pool (Installment)' ||
@@ -552,18 +566,18 @@ export default function DashboardPage() {
     .filter(cf => cf.type === 'CASH IN' && cf.category === 'Interest Profit (Installment)')
     .reduce((sum, cf) => sum + (cf.amount || 0), 0)
 
-  // System profit (for fallback/comparison)
-  const systemProfit = paidLoans.reduce((sum, l) => sum + ((l.total_repayment || 0) - (l.loan_amount || 0)), 0) + 
-    activeLoans.reduce((sum, l) => {
-      const installment = Math.ceil(l.installment_amount || 0)
-      const paidSoFar = installment * (l.payments_made || 0)
-      const interestRate = (l.interest_rate || 0.07) * (l.loan_term || 2)
-      const totalInterest = (l.loan_amount || 0) * interestRate
-      return (totalInterest > 0 ? (paidSoFar / (l.total_repayment || 1)) * totalInterest : 0)
-    }, 0)
+  const totalProfit = ledgerProfit
+  const roi = ledgerCapital > 0 ? (totalProfit / ledgerCapital) * 100 : 0
 
-  // We prioritize the Audit/Ledger profit if it exists
-  const totalProfit = ledgerProfit || systemProfit
+  // Profit this month — from capital_flow ledger (Installment interest this month)
+  const now = new Date()
+  const profitThisMonth = capitalEntries
+    .filter(e => {
+      if (e.type !== 'CASH IN' || e.category !== 'Interest Profit (Installment)') return false
+      const d = new Date(e.entry_date)
+      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
+    })
+    .reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0)
 
   // ── QuickLoan stats ──────────────────────
   const activeQuickLoans = loans.filter(l => l.loan_type === 'quickloan' && ['Active', 'Partially Paid', 'Overdue'].includes(l.status))
@@ -576,11 +590,7 @@ export default function DashboardPage() {
     .filter(cf => cf.type === 'CASH IN' && cf.category === 'Interest Profit (QuickLoan)')
     .reduce((sum, cf) => sum + (cf.amount || 0), 0)
 
-  const qlSystemProfit = paidQuickLoans.reduce((sum, l) => {
-    return sum + ((l.total_repayment || 0) - (l.loan_amount || 0))
-  }, 0)
-
-  const qlTotalInterestEarned = qlLedgerProfit || qlSystemProfit
+  const qlTotalInterestEarned = qlLedgerProfit
 
   const qlDay15Overdue = activeQuickLoans.filter(l => {
     if (!l.release_date) return false
@@ -596,23 +606,14 @@ export default function DashboardPage() {
 
   const defaultedLoans = loans.filter(l => l.status === 'Defaulted' && l.loan_type !== 'quickloan')
   const defaultRate = loans.length > 0 ? (defaultedLoans.length / loans.length) * 100 : 0
-  
-  // Liquidity now includes dynamic profit (CASH on Hand)
-  const availableLiquidity = (ledgerCapital + totalProfit) - amountLentOut
-  const roi = ledgerCapital > 0 ? (totalProfit / ledgerCapital) * 100 : 0
 
-  // Profit this month — paid loans + active interest earned this month
-  const now = new Date()
-  const profitThisMonth = paidLoans
-    .filter(l => new Date(l.updated_at).getMonth() === now.getMonth() && new Date(l.updated_at).getFullYear() === now.getFullYear())
-    .reduce((sum, l) => sum + ((l.total_repayment || 0) - (l.loan_amount || 0)), 0)
-
-  // Projected yearly — use avg loan term from portfolio
-  const avgTerm = loans.length > 0
-    ? loans.reduce((sum, l) => sum + (l.loan_term || 2), 0) / loans.length
+  // Projected yearly — use avg loan term from installment portfolio
+  const instLoans = loans.filter(l => l.loan_type !== 'quickloan')
+  const avgTerm = instLoans.length > 0
+    ? instLoans.reduce((sum, l) => sum + (l.loan_term || 2), 0) / instLoans.length
     : 2
   const cyclesPerYear = 12 / avgTerm
-  const projectedYearly = availableLiquidity * (settings?.interest_rate || 0.07) * avgTerm * cyclesPerYear
+  const projectedYearly = Math.max(0, availableLiquidity) * (settings?.interest_rate || 0.07) * avgTerm * cyclesPerYear
 
   // ── Actions ────────────────────────────────────────────────
   const handleAddProduct = async () => {
@@ -783,33 +784,36 @@ export default function DashboardPage() {
     capital: ledgerCapital + monthlyData.slice(0, i + 1).reduce((sum, x) => sum + x.profit, 0)
   }))
 
-  // ── QuickLoan dashboard stats ──────────
+  // ── QuickLoan dashboard stats (isolated from Installment pool) ──────────
   const qlResetDate = settings?.ql_last_reset_date ? new Date(settings.ql_last_reset_date) : null
   
   // Dynamic QL Capital
   const qlLedgerCapital = capitalEntries
-    .filter(c => c.type === 'CASH IN' && 
-      c.category === 'Initial Pool (QuickLoan)'
-    )
+    .filter(c => c.type === 'CASH IN' && c.category === 'Initial Pool (QuickLoan)')
     .reduce((sum, c) => sum + (c.amount || 0), 0)
 
+  // QL-only liquidity from capital_flow
+  const qlEntries = capitalEntries.filter(e => isQuickLoanEntry(e))
+  const qlAvailableLiquidity = qlEntries.reduce((sum, e) => {
+    const amt = parseFloat(e.amount) || 0
+    return e.type === 'CASH IN' ? sum + amt : sum - amt
+  }, 0)
+
   const qlAmountLentOut = activeQuickLoans.reduce((sum, l) => sum + (l.loan_amount || 0), 0)
-  const qlAvailableLiquidity = (qlLedgerCapital + qlTotalInterestEarned) - qlAmountLentOut
 
-  const qlPaidAfterReset = qlResetDate
-    ? paidQuickLoans.filter(l => new Date(l.updated_at) >= qlResetDate)
-    : paidQuickLoans
-  const qlTotalProfitAllTime = paidQuickLoans.reduce((sum, l) => sum + Math.max(0, (l.total_repayment || 0) - (l.loan_amount || 0)), 0)
+  // QL Profit this month — from capital_flow ledger
+  const qlProfitThisMonth = capitalEntries
+    .filter(e => {
+      if (e.type !== 'CASH IN' || e.category !== 'Interest Profit (QuickLoan)') return false
+      const d = new Date(e.entry_date)
+      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
+    })
+    .reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0)
 
-  const now2 = new Date()
-  const qlProfitThisMonth = paidQuickLoans
-    .filter(l => new Date(l.updated_at).getMonth() === now2.getMonth() && new Date(l.updated_at).getFullYear() === now2.getFullYear())
-    .reduce((sum, l) => sum + Math.max(0, (l.total_repayment || 0) - (l.loan_amount || 0)), 0)
-
-  // QuickLoan ROI — based on capital if set, otherwise based on principal deployed
-  const qlRoi = qlLedgerCapital > 0 ? (qlTotalProfitAllTime / qlLedgerCapital) * 100 : 0
-  // Projected: 2 cycles/month at 10%/month = 5% per cycle × 2 = 10%/month on deployed capital
-  const qlProjectedYearly = qlAvailableLiquidity > 0 ? qlAvailableLiquidity * 0.10 * 12 : (qlLedgerCapital * 0.10 * 12)
+  // QuickLoan ROI — based on capital from ledger
+  const qlRoi = qlLedgerCapital > 0 ? (qlTotalInterestEarned / qlLedgerCapital) * 100 : 0
+  // Projected: 10%/month on available QL capital
+  const qlProjectedYearly = Math.max(0, qlAvailableLiquidity) * 0.10 * 12
 
   // QL collection efficiency — ratio of loans paid on time (day 15) vs extended/late
   const qlPaidOnDay15 = paidQuickLoans.filter(l => {
