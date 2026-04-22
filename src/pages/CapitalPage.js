@@ -57,7 +57,7 @@ export default function CapitalPage() {
   // ── Category constants ────────────────────────────────────
   const CAPITAL_IN_CATS  = ['Capital Top-up (JP)', 'Capital Top-up (Charlou)', 'Initial Pool (Installment)', 'Initial Pool (QuickLoan)']
   const CAPITAL_OUT_CATS = ['Partner Withdrawal (JP)', 'Partner Withdrawal (Charlou)']
-  const PROFIT_CATS      = ['Interest Profit (Installment)', 'Interest Profit (QuickLoan)', 'Interest Profit', 'Other Income']
+  const PROFIT_CATS      = ['Interest Profit (Installment)', 'Interest Profit (QuickLoan)', 'Interest Profit']
   const EXPENSE_CATS     = ['Subscription / Hosting', 'Operating Expense', 'Rebate Issued', 'Other Expense']
   const LOAN_OUT_CATS    = ['Loan Disbursed', 'Loan Disbursed QL']
   const LOAN_IN_CATS     = ['Loan Principal Return']
@@ -79,7 +79,7 @@ export default function CapitalPage() {
       const cat      = entry.category || ''
 
       // Partner capital tracking
-      if (isCashIn  && CAPITAL_IN_CATS.includes(cat))  { jpCapital     += cat.includes('JP') ? amount : 0; charlouCapital += cat.includes('Charlou') ? amount : 0 }
+      if (isCashIn  && CAPITAL_IN_CATS.includes(cat))  { jpCapital += cat.includes('JP') ? amount : 0; charlouCapital += (cat.includes('Charlou') || cat.includes('Initial Pool')) ? amount : 0 }
       if (!isCashIn && CAPITAL_OUT_CATS.includes(cat)) { jpCapital     -= cat.includes('JP') ? amount : 0; charlouCapital -= cat.includes('Charlou') ? amount : 0 }
 
       // Running pool: capital in/out + profit + expenses only
