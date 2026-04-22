@@ -85,7 +85,7 @@ export default function CapitalForecastPage() {
     activeInstallmentLoans.reduce((sum, l) => sum + (l.loan_amount || 0), 0) +
     activeQuickLoans.reduce((sum, l) => sum + (l.loan_amount || 0), 0)
 
-  const currentCashOnHand = totalCashIn - totalCashOut - totalDeployed
+  const currentCashOnHand = totalCashIn - totalCashOut
 
   // ── Next 4 Cutoff Dates ──
   const getNextCutoffs = () => {
