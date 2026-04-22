@@ -43,7 +43,7 @@ const navGroups = [
     label: 'FINANCE',
     items: [
       { to: '/admin/capital', icon: Wallet, label: 'Capital' },
-      { to: '/admin/ledger', icon: TrendingUp, label: 'Financial Ledger' },
+      // { to: '/admin/ledger', icon: TrendingUp, label: 'Financial Ledger' },  // Removed: redundant with Capital's Ledger tab
       { to: '/admin/earnings', icon: DollarSign, label: 'Earnings Report' },
       { to: '/admin/hold-ledger', icon: Lock, label: 'Hold Ledger' },
       { to: '/admin/forecast-capital', icon: BarChart, label: 'Cash Forecast' },
