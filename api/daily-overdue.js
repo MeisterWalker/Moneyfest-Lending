@@ -84,7 +84,7 @@ module.exports = async (req, res) => {
 
   const { data: existingPenalties, error: penFetchErr } = await supabase
     .from('penalty_charges')
-    .select('loan_id, charged_date, penalty_amount')
+    .select('loan_id, penalty_amount, created_at')
     .in('loan_id', loanIds);
 
   if (penFetchErr) {
@@ -96,7 +96,9 @@ module.exports = async (req, res) => {
   const chargedTodaySet = new Set();
   const totalChargedByLoan = {};
   for (const p of (existingPenalties || [])) {
-    const key = `${p.loan_id}|${p.charged_date}`;
+    // Use created_at date portion for dedup (charged_date column doesn't exist)
+    const dateStr = p.created_at ? p.created_at.slice(0, 10) : '';
+    const key = `${p.loan_id}|${dateStr}`;
     chargedTodaySet.add(key); // used to prevent duplicate today entries
     totalChargedByLoan[p.loan_id] = (totalChargedByLoan[p.loan_id] || 0) + (parseFloat(p.penalty_amount) || 0);
   }
@@ -186,14 +188,15 @@ module.exports = async (req, res) => {
       console.log(`[CRON] Loan ${loan.id}: credit score ${currentScore} → ${newScore}`);
     }
 
-    // ── penalty_charges insert (one row per day charged today) ──
+    // ── penalty_charges insert (one row per catch-up run) ──
     penaltyInserts.push({
-      loan_id:        loan.id,
-      borrower_id:    loan.borrower_id,
-      penalty_amount: penaltyToCharge,
-      days_late:      daysLate,
-      charged_date:   todayStr,
-      description:    `Day ${daysLate} overdue — ₱20/day × ${daysLate} days, net new ₱${penaltyToCharge}`,
+      loan_id:            loan.id,
+      borrower_id:        loan.borrower_id,
+      installment_number: (loan.payments_made || 0) + 1,
+      days_late:          daysLate,
+      penalty_per_day:    20,
+      penalty_amount:     penaltyToCharge,
+      cap_applied:        false,
     });
 
     // ── audit_logs insert ──
@@ -202,7 +205,6 @@ module.exports = async (req, res) => {
       module:       'Loan',
       description:  `Overdue penalty ₱${penaltyToCharge} charged — Loan ${loan.id}, Day ${daysLate}. Hold: ₱${currentHold} → ₱${newHold}.`,
       changed_by:   'system-cron',
-      reference_id: loan.id,
     });
 
     // ── wallet_transactions (borrower portal visibility) ──
@@ -297,13 +299,13 @@ module.exports = async (req, res) => {
     }
   }
 
-  // penalty_charges — upsert on (loan_id, charged_date) to prevent duplicates
+  // penalty_charges — insert (dedup handled by chargedTodaySet above)
   if (penaltyInserts.length > 0) {
     const { error: penErr } = await supabase
       .from('penalty_charges')
-      .upsert(penaltyInserts, { onConflict: 'loan_id,charged_date', ignoreDuplicates: true });
-    if (penErr) console.error('[CRON] ❌ penalty_charges upsert failed:', penErr.message);
-    else        console.log(`[CRON] ✅ ${penaltyInserts.length} penalty_charges rows upserted`);
+      .insert(penaltyInserts);
+    if (penErr) console.error('[CRON] ❌ penalty_charges insert failed:', penErr.message);
+    else        console.log(`[CRON] ✅ ${penaltyInserts.length} penalty_charges rows inserted`);
   }
 
   // audit_logs
