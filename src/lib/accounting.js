@@ -45,7 +45,8 @@ export const logAutomatedPayment = async (loan, amountReceived, cashLocation = '
       }
 
       // We calculate the specific interest portion for ONE standard installment
-      const interestPerInstallment = totalInterest / numInstallments
+      // Round to 2dp BEFORE ratio multiplication to prevent sub-cent drift
+      const interestPerInstallment = Math.round((totalInterest / numInstallments) * 100) / 100
       
       // If the amount received matches a standard installment, use the pre-calculated split
       // Otherwise (partial payment), we prorate it.

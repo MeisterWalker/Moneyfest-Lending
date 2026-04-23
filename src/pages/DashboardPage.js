@@ -570,23 +570,37 @@ export default function DashboardPage() {
   const amountLentOut = activeLoans.reduce((sum, l) => sum + (l.loan_amount || 0), 0)
   const paidLoans = loans.filter(l => l.status === 'Paid' && l.loan_type !== 'quickloan')
 
-  // DYNAMIC PROFIT: Sum of Interest Profit entries in the Ledger
-  const ledgerProfit = capitalEntries
+  // DYNAMIC PROFIT: Sum of Interest Profit entries in the Ledger (NET of rebates)
+  const grossProfit = capitalEntries
     .filter(cf => cf.type === 'CASH IN' && cf.category === 'Interest Profit (Installment)')
     .reduce((sum, cf) => sum + (cf.amount || 0), 0)
 
-  const totalProfit = ledgerProfit
+  const totalRebates = capitalEntries
+    .filter(cf => cf.type === 'CASH OUT' && (cf.category || '').toLowerCase().includes('rebate'))
+    .reduce((sum, cf) => sum + (parseFloat(cf.amount) || 0), 0)
+
+  const totalProfit = grossProfit - totalRebates
   const roi = ledgerCapital > 0 ? (totalProfit / ledgerCapital) * 100 : 0
 
-  // Profit this month — from capital_flow ledger (Installment interest this month)
+  // Profit this month — from capital_flow ledger (Installment interest this month, net of rebates)
   const now = new Date()
-  const profitThisMonth = capitalEntries
+  const grossProfitThisMonth = capitalEntries
     .filter(e => {
       if (e.type !== 'CASH IN' || e.category !== 'Interest Profit (Installment)') return false
       const d = new Date(e.entry_date)
       return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
     })
     .reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0)
+
+  const rebatesThisMonth = capitalEntries
+    .filter(e => {
+      if (e.type !== 'CASH OUT' || !(e.category || '').toLowerCase().includes('rebate')) return false
+      const d = new Date(e.entry_date)
+      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
+    })
+    .reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0)
+
+  const profitThisMonth = grossProfitThisMonth - rebatesThisMonth
 
   // ── QuickLoan stats ──────────────────────
   const activeQuickLoans = loans.filter(l => l.loan_type === 'quickloan' && ['Active', 'Partially Paid', 'Overdue'].includes(l.status))
@@ -916,20 +930,46 @@ export default function DashboardPage() {
       })}
 
       {/* Stat Cards Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 24 }}>
-        <StatCard label="Total Capital" value={formatCurrency(ledgerCapital)} sub="Starting capital" icon={Banknote} color="var(--blue)" />
+
+      {/* ── Hero Profit Card ── */}
+      <div style={{
+        background: 'linear-gradient(135deg, rgba(34,197,94,0.12), rgba(20,184,166,0.06))',
+        border: '1px solid rgba(34,197,94,0.2)',
+        borderRadius: 16, padding: '28px 32px', marginBottom: 28
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 20 }}>
+          <div>
+            <div style={{ fontSize: 12, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, marginBottom: 8 }}>Net Installment Profit</div>
+            <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 42, color: 'var(--green)', lineHeight: 1 }}>{formatCurrency(totalProfit)}</div>
+            <div style={{ fontSize: 13, color: 'var(--text-label)', marginTop: 10 }}>
+              All-time earnings after rebates · ROI <span style={{ color: 'var(--purple)', fontWeight: 700 }}>{roi.toFixed(1)}%</span>
+            </div>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div style={{ background: 'rgba(0,0,0,0.2)', borderRadius: 12, padding: '14px 18px', minWidth: 130 }}>
+              <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 4 }}>This Month</div>
+              <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 20, color: 'var(--teal)' }}>{formatCurrency(profitThisMonth)}</div>
+            </div>
+            <div style={{ background: 'rgba(0,0,0,0.2)', borderRadius: 12, padding: '14px 18px', minWidth: 130 }}>
+              <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 4 }}>Projected / Year</div>
+              <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 20, color: 'var(--blue)' }}>{formatCurrency(projectedYearly)}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Portfolio Health ── */}
+      <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600, marginBottom: 12 }}>📊 Portfolio Health</div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16, marginBottom: 28 }}>
+        <StatCard label="Total Capital" value={formatCurrency(ledgerCapital)} sub="Invested capital" icon={Banknote} color="var(--blue)" />
         <StatCard label="Amount Lent Out" value={formatCurrency(amountLentOut)} sub={`${activeLoans.length} active loans`} icon={CreditCard} color="var(--purple)" />
-        <StatCard label="Total Profit" value={formatCurrency(totalProfit)} sub="All-time earnings" icon={TrendingUp} color="var(--green)" />
-        <StatCard label="Profit This Month" value={formatCurrency(profitThisMonth)} icon={Activity} color="var(--teal)" />
-        <StatCard label="Projected Yearly" value={formatCurrency(projectedYearly)} sub="Based on available capital" icon={ArrowUpRight} color="var(--blue)" />
-        <StatCard label="Default Rate" value={`${defaultRate.toFixed(1)}%`} sub={`${defaultedLoans.length} defaulted`} icon={AlertTriangle} color={defaultRate > 10 ? 'var(--red)' : 'var(--gold)'} />
         <StatCard label="Available Liquidity" value={formatCurrency(Math.max(0, availableLiquidity))} sub="Ready to lend" icon={Banknote} color="var(--green)" />
-        <StatCard label="ROI" value={`${roi.toFixed(1)}%`} sub="Return on investment" icon={Percent} color="var(--purple)" />
-        <StatCard label="Active Loans" value={activeLoans.length} sub={`${loans.length} total`} icon={Users} color="var(--blue)" />
+        <StatCard label="Active Loans" value={activeLoans.length} sub={`${loans.length} total · ${paidLoans.length} paid`} icon={Users} color="var(--blue)" />
+        <StatCard label="Default Rate" value={`${defaultRate.toFixed(1)}%`} sub={`${defaultedLoans.length} defaulted`} icon={AlertTriangle} color={defaultRate > 10 ? 'var(--red)' : 'var(--gold)'} />
       </div>
 
       {/* Collection Efficiency */}
-      <div style={{ marginBottom: 24 }}>
+      <div style={{ marginBottom: 28 }}>
         <EfficiencyCard 
           rate={efficiencyRate} 
           onTime={totalInstallmentsDue} 
@@ -947,11 +987,73 @@ export default function DashboardPage() {
         )}
       </div>
 
+      {/* ── Cutoff Profit Breakdown ── */}
+      <div className="card" style={{ padding: 0, overflow: 'hidden', marginBottom: 28 }}>
+        <div style={{ padding: '18px 24px', borderBottom: '1px solid var(--card-border)', display: 'flex', alignItems: 'center', gap: 10 }}>
+          <Calendar size={16} color="var(--green)" />
+          <span style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 15 }}>Cutoff Profit Breakdown</span>
+          <span style={{ fontSize: 11, color: 'var(--text-muted)', marginLeft: 'auto' }}>Interest collected per cutoff date</span>
+        </div>
+        {(() => {
+          const cutoffMap = {}
+          capitalEntries
+            .filter(cf => cf.type === 'CASH IN' && cf.category === 'Interest Profit (Installment)')
+            .forEach(cf => {
+              const key = cf.entry_date
+              if (!cutoffMap[key]) cutoffMap[key] = { date: key, entries: [], total: 0 }
+              cutoffMap[key].entries.push(cf)
+              cutoffMap[key].total += parseFloat(cf.amount) || 0
+            })
+          const cutoffs = Object.values(cutoffMap).sort((a, b) => a.date.localeCompare(b.date))
+          
+          return cutoffs.length === 0 ? (
+            <div style={{ padding: '30px', textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>No profit entries yet</div>
+          ) : (
+            <div>
+              {cutoffs.map((c, idx) => {
+                const d = new Date(c.date + 'T00:00:00')
+                const label = d.toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' })
+                return (
+                  <div key={c.date} style={{
+                    display: 'grid', gridTemplateColumns: '1fr auto auto',
+                    padding: '14px 24px', gap: 16, alignItems: 'center',
+                    borderBottom: idx < cutoffs.length - 1 ? '1px solid rgba(255,255,255,0.03)' : 'none',
+                    transition: 'background 0.1s'
+                  }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.015)'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                  >
+                    <div>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{label}</div>
+                      <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{c.entries.length} payment{c.entries.length !== 1 ? 's' : ''} collected</div>
+                    </div>
+                    <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 16, color: 'var(--green)' }}>
+                      +{formatCurrency(c.total)}
+                    </div>
+                    <div style={{ width: 60, height: 6, background: 'rgba(255,255,255,0.05)', borderRadius: 3, overflow: 'hidden' }}>
+                      <div style={{ height: '100%', width: `${Math.min(100, (c.total / (grossProfit || 1)) * 100)}%`, background: 'var(--green)', borderRadius: 3 }} />
+                    </div>
+                  </div>
+                )
+              })}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr auto auto', padding: '14px 24px', gap: 16, background: 'rgba(34,197,94,0.06)', borderTop: '2px solid rgba(34,197,94,0.15)' }}>
+                <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--text-primary)' }}>Total (Net of Rebates)</div>
+                <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 16, color: 'var(--green)' }}>{formatCurrency(totalProfit)}</div>
+                <div />
+              </div>
+            </div>
+          )
+        })()}
+      </div>
+
       {/* Charts Row */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 24 }}>
+      <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600, marginBottom: 12 }}>📈 Performance Charts</div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 28 }}>
         {/* Capital Growth Line Chart */}
-        <div className="card" style={{ padding: '20px 22px' }}>
-          <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 15, marginBottom: 18 }}>📈 Capital Growth</div>
+        <div className="card" style={{ padding: '22px 24px' }}>
+          <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 15, marginBottom: 18, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <TrendingUp size={16} color="var(--teal)" /> Capital Growth
+          </div>
           <ResponsiveContainer width="100%" height={200}>
             <LineChart data={capitalGrowthData}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--card-border)" />
@@ -964,8 +1066,10 @@ export default function DashboardPage() {
         </div>
 
         {/* Monthly Profit Bar Chart */}
-        <div className="card" style={{ padding: '20px 22px' }}>
-          <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 15, marginBottom: 18 }}><div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><img src="/philippine-peso.png" alt="philippine-peso" style={{ width: 16, height: 16, objectFit: 'contain' }} />Monthly Profit</div></div>
+        <div className="card" style={{ padding: '22px 24px' }}>
+          <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 15, marginBottom: 18, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Banknote size={16} color="var(--green)" /> Monthly Profit
+          </div>
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={monthlyData}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--card-border)" />
@@ -979,9 +1083,9 @@ export default function DashboardPage() {
       </div>
 
       {/* Donut Chart + Top Borrowers */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 20, marginBottom: 24 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 20, marginBottom: 28 }}>
         {/* Loan Status Donut */}
-        <div className="card" style={{ padding: '20px 22px' }}>
+        <div className="card" style={{ padding: '22px 24px' }}>
           <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 15, marginBottom: 14 }}>Loan Status</div>
           {donutData.length === 0 ? (
             <div className="empty-state" style={{ padding: '30px 10px' }}>
