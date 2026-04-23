@@ -965,7 +965,7 @@ export default function LoansPage() {
     const daysEarly = Math.ceil((finalDue - today) / (1000 * 60 * 60 * 24))
     if (daysEarly < 7) return false
 
-    const rebateAmount = parseFloat((loan.loan_amount * 0.01).toFixed(2))
+    const rebateAmount = 50 // Flat ₱50 rebate regardless of loan amount
     const { data: walletData } = await supabase
       .from('wallets').select('id, balance').eq('borrower_id', loan.borrower_id).maybeSingle()
 

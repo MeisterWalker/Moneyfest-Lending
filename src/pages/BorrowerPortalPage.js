@@ -1265,11 +1265,11 @@ export default function BorrowerPortalPage() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 14px', background: 'rgba(34,197,94,0.05)', border: '1px solid rgba(34,197,94,0.1)', borderRadius: 10, marginBottom: 8 }}>
                   <div>
                     <div style={{ fontSize: 13, fontWeight: 700, color: '#F0F4FF' }}>Pay final installment at least 1–2 weeks early</div>
-                    <div style={{ fontSize: 11, color: '#4B5580', marginTop: 2 }}>₱50 rebate on a ₱5,000 loan</div>
+                    <div style={{ fontSize: 11, color: '#4B5580', marginTop: 2 }}>Flat ₱50 rebate — regardless of loan amount</div>
                   </div>
-                  <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 900, fontSize: 22, color: '#22C55E' }}>1%</div>
+                  <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 900, fontSize: 22, color: '#22C55E' }}>₱50</div>
                 </div>
-                <div style={{ fontSize: 11, color: '#4B5580', lineHeight: 1.7 }}>Fixed 1% of your original loan amount — credited automatically when admin records your payment. Security Hold is also returned here after your final installment.</div>
+                <div style={{ fontSize: 11, color: '#4B5580', lineHeight: 1.7 }}>A flat ₱50 early payoff rebate is credited automatically when admin records your final payment at least 7 days early. Security Hold is also returned here after your final installment.</div>
               </div>
             )}
 
@@ -2322,11 +2322,11 @@ export default function BorrowerPortalPage() {
                     <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 13, color: '#F0F4FF', letterSpacing: '0.01em' }}>Rebate Calculator</div>
                   </div>
                   <div style={{ fontSize: 11, color: '#7A8AAA', marginBottom: 14, lineHeight: 1.5 }}>
-                    Pay off your full balance early to earn a 1% rebate on your principal!
+                    Pay off your full balance early to earn a flat ₱50 rebate!
                   </div>
                   {(() => {
                     const principal = Number(loan.loan_amount)
-                    const rebate = principal * 0.01
+                    const rebate = 50 // Flat ₱50 rebate
                     return (
                       <div style={{ padding: '12px', background: 'rgba(0,0,0,0.2)', borderRadius: 12, border: '1px solid rgba(255,255,255,0.04)' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
