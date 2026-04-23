@@ -988,11 +988,19 @@ export default function DashboardPage() {
       </div>
 
       {/* ── Cutoff Profit Breakdown ── */}
-      <div className="card" style={{ padding: 0, overflow: 'hidden', marginBottom: 28 }}>
-        <div style={{ padding: '18px 24px', borderBottom: '1px solid var(--card-border)', display: 'flex', alignItems: 'center', gap: 10 }}>
-          <Calendar size={16} color="var(--green)" />
-          <span style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 15 }}>Cutoff Profit Breakdown</span>
-          <span style={{ fontSize: 11, color: 'var(--text-muted)', marginLeft: 'auto' }}>Interest collected per cutoff date</span>
+      <div className="card" style={{ 
+        padding: 0, overflow: 'hidden', marginBottom: 28, 
+        border: '1px solid rgba(34,197,94,0.15)',
+        background: 'linear-gradient(180deg, rgba(34,197,94,0.03) 0%, rgba(0,0,0,0) 100%)'
+      }}>
+        <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(34,197,94,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Calendar size={16} color="var(--green)" />
+          </div>
+          <div>
+            <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 16 }}>Cutoff Profit Breakdown</div>
+            <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Interest collected per cutoff date</div>
+          </div>
         </div>
         {(() => {
           const cutoffMap = {}
@@ -1004,10 +1012,24 @@ export default function DashboardPage() {
               cutoffMap[key].entries.push(cf)
               cutoffMap[key].total += parseFloat(cf.amount) || 0
             })
+            
+          // Subtract rebates that happen on the same date
+          capitalEntries
+            .filter(cf => cf.type === 'CASH OUT' && (cf.category || '').toLowerCase().includes('rebate'))
+            .forEach(cf => {
+              const key = cf.entry_date
+              if (cutoffMap[key]) {
+                cutoffMap[key].total -= parseFloat(cf.amount) || 0
+              }
+            })
+
           const cutoffs = Object.values(cutoffMap).sort((a, b) => a.date.localeCompare(b.date))
           
           return cutoffs.length === 0 ? (
-            <div style={{ padding: '30px', textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>No profit entries yet</div>
+            <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)', fontSize: 14 }}>
+              <Calendar size={24} style={{ opacity: 0.2, marginBottom: 12 }} />
+              <div>No profit entries yet</div>
+            </div>
           ) : (
             <div>
               {cutoffs.map((c, idx) => {
@@ -1015,31 +1037,37 @@ export default function DashboardPage() {
                 const label = d.toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' })
                 return (
                   <div key={c.date} style={{
-                    display: 'grid', gridTemplateColumns: '1fr auto auto',
-                    padding: '14px 24px', gap: 16, alignItems: 'center',
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    padding: '16px 24px',
                     borderBottom: idx < cutoffs.length - 1 ? '1px solid rgba(255,255,255,0.03)' : 'none',
-                    transition: 'background 0.1s'
+                    background: 'transparent', transition: 'background 0.2s ease', cursor: 'default'
                   }}
-                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.015)'}
+                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'}
                     onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                   >
-                    <div>
-                      <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{label}</div>
-                      <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{c.entries.length} payment{c.entries.length !== 1 ? 's' : ''} collected</div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 2 }}>{label}</div>
+                      <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{c.entries.length} payment{c.entries.length !== 1 ? 's' : ''} collected</div>
                     </div>
-                    <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 16, color: 'var(--green)' }}>
-                      +{formatCurrency(c.total)}
-                    </div>
-                    <div style={{ width: 60, height: 6, background: 'rgba(255,255,255,0.05)', borderRadius: 3, overflow: 'hidden' }}>
-                      <div style={{ height: '100%', width: `${Math.min(100, (c.total / (grossProfit || 1)) * 100)}%`, background: 'var(--green)', borderRadius: 3 }} />
+                    
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                      <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 16, color: 'var(--green)', minWidth: 80, textAlign: 'right' }}>
+                        +{formatCurrency(c.total)}
+                      </div>
+                      <div style={{ width: 80, height: 6, background: 'rgba(255,255,255,0.05)', borderRadius: 3, overflow: 'hidden' }}>
+                        <div style={{ height: '100%', width: `${Math.min(100, (c.total / (totalProfit || 1)) * 100)}%`, background: 'var(--green)', borderRadius: 3, boxShadow: '0 0 10px rgba(34,197,94,0.5)' }} />
+                      </div>
                     </div>
                   </div>
                 )
               })}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr auto auto', padding: '14px 24px', gap: 16, background: 'rgba(34,197,94,0.06)', borderTop: '2px solid rgba(34,197,94,0.15)' }}>
-                <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--text-primary)' }}>Total (Net of Rebates)</div>
-                <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 16, color: 'var(--green)' }}>{formatCurrency(totalProfit)}</div>
-                <div />
+              <div style={{ 
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between', 
+                padding: '18px 24px', background: 'rgba(34,197,94,0.08)', 
+                borderTop: '1px solid rgba(34,197,94,0.2)' 
+              }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total (Net of Rebates)</div>
+                <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 18, color: 'var(--green)' }}>{formatCurrency(totalProfit)}</div>
               </div>
             </div>
           )
