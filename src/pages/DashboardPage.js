@@ -1350,6 +1350,8 @@ export default function DashboardPage() {
                 {paidQuickLoans.map(loan => {
                   const b = borrowers.find(x => x.id === loan.borrower_id)
                   const earned = parseFloat(((loan.total_repayment || 0) - (loan.loan_amount || 0)).toFixed(2))
+                  const extensionFee = loan.extension_fee_charged ? 100 : 0
+                  const baseInterest = earned - extensionFee
                   return (
                     <div key={loan.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: 'rgba(34,197,94,0.04)', border: '1px solid rgba(34,197,94,0.15)', borderRadius: 8 }}>
                       <div>
@@ -1358,7 +1360,13 @@ export default function DashboardPage() {
                       </div>
                       <div style={{ textAlign: 'right' }}>
                         <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--green)' }}>+{formatCurrency(earned)}</div>
-                        <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>interest earned</div>
+                        <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                          {loan.extension_fee_charged ? (
+                            <>₱{baseInterest.toFixed(0)} interest · ₱100 extension</>
+                          ) : (
+                            <>interest earned</>
+                          )}
+                        </div>
                       </div>
                     </div>
                   )
