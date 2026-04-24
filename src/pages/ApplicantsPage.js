@@ -3,6 +3,8 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../components/Toast'
 import { logAudit } from '../lib/helpers'
+import { calcSecurityHold } from '../lib/creditSystem'
+import { sendApplicationApprovedEmail } from '../lib/emailService'
 
 // ── Status config ──────────────────────────────────────────────
 const STATUS = {
@@ -401,7 +403,6 @@ export default function ApplicantsPage() {
     toast(`${app.full_name} marked Under Review`, 'info')
   }
 
-  // ── Approve ──
   const handleApprove = async (app) => {
     try {
       const now = new Date().toISOString()
@@ -413,10 +414,12 @@ export default function ApplicantsPage() {
 
       // 2. Check if borrower already exists (avoid duplicates)
       const { data: existing } = await supabase.from('borrowers')
-        .select('id').eq('access_code', app.access_code).maybeSingle()
+        .select('id, credit_score').eq('access_code', app.access_code).maybeSingle()
+
+      let borrowerId = existing?.id
 
       if (!existing) {
-        const { error: bErr } = await supabase.from('borrowers').insert({
+        const { data: newB, error: bErr } = await supabase.from('borrowers').insert({
           full_name:        app.full_name,
           department:       app.department || '',
           phone:            app.phone || '',
@@ -431,14 +434,123 @@ export default function ApplicantsPage() {
           loyalty_badge:    'New',
           at_risk:          false,
           admin_notes:      'Approved via Applicants page.',
-        })
+        }).select('id').single()
         if (bErr) throw bErr
+        borrowerId = newB.id
       }
 
-      // 3. Log + UI update
-      await logAudit({ action_type: 'APPLICATION_APPROVED', module: 'Applicants', description: `Approved applicant ${app.full_name} (${app.access_code}) — ₱${Number(app.loan_amount).toLocaleString()} ${app.loan_type === 'quickloan' ? 'QuickLoan' : 'Installment'}. Borrower record created.`, changed_by: user?.email })
+      // 3. Create Loan
+      const { data: existingLoan } = await supabase.from('loans')
+        .select('id').eq('borrower_id', borrowerId)
+        .in('status', ['Pending', 'Active', 'Partially Paid']).maybeSingle()
+
+      if (!existingLoan) {
+        const loanAmount = Number(app.loan_amount) || 5000
+        const isQuickLoan = app.loan_type === 'quickloan'
+        const today = new Date()
+        const todayStr = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0')
+
+        if (isQuickLoan) {
+          const { error: lErr } = await supabase.from('loans').insert({
+            borrower_id: borrowerId,
+            loan_type: 'quickloan',
+            loan_amount: loanAmount,
+            interest_rate: 0.10,
+            loan_term: 0,
+            num_installments: 0,
+            installment_amount: 0,
+            total_repayment: loanAmount,
+            remaining_balance: loanAmount,
+            payments_made: 0,
+            release_date: todayStr,
+            status: 'Pending',
+            security_hold: 0,
+            funds_released: loanAmount,
+            loan_purpose: app.loan_purpose,
+            security_hold_returned: false,
+            extension_fee_charged: false,
+          })
+          if (lErr) throw lErr
+        } else {
+          // Installment loan schedule
+          const day = today.getDate()
+          let releaseDate
+          if (day <= 5) releaseDate = new Date(today.getFullYear(), today.getMonth(), 5)
+          else if (day <= 20) releaseDate = new Date(today.getFullYear(), today.getMonth(), 20)
+          else releaseDate = new Date(today.getFullYear(), today.getMonth() + 1, 5)
+          const releaseDateStr = releaseDate.getFullYear() + '-' + String(releaseDate.getMonth()+1).padStart(2,'0') + '-' + String(releaseDate.getDate()).padStart(2,'0')
+
+          const loanTerm = Number(app.loan_term) || 2
+          const numInstallments = loanTerm * 2
+          const { data: rateSettings } = await supabase.from('settings').select('interest_rate').eq('id', 1).maybeSingle()
+          const monthlyRate = Number(rateSettings?.interest_rate) || 0.07
+          const total = loanAmount * (1 + monthlyRate * loanTerm)
+          const installment = Math.ceil(total / numInstallments)
+          const adjustedTotal = installment * numInstallments
+          const { hold: holdAmt, released } = calcSecurityHold(loanAmount, existing?.credit_score || 750)
+
+          const { error: lErr } = await supabase.from('loans').insert({
+            borrower_id: borrowerId,
+            loan_type: 'regular',
+            loan_amount: loanAmount,
+            interest_rate: monthlyRate,
+            loan_term: loanTerm,
+            num_installments: numInstallments,
+            total_repayment: adjustedTotal,
+            installment_amount: installment,
+            remaining_balance: adjustedTotal,
+            payments_made: 0,
+            release_date: releaseDateStr,
+            status: 'Pending',
+            security_hold: holdAmt,
+            security_hold_original: holdAmt,
+            funds_released: released,
+            loan_purpose: app.loan_purpose,
+            security_hold_returned: false
+          })
+          if (lErr) throw lErr
+        }
+      }
+
+      // 4. Send Email Notification
+      if (app.email) {
+        const loanAmount = Number(app.loan_amount) || 5000
+        const loanTerm   = Number(app.loan_term) || 2
+        const numInstallments = loanTerm * 2
+        const totalRepayment = Math.ceil(loanAmount * (1 + 0.07 * loanTerm))
+        const installmentAmount = Math.ceil(totalRepayment / numInstallments)
+        const today = new Date()
+        const day = today.getDate()
+        let rel
+        if (day <= 5) rel = new Date(today.getFullYear(), today.getMonth(), 5)
+        else if (day <= 20) rel = new Date(today.getFullYear(), today.getMonth(), 20)
+        else rel = new Date(today.getFullYear(), today.getMonth() + 1, 5)
+        const releaseDateStr = rel.toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' })
+        const loanType = app.loan_type === 'quickloan' ? 'QuickLoan' : 'Installment Loan'
+        
+        try {
+          await sendApplicationApprovedEmail({
+            to: app.email,
+            borrowerName: app.full_name,
+            accessCode: app.access_code,
+            loanAmount,
+            loanType,
+            releaseDate: releaseDateStr,
+            installmentAmount,
+            totalRepayment,
+            loanTerm,
+            numInstallments,
+          })
+        } catch (e) {
+          console.warn('Approval email failed:', e)
+          toast('Warning: Failed to send approval email.', 'info')
+        }
+      }
+
+      // 5. Log + UI update
+      await logAudit({ action_type: 'APPLICATION_APPROVED', module: 'Applicants', description: `Approved applicant ${app.full_name} (${app.access_code}) — ₱${Number(app.loan_amount).toLocaleString()} ${app.loan_type === 'quickloan' ? 'QuickLoan' : 'Installment'}. Borrower and Loan created.`, changed_by: user?.email })
       setApplicants(prev => prev.map(a => a.id === app.id ? { ...a, status: 'Approved', reviewed_at: now, reviewed_by: user?.email } : a))
-      toast(`✅ ${app.full_name} approved! Borrower record created.`, 'success')
+      toast(`✅ ${app.full_name} approved! Borrower and loan records created.`, 'success')
 
     } catch (err) {
       console.error('Approve error:', err)
