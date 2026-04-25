@@ -1708,7 +1708,7 @@ export default function LoansPage() {
         <div className="split-layout">
 
           {/* Table Container */}
-          <div className="card" style={{ padding: 0, overflowX: 'auto' }}>
+          <div className="card" style={{ padding: 0, overflowX: 'auto', minWidth: 0 }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
               <thead style={{ background: 'rgba(255,255,255,0.02)', color: 'var(--text-muted)', textTransform: 'uppercase', fontSize: 11 }}>
                 <tr>
@@ -1853,14 +1853,21 @@ export default function LoansPage() {
                     <div>
                       <div style={{ fontSize: 16, fontWeight: 700 }}>{b?.full_name}</div>
                       <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>
-                        {isQuick ? 'QuickLoan' : 'Installment'} · {loan.release_date ? new Date(loan.release_date).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Pending'}
+                        {isQuick ? 'QuickLoan' : 'Installment'}
                       </div>
                     </div>
                     <button onClick={() => setSelectedLoanId(null)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 4 }}>
                       <X size={16} />
                     </button>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 16 }}>
+
+                  {loan.status !== 'Pending' && loan.release_date && (
+                    <div style={{ marginTop: 12, display: 'inline-block', padding: '4px 8px', background: 'rgba(255,255,255,0.05)', borderRadius: 6, fontSize: 11, fontWeight: 600, color: 'var(--text-label)' }}>
+                      Released {formatDate(loan.release_date)}
+                    </div>
+                  )}
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: loan.status !== 'Pending' ? 12 : 16 }}>
                     <div style={{ fontSize: 20, fontWeight: 800, fontFamily: 'Space Grotesk' }}>{formatCurrency(loan.loan_amount)}</div>
                     <StatusPill status={displayStatus} />
                   </div>
