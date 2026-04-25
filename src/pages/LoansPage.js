@@ -792,6 +792,8 @@ export default function LoansPage() {
   const [investors, setInvestors] = useState([])
   const [settings, setSettings] = useState(null)
   const [selectedLoanId, setSelectedLoanId] = useState(null)
+  const [panelCashLocation, setPanelCashLocation] = useState('hand')
+  const [panelConfirmingRenew, setPanelConfirmingRenew] = useState(false)
   const [applications, setApplications] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -1772,7 +1774,7 @@ export default function LoansPage() {
                   return (
                     <tr 
                       key={loan.id} 
-                      onClick={() => setSelectedLoanId(loan.id)}
+                      onClick={() => { setSelectedLoanId(loan.id); setPanelConfirmingRenew(false); }}
                       style={{ 
                         borderBottom: '1px solid var(--card-border)', 
                         background: isSelected ? 'rgba(59,130,246,0.05)' : 'transparent',
@@ -1858,7 +1860,7 @@ export default function LoansPage() {
                         {isQuick ? 'QuickLoan' : 'Installment'}
                       </div>
                     </div>
-                    <button onClick={() => setSelectedLoanId(null)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 4 }}>
+                    <button onClick={() => { setSelectedLoanId(null); setPanelConfirmingRenew(false); }} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 4 }}>
                       <X size={16} />
                     </button>
                   </div>
@@ -1993,6 +1995,17 @@ export default function LoansPage() {
 
                 {/* Actions */}
                 <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {/* Cash Location Dropdown for active loans */}
+                  {loan.status !== 'Pending' && loan.status !== 'Paid' && loan.status !== 'Paid Off' && loan.status !== 'Defaulted' && (
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 4 }}>
+                      <select value={panelCashLocation} onChange={e => setPanelCashLocation(e.target.value)}
+                        style={{ background: 'var(--card)', color: 'var(--text-primary)', border: '1px solid var(--card-border)', borderRadius: 6, padding: '3px 6px', fontSize: 11 }}>
+                        <option value="hand">Hand</option>
+                        <option value="maribank">Maribank</option>
+                      </select>
+                    </div>
+                  )}
+
                   {/* Contextual Buttons */}
                   {loan.status === 'Pending' && (
                     <button className="btn-primary" style={{ width: '100%', display: 'flex', justifyContent: 'center' }} onClick={() => handleConfirmRelease(loan)}>
@@ -2001,34 +2014,34 @@ export default function LoansPage() {
                   )}
                   
                   {isQuick && loan.status === 'Active' && !loan.extension_fee_charged && (
-                    <button className="btn-primary" style={{ width: '100%', display: 'flex', justifyContent: 'center' }} onClick={() => handleQuickLoanPayoff(loan)}>
+                    <button className="btn-primary" style={{ width: '100%', display: 'flex', justifyContent: 'center' }} onClick={() => handleQuickLoanPayoff(loan, panelCashLocation)}>
                       Record Full Payoff
                     </button>
                   )}
                   {isQuick && loan.status === 'Active' && !loan.extension_fee_charged && (
-                    <button className="btn-primary" style={{ width: '100%', background: 'rgba(245,158,11,0.1)', color: 'var(--gold)', border: '1px solid rgba(245,158,11,0.3)', display: 'flex', justifyContent: 'center' }} onClick={() => handleQuickLoanDay15Missed(loan)}>
+                    <button className="btn-primary" style={{ width: '100%', background: 'rgba(245,158,11,0.1)', color: 'var(--gold)', border: '1px solid rgba(245,158,11,0.3)', display: 'flex', justifyContent: 'center' }} onClick={() => handleQuickLoanDay15Missed(loan, panelCashLocation)}>
                       Record Extension
                     </button>
                   )}
                   
                   {isQuick && loan.status === 'Active' && loan.extension_fee_charged && (
-                    <button className="btn-primary" style={{ width: '100%', display: 'flex', justifyContent: 'center' }} onClick={() => handleQuickLoanPayoff(loan)}>
+                    <button className="btn-primary" style={{ width: '100%', display: 'flex', justifyContent: 'center' }} onClick={() => handleQuickLoanPayoff(loan, panelCashLocation)}>
                       Record Full Payoff
                     </button>
                   )}
 
                   {isQuick && loan.status === 'Overdue' && (
-                    <button className="btn-primary" style={{ width: '100%', display: 'flex', justifyContent: 'center' }} onClick={() => handleQuickLoanPayoff(loan)}>
+                    <button className="btn-primary" style={{ width: '100%', display: 'flex', justifyContent: 'center' }} onClick={() => handleQuickLoanPayoff(loan, panelCashLocation)}>
                       Record Full Payoff
                     </button>
                   )}
 
                   {!isQuick && ['Active', 'Partially Paid'].includes(loan.status) && (
                     <>
-                      <button className="btn-primary" style={{ width: '100%', display: 'flex', justifyContent: 'center' }} onClick={() => handleRecordPayment(loan)}>
+                      <button className="btn-primary" style={{ width: '100%', display: 'flex', justifyContent: 'center' }} onClick={() => handleRecordPayment(loan, panelCashLocation)}>
                         Record Payment
                       </button>
-                      <button className="btn-primary" style={{ width: '100%', background: 'rgba(34,197,94,0.1)', color: 'var(--green)', border: '1px solid rgba(34,197,94,0.3)', display: 'flex', justifyContent: 'center' }} onClick={() => handleFullPayoff(loan)}>
+                      <button className="btn-primary" style={{ width: '100%', background: 'rgba(34,197,94,0.1)', color: 'var(--green)', border: '1px solid rgba(34,197,94,0.3)', display: 'flex', justifyContent: 'center' }} onClick={() => handleFullPayoff(loan, panelCashLocation)}>
                         Full Payoff
                       </button>
                     </>
@@ -2036,11 +2049,60 @@ export default function LoansPage() {
                   
                   {!isQuick && loan.status === 'Overdue' && (
                     <>
-                      <button className="btn-primary" style={{ width: '100%', display: 'flex', justifyContent: 'center' }} onClick={() => handleRecordPayment(loan)}>
+                      <button className="btn-primary" style={{ width: '100%', display: 'flex', justifyContent: 'center' }} onClick={() => handleRecordPayment(loan, panelCashLocation)}>
                         Record Payment
                       </button>
                     </>
                   )}
+
+                  {/* Renew Button */}
+                  {(loan.status === 'Paid' || loan.status === 'Paid Off') && (() => {
+                    const level = b?.loan_limit_level || 1
+                    const limitMap = { 4: 10000, 3: 9000, 2: 7000, 1: 5000 }
+                    const suggestedMax = limitMap[level] || 5000
+                    const tierMap = { 4: '👑 VIP', 3: '🤝 Reliable', 2: '⭐ Trusted', 1: '🌱 New' }
+                    const tierName = tierMap[level] || '🌱 New'
+                    const increased = suggestedMax > loan.loan_amount
+
+                    if (panelConfirmingRenew) {
+                      return (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, background: 'rgba(20,184,166,0.06)', border: '1px solid rgba(20,184,166,0.25)', borderRadius: 10, padding: '12px 14px', width: '100%', marginTop: 4 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+                            <div style={{ fontSize: 13 }}>
+                              <span style={{ fontWeight: 700, color: 'var(--teal)' }}>{tierName} Tier Upgrade</span>
+                              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
+                                Credit Score: <strong>{b?.credit_score || 0}</strong> · {' '}
+                                {increased 
+                                  ? <span>Eligible limit increased to <strong style={{ color: 'var(--green)' }}>{formatCurrency(suggestedMax)}</strong>!</span>
+                                  : <span>Eligible for renewal up to {formatCurrency(suggestedMax)}</span>
+                                }
+                              </div>
+                            </div>
+                            <div style={{ display: 'flex', gap: 8 }}>
+                              <button 
+                                onClick={() => { handleRenew(loan, suggestedMax); setPanelConfirmingRenew(false) }}
+                                style={{ background: 'var(--teal)', color: '#fff', border: 'none', borderRadius: 6, padding: '6px 12px', cursor: 'pointer', fontSize: 12, fontWeight: 700 }}
+                              >
+                                Confirm Renewal
+                              </button>
+                              <button 
+                                onClick={() => setPanelConfirmingRenew(false)}
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 12 }}
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    }
+
+                    return (
+                      <button className="btn-primary" style={{ width: '100%', background: 'rgba(20,184,166,0.1)', color: 'var(--teal)', border: '1px solid rgba(20,184,166,0.3)', display: 'flex', justifyContent: 'center' }} onClick={() => setPanelConfirmingRenew(true)}>
+                        Renew Loan
+                      </button>
+                    )
+                  })()}
 
                   {/* Common Actions */}
                   <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
