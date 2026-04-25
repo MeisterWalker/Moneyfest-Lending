@@ -817,7 +817,6 @@ export default function DashboardPage() {
       {/* ── Portfolio Health ── */}
       <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600, marginBottom: 12 }}>📊 Portfolio Health</div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16, marginBottom: 28 }}>
-        <StatCard label="Total Capital" value={formatCurrency(ledgerCapital)} sub="Invested capital" icon={Banknote} color="var(--blue)" />
         <StatCard label="Amount Lent Out" value={formatCurrency(amountLentOut)} sub={`${activeLoans.length} active loans`} icon={CreditCard} color="var(--purple)" />
         <StatCard label="Available Liquidity" value={formatCurrency(Math.max(0, availableLiquidity))} sub="Ready to lend" icon={Banknote} color="var(--green)" />
         <StatCard label="Active Loans" value={activeLoans.length} sub={`${loans.length} total · ${paidLoans.length} paid`} icon={Users} color="var(--blue)" />
