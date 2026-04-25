@@ -2106,7 +2106,7 @@ export default function LoansPage() {
 
       {/* --- Restored Modals & Confirmations --- */}
       <LoanModal
-        open={modalOpen}
+        isOpen={modalOpen}
         onClose={() => { setModalOpen(false); setEditingLoan(null); setPrefillLoan(null) }}
         onSave={handleSave}
         loan={editingLoan}
