@@ -1342,38 +1342,90 @@ export default function DashboardPage() {
             )}
           </div>
 
-          {/* Paid QuickLoans history */}
-          {paidQuickLoans.length > 0 && (
-            <div className="card" style={{ padding: '20px 22px', borderColor: 'rgba(245,158,11,0.1)' }}>
-              <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 15, marginBottom: 14 }}>✅ Paid QuickLoans</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {paidQuickLoans.map(loan => {
-                  const b = borrowers.find(x => x.id === loan.borrower_id)
-                  const earned = parseFloat(((loan.total_repayment || 0) - (loan.loan_amount || 0)).toFixed(2))
-                  const extensionFee = loan.extension_fee_charged ? 100 : 0
-                  const baseInterest = earned - extensionFee
-                  return (
-                    <div key={loan.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: 'rgba(34,197,94,0.04)', border: '1px solid rgba(34,197,94,0.15)', borderRadius: 8 }}>
+          {/* QuickLoan Profit Trail */}
+          {(() => {
+            const combinedQLEvents = []
+
+            // 1. Paid QuickLoans
+            paidQuickLoans.forEach(loan => {
+              const b = borrowers.find(x => x.id === loan.borrower_id)
+              const earned = parseFloat(((loan.total_repayment || 0) - (loan.loan_amount || 0)).toFixed(2))
+              const extensionFee = loan.extension_fee_charged ? 100 : 0
+              const baseInterest = earned - extensionFee
+              
+              combinedQLEvents.push({
+                id: `paid-${loan.id}`,
+                date: new Date(loan.updated_at || loan.created_at),
+                borrowerName: b?.full_name || 'Unknown',
+                earned,
+                statusLabel: 'Paid',
+                subLabel: `${formatCurrency(loan.loan_amount)} principal · Paid`,
+                profitLabel: loan.extension_fee_charged 
+                  ? `₱${baseInterest.toFixed(0)} interest · ₱100 ext` 
+                  : 'interest earned',
+                background: 'rgba(34,197,94,0.04)',
+                border: '1px solid rgba(34,197,94,0.15)',
+                color: 'var(--green)'
+              })
+            })
+
+            // 2. Extension events for active loans
+            activeQuickLoans.filter(l => l.extension_fee_charged).forEach(loan => {
+              const b = borrowers.find(x => x.id === loan.borrower_id)
+              if (!b) return
+              
+              const extEntry = capitalEntries
+                .filter(cf => cf.type === 'CASH IN' && cf.category === 'Interest Profit (QuickLoan)' && cf.notes?.includes(b.full_name))
+                .sort((a, b) => new Date(b.created_at || b.entry_date) - new Date(a.created_at || a.entry_date))[0]
+                
+              const earned = extEntry ? parseFloat(extEntry.amount) : (loan.loan_amount * 0.05 + 100)
+              const date = extEntry ? new Date(extEntry.created_at || extEntry.entry_date) : new Date(loan.updated_at)
+              
+              const { daysElapsed } = calcQuickLoanBalance(loan)
+
+              combinedQLEvents.push({
+                id: `ext-${loan.id}`,
+                date,
+                borrowerName: b.full_name,
+                earned,
+                statusLabel: `Extended — Day ${daysElapsed}`,
+                subLabel: `${formatCurrency(loan.loan_amount)} principal · ${daysElapsed > 30 ? 'Overdue' : 'Extended'}`,
+                profitLabel: 'extension profit',
+                background: 'rgba(245,158,11,0.04)',
+                border: '1px solid rgba(245,158,11,0.15)',
+                color: 'var(--gold)'
+              })
+            })
+
+            combinedQLEvents.sort((a, b) => b.date - a.date)
+
+            if (combinedQLEvents.length === 0) return null
+
+            return (
+              <div className="card" style={{ padding: '20px 22px', borderColor: 'rgba(245,158,11,0.1)' }}>
+                <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 15, marginBottom: 14 }}>✅ Profit Trail (Paid & Extended)</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {combinedQLEvents.map(evt => (
+                    <div key={evt.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: evt.background, border: evt.border, borderRadius: 8 }}>
                       <div>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{b?.full_name || 'Unknown'}</div>
-                        <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{formatCurrency(loan.loan_amount)} principal · Paid</div>
-                      </div>
-                      <div style={{ textAlign: 'right' }}>
-                        <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--green)' }}>+{formatCurrency(earned)}</div>
-                        <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-                          {loan.extension_fee_charged ? (
-                            <>₱{baseInterest.toFixed(0)} interest · ₱100 extension</>
-                          ) : (
-                            <>interest earned</>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                          {evt.borrowerName}
+                          {evt.statusLabel !== 'Paid' && (
+                            <span style={{ fontSize: 10, padding: '2px 6px', background: 'rgba(245,158,11,0.1)', color: 'var(--gold)', borderRadius: 4 }}>{evt.statusLabel}</span>
                           )}
                         </div>
+                        <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{evt.subLabel}</div>
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{ fontSize: 14, fontWeight: 700, color: evt.color }}>+{formatCurrency(evt.earned)}</div>
+                        <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{evt.profitLabel}</div>
                       </div>
                     </div>
-                  )
-                })}
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            )
+          })()}
         </div>
       )}
 
