@@ -1685,7 +1685,7 @@ export default function LoansPage() {
           )}
         </div>
       ) : (
-        
+        <>
         <style>{`
           .split-layout {
             display: grid;
@@ -2014,3 +2014,9 @@ export default function LoansPage() {
 
         </div>
 
+
+        </>
+      )}
+    </div>
+  )
+}
