@@ -2061,7 +2061,7 @@ export default function LoansPage() {
                                 onClick={() => { handleRenew(loan, suggestedMax); setPanelConfirmingRenew(false) }}
                                 style={{ background: 'var(--teal)', color: '#fff', border: 'none', borderRadius: 6, padding: '6px 12px', cursor: 'pointer', fontSize: 12, fontWeight: 700 }}
                               >
-                                Confirm Renewal
+                                Open Renewal Form
                               </button>
                               <button 
                                 onClick={() => setPanelConfirmingRenew(false)}
