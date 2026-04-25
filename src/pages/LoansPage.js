@@ -2037,7 +2037,7 @@ export default function LoansPage() {
                   {(loan.status === 'Paid' || loan.status === 'Paid Off') && (() => {
                     const level = b?.loan_limit_level || 1
                     const limitMap = { 4: 10000, 3: 9000, 2: 7000, 1: 5000 }
-                    const suggestedMax = limitMap[level] || 5000
+                    const suggestedMax = isQuick ? 3000 : (limitMap[level] || 5000)
                     const tierMap = { 4: '👑 VIP', 3: '🤝 Reliable', 2: '⭐ Trusted', 1: '🌱 New' }
                     const tierName = tierMap[level] || '🌱 New'
                     const increased = suggestedMax > loan.loan_amount
