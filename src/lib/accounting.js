@@ -24,14 +24,17 @@ export const logAutomatedPayment = async (loan, amountReceived, cashLocation = '
     if (isQuickLoan) {
       // For QuickLoans, we calculate interest based on the 1% daily rate
       // But usually, the user collects a fixed amount.
-      // We assume any amount above the principal is profit.
-      // In this specific system, the user is often collecting ₱3,300 for a ₱3,000 loan.
+      // QuickLoans do not allow partial principal payments. 
+      // If the received amount is less than the loan amount, it's an extension payment (all profit).
+      // If it's greater than or equal to the loan amount, it's a full payoff.
       
-      const principalPart = Math.min(loan.loan_amount, amountReceived)
-      const interestPart = amountReceived - principalPart
-      
-      interestProfit = interestPart
-      principalReturn = principalPart
+      if (amountReceived >= loan.loan_amount) {
+        principalReturn = loan.loan_amount
+        interestProfit = amountReceived - loan.loan_amount
+      } else {
+        principalReturn = 0
+        interestProfit = amountReceived
+      }
     } else {
       // For Regular Loans:
       // Interest is usually (Total Repayment - Principal) / Num Installments
