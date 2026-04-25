@@ -594,7 +594,7 @@ export default function DashboardPage() {
     .reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0)
 
   // Installment gets everything else
-  const availableLiquidity = totalPool - qlPoolValue
+  const availableLiquidity = totalPool
 
   // ── Computed stats (Installment) ──────────
   const ledgerCapital = capitalEntries
@@ -840,7 +840,7 @@ export default function DashboardPage() {
           {/* Operations Stat Row */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
             <StatCard label="Amount Lent Out" value={formatCurrency(amountLentOut)} sub={`${activeLoans.length} active loans`} icon={CreditCard} color="var(--purple)" />
-            <StatCard label="Available Liquidity" value={formatCurrency(Math.max(0, availableLiquidity))} sub="Ready to lend" icon={Banknote} color="var(--green)" />
+            <StatCard label="Available Cash" value={formatCurrency(Math.max(0, availableLiquidity))} sub="Ready to lend" icon={Banknote} color="var(--green)" />
             <StatCard label="Default Rate" value={`${defaultRate.toFixed(1)}%`} sub={`${defaultedLoans.length} defaulted`} icon={AlertTriangle} color={defaultRate > 10 ? 'var(--red)' : 'var(--gold)'} />
           </div>
 
