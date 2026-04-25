@@ -1708,8 +1708,9 @@ export default function LoansPage() {
         <div className="split-layout">
 
           {/* Table Container */}
-          <div className="card" style={{ padding: 0, overflowX: 'auto', minWidth: 0 }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+          <div className="card" style={{ padding: 0, minWidth: 0 }}>
+            <div style={{ overflowX: 'auto', width: '100%' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, tableLayout: 'auto' }}>
               <thead style={{ background: 'rgba(255,255,255,0.02)', color: 'var(--text-muted)', textTransform: 'uppercase', fontSize: 11 }}>
                 <tr>
                   <th style={{ textAlign: 'left', padding: '12px 20px', fontWeight: 600 }}>Borrower</th>
@@ -1803,6 +1804,7 @@ export default function LoansPage() {
                 })}
               </tbody>
             </table>
+            </div>
           </div>
 
           {/* Hidden LoanCards for React to not complain if they are mapped elsewhere, but we don't render them */}
@@ -1891,17 +1893,54 @@ export default function LoansPage() {
 
                 {/* Key Fields */}
                 <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 10, borderBottom: '1px solid var(--card-border)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{isQuick ? 'Total Owed' : 'Installment'}</span>
-                    <span style={{ fontSize: 12, fontWeight: 600 }}>{isQuick ? formatCurrency(calcQuickLoanBalance(loan).balance) : formatCurrency(loan.installment_amount)}</span>
-                  </div>
+                  {(() => {
+                    const qlBalance = isQuick ? calcQuickLoanBalance(loan) : null;
+                    if (isQuick) {
+                      if (qlBalance !== null) {
+                        return (
+                          <>
+                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                              <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Total Owed</span>
+                              <span style={{ fontSize: 12, fontWeight: 600 }}>{formatCurrency(qlBalance.balance || qlBalance.totalOwed)}</span>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                              <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Accrued Interest</span>
+                              <span style={{ fontSize: 12, fontWeight: 600 }}>{formatCurrency(qlBalance.accruedInterest || 0)}</span>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                              <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Extension Fee</span>
+                              <span style={{ fontSize: 12, fontWeight: 600 }}>{qlBalance.extensionFee > 0 ? formatCurrency(qlBalance.extensionFee) : '-'}</span>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                              <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Days Elapsed</span>
+                              <span style={{ fontSize: 12, fontWeight: 600 }}>{qlBalance.daysElapsed || 0} days</span>
+                            </div>
+                          </>
+                        )
+                      } else {
+                        return (
+                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Total Owed</span>
+                            <span style={{ fontSize: 12, fontWeight: 600 }}>{formatCurrency(loan.remaining_balance)}</span>
+                          </div>
+                        )
+                      }
+                    } else {
+                      return (
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Installment</span>
+                          <span style={{ fontSize: 12, fontWeight: 600 }}>{formatCurrency(loan.installment_amount)}</span>
+                        </div>
+                      )
+                    }
+                  })()}
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Total Repayment</span>
                     <span style={{ fontSize: 12, fontWeight: 600 }}>{formatCurrency(loan.total_repayment)}</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Interest Rate</span>
-                    <span style={{ fontSize: 12, fontWeight: 600 }}>{loan.interest_rate}%</span>
+                    <span style={{ fontSize: 12, fontWeight: 600 }}>{(loan.interest_rate * 100).toFixed(1)}%</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Security Hold</span>
