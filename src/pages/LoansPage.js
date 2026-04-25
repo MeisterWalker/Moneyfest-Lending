@@ -2103,6 +2103,47 @@ export default function LoansPage() {
 
         </>
       )}
+
+      {/* --- Restored Modals & Confirmations --- */}
+      <LoanModal
+        open={modalOpen}
+        onClose={() => { setModalOpen(false); setEditingLoan(null); setPrefillLoan(null) }}
+        onSave={handleSave}
+        loan={editingLoan}
+        prefill={prefillLoan}
+        borrowers={borrowers}
+        settings={settings}
+      />
+
+      {deleteTarget && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
+          <div className="card" style={{ padding: 28, maxWidth: 380, width: '90%' }}>
+            <h3 style={{ marginBottom: 10 }}>Delete Loan?</h3>
+            <p style={{ color: 'var(--text-muted)', fontSize: 14, marginBottom: 20 }}>
+              This will permanently delete the loan for <strong>{borrowers.find(b => b.id === deleteTarget.borrower_id)?.full_name}</strong>. This cannot be undone.
+            </p>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+              <button className="btn-secondary" onClick={() => setDeleteTarget(null)}>Cancel</button>
+              <button className="btn-delete" onClick={() => handleDelete(deleteTarget)}>Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {defaultTarget && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
+          <div className="card" style={{ padding: 28, maxWidth: 380, width: '90%' }}>
+            <h3 style={{ marginBottom: 10 }}>Mark as Defaulted?</h3>
+            <p style={{ color: 'var(--text-muted)', fontSize: 14, marginBottom: 20 }}>
+              This will mark <strong>{borrowers.find(b => b.id === defaultTarget.borrower_id)?.full_name}</strong>'s loan as defaulted and deduct 150 credit score points. This cannot be undone.
+            </p>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+              <button className="btn-secondary" onClick={() => setDefaultTarget(null)}>Cancel</button>
+              <button className="btn-delete" onClick={() => handleDefault(defaultTarget)}>Confirm Default</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
