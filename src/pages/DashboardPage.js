@@ -1203,7 +1203,7 @@ export default function DashboardPage() {
                         <td style={{ padding: '14px 20px', fontWeight: 600 }}>{b?.full_name || 'Unknown'}</td>
                         <td style={{ padding: '14px 10px', fontSize: 13 }}>{new Date(loan.release_date).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
                         <td style={{ padding: '14px 10px', textAlign: 'center', fontSize: 13 }}>Day {days}</td>
-                        <td style={{ padding: '14px 20px', textAlign: 'right', fontWeight: 700, color: 'var(--text-label)' }}>{formatCurrency(details.balance)}</td>
+                        <td style={{ padding: '14px 20px', textAlign: 'right', fontWeight: 700, color: 'var(--text-label)' }}>{formatCurrency(details.totalOwed)}</td>
                         <td style={{ padding: '14px 20px', textAlign: 'right' }}>
                           <StatusPill status={loan.status === 'Active' && loan.extension_fee_charged ? 'Extended' : loan.status} />
                         </td>
