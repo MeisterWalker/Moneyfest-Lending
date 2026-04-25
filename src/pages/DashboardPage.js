@@ -1271,7 +1271,7 @@ export default function DashboardPage() {
                 <div key={evt.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 24px', borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
                     <div style={{ width: 40, height: 40, borderRadius: 10, background: 'rgba(255,255,255,0.03)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <CheckCircle2 size={18} color={color} />
+                      <CheckCircle size={18} color={color} />
                     </div>
                     <div>
                       <div style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}>
