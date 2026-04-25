@@ -1809,29 +1809,7 @@ export default function LoansPage() {
             </div>
           </div>
 
-          {/* Hidden LoanCards for React to not complain if they are mapped elsewhere, but we don't render them */}
-          <div style={{ display: 'none' }}>
-             {filtered.map(loan => (
-              <LoanCard
-                key={loan.id}
-                loan={loan}
-                borrowers={borrowers}
-                applications={applications}
-                investors={investors}
-                onEdit={l => { setEditingLoan(l); setPrefillLoan(null); setModalOpen(true) }}
-                onDelete={setDeleteTarget}
-                onDefault={setDefaultTarget}
-                onRecordPayment={handleRecordPayment}
-                onFullPayoff={handleFullPayoff}
-                onRenew={handleRenew}
-                onConfirmRelease={handleConfirmRelease}
-                onQuickLoanPayoff={handleQuickLoanPayoff}
-                onQuickLoanDay15Missed={handleQuickLoanDay15Missed}
-                onRecordPrincipalPayment={handleRecordPrincipalPayment}
-                onAssignInvestor={handleAssignInvestor}
-              />
-            ))}
-          </div>
+
 
           {/* Detail Panel */}
           {selectedLoanId && (() => {
