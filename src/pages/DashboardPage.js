@@ -441,28 +441,19 @@ export default function DashboardPage() {
   const [penaltyCharges, setPenaltyCharges] = useState([])
   const [visitStats, setVisitStats] = useState({ total: 0, today: 0, pages: {} })
   const [dashTab, setDashTab] = useState('installment')
-  const [otherProducts, setOtherProducts] = useState([])
-  const [productLogs, setProductLogs] = useState([])
-  const [selectedProductId, setSelectedProductId] = useState(null)
-  const [newProduct, setNewProduct] = useState({ name: '', capital: '', unit_price: '' })
-  const [newLog, setNewLog] = useState({ sales: '', expenses: '', items: '', prepared: '', date: new Date().toISOString().slice(0, 10), notes: '' })
-  const [addingProduct, setAddingProduct] = useState(false)
-  const [addingLog, setAddingLog] = useState(false)
-  const [logMode, setLogMode] = useState('sales') // 'sales' or 'stock'
+
   const [investors, setInvestors] = useState([])
   const navigate = useNavigate()
 
   const fetchData = useCallback(async () => {
     try {
-      const [{ data: l }, { data: b }, { data: s }, { data: a }, { data: apps }, { data: visits }, { data: others }, { data: logs }, { data: inv }, { data: cf }, { data: pc }] = await Promise.all([
+      const [{ data: l }, { data: b }, { data: s }, { data: a }, { data: apps }, { data: visits }, { data: inv }, { data: cf }, { data: pc }] = await Promise.all([
         supabase.from('loans').select('*').order('created_at', { ascending: false }),
         supabase.from('borrowers').select('*'),
         supabase.from('settings').select('*').eq('id', 1).single(),
         supabase.from('audit_logs').select('*').order('created_at', { ascending: false }).limit(10),
         supabase.from('applications').select('id').eq('status', 'Pending'),
         supabase.from('page_visits').select('page, visited_at'),
-        supabase.from('other_products').select('*').order('created_at', { ascending: false }),
-        supabase.from('product_logs').select('*').order('log_date', { ascending: false }),
         supabase.from('investors').select('id,full_name,tier,total_capital,access_code'),
         supabase.from('capital_flow').select('*'),
         supabase.from('penalty_charges').select('*')
@@ -472,8 +463,7 @@ export default function DashboardPage() {
       setPendingApps((apps || []).length)
       setSettings(s)
       setAuditLogs(a || [])
-      setOtherProducts(others || [])
-      setProductLogs(logs || [])
+
       setInvestors(inv || [])
       setCapitalEntries(cf || [])
       setPenaltyCharges(pc || [])
@@ -638,136 +628,7 @@ export default function DashboardPage() {
   const cyclesPerYear = 12 / avgTerm
   const projectedYearly = Math.max(0, availableLiquidity) * (settings?.interest_rate || 0.07) * avgTerm * cyclesPerYear
 
-  // ── Actions ────────────────────────────────────────────────
-  const handleAddProduct = async () => {
-    if (!newProduct.name || !newProduct.capital) {
-      toast('Please enter both name and capital', 'error')
-      return
-    }
-    setAddingProduct(true)
-    const { error } = await supabase.from('other_products').insert({
-      name: newProduct.name,
-      capital: parseFloat(newProduct.capital),
-      unit_price: parseFloat(newProduct.unit_price) || 0,
-      description: 'Manual entry'
-    })
-    if (error) {
-      toast('Failed to add product', 'error')
-    } else {
-      toast('Product added successfully', 'success')
-      setNewProduct({ name: '', capital: '', unit_price: '' })
-      fetchData()
-    }
-    setAddingProduct(false)
-  }
 
-  const handleDeleteProduct = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this product?')) return
-    const { error } = await supabase.from('other_products').delete().eq('id', id)
-    if (error) {
-      toast('Failed to delete product', 'error')
-    } else {
-      toast('Product deleted', 'info')
-      if (selectedProductId === id) setSelectedProductId(null)
-      fetchData()
-    }
-  }
-
-  const handleAddLog = async () => {
-    if (!selectedProductId) return
-    setAddingLog(true)
-    
-    let salesAmount = 0
-    let expenseAmount = 0
-    let itemsSold = 0
-    let itemsPrepared = 0
-
-    const product = otherProducts.find(p => p.id === selectedProductId)
-
-    if (logMode === 'sales') {
-      itemsSold = parseInt(newLog.items) || 0
-      salesAmount = parseFloat(newLog.sales) || (itemsSold * (product?.unit_price || 0))
-      expenseAmount = 0
-    } else {
-      itemsPrepared = parseInt(newLog.prepared) || 0
-      expenseAmount = parseFloat(newLog.expenses) || 0
-      salesAmount = 0
-    }
-
-    if (!salesAmount && !expenseAmount && !itemsSold && !itemsPrepared) {
-      setAddingLog(false)
-      return
-    }
-
-    const { error } = await supabase.from('product_logs').insert({
-      product_id: selectedProductId,
-      sales_amount: salesAmount,
-      expense_amount: expenseAmount,
-      items_sold: itemsSold,
-      items_prepared: itemsPrepared,
-      log_date: newLog.date,
-      notes: newLog.notes
-    })
-    if (error) {
-      toast('Failed to log activity', 'error')
-    } else {
-      toast('Activity logged successfully', 'success')
-      setNewLog({ sales: '', expenses: '', items: '', prepared: '', date: new Date().toISOString().slice(0, 10), notes: '' })
-      fetchData()
-    }
-    setAddingLog(false)
-  }
-
-  const handleDeleteLog = async (id) => {
-    if (!window.confirm('Delete this log entry?')) return
-    const { error } = await supabase.from('product_logs').delete().eq('id', id)
-    if (error) {
-      toast('Failed to delete log', 'error')
-    } else {
-      toast('Log entry deleted', 'info')
-      fetchData()
-    }
-  }
-
-  const getProductStats = (productId) => {
-    const logs = productLogs.filter(l => l.product_id === productId)
-    const totalSales = logs.reduce((sum, l) => sum + (l.sales_amount || 0), 0)
-    const totalExpenses = logs.reduce((sum, l) => sum + (l.expense_amount || 0), 0)
-    const netProfit = totalSales - totalExpenses
-    const product = otherProducts.find(p => p.id === productId)
-    const capital = product?.capital || 1
-    const roi = (netProfit / capital) * 100
-    const itemsSold = logs.reduce((sum, l) => sum + (l.items_sold || 0), 0)
-    const itemsPrepared = logs.reduce((sum, l) => sum + (l.items_prepared || 0), 0)
-    const itemsRemaining = itemsPrepared - itemsSold
-    const efficiency = itemsPrepared > 0 ? (itemsSold / itemsPrepared) * 100 : 0
-
-    // Week Metrics (Last 7 Days)
-    const sevenDaysAgo = new Date()
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
-    const weekLogs = logs.filter(l => new Date(l.log_date) >= sevenDaysAgo)
-    const weekPrepared = weekLogs.reduce((sum, l) => sum + (l.items_prepared || 0), 0)
-    const weekSold = weekLogs.reduce((sum, l) => sum + (l.items_sold || 0), 0)
-    const weekRemaining = weekPrepared - weekSold
-    const weekEfficiency = weekPrepared > 0 ? (weekSold / weekPrepared) * 100 : 0
-    
-    // Last 7 days chart data
-    const last7Days = Array.from({ length: 7 }, (_, i) => {
-      const d = new Date()
-      d.setDate(d.getDate() - (6 - i))
-      const dateStr = d.toISOString().slice(0, 10)
-      const dayLogs = logs.filter(l => l.log_date === dateStr)
-      const daySales = dayLogs.reduce((sum, l) => sum + (l.sales_amount || 0), 0)
-      const dayExps = dayLogs.reduce((sum, l) => sum + (l.expense_amount || 0), 0)
-      return {
-        date: d.toLocaleDateString('en-PH', { month: 'short', day: 'numeric' }),
-        sales: daySales,
-        profit: daySales - dayExps
-      }
-    })
-
-    return { totalSales, totalExpenses, netProfit, roi, itemsSold, itemsPrepared, itemsRemaining, efficiency, weekPrepared, weekSold, weekRemaining, weekEfficiency, last7Days, logs }
-  }
 
   // Redirect to Loans page to record payment
   const handleMarkPaid = (loan) => {
@@ -842,11 +703,7 @@ export default function DashboardPage() {
   }).length
   const qlEfficiency = paidQuickLoans.length > 0 ? (qlPaidOnDay15 / paidQuickLoans.length) * 100 : 100
 
-  // ── Other Categories stats ───────────────────────────────────
-  const otherTotalCapital = otherProducts.reduce((sum, p) => sum + (p.capital || 0), 0)
-  const otherTotalProfit = otherProducts.reduce((sum, p) => sum + getProductStats(p.id).netProfit, 0)
-  // SYNCED TOTAL: Uses dynamic ledger capital
-  const systemTotalCapital = ledgerCapital + qlLedgerCapital + otherTotalCapital + totalProfit + qlTotalInterestEarned
+
   const donutData = [
     { name: 'Active', value: activeLoans.length, color: 'var(--blue)' },
     { name: 'Paid', value: paidLoans.length, color: 'var(--green)' },
@@ -877,18 +734,17 @@ export default function DashboardPage() {
         <div style={{ display: 'flex', gap: 4, background: 'rgba(255,255,255,0.03)', borderRadius: 12, padding: 4 }}>
           {[
             { key: 'installment', label: '📅 Installment' },
-            { key: 'quickloan',   label: '⚡ QuickLoan' },
-            { key: 'other',       label: '💼 Other' },
+            { key: 'quickloan',   label: '⚡ QuickLoan' }
           ].map(tab => (
             <button key={tab.key} onClick={() => setDashTab(tab.key)}
               style={{
                 padding: '8px 18px', borderRadius: 9, border: 'none', cursor: 'pointer',
                 fontSize: 13, fontWeight: 600, transition: 'all 0.15s ease',
                 background: dashTab === tab.key
-                  ? tab.key === 'quickloan' ? 'rgba(245,158,11,0.2)' : tab.key === 'other' ? 'rgba(16,185,129,0.2)' : 'rgba(59,130,246,0.2)'
+                  ? tab.key === 'quickloan' ? 'rgba(245,158,11,0.2)' : 'rgba(59,130,246,0.2)'
                   : 'transparent',
                 color: dashTab === tab.key
-                  ? tab.key === 'quickloan' ? '#F59E0B' : tab.key === 'other' ? '#10B981' : 'var(--blue)'
+                  ? tab.key === 'quickloan' ? '#F59E0B' : 'var(--blue)'
                   : 'var(--text-muted)',
               }}>
               {tab.label}
@@ -1429,375 +1285,6 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* ── OTHER ASSETS / BUSINESSES ── */}
-      {dashTab === 'other' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-          {/* Total System Capital Overview */}
-          <div className="card" style={{ padding: '24px 28px', background: 'linear-gradient(135deg, rgba(16,185,129,0.1), rgba(16,185,129,0.02))', border: '1px solid rgba(16,185,129,0.2)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24, flexWrap: 'wrap', gap: 20 }}>
-              <div>
-                <div style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Total System Capital</div>
-                <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 36, color: '#10B981', lineHeight: 1 }}>{formatCurrency(systemTotalCapital)}</div>
-                <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 8 }}>Consolidated overview of all deployed funds</div>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12, flex: 1, maxWidth: 600 }}>
-                {[
-                  { label: 'Installment Pool', value: ledgerCapital, color: 'var(--blue)' },
-                  { label: 'QuickLoan Pool', value: qlLedgerCapital, color: '#F59E0B' },
-                  { label: 'Other Products', value: otherTotalCapital, color: '#10B981' },
-                ].map(item => (
-                  <div key={item.label} style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 12, padding: '12px 16px', border: '1px solid var(--card-border)' }}>
-                    <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>{item.label}</div>
-                    <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 18, color: item.color }}>{formatCurrency(item.value)}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Visual Breakdown Bar */}
-            <div style={{ height: 12, background: 'rgba(255,255,255,0.05)', borderRadius: 6, overflow: 'hidden', display: 'flex' }}>
-              <div style={{ width: `${(ledgerCapital / (systemTotalCapital || 1)) * 100}%`, background: 'var(--blue)', transition: 'width 0.5s ease' }} />
-              <div style={{ width: `${(qlLedgerCapital / (systemTotalCapital || 1)) * 100}%`, background: '#F59E0B', transition: 'width 0.5s ease' }} />
-              <div style={{ width: `${(otherTotalCapital / (systemTotalCapital || 1)) * 100}%`, background: '#10B981', transition: 'width 0.5s ease' }} />
-            </div>
-            <div style={{ display: 'flex', gap: 16, marginTop: 12, fontSize: 11, color: "var(--text-muted)" }}>
-              <span><span style={{ display: "inline-block", width: 8, height: 8, background: "var(--blue)", borderRadius: "50%", marginRight: 4 }} /> Installment</span>
-              <span><span style={{ display: "inline-block", width: 8, height: 8, background: "#F59E0B", borderRadius: "50%", marginRight: 4 }} /> QuickLoan</span>
-              <span><span style={{ display: "inline-block", width: 8, height: 8, background: "#10B981", borderRadius: "50%", marginRight: 4 }} /> Other Business</span>
-            </div>
-          </div>
-
-          {!selectedProductId ? (
-            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 350px', gap: 24, alignItems: 'start' }}>
-              {/* Products List Leaderboard */}
-              <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-                <div style={{ padding: '18px 24px', borderBottom: '1px solid var(--card-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 16 }}>🏆 Top Performing Ventures</div>
-                  <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{otherProducts.length} Entries</span>
-                </div>
-                <div style={{ padding: '0' }}>
-                  {otherProducts.length === 0 ? (
-                    <div style={{ padding: '40px 24px', textAlign: 'center' }}>
-                      <Briefcase size={32} color="var(--text-muted)" style={{ marginBottom: 12, opacity: 0.5 }} />
-                      <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>No other products listed yet.</p>
-                    </div>
-                  ) : (
-                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                      <thead>
-                        <tr style={{ background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid var(--card-border)' }}>
-                          <th style={{ textAlign: 'left', padding: '12px 24px', fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>Venture Name</th>
-                          <th style={{ textAlign: 'right', padding: '12px 12px', fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>Capital</th>
-                          <th style={{ textAlign: 'right', padding: '12px 12px', fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>Net Profit</th>
-                          <th style={{ textAlign: 'center', padding: '12px 24px', fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>ROI %</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {otherProducts.map((prod) => {
-                          const stats = getProductStats(prod.id)
-                          return (
-                            <tr key={prod.id} 
-                              onClick={() => setSelectedProductId(prod.id)}
-                              style={{ borderBottom: '1px solid var(--card-border)', cursor: 'pointer', transition: 'background 0.2s ease' }} 
-                              onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'}
-                              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                            >
-                              <td style={{ padding: '16px 24px' }}>
-                                <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>{prod.name}</div>
-                                <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{stats.itemsSold} items sold total</div>
-                              </td>
-                              <td style={{ padding: '16px 12px', textAlign: 'right', fontFamily: 'Space Grotesk', fontWeight: 600, color: 'var(--text-label)' }}>{formatCurrency(prod.capital)}</td>
-                              <td style={{ padding: '16px 12px', textAlign: 'right', fontFamily: 'Space Grotesk', fontWeight: 700, color: stats.netProfit >= 0 ? 'var(--green)' : 'var(--red)' }}>{formatCurrency(stats.netProfit)}</td>
-                              <td style={{ padding: '16px 24px', textAlign: 'center' }}>
-                                <span style={{ 
-                                  fontSize: 11, fontWeight: 700, padding: '4px 8px', borderRadius: 4, 
-                                  background: stats.roi >= 100 ? 'rgba(34,197,94,0.15)' : 'rgba(255,255,255,0.05)',
-                                  color: stats.roi >= 100 ? 'var(--green)' : 'var(--text-label)',
-                                  border: stats.roi >= 100 ? '1px solid var(--green)' : '1px solid var(--card-border)'
-                                }}>
-                                  {stats.roi.toFixed(1)}%
-                                </span>
-                              </td>
-                            </tr>
-                          )
-                        })}
-                      </tbody>
-                    </table>
-                  )}
-                </div>
-              </div>
-
-              {/* Add New Product Form */}
-                <div className="card" style={{ padding: '22px 24px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 18 }}>
-                    <Plus size={18} color="#10B981" />
-                    <span style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 16 }}>New Business Venture</span>
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                    <div className="form-group">
-                      <label className="form-label" style={{ fontSize: 12 }}>Name (e.g. Turon Shop)</label>
-                      <input 
-                        placeholder="e.g. Food Business"
-                        value={newProduct.name}
-                        onChange={e => setNewProduct(f => ({ ...f, name: e.target.value }))}
-                        style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--card-border)' }}
-                      />
-                    </div>
-                    <div style={{ display: 'flex', gap: 12 }}>
-                      <div className="form-group" style={{ flex: 1 }}>
-                        <label className="form-label" style={{ fontSize: 12 }}>Initial Capital (₱)</label>
-                        <input 
-                          type="number"
-                          placeholder="0.00"
-                          value={newProduct.capital}
-                          onChange={e => setNewProduct(f => ({ ...f, capital: e.target.value }))}
-                          style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--card-border)' }}
-                        />
-                      </div>
-                      <div className="form-group" style={{ flex: 1 }}>
-                        <label className="form-label" style={{ fontSize: 12 }}>Unit Selling Price (₱)</label>
-                        <input 
-                          type="number"
-                          placeholder="0.00"
-                          value={newProduct.unit_price}
-                          onChange={e => setNewProduct(f => ({ ...f, unit_price: e.target.value }))}
-                          style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--card-border)' }}
-                        />
-                      </div>
-                    </div>
-                    <button 
-                      onClick={handleAddProduct}
-                      disabled={addingProduct || !newProduct.name || !newProduct.capital}
-                      className="btn-primary" 
-                      style={{ background: '#10B981', marginTop: 8, gap: 8 }}
-                    >
-                      {addingProduct ? 'Adding...' : <><Plus size={16} /> Deploy Capital</>}
-                    </button>
-                  </div>
-                </div>
-              </div>
-          ) : (
-            /* ── PRODUCT MINI DASHBOARD ── */
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
-                <button onClick={() => setSelectedProductId(null)} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--card-border)', borderRadius: 8, padding: 8, color: 'var(--text-muted)', cursor: 'pointer' }}>
-                  <History size={18} />
-                </button>
-                <div>
-                  <h2 style={{ fontSize: 24, fontFamily: 'Space Grotesk', fontWeight: 800 }}>{otherProducts.find(p => p.id === selectedProductId)?.name}</h2>
-                  <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Detailed performance dashboard</div>
-                </div>
-                <button onClick={() => handleDeleteProduct(selectedProductId)} style={{ marginLeft: 'auto', background: 'rgba(239,68,68,0.08)', color: 'var(--red)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, padding: '8px 16px', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
-                  Delete Venture
-                </button>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 350px', gap: 24 }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-                  {/* Stats Row */}
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
-                    {[
-                      { label: 'Total Sales', value: formatCurrency(getProductStats(selectedProductId).totalSales), color: 'var(--text-primary)' },
-                      { label: 'Total Expenses', value: formatCurrency(getProductStats(selectedProductId).totalExpenses), color: 'var(--text-label)' },
-                      { label: 'Net Profit', value: formatCurrency(getProductStats(selectedProductId).netProfit), color: getProductStats(selectedProductId).netProfit >= 0 ? 'var(--green)' : 'var(--red)' },
-                      { label: 'Status', value: getProductStats(selectedProductId).itemsRemaining <= 0 ? 'SOLD OUT' : `${getProductStats(selectedProductId).itemsRemaining} Packs Left`, color: getProductStats(selectedProductId).itemsRemaining <= 0 ? 'var(--red)' : 'var(--gold)' },
-                    ].map(stat => (
-                      <div key={stat.label} className="card" style={{ padding: '16px 20px' }}>
-                        <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6, textTransform: 'uppercase' }}>{stat.label}</div>
-                        <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 18, color: stat.color }}>{stat.value}</div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Trends Chart */}
-                  <div className="card" style={{ padding: 24 }}>
-                    <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 15, marginBottom: 20 }}>📈 7-Day Performance Trends</div>
-                    <div style={{ height: 250, width: '100%' }}>
-                      <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={getProductStats(selectedProductId).last7Days}>
-                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--chart-grid)" />
-                          <XAxis dataKey="date" stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} />
-                          <YAxis stroke="var(--text-muted)" fontSize={12} tickLine={false} axisLine={false} tickFormatter={val => `₱${val}`} />
-                          <Tooltip content={<CustomTooltip />} />
-                          <Line type="monotone" dataKey="sales" stroke="var(--blue)" strokeWidth={3} dot={{ r: 4, fill: 'var(--blue)' }} />
-                          <Line type="monotone" dataKey="profit" stroke="var(--green)" strokeWidth={3} dot={{ r: 4, fill: 'var(--green)' }} />
-                        </LineChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </div>
-
-                  {/* History Logs */}
-                  <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-                    <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--card-border)', fontWeight: 700 }}>Activity History</div>
-                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                      <thead style={{ background: 'rgba(255,255,255,0.02)', fontSize: 11, color: 'var(--text-muted)' }}>
-                        <tr>
-                          <th style={{ textAlign: 'left', padding: '12px 20px' }}>Date</th>
-                          <th style={{ textAlign: 'center', padding: '12px' }}>Stock</th>
-                          <th style={{ textAlign: 'center', padding: '12px' }}>Sold</th>
-                          <th style={{ textAlign: 'right', padding: '12px' }}>Sales</th>
-                          <th style={{ textAlign: 'right', padding: '12px' }}>Exp.</th>
-                          <th style={{ textAlign: 'right', padding: '12px' }}>Net</th>
-                          <th style={{ width: 50 }}></th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {getProductStats(selectedProductId).logs.map(log => (
-                          <tr key={log.id} style={{ borderBottom: '1px solid var(--card-border)', fontSize: 13 }}>
-                            <td style={{ padding: '12px 20px' }}>{new Date(log.log_date).toLocaleDateString('en-PH', { month: 'short', day: 'numeric' })}</td>
-                            <td style={{ padding: '12px', textAlign: 'center' }}>{log.items_prepared}</td>
-                            <td style={{ padding: '12px', textAlign: 'center' }}>{log.items_sold}</td>
-                            <td style={{ padding: '12px', textAlign: 'right', color: 'var(--blue)' }}>{formatCurrency(log.sales_amount)}</td>
-                            <td style={{ padding: '12px', textAlign: 'right', color: 'var(--text-muted)' }}>{formatCurrency(log.expense_amount)}</td>
-                            <td style={{ padding: '12px', textAlign: 'right', fontWeight: 600, color: 'var(--green)' }}>{formatCurrency(log.sales_amount - log.expense_amount)}</td>
-                            <td style={{ textAlign: 'center' }}>
-                              <button onClick={() => handleDeleteLog(log.id)} style={{ background: 'none', border: 'none', color: 'var(--red)', opacity: 0.4, cursor: 'pointer' }}>
-                                <Trash2 size={14} />
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-
-                {/* Log Entry Form */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-                  <div className="card" style={{ padding: 24 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 18 }}>
-                      <ClipboardList size={18} color="var(--blue)" />
-                      <span style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 16 }}>Log Activity</span>
-                    </div>
-
-                    {/* Mode Toggle Tabs */}
-                    <div style={{ display: 'flex', background: 'rgba(255,255,255,0.03)', padding: 4, borderRadius: 10, marginBottom: 20 }}>
-                      <button 
-                        onClick={() => setLogMode('sales')}
-                        style={{ 
-                          flex: 1, padding: '8px', borderRadius: 8, border: 'none', cursor: 'pointer',
-                          background: logMode === 'sales' ? 'var(--blue)' : 'transparent',
-                          color: logMode === 'sales' ? '#fff' : 'var(--text-muted)',
-                          fontSize: 12, fontWeight: 700, transition: 'all 0.2s ease'
-                        }}
-                      >
-                        💰 Daily Sale
-                      </button>
-                      <button 
-                        onClick={() => setLogMode('stock')}
-                        style={{ 
-                          flex: 1, padding: '8px', borderRadius: 8, border: 'none', cursor: 'pointer',
-                          background: logMode === 'stock' ? '#F59E0B' : 'transparent',
-                          color: logMode === 'stock' ? '#fff' : 'var(--text-muted)',
-                          fontSize: 12, fontWeight: 700, transition: 'all 0.2s ease'
-                        }}
-                      >
-                        📦 Stock Purchase
-                      </button>
-                    </div>
-
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                      <div className="form-group">
-                        <label className="form-label" style={{ fontSize: 11 }}>Log Date</label>
-                        <input type="date" value={newLog.date} onChange={e => setNewLog(prev => ({ ...prev, date: e.target.value }))} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--card-border)' }} />
-                      </div>
-
-                      {logMode === 'sales' ? (
-                        <>
-                          <div className="form-group">
-                            <label className="form-label" style={{ fontSize: 11 }}>Items Sold (Pieces)</label>
-                            <input type="number" placeholder="0" value={newLog.items} onChange={e => setNewLog(prev => ({ ...prev, items: e.target.value }))} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--card-border)' }} />
-                          </div>
-                          <div className="form-group">
-                            <label className="form-label" style={{ fontSize: 11 }}>
-                              Sales Amount (₱)
-                              {otherProducts.find(p => p.id === selectedProductId)?.unit_price > 0 && !newLog.sales && newLog.items && (
-                                <span style={{ marginLeft: 6, color: 'var(--green)', fontSize: 10 }}>Auto-calc: ₱{(parseInt(newLog.items) * otherProducts.find(p => p.id === selectedProductId).unit_price).toLocaleString()}</span>
-                              )}
-                            </label>
-                            <input type="number" placeholder="Leave empty for auto-calc" value={newLog.sales} onChange={e => setNewLog(prev => ({ ...prev, sales: e.target.value }))} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--card-border)' }} />
-                          </div>
-                        </>
-                      ) : (
-                        <>
-                          <div className="form-group">
-                            <label className="form-label" style={{ fontSize: 11 }}>Items Purchased / Prepared</label>
-                            <input type="number" placeholder="Add pieces to stock" value={newLog.prepared} onChange={e => setNewLog(prev => ({ ...prev, prepared: e.target.value }))} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--card-border)' }} />
-                          </div>
-                          <div className="form-group">
-                            <label className="form-label" style={{ fontSize: 11 }}>Total Cost / Bill (₱)</label>
-                            <input type="number" placeholder="Price paid to factory" value={newLog.expenses} onChange={e => setNewLog(prev => ({ ...prev, expenses: e.target.value }))} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--card-border)' }} />
-                          </div>
-                        </>
-                      )}
-
-                      <div className="form-group">
-                        <label className="form-label" style={{ fontSize: 11 }}>Notes</label>
-                        <textarea placeholder="e.g. Factory delivery" value={newLog.notes} onChange={e => setNewLog(prev => ({ ...prev, notes: e.target.value }))} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--card-border)', minHeight: 60, borderRadius: 8, padding: 10, fontSize: 13 }} />
-                      </div>
-
-                      <button 
-                        onClick={handleAddLog}
-                        disabled={addingLog}
-                        className="btn-primary"
-                        style={{ background: logMode === 'sales' ? 'var(--blue)' : '#F59E0B', marginTop: 8 }}
-                      >
-                        {addingLog ? 'Saving...' : logMode === 'sales' ? 'Save Daily Sale' : 'Add Stock & Expenses'}
-                      </button>
-                    </div>
-                  </div>
-                  
-                  {/* Capital Progress Card */}
-                  <div className="card" style={{ padding: 24, background: 'linear-gradient(135deg, rgba(59,130,246,0.1), rgba(59,130,246,0.02))', border: '1px solid rgba(59,130,246,0.15)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-                      <div>
-                        <div style={{ fontSize: 12, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Cycle ROI Status</div>
-                        <div style={{ fontFamily: 'Space Grotesk', fontWeight: 800, fontSize: 24, color: 'var(--blue)' }}>
-                          {getProductStats(selectedProductId).roi >= 100 ? 'SUCCESS' : `${getProductStats(selectedProductId).roi.toFixed(1)}% Back`}
-                        </div>
-                      </div>
-                      {getProductStats(selectedProductId).roi >= 100 && (
-                        <div style={{ background: 'var(--green)', color: '#fff', fontSize: 10, padding: '4px 8px', borderRadius: 4, fontWeight: 700 }}>PROFITABLE</div>
-                      )}
-                    </div>
-                    <div style={{ height: 6, background: 'rgba(255,255,255,0.1)', borderRadius: 3, overflow: 'hidden', marginBottom: 12 }}>
-                      <div style={{ width: `${Math.min(100, getProductStats(selectedProductId).roi)}%`, height: '100%', background: 'var(--blue)' }} />
-                    </div>
-                    <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-                      Total net profit has recovered {formatCurrency(Math.max(0, getProductStats(selectedProductId).netProfit))} out of {formatCurrency(otherProducts.find(p => p.id === selectedProductId)?.capital)} capital.
-                    </div>
-                  </div>
-
-                  {/* Weekly Stock Card */}
-                  <div className="card" style={{ padding: 24, background: 'linear-gradient(135deg, rgba(245,158,11,0.1), rgba(245,158,11,0.02))', border: '1px solid rgba(245,158,11,0.15)' }}>
-                    <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 8, textTransform: 'uppercase' }}>Weekly Stock Status</div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
-                      <div>
-                        <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>Prepared this Week</div>
-                        <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 18 }}>{getProductStats(selectedProductId).weekPrepared} <span style={{ fontSize: 11, fontWeight: 400 }}>pcs</span></div>
-                      </div>
-                      <div>
-                        <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>Sold this Week</div>
-                        <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 18 }}>{getProductStats(selectedProductId).weekSold} <span style={{ fontSize: 11, fontWeight: 400 }}>pcs</span></div>
-                      </div>
-                    </div>
-                    
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                      <span style={{ fontSize: 11, fontWeight: 700 }}>Stock Efficiency</span>
-                      <span style={{ fontSize: 11, color: getProductStats(selectedProductId).weekEfficiency >= 90 ? 'var(--green)' : 'var(--text-label)' }}>{getProductStats(selectedProductId).weekEfficiency.toFixed(1)}%</span>
-                    </div>
-                    <div style={{ height: 6, background: 'rgba(255,255,255,0.1)', borderRadius: 3, overflow: 'hidden', marginBottom: 12 }}>
-                      <div style={{ width: `${Math.min(100, getProductStats(selectedProductId).weekEfficiency)}%`, height: '100%', background: '#F59E0B' }} />
-                    </div>
-                    <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-                      You still have **{getProductStats(selectedProductId).weekRemaining} pieces** available to sell this week.
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
     </div>
   )
 }
