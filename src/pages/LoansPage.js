@@ -1956,9 +1956,9 @@ export default function LoansPage() {
 
                 {/* Status Banners */}
                 <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--card-border)', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {loan.signature_status === 'Signed' ? (
+                  {loan.e_signature_name ? (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--green)', fontSize: 12, fontWeight: 600 }}>
-                      <CheckCircle size={14} /> Contract Signed
+                      <CheckCircle size={14} /> Signed by {loan.e_signature_name}
                     </div>
                   ) : (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--gold)', fontSize: 12, fontWeight: 600 }}>
