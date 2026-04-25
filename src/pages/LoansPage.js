@@ -1561,7 +1561,7 @@ export default function LoansPage() {
   }
 
   return (
-    <div style={{ padding: '32px 28px', maxWidth: 960, margin: '0 auto' }}>
+    <div style={{ padding: '32px 28px', maxWidth: 1200, margin: '0 auto' }}>
       {/* Header */}
       <div className="page-header">
         <div>
@@ -1708,7 +1708,7 @@ export default function LoansPage() {
         <div className="split-layout">
 
           {/* Table Container */}
-          <div className="card" style={{ padding: 0, minWidth: 0 }}>
+          <div className="card" style={{ padding: 0, minWidth: 600 }}>
             <div style={{ overflowX: 'auto', width: '100%' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, tableLayout: 'auto' }}>
               <thead style={{ background: 'rgba(255,255,255,0.02)', color: 'var(--text-muted)', textTransform: 'uppercase', fontSize: 11 }}>
@@ -1887,7 +1887,7 @@ export default function LoansPage() {
                       }} />
                     </div>
                   ) : (
-                    <InstallmentProgressBar current={loan.payments_made || 0} total={loan.num_installments || 4} />
+                    <InstallmentProgressBar paid={loan.payments_made || 0} total={loan.num_installments || 4} remainingBalance={loan.remaining_balance} />
                   )}
                 </div>
 
