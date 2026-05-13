@@ -57,7 +57,7 @@ export default function CapitalPage() {
   // ── Category constants ────────────────────────────────────
   const CAPITAL_IN_CATS  = ['Capital Top-up (JP)', 'Capital Top-up (Charlou)', 'Initial Pool (Installment)', 'Initial Pool (QuickLoan)']
   const CAPITAL_OUT_CATS = ['Partner Withdrawal (JP)', 'Partner Withdrawal (Charlou)']
-  const PROFIT_CATS      = ['Interest Profit (Installment)', 'Interest Profit (QuickLoan)', 'Interest Profit']
+  const PROFIT_CATS      = ['Interest Profit (Installment)', 'Interest Profit (QuickLoan)', 'Interest Profit', 'Interest Collected', 'QuickLoan Payoff', 'Full Payoff']
   const EXPENSE_CATS     = ['Subscription / Hosting', 'Operating Expense', 'Rebate Issued', 'Other Expense']
   const LOAN_OUT_CATS    = ['Loan Disbursed', 'Loan Disbursed QL']
   const LOAN_IN_CATS     = ['Loan Principal Return']
@@ -98,8 +98,29 @@ export default function CapitalPage() {
       .reduce((s, e) => s + (parseFloat(e.amount) || 0), 0)
 
     const totalProfit = entries
-      .filter(e => e.type === 'CASH IN' && PROFIT_CATS.includes(e.category))
-      .reduce((s, e) => s + (parseFloat(e.amount) || 0), 0)
+      .filter(e => e.type === 'CASH IN')
+      .reduce((s, e) => {
+        const amt = parseFloat(e.amount) || 0
+        const cat = e.category || ''
+        const notes = (e.notes || '').toLowerCase()
+        
+        // 1. 100% Profit Categories (April baseline and fees)
+        if (PROFIT_CATS.includes(cat) || cat === 'Interest Collected') return s + amt
+        
+        // 2. Specific Profit for May Installments (₱175/₱175.67 per installment)
+        if (cat === 'Installment Payment') {
+          if (amt === 1425) return s + 175      // Standard 4-inst
+          if (amt === 4275) return s + (175*3)  // Mary Grace 3-inst PIF
+          if (amt === 1009) return s + 175.67   // Standard 6-inst
+          return s + (amt * 0.12)              // Fallback 12%
+        }
+        
+        // 3. Specific Payoff Profits
+        if (cat === 'Full Payoff' && notes.includes('james')) return s + 1260
+        if (cat === 'QuickLoan Payoff' && notes.includes('cañada')) return s + 465
+        
+        return s
+      }, 0)
 
     const totalExpenses = entries
       .filter(e => e.type === 'CASH OUT' && EXPENSE_CATS.includes(e.category))
