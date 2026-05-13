@@ -711,8 +711,10 @@ export default function BorrowerPortalPage() {
     setLoading(true); setError('')
     const cleanCode = accessCode.toUpperCase().trim()
 
-    // SEC-01 FIX: Set portal context so RLS policies can filter by access_code
-    await supabase.rpc('set_portal_context', { code: cleanCode })
+    // SEC-01: Portal context via session vars removed — Supabase PgBouncer
+    // transaction pooling resets session vars between API calls, so the
+    // set_portal_context RPC had no effect on subsequent queries.
+    // RLS v3 uses permissive anon SELECT policies instead.
 
     const { data: b } = await supabase.from('borrowers').select('*').eq('access_code', cleanCode).single()
     if (b) {
@@ -972,7 +974,7 @@ export default function BorrowerPortalPage() {
                   onChange={e => setInputCode(e.target.value.toUpperCase())}
                   onKeyDown={e => e.key === 'Enter' && handleLogin()}
                   placeholder="LM-XXXX"
-                  maxLength={7}
+                  maxLength={12}
                   className="portal-login-input"
                   style={{ width: '100%', boxSizing: 'border-box', padding: '16px 16px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, color: '#F0F4FF', fontSize: 24, fontWeight: 800, fontFamily: 'monospace', letterSpacing: 8, textAlign: 'center', marginBottom: 16, outline: 'none', transition: 'all 0.2s' }}
                 />

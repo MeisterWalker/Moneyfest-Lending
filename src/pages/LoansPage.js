@@ -1721,6 +1721,7 @@ export default function LoansPage() {
                   <th style={{ textAlign: 'right', padding: '12px 10px', fontWeight: 600 }}>Remaining</th>
                   <th style={{ textAlign: 'center', padding: '12px 10px', fontWeight: 600 }}>Progress</th>
                   <th style={{ textAlign: 'right', padding: '12px 10px', fontWeight: 600 }}>Next Due</th>
+                  <th style={{ textAlign: 'right', padding: '12px 10px', fontWeight: 600 }}>Released</th>
                   <th style={{ textAlign: 'right', padding: '12px 20px', fontWeight: 600 }}>Status</th>
                 </tr>
               </thead>
@@ -1798,6 +1799,9 @@ export default function LoansPage() {
                       </td>
                       <td style={{ padding: '14px 10px', textAlign: 'center', color: 'var(--text-label)' }}>{progressDisplay}</td>
                       <td style={{ padding: '14px 10px', textAlign: 'right', color: dueColor, fontWeight: dueColor !== 'var(--text-muted)' ? 600 : 400 }}>{dueDisplay}</td>
+                      <td style={{ padding: '14px 10px', textAlign: 'right', color: loan.release_date ? 'var(--text-label)' : 'var(--text-muted)', fontSize: 12 }}>
+                        {loan.release_date ? new Date(...loan.release_date.split('-').map((v,i) => i===1 ? Number(v)-1 : Number(v))).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}
+                      </td>
                       <td style={{ padding: '14px 20px', textAlign: 'right' }}>
                         <StatusPill status={displayStatus} />
                       </td>

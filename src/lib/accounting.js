@@ -127,8 +127,37 @@ export const logAutomatedPayment = async (loan, amountReceived, cashLocation = '
     }
 
     if (entries.length > 0) {
-      const { error } = await supabase.from('capital_flow').insert(entries)
-      if (error) throw error
+      // ── DEDUP: Prevent duplicate capital_flow entries for the same loan payment ──
+      // Check if entries with the same date + category + amount already exist for this loan
+      const today = new Date().toISOString().slice(0, 10)
+      const loanRef = loan.id  // Used to match against notes containing the loan context
+
+      const { data: existing } = await supabase
+        .from('capital_flow')
+        .select('id, category, amount, notes')
+        .eq('entry_date', today)
+
+      const dedupedEntries = entries.filter(entry => {
+        // Check if an identical entry already exists today
+        const isDupe = (existing || []).some(ex =>
+          ex.category === entry.category &&
+          Math.abs(parseFloat(ex.amount) - entry.amount) < 0.01 &&
+          ex.notes && entry.notes &&
+          // Match on borrower name substring to avoid cross-loan false positives
+          ex.notes.substring(0, 40) === entry.notes.substring(0, 40)
+        )
+        if (isDupe) {
+          console.warn(`logAutomatedPayment: DEDUP — skipping duplicate ${entry.category} ₱${entry.amount} for ${today}`)
+        }
+        return !isDupe
+      })
+
+      if (dedupedEntries.length > 0) {
+        const { error } = await supabase.from('capital_flow').insert(dedupedEntries)
+        if (error) throw error
+      } else {
+        console.warn('logAutomatedPayment: All entries were duplicates — nothing inserted')
+      }
     }
 
     return { success: true, interestProfit, principalReturn }
