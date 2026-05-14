@@ -89,7 +89,7 @@ function generateReceiptHTML({ loan, borrower, installmentNum, amount, date }) {
         <div class="progress-label">Repayment Progress — ${installmentNum} of ${numInstallments} installments paid</div>
         <div class="progress-bar"><div class="progress-fill" style="width:${(installmentNum / numInstallments) * 100}%"></div></div>
         <div class="progress-steps">
-          ${Array.from({length: numInstallments}, (_,i) => i+1).map(i => `<div class="step ${i <= installmentNum ? 'done' : 'pending'}">${i <= installmentNum ? "✓" : i}</div>`).join('')}
+          ${Array.from({ length: numInstallments }, (_, i) => i + 1).map(i => `<div class="step ${i <= installmentNum ? 'done' : 'pending'}">${i <= installmentNum ? "✓" : i}</div>`).join('')}
         </div>
       </div>
 
@@ -127,12 +127,12 @@ function downloadReceiptPDF({ loan, borrower, installmentNum, amount }) {
 }
 
 const STATUS_CONFIG = {
-  Pending:        { color: 'var(--gray)',   bg: 'rgba(107,114,128,0.15)', border: 'rgba(107,114,128,0.3)' },
-  Active:         { color: 'var(--blue)',   bg: 'rgba(59,130,246,0.15)',  border: 'rgba(59,130,246,0.3)' },
-  'Partially Paid':{ color: 'var(--purple)', bg: 'rgba(139,92,246,0.15)', border: 'rgba(139,92,246,0.3)' },
-  Paid:           { color: 'var(--green)',  bg: 'rgba(34,197,94,0.15)',   border: 'rgba(34,197,94,0.3)' },
-  Overdue:        { color: 'var(--gold)',   bg: 'rgba(245,158,11,0.15)',  border: 'rgba(245,158,11,0.3)' },
-  Defaulted:      { color: 'var(--red)',    bg: 'rgba(239,68,68,0.15)',   border: 'rgba(239,68,68,0.3)' },
+  Pending: { color: 'var(--gray)', bg: 'rgba(107,114,128,0.15)', border: 'rgba(107,114,128,0.3)' },
+  Active: { color: 'var(--blue)', bg: 'rgba(59,130,246,0.15)', border: 'rgba(59,130,246,0.3)' },
+  'Partially Paid': { color: 'var(--purple)', bg: 'rgba(139,92,246,0.15)', border: 'rgba(139,92,246,0.3)' },
+  Paid: { color: 'var(--green)', bg: 'rgba(34,197,94,0.15)', border: 'rgba(34,197,94,0.3)' },
+  Overdue: { color: 'var(--gold)', bg: 'rgba(245,158,11,0.15)', border: 'rgba(245,158,11,0.3)' },
+  Defaulted: { color: 'var(--red)', bg: 'rgba(239,68,68,0.15)', border: 'rgba(239,68,68,0.3)' },
 }
 
 function StatusBadge({ status }) {
@@ -254,8 +254,8 @@ function LoanCard({ loan: rawLoan, borrowers, applications, investors, onEdit, o
 
         {/* Live penalty counter for overdue installments */}
         {(loan.status === 'Active' || loan.status === 'Partially Paid' || loan.status === 'Overdue') && !isQuickLoan && nextDue && (() => {
-          const todayP = new Date(); todayP.setHours(0,0,0,0)
-          const dueDateP = new Date(nextDue); dueDateP.setHours(0,0,0,0)
+          const todayP = new Date(); todayP.setHours(0, 0, 0, 0)
+          const dueDateP = new Date(nextDue); dueDateP.setHours(0, 0, 0, 0)
           const daysLateP = Math.max(0, Math.ceil((todayP - dueDateP) / (1000 * 60 * 60 * 24)))
           if (daysLateP <= 0) return null
           const penalty = daysLateP * 20
@@ -357,7 +357,7 @@ function LoanCard({ loan: rawLoan, borrowers, applications, investors, onEdit, o
                 { label: 'Installment', value: formatCurrency(loan.installment_amount) },
                 { label: 'Payments Made', value: `${loan.payments_made} of ${loan.num_installments || 4}` },
                 { label: 'Remaining', value: formatCurrency(loan.remaining_balance) },
-                { label: 'Final Due', value: (() => { try { const d = loan.release_date ? (() => { const [y,m,dy] = loan.release_date.split('-').map(Number); const rel = new Date(y,m-1,dy); let fd = new Date(rel); for(let i=1;i<=4;i++){if(rel.getDate()<=5){fd=new Date(rel.getFullYear(),rel.getMonth()+Math.floor((i-1)/2),i%2===1?20:5);if(i%2===0)fd.setMonth(fd.getMonth()+1)}else{fd=new Date(rel.getFullYear(),rel.getMonth()+Math.ceil(i/2),i%2===1?5:20)}} return fd.toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'}) })() : '—'; return d } catch(e){return '—'} })() },
+                { label: 'Final Due', value: (() => { try { const d = loan.release_date ? (() => { const [y, m, dy] = loan.release_date.split('-').map(Number); const rel = new Date(y, m - 1, dy); let fd = new Date(rel); for (let i = 1; i <= 4; i++) { if (rel.getDate() <= 5) { fd = new Date(rel.getFullYear(), rel.getMonth() + Math.floor((i - 1) / 2), i % 2 === 1 ? 20 : 5); if (i % 2 === 0) fd.setMonth(fd.getMonth() + 1) } else { fd = new Date(rel.getFullYear(), rel.getMonth() + Math.ceil(i / 2), i % 2 === 1 ? 5 : 20) } } return fd.toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' }) })() : '—'; return d } catch (e) { return '—' } })() },
                 { label: 'Security Hold', value: loan.security_hold > 0 ? `${formatCurrency(loan.security_hold)} ${loan.security_hold_returned ? '(returned)' : '(held)'}` : '—' },
               ].map(item => (
                 <div key={item.label}>
@@ -368,7 +368,8 @@ function LoanCard({ loan: rawLoan, borrowers, applications, investors, onEdit, o
             </div>
           )}
           {/* LA Signature status row */}
-          <div style={{ marginTop: 14, padding: '10px 14px', borderRadius: 8, fontSize: 12, display: 'flex', alignItems: 'center', gap: 8,
+          <div style={{
+            marginTop: 14, padding: '10px 14px', borderRadius: 8, fontSize: 12, display: 'flex', alignItems: 'center', gap: 8,
             background: loan.e_signature_name ? 'rgba(34,197,94,0.05)' : 'rgba(245,158,11,0.05)',
             border: `1px solid ${loan.e_signature_name ? 'rgba(34,197,94,0.2)' : 'rgba(245,158,11,0.2)'}`,
             color: loan.e_signature_name ? 'var(--green)' : 'var(--gold)'
@@ -401,14 +402,14 @@ function LoanCard({ loan: rawLoan, borrowers, applications, investors, onEdit, o
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           {/* QuickLoan pay button */}
           {isQuickLoan && canPay && !confirming && (
-              <button
-                onClick={() => setConfirming(true)}
-                className="btn-primary"
-                style={{ fontSize: 12, padding: '6px 14px', background: 'linear-gradient(135deg,#F59E0B,#D97706)', border: 'none' }}
-              >
-                ⚡ Record Full Payoff
-              </button>
-            )}
+            <button
+              onClick={() => setConfirming(true)}
+              className="btn-primary"
+              style={{ fontSize: 12, padding: '6px 14px', background: 'linear-gradient(135deg,#F59E0B,#D97706)', border: 'none' }}
+            >
+              ⚡ Record Full Payoff
+            </button>
+          )}
 
           {/* QuickLoan Record Extension button (Manual) */}
           {isQuickLoan && !loan.extension_fee_charged && canPay && !confirming && !confirmingExtension && !confirmingPrincipal && (
@@ -430,78 +431,78 @@ function LoanCard({ loan: rawLoan, borrowers, applications, investors, onEdit, o
             </button>
           )}
 
-            {/* Confirm Release button for Pending loans */}
-            {loan.status === 'Pending' && (
-              <button
-                onClick={() => onConfirmRelease(loan)}
-                className="btn-primary"
-                style={{ fontSize: 12, padding: '6px 14px', background: 'linear-gradient(135deg,#22C55E,#16A34A)', border: 'none' }}
-              >
-                <CheckCircle size={13} /> Confirm Funds Released
-              </button>
-            )}
+          {/* Confirm Release button for Pending loans */}
+          {loan.status === 'Pending' && (
+            <button
+              onClick={() => onConfirmRelease(loan)}
+              className="btn-primary"
+              style={{ fontSize: 12, padding: '6px 14px', background: 'linear-gradient(135deg,#22C55E,#16A34A)', border: 'none' }}
+            >
+              <CheckCircle size={13} /> Confirm Funds Released
+            </button>
+          )}
 
-            {/* Installment loan record payment button */}
-            {!isQuickLoan && canPay && !confirming && !confirmingFullPayoff && (
-              <button
-                onClick={() => setConfirming(true)}
-                className="btn-primary"
-                style={{ fontSize: 12, padding: '6px 14px' }}
-              >
-                <CheckCircle size={13} /> Record Payment {nextInstallment} of {loan.num_installments || 4}
-              </button>
-            )}
+          {/* Installment loan record payment button */}
+          {!isQuickLoan && canPay && !confirming && !confirmingFullPayoff && (
+            <button
+              onClick={() => setConfirming(true)}
+              className="btn-primary"
+              style={{ fontSize: 12, padding: '6px 14px' }}
+            >
+              <CheckCircle size={13} /> Record Payment {nextInstallment} of {loan.num_installments || 4}
+            </button>
+          )}
 
-            {/* Full Payoff button — only for installment loans with remaining installments */}
-            {!isQuickLoan && canPay && !confirming && !confirmingFullPayoff && (
-              <button
-                onClick={() => setConfirmingFullPayoff(true)}
-                style={{
-                  fontSize: 12, padding: '6px 14px', borderRadius: 8,
-                  border: '1px solid rgba(34,197,94,0.4)',
-                  background: 'rgba(34,197,94,0.1)',
-                  color: '#4ADE80', cursor: 'pointer', fontWeight: 600,
-                  display: 'inline-flex', alignItems: 'center', gap: 5
-                }}
-              >
-                💰 Full Payoff
-              </button>
-            )}
+          {/* Full Payoff button — only for installment loans with remaining installments */}
+          {!isQuickLoan && canPay && !confirming && !confirmingFullPayoff && (
+            <button
+              onClick={() => setConfirmingFullPayoff(true)}
+              style={{
+                fontSize: 12, padding: '6px 14px', borderRadius: 8,
+                border: '1px solid rgba(34,197,94,0.4)',
+                background: 'rgba(34,197,94,0.1)',
+                color: '#4ADE80', cursor: 'pointer', fontWeight: 600,
+                display: 'inline-flex', alignItems: 'center', gap: 5
+              }}
+            >
+              💰 Full Payoff
+            </button>
+          )}
 
-            {/* Full Payoff confirmation inline */}
-            {confirmingFullPayoff && (() => {
-              const numInst = loan.num_installments || 4
-              const remaining = numInst - loan.payments_made
-              const holdAmt = loan.security_hold || 0
-              const holdLabel = holdAmt > 0 && !loan.security_hold_returned ? ` + ₱${holdAmt} hold returned` : ''
-              const remainingBalance = Math.ceil(loan.remaining_balance ?? 0)
-              return (
-                <div style={{
-                  display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap',
-                  background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.25)',
-                  borderRadius: 8, padding: '8px 12px', fontSize: 12, width: '100%'
-                }}>
-                  <span style={{ color: 'var(--text-label)', flex: 1 }}>
-                    💰 Record full payoff of {formatCurrency(remainingBalance)}{holdLabel}?
-                    <span style={{ color: 'var(--text-muted)', marginLeft: 4 }}>
-                      ({remaining} installment{remaining !== 1 ? 's' : ''} remaining)
-                    </span>
+          {/* Full Payoff confirmation inline */}
+          {confirmingFullPayoff && (() => {
+            const numInst = loan.num_installments || 4
+            const remaining = numInst - loan.payments_made
+            const holdAmt = loan.security_hold || 0
+            const holdLabel = holdAmt > 0 && !loan.security_hold_returned ? ` + ₱${holdAmt} hold returned` : ''
+            const remainingBalance = Math.ceil(loan.remaining_balance ?? 0)
+            return (
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap',
+                background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.25)',
+                borderRadius: 8, padding: '8px 12px', fontSize: 12, width: '100%'
+              }}>
+                <span style={{ color: 'var(--text-label)', flex: 1 }}>
+                  💰 Record full payoff of {formatCurrency(remainingBalance)}{holdLabel}?
+                  <span style={{ color: 'var(--text-muted)', marginLeft: 4 }}>
+                    ({remaining} installment{remaining !== 1 ? 's' : ''} remaining)
                   </span>
-                  <button
-                    onClick={() => { onFullPayoff(loan); setConfirmingFullPayoff(false) }}
-                    style={{ background: 'var(--green)', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 12px', cursor: 'pointer', fontSize: 12, fontWeight: 700 }}
-                  >
-                    Confirm
-                  </button>
-                  <button
-                    onClick={() => setConfirmingFullPayoff(false)}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 12 }}
-                  >
-                    Cancel
-                  </button>
-                </div>
-              )
-            })()}
+                </span>
+                <button
+                  onClick={() => { onFullPayoff(loan); setConfirmingFullPayoff(false) }}
+                  style={{ background: 'var(--green)', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 12px', cursor: 'pointer', fontSize: 12, fontWeight: 700 }}
+                >
+                  Confirm
+                </button>
+                <button
+                  onClick={() => setConfirmingFullPayoff(false)}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 12 }}
+                >
+                  Cancel
+                </button>
+              </div>
+            )
+          })()}
 
           {/* Payment confirmation inline */}
           {confirming && (
@@ -670,11 +671,11 @@ function LoanCard({ loan: rawLoan, borrowers, applications, investors, onEdit, o
             const level = borrower?.loan_limit_level || 1
             const limitMap = { 4: 10000, 3: 9000, 2: 7000, 1: 5000 }
             const tierMap = { 4: '👑 VIP', 3: '🤝 Reliable', 2: '⭐ Trusted', 1: '🌱 New' }
-            
+
             const newMax = limitMap[level] || 5000
             const tierName = tierMap[level] || '🌱 New'
             const increased = newMax > loan.loan_amount
-            
+
             return (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10, background: 'rgba(20,184,166,0.06)', border: '1px solid rgba(20,184,166,0.25)', borderRadius: 10, padding: '12px 14px', width: '100%', marginTop: 8 }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -682,20 +683,20 @@ function LoanCard({ loan: rawLoan, borrowers, applications, investors, onEdit, o
                     <span style={{ fontWeight: 700, color: 'var(--teal)' }}>{tierName} Tier Upgrade</span>
                     <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
                       Credit Score: <strong>{borrower?.credit_score || 0}</strong> · {' '}
-                      {increased 
+                      {increased
                         ? <span>Eligible limit increased to <strong style={{ color: 'var(--green)' }}>{formatCurrency(newMax)}</strong>!</span>
                         : <span>Eligible for renewal up to {formatCurrency(newMax)}</span>
                       }
                     </div>
                   </div>
                   <div style={{ display: 'flex', gap: 8 }}>
-                    <button 
+                    <button
                       onClick={() => { onRenew(loan, newMax); setConfirmingRenew(false) }}
                       style={{ background: 'var(--teal)', color: '#fff', border: 'none', borderRadius: 6, padding: '6px 12px', cursor: 'pointer', fontSize: 12, fontWeight: 700 }}
                     >
                       Confirm Renewal
                     </button>
-                    <button 
+                    <button
                       onClick={() => setConfirmingRenew(false)}
                       style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 12 }}
                     >
@@ -877,10 +878,10 @@ export default function LoansPage() {
       const dueDateStr = formatDateValue(nextDueDate) // YYYY-MM-DD (local time, no UTC shift)
       const instNum = loan.payments_made + 1
       const { data } = await supabase.rpc('apply_overdue_penalties', {
-        p_loan_id:         loan.id,
-        p_due_date_str:    dueDateStr,
+        p_loan_id: loan.id,
+        p_due_date_str: dueDateStr,
         p_installment_num: instNum,
-        p_admin_email:     user?.email || 'system'
+        p_admin_email: user?.email || 'system'
       })
       if (data?.success && !data?.skipped) {
         if ((data.net_penalty || 0) > 0) penaltyCount++
@@ -964,7 +965,7 @@ export default function LoansPage() {
   const handleRecordPrincipalPayment = async (loan, amount) => {
     const borrower = borrowers.find(b => b.id === loan.borrower_id)
     const today = new Date()
-    const todayStr = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0')
+    const todayStr = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0')
     const currentPrincipal = parseFloat(loan.current_principal ?? loan.loan_amount)
     const newPrincipal = Math.max(0, parseFloat((currentPrincipal - amount).toFixed(2)))
 
@@ -1234,10 +1235,10 @@ export default function LoansPage() {
   }
 
   const handleRenew = (loan, suggestedMax) => {
-    setPrefillLoan({ 
-      borrower_id: loan.borrower_id, 
-      loan_amount: loan.loan_amount, 
-      interest_rate: loan.interest_rate, 
+    setPrefillLoan({
+      borrower_id: loan.borrower_id,
+      loan_amount: loan.loan_amount,
+      interest_rate: loan.interest_rate,
       loan_type: loan.loan_type,
       suggested_max: suggestedMax
     })
@@ -1370,7 +1371,7 @@ export default function LoansPage() {
   const handleConfirmRelease = async (loan) => {
     const borrower = borrowers.find(b => b.id === loan.borrower_id)
     const today = new Date()
-    const todayStr = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0')
+    const todayStr = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0')
 
     const { error } = await supabase.from('loans').update({
       status: 'Active',
@@ -1440,65 +1441,65 @@ export default function LoansPage() {
     processingRef.current = true
     try {
       const balance = calcQuickLoanBalance(loan)
-    const borrower = borrowers.find(b => b.id === loan.borrower_id)
-    const totalCollected = balance.totalOwed
+      const borrower = borrowers.find(b => b.id === loan.borrower_id)
+      const totalCollected = balance.totalOwed
 
-    const { error } = await supabase.from('loans').update({
-      status: 'Paid',
-      payments_made: 1,
-      remaining_balance: 0,
-      total_repayment: totalCollected,
-      updated_at: new Date().toISOString()
-    }).eq('id', loan.id)
+      const { error } = await supabase.from('loans').update({
+        status: 'Paid',
+        payments_made: 1,
+        remaining_balance: 0,
+        total_repayment: totalCollected,
+        updated_at: new Date().toISOString()
+      }).eq('id', loan.id)
 
-    if (error) { toast('Failed to record QuickLoan payoff', 'error'); return }
+      if (error) { toast('Failed to record QuickLoan payoff', 'error'); return }
 
-    // Log Automated Accounting Movement
-    await logAutomatedPayment(loan, totalCollected, cashLocation)
+      // Log Automated Accounting Movement
+      await logAutomatedPayment(loan, totalCollected, cashLocation)
 
-    // Log penalty if in penalty phase
-    if (balance.penaltyAccrued > 0) {
-      const penaltyDays = balance.daysElapsed - QUICKLOAN_CONFIG.DAY30_THRESHOLD
-      await supabase.from('penalty_charges').insert({
-        borrower_id: loan.borrower_id,
-        loan_id: loan.id,
-        installment_number: 1,
-        days_late: penaltyDays,
-        penalty_per_day: QUICKLOAN_CONFIG.PENALTY_PER_DAY,
-        penalty_amount: balance.penaltyAccrued,
-        cap_applied: false,
-        created_at: new Date().toISOString()
+      // Log penalty if in penalty phase
+      if (balance.penaltyAccrued > 0) {
+        const penaltyDays = balance.daysElapsed - QUICKLOAN_CONFIG.DAY30_THRESHOLD
+        await supabase.from('penalty_charges').insert({
+          borrower_id: loan.borrower_id,
+          loan_id: loan.id,
+          installment_number: 1,
+          days_late: penaltyDays,
+          penalty_per_day: QUICKLOAN_CONFIG.PENALTY_PER_DAY,
+          penalty_amount: balance.penaltyAccrued,
+          cap_applied: false,
+          created_at: new Date().toISOString()
+        })
+      }
+
+      // +25 credit score completion bonus + badge update
+      if (borrower) {
+        const currentPoints = borrower.credit_score || CREDIT_CONFIG.STARTING_SCORE
+        const newScore = Math.min(CREDIT_CONFIG.MAX_SCORE, currentPoints + CREDIT_CONFIG.FULL_LOAN_COMPLETE)
+        const newRisk = CREDIT_CONFIG.riskFromScore(newScore)
+        const newCleanLoans = (borrower.clean_loans || 0) + 1
+        const newBadge = getBadgeStatus(newScore, newCleanLoans)
+        const newLevel = newScore >= 1000 ? 4 : newScore >= 920 ? 3 : newScore >= 835 ? 2 : 1
+        const newLimit = newLevel === 4 ? 10000 : newLevel === 3 ? 9000 : newLevel === 2 ? 7000 : 5000
+
+        await supabase.from('borrowers').update({
+          credit_score: newScore,
+          risk_score: newRisk,
+          loyalty_badge: newBadge,
+          clean_loans: newCleanLoans,
+          loan_limit_level: newLevel,
+          loan_limit: newLimit
+        }).eq('id', borrower.id)
+      }
+
+
+
+      await logAudit({
+        action_type: 'QUICKLOAN_PAID',
+        module: 'Loan',
+        description: `QuickLoan fully paid by ${borrower?.full_name} — ${formatCurrency(totalCollected)} collected (principal ${formatCurrency(balance.principal)} + interest ${formatCurrency(balance.accruedInterest)}${balance.extensionFee > 0 ? ` + ext fee ${formatCurrency(balance.extensionFee)}` : ''}${balance.penaltyAccrued > 0 ? ` + penalty ${formatCurrency(balance.penaltyAccrued)}` : ''}) on day ${balance.daysElapsed}. Credit score +${CREDIT_CONFIG.FULL_LOAN_COMPLETE}.`,
+        changed_by: user?.email
       })
-    }
-
-    // +25 credit score completion bonus + badge update
-    if (borrower) {
-      const currentPoints = borrower.credit_score || CREDIT_CONFIG.STARTING_SCORE
-      const newScore = Math.min(CREDIT_CONFIG.MAX_SCORE, currentPoints + CREDIT_CONFIG.FULL_LOAN_COMPLETE)
-      const newRisk = CREDIT_CONFIG.riskFromScore(newScore)
-      const newCleanLoans = (borrower.clean_loans || 0) + 1
-      const newBadge = getBadgeStatus(newScore, newCleanLoans) 
-      const newLevel = newScore >= 1000 ? 4 : newScore >= 920 ? 3 : newScore >= 835 ? 2 : 1
-      const newLimit = newLevel === 4 ? 10000 : newLevel === 3 ? 9000 : newLevel === 2 ? 7000 : 5000
-      
-      await supabase.from('borrowers').update({
-        credit_score: newScore,
-        risk_score: newRisk,
-        loyalty_badge: newBadge,
-        clean_loans: newCleanLoans,
-        loan_limit_level: newLevel,
-        loan_limit: newLimit
-      }).eq('id', borrower.id)
-    }
-
-
-
-    await logAudit({
-      action_type: 'QUICKLOAN_PAID',
-      module: 'Loan',
-      description: `QuickLoan fully paid by ${borrower?.full_name} — ${formatCurrency(totalCollected)} collected (principal ${formatCurrency(balance.principal)} + interest ${formatCurrency(balance.accruedInterest)}${balance.extensionFee > 0 ? ` + ext fee ${formatCurrency(balance.extensionFee)}` : ''}${balance.penaltyAccrued > 0 ? ` + penalty ${formatCurrency(balance.penaltyAccrued)}` : ''}) on day ${balance.daysElapsed}. Credit score +${CREDIT_CONFIG.FULL_LOAN_COMPLETE}.`,
-      changed_by: user?.email
-    })
 
       toast(`✅ QuickLoan paid — ${formatCurrency(totalCollected)} collected · Credit score +${CREDIT_CONFIG.FULL_LOAN_COMPLETE}`, 'success')
       fetchData()
@@ -1543,10 +1544,10 @@ export default function LoansPage() {
   const filtered = loans.filter(l => {
     const borrower = borrowers.find(b => b.id === l.borrower_id)
     const matchSearch = borrower?.full_name?.toLowerCase().includes(search.toLowerCase())
-    const matchStatus = statusFilter === 'All' 
-      ? true 
-      : statusFilter === 'Active' 
-        ? ['Active', 'Partially Paid'].includes(l.status) 
+    const matchStatus = statusFilter === 'All'
+      ? true
+      : statusFilter === 'Active'
+        ? ['Active', 'Partially Paid'].includes(l.status)
         : l.status === statusFilter
     const matchType = loanTypeTab === 'all' || l.loan_type === loanTypeTab || (!l.loan_type && loanTypeTab === 'regular')
     return matchSearch && matchStatus && matchType
@@ -1688,7 +1689,7 @@ export default function LoansPage() {
         </div>
       ) : (
         <>
-        <style>{`
+          <style>{`
           .split-layout {
             display: grid;
             gap: 20px;
@@ -1707,398 +1708,400 @@ export default function LoansPage() {
             }
           }
         `}</style>
-        <div className="split-layout">
+          <div className="split-layout">
 
-          {/* Table Container */}
-          <div className="card" style={{ padding: 0, minWidth: 600 }}>
-            <div style={{ overflowX: 'auto', width: '100%' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, tableLayout: 'auto' }}>
-              <thead style={{ background: 'rgba(255,255,255,0.02)', color: 'var(--text-muted)', textTransform: 'uppercase', fontSize: 11 }}>
-                <tr>
-                  <th style={{ textAlign: 'left', padding: '12px 20px', fontWeight: 600 }}>Borrower</th>
-                  <th style={{ textAlign: 'left', padding: '12px 10px', fontWeight: 600 }}>Type</th>
-                  <th style={{ textAlign: 'right', padding: '12px 10px', fontWeight: 600 }}>Amount</th>
-                  <th style={{ textAlign: 'right', padding: '12px 10px', fontWeight: 600 }}>Remaining</th>
-                  <th style={{ textAlign: 'center', padding: '12px 10px', fontWeight: 600 }}>Progress</th>
-                  <th style={{ textAlign: 'right', padding: '12px 10px', fontWeight: 600 }}>Next Due</th>
-                  <th style={{ textAlign: 'right', padding: '12px 20px', fontWeight: 600 }}>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map(loan => {
-                  const b = borrowers.find(x => x.id === loan.borrower_id)
-                  const isSelected = selectedLoanId === loan.id
-                  const isQuick = loan.loan_type === 'quickloan'
-                  
-                  // Progress & Due logic
-                  let progressDisplay = '-'
-                  let dueDisplay = '-'
-                  let dueColor = 'var(--text-muted)'
-                  let balColor = 'var(--text-label)'
-                  
-                  if (loan.status === 'Overdue') {
-                    balColor = 'var(--red)'
-                    dueColor = 'var(--red)'
-                  } else if (loan.status === 'Active' && loan.extension_fee_charged) {
-                    balColor = 'var(--gold)'
-                  }
-                  
-                  if (isQuick) {
-                    const days = getQuickLoanDaysElapsed(loan.release_date)
-                    progressDisplay = loan.status === 'Pending' ? '-' : `Day ${days}`
-                    const dueDates = loan.release_date ? getQuickLoanDueDates(loan.release_date) : null
-                    if (dueDates) {
-                      dueDisplay = new Date(dueDates.day30).toLocaleDateString('en-PH', { month: 'short', day: 'numeric' })
-                      const daysUntilDue = Math.ceil((new Date(dueDates.day30) - new Date()) / (1000 * 60 * 60 * 24))
-                      if (daysUntilDue <= 1 && daysUntilDue >= 0 && loan.status === 'Active') dueColor = 'var(--gold)'
-                    }
-                  } else {
-                    const numInst = loan.num_installments || 4
-                    progressDisplay = `${loan.payments_made || 0}/${numInst}`
-                    if (loan.release_date && loan.status !== 'Pending') {
-                      const dates = getInstallmentDates(loan.release_date, numInst)
-                      const nextIdx = loan.payments_made || 0
-                      if (nextIdx < dates.length) {
-                        dueDisplay = new Date(dates[nextIdx]).toLocaleDateString('en-PH', { month: 'short', day: 'numeric' })
-                        const daysUntilDue = Math.ceil((new Date(dates[nextIdx]) - new Date()) / (1000 * 60 * 60 * 24))
-                        if (daysUntilDue <= 1 && daysUntilDue >= 0 && loan.status === 'Active') dueColor = 'var(--gold)'
-                      }
-                    }
-                  }
-
-                  let displayStatus = loan.status
-                  if (isQuick && loan.status === 'Active' && loan.extension_fee_charged) {
-                    displayStatus = 'Extended'
-                  }
-
-                  return (
-                    <tr 
-                      key={loan.id} 
-                      onClick={() => { setSelectedLoanId(loan.id); setPanelConfirmingRenew(false); }}
-                      style={{ 
-                        borderBottom: '1px solid var(--card-border)', 
-                        background: isSelected ? 'rgba(59,130,246,0.05)' : 'transparent',
-                        cursor: 'pointer',
-                        transition: 'background 0.2s ease'
-                      }}
-                    >
-                      <td style={{ padding: '14px 20px', fontWeight: 600 }}>{b?.full_name || 'Unknown'}</td>
-                      <td style={{ padding: '14px 10px' }}>
-                        <span style={{ 
-                          fontSize: 10, fontWeight: 700, padding: '3px 6px', borderRadius: 4, 
-                          background: isQuick ? 'rgba(139,92,246,0.1)' : 'rgba(59,130,246,0.1)',
-                          color: isQuick ? 'var(--purple)' : 'var(--blue)', textTransform: 'uppercase'
-                        }}>
-                          {isQuick ? 'QuickLoan' : 'Installment'}
-                        </span>
-                      </td>
-                      <td style={{ padding: '14px 10px', textAlign: 'right' }}>{formatCurrency(loan.loan_amount)}</td>
-                      <td style={{ padding: '14px 10px', textAlign: 'right', fontWeight: 600, color: balColor }}>
-                        {formatCurrency(loan.remaining_balance)}
-                      </td>
-                      <td style={{ padding: '14px 10px', textAlign: 'center', color: 'var(--text-label)' }}>{progressDisplay}</td>
-                      <td style={{ padding: '14px 10px', textAlign: 'right', color: dueColor, fontWeight: dueColor !== 'var(--text-muted)' ? 600 : 400 }}>{dueDisplay}</td>
-                      <td style={{ padding: '14px 20px', textAlign: 'right' }}>
-                        <StatusPill status={displayStatus} />
-                      </td>
+            {/* Table Container */}
+            <div className="card" style={{ padding: 0, minWidth: 600 }}>
+              <div style={{ overflowX: 'auto', width: '100%' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, tableLayout: 'auto' }}>
+                  <thead style={{ background: 'rgba(255,255,255,0.02)', color: 'var(--text-muted)', textTransform: 'uppercase', fontSize: 11 }}>
+                    <tr>
+                      <th style={{ textAlign: 'left', padding: '12px 20px', fontWeight: 600 }}>Borrower</th>
+                      <th style={{ textAlign: 'left', padding: '12px 10px', fontWeight: 600 }}>Type</th>
+                      <th style={{ textAlign: 'right', padding: '12px 10px', fontWeight: 600 }}>Amount</th>
+                      <th style={{ textAlign: 'right', padding: '12px 10px', fontWeight: 600 }}>Remaining</th>
+                      <th style={{ textAlign: 'center', padding: '12px 10px', fontWeight: 600 }}>Progress</th>
+                      <th style={{ textAlign: 'right', padding: '12px 10px', fontWeight: 600 }}>Next Due</th>
+                      <th style={{ textAlign: 'right', padding: '12px 20px', fontWeight: 600 }}>Status</th>
                     </tr>
-                  )
-                })}
-              </tbody>
-            </table>
+                  </thead>
+                  <tbody>
+                    {filtered.map(loan => {
+                      const b = borrowers.find(x => x.id === loan.borrower_id)
+                      const isSelected = selectedLoanId === loan.id
+                      const isQuick = loan.loan_type === 'quickloan'
+
+                      // Progress & Due logic
+                      let progressDisplay = '-'
+                      let dueDisplay = '-'
+                      let dueColor = 'var(--text-muted)'
+                      let balColor = 'var(--text-label)'
+
+                      if (loan.status === 'Overdue') {
+                        balColor = 'var(--red)'
+                        dueColor = 'var(--red)'
+                      } else if (loan.status === 'Active' && loan.extension_fee_charged) {
+                        balColor = 'var(--gold)'
+                      }
+
+                      if (isQuick) {
+                        const days = getQuickLoanDaysElapsed(loan.release_date)
+                        progressDisplay = loan.status === 'Pending' ? '-' : `Day ${days}`
+                        const dueDates = loan.release_date ? getQuickLoanDueDates(loan.release_date) : null
+                        if (dueDates) {
+                          dueDisplay = new Date(dueDates.day30).toLocaleDateString('en-PH', { month: 'short', day: 'numeric' })
+                          const daysUntilDue = Math.ceil((new Date(dueDates.day30) - new Date()) / (1000 * 60 * 60 * 24))
+                          if (daysUntilDue <= 1 && daysUntilDue >= 0 && loan.status === 'Active') dueColor = 'var(--gold)'
+                        }
+                      } else {
+                        const numInst = loan.num_installments || 4
+                        progressDisplay = `${loan.payments_made || 0}/${numInst}`
+                        if (loan.release_date && loan.status !== 'Pending') {
+                          const dates = getInstallmentDates(loan.release_date, numInst)
+                          const nextIdx = loan.payments_made || 0
+                          if (nextIdx < dates.length) {
+                            dueDisplay = new Date(dates[nextIdx]).toLocaleDateString('en-PH', { month: 'short', day: 'numeric' })
+                            const daysUntilDue = Math.ceil((new Date(dates[nextIdx]) - new Date()) / (1000 * 60 * 60 * 24))
+                            if (daysUntilDue <= 1 && daysUntilDue >= 0 && loan.status === 'Active') dueColor = 'var(--gold)'
+                          }
+                        }
+                      }
+
+                      let displayStatus = loan.status
+                      if (isQuick && loan.status === 'Active' && loan.extension_fee_charged) {
+                        displayStatus = 'Extended'
+                      }
+
+                      return (
+                        <tr
+                          key={loan.id}
+                          onClick={() => { setSelectedLoanId(loan.id); setPanelConfirmingRenew(false); }}
+                          style={{
+                            borderBottom: '1px solid var(--card-border)',
+                            background: isSelected ? 'rgba(59,130,246,0.05)' : 'transparent',
+                            cursor: 'pointer',
+                            transition: 'background 0.2s ease'
+                          }}
+                        >
+                          <td style={{ padding: '14px 20px', fontWeight: 600 }}>{b?.full_name || 'Unknown'}</td>
+                          <td style={{ padding: '14px 10px' }}>
+                            <span style={{
+                              fontSize: 10, fontWeight: 700, padding: '3px 6px', borderRadius: 4,
+                              background: isQuick ? 'rgba(139,92,246,0.1)' : 'rgba(59,130,246,0.1)',
+                              color: isQuick ? 'var(--purple)' : 'var(--blue)', textTransform: 'uppercase'
+                            }}>
+                              {isQuick ? 'QuickLoan' : 'Installment'}
+                            </span>
+                          </td>
+                          <td style={{ padding: '14px 10px', textAlign: 'right' }}>{formatCurrency(loan.loan_amount)}</td>
+                          <td style={{ padding: '14px 10px', textAlign: 'right', fontWeight: 600, color: balColor }}>
+                            {isQuick
+                              ? formatCurrency(calcQuickLoanBalance(loan)?.totalOwed ?? loan.remaining_balance)
+                              : formatCurrency(loan.remaining_balance)}
+                          </td>
+                          <td style={{ padding: '14px 10px', textAlign: 'center', color: 'var(--text-label)' }}>{progressDisplay}</td>
+                          <td style={{ padding: '14px 10px', textAlign: 'right', color: dueColor, fontWeight: dueColor !== 'var(--text-muted)' ? 600 : 400 }}>{dueDisplay}</td>
+                          <td style={{ padding: '14px 20px', textAlign: 'right' }}>
+                            <StatusPill status={displayStatus} />
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
 
 
 
-          {/* Detail Panel */}
-          {selectedLoanId && (() => {
-            const loan = filtered.find(l => l.id === selectedLoanId)
-            if (!loan) return null
-            const b = borrowers.find(x => x.id === loan.borrower_id)
-            const isQuick = loan.loan_type === 'quickloan'
-            let displayStatus = loan.status
-            if (isQuick && loan.status === 'Active' && loan.extension_fee_charged) displayStatus = 'Extended'
+            {/* Detail Panel */}
+            {selectedLoanId && (() => {
+              const loan = filtered.find(l => l.id === selectedLoanId)
+              if (!loan) return null
+              const b = borrowers.find(x => x.id === loan.borrower_id)
+              const isQuick = loan.loan_type === 'quickloan'
+              let displayStatus = loan.status
+              if (isQuick && loan.status === 'Active' && loan.extension_fee_charged) displayStatus = 'Extended'
 
-            return (
-              <div className="card" style={{ 
-                padding: 0, 
-                position: 'sticky', 
-                top: 24,
-                display: 'flex',
-                flexDirection: 'column',
-                height: 'fit-content'
-              }}>
-                {/* Header */}
-                <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--card-border)', background: 'rgba(255,255,255,0.02)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <div>
-                      <div style={{ fontSize: 16, fontWeight: 700 }}>{b?.full_name}</div>
-                      <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>
-                        {isQuick ? 'QuickLoan' : 'Installment'}
+              return (
+                <div className="card" style={{
+                  padding: 0,
+                  position: 'sticky',
+                  top: 24,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  height: 'fit-content'
+                }}>
+                  {/* Header */}
+                  <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--card-border)', background: 'rgba(255,255,255,0.02)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <div>
+                        <div style={{ fontSize: 16, fontWeight: 700 }}>{b?.full_name}</div>
+                        <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>
+                          {isQuick ? 'QuickLoan' : 'Installment'}
+                        </div>
                       </div>
+                      <button onClick={() => { setSelectedLoanId(null); setPanelConfirmingRenew(false); }} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 4 }}>
+                        <X size={16} />
+                      </button>
                     </div>
-                    <button onClick={() => { setSelectedLoanId(null); setPanelConfirmingRenew(false); }} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 4 }}>
-                      <X size={16} />
-                    </button>
+
+                    {loan.status !== 'Pending' && loan.release_date && (
+                      <div style={{ marginTop: 12, display: 'inline-block', padding: '4px 8px', background: 'rgba(255,255,255,0.05)', borderRadius: 6, fontSize: 11, fontWeight: 600, color: 'var(--text-label)' }}>
+                        Released {formatDate(loan.release_date)}
+                      </div>
+                    )}
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: loan.status !== 'Pending' ? 12 : 16 }}>
+                      <div style={{ fontSize: 20, fontWeight: 800, fontFamily: 'Space Grotesk' }}>{formatCurrency(loan.loan_amount)}</div>
+                      <StatusPill status={displayStatus} />
+                    </div>
                   </div>
 
-                  {loan.status !== 'Pending' && loan.release_date && (
-                    <div style={{ marginTop: 12, display: 'inline-block', padding: '4px 8px', background: 'rgba(255,255,255,0.05)', borderRadius: 6, fontSize: 11, fontWeight: 600, color: 'var(--text-label)' }}>
-                      Released {formatDate(loan.release_date)}
-                    </div>
-                  )}
-
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: loan.status !== 'Pending' ? 12 : 16 }}>
-                    <div style={{ fontSize: 20, fontWeight: 800, fontFamily: 'Space Grotesk' }}>{formatCurrency(loan.loan_amount)}</div>
-                    <StatusPill status={displayStatus} />
+                  {/* Progress */}
+                  <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--card-border)' }}>
+                    <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 8 }}>Progress</div>
+                    {isQuick ? (
+                      <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: 6, height: 6, width: '100%', overflow: 'hidden' }}>
+                        <div style={{
+                          height: '100%',
+                          background: 'var(--purple)',
+                          width: `${Math.min(100, Math.max(0, (getQuickLoanDaysElapsed(loan.release_date) / 30) * 100))}%`
+                        }} />
+                      </div>
+                    ) : (
+                      <InstallmentProgressBar paid={loan.payments_made || 0} total={loan.num_installments || 4} remainingBalance={loan.remaining_balance} />
+                    )}
                   </div>
-                </div>
 
-                {/* Progress */}
-                <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--card-border)' }}>
-                  <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 8 }}>Progress</div>
-                  {isQuick ? (
-                    <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: 6, height: 6, width: '100%', overflow: 'hidden' }}>
-                      <div style={{ 
-                        height: '100%', 
-                        background: 'var(--purple)', 
-                        width: `${Math.min(100, Math.max(0, (getQuickLoanDaysElapsed(loan.release_date) / 30) * 100))}%` 
-                      }} />
-                    </div>
-                  ) : (
-                    <InstallmentProgressBar paid={loan.payments_made || 0} total={loan.num_installments || 4} remainingBalance={loan.remaining_balance} />
-                  )}
-                </div>
-
-                {/* Key Fields */}
-                <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 10, borderBottom: '1px solid var(--card-border)' }}>
-                  {(() => {
-                    const qlBalance = isQuick ? calcQuickLoanBalance(loan) : null;
-                    if (isQuick) {
-                      if (qlBalance !== null) {
-                        return (
-                          <>
+                  {/* Key Fields */}
+                  <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 10, borderBottom: '1px solid var(--card-border)' }}>
+                    {(() => {
+                      const qlBalance = isQuick ? calcQuickLoanBalance(loan) : null;
+                      if (isQuick) {
+                        if (qlBalance !== null) {
+                          return (
+                            <>
+                              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Total Owed</span>
+                                <span style={{ fontSize: 12, fontWeight: 600 }}>{formatCurrency(qlBalance.balance || qlBalance.totalOwed)}</span>
+                              </div>
+                              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Accrued Interest</span>
+                                <span style={{ fontSize: 12, fontWeight: 600 }}>{formatCurrency(qlBalance.accruedInterest || 0)}</span>
+                              </div>
+                              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Extension Fee</span>
+                                <span style={{ fontSize: 12, fontWeight: 600 }}>{qlBalance.extensionFee > 0 ? formatCurrency(qlBalance.extensionFee) : '-'}</span>
+                              </div>
+                              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Days Elapsed</span>
+                                <span style={{ fontSize: 12, fontWeight: 600 }}>{qlBalance.daysElapsed || 0} days</span>
+                              </div>
+                            </>
+                          )
+                        } else {
+                          return (
                             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                               <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Total Owed</span>
-                              <span style={{ fontSize: 12, fontWeight: 600 }}>{formatCurrency(qlBalance.balance || qlBalance.totalOwed)}</span>
+                              <span style={{ fontSize: 12, fontWeight: 600 }}>{formatCurrency(loan.remaining_balance)}</span>
                             </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                              <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Accrued Interest</span>
-                              <span style={{ fontSize: 12, fontWeight: 600 }}>{formatCurrency(qlBalance.accruedInterest || 0)}</span>
-                            </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                              <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Extension Fee</span>
-                              <span style={{ fontSize: 12, fontWeight: 600 }}>{qlBalance.extensionFee > 0 ? formatCurrency(qlBalance.extensionFee) : '-'}</span>
-                            </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                              <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Days Elapsed</span>
-                              <span style={{ fontSize: 12, fontWeight: 600 }}>{qlBalance.daysElapsed || 0} days</span>
-                            </div>
-                          </>
-                        )
+                          )
+                        }
                       } else {
                         return (
                           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Total Owed</span>
-                            <span style={{ fontSize: 12, fontWeight: 600 }}>{formatCurrency(loan.remaining_balance)}</span>
+                            <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Installment</span>
+                            <span style={{ fontSize: 12, fontWeight: 600 }}>{formatCurrency(loan.installment_amount)}</span>
                           </div>
                         )
                       }
-                    } else {
-                      return (
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Installment</span>
-                          <span style={{ fontSize: 12, fontWeight: 600 }}>{formatCurrency(loan.installment_amount)}</span>
-                        </div>
-                      )
-                    }
-                  })()}
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Total Repayment</span>
-                    <span style={{ fontSize: 12, fontWeight: 600 }}>{formatCurrency(loan.total_repayment)}</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Interest Rate</span>
-                    <span style={{ fontSize: 12, fontWeight: 600 }}>{(loan.interest_rate * 100).toFixed(1)}%</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Security Hold</span>
-                    <span style={{ fontSize: 12, fontWeight: 600 }}>{formatCurrency(loan.security_hold)}</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Purpose</span>
-                    <span style={{ fontSize: 12, fontWeight: 600 }}>{loan.loan_purpose || 'N/A'}</span>
-                  </div>
-                </div>
-
-                {/* Status Banners */}
-                <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--card-border)', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {loan.e_signature_name ? (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--green)', fontSize: 12, fontWeight: 600 }}>
-                      <CheckCircle size={14} /> Signed by {loan.e_signature_name}
+                    })()}
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Total Repayment</span>
+                      <span style={{ fontSize: 12, fontWeight: 600 }}>{formatCurrency(loan.total_repayment)}</span>
                     </div>
-                  ) : (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--gold)', fontSize: 12, fontWeight: 600 }}>
-                      <AlertTriangle size={14} /> Pending Signature
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Interest Rate</span>
+                      <span style={{ fontSize: 12, fontWeight: 600 }}>{(loan.interest_rate * 100).toFixed(1)}%</span>
                     </div>
-                  )}
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Security Hold</span>
+                      <span style={{ fontSize: 12, fontWeight: 600 }}>{formatCurrency(loan.security_hold)}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Purpose</span>
+                      <span style={{ fontSize: 12, fontWeight: 600 }}>{loan.loan_purpose || 'N/A'}</span>
+                    </div>
+                  </div>
 
-                  {loan.status === 'Overdue' && (() => {
-                    let penalty = 0
-                    if (isQuick) {
-                      const details = calcQuickLoanBalance(loan)
-                      penalty = details.penalty
-                    } else {
-                      const dates = getInstallmentDates(loan.release_date, loan.num_installments || 4)
-                      const nextIdx = loan.payments_made || 0
-                      if (dates[nextIdx]) {
-                        const dueDate = new Date(dates[nextIdx])
-                        const daysLate = Math.floor((new Date() - dueDate) / (1000 * 60 * 60 * 24))
-                        if (daysLate > 0) {
-                          penalty = (loan.installment_amount * 0.05) * daysLate
+                  {/* Status Banners */}
+                  <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--card-border)', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {loan.e_signature_name ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--green)', fontSize: 12, fontWeight: 600 }}>
+                        <CheckCircle size={14} /> Signed by {loan.e_signature_name}
+                      </div>
+                    ) : (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--gold)', fontSize: 12, fontWeight: 600 }}>
+                        <AlertTriangle size={14} /> Pending Signature
+                      </div>
+                    )}
+
+                    {loan.status === 'Overdue' && (() => {
+                      let penalty = 0
+                      if (isQuick) {
+                        const details = calcQuickLoanBalance(loan)
+                        penalty = details.penalty
+                      } else {
+                        const dates = getInstallmentDates(loan.release_date, loan.num_installments || 4)
+                        const nextIdx = loan.payments_made || 0
+                        if (dates[nextIdx]) {
+                          const dueDate = new Date(dates[nextIdx])
+                          const daysLate = Math.floor((new Date() - dueDate) / (1000 * 60 * 60 * 24))
+                          if (daysLate > 0) {
+                            penalty = (loan.installment_amount * 0.05) * daysLate
+                          }
                         }
                       }
-                    }
-                    if (penalty > 0) {
-                      return (
-                        <div style={{ background: 'rgba(239,68,68,0.1)', color: 'var(--red)', padding: '8px 12px', borderRadius: 6, fontSize: 11, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
-                          <AlertTriangle size={14} /> +{formatCurrency(penalty)} penalty accrued
-                        </div>
-                      )
-                    }
-                    return null
-                  })()}
-                </div>
-
-                {/* Actions */}
-                <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {/* Cash Location Dropdown for active loans */}
-                  {loan.status !== 'Pending' && loan.status !== 'Paid' && loan.status !== 'Paid Off' && loan.status !== 'Defaulted' && (
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 4 }}>
-                      <select value={panelCashLocation} onChange={e => setPanelCashLocation(e.target.value)}
-                        style={{ background: 'var(--card)', color: 'var(--text-primary)', border: '1px solid var(--card-border)', borderRadius: 6, padding: '3px 6px', fontSize: 11 }}>
-                        <option value="hand">Hand</option>
-                        <option value="maribank">Maribank</option>
-                      </select>
-                    </div>
-                  )}
-
-                  {/* Contextual Buttons */}
-                  {loan.status === 'Pending' && (
-                    <button className="btn-primary" style={{ width: '100%', display: 'flex', justifyContent: 'center' }} onClick={() => handleConfirmRelease(loan)}>
-                      Confirm Release
-                    </button>
-                  )}
-                  
-                  {isQuick && loan.status === 'Active' && !loan.extension_fee_charged && (
-                    <button className="btn-primary" style={{ width: '100%', display: 'flex', justifyContent: 'center' }} onClick={() => handleQuickLoanPayoff(loan, panelCashLocation)}>
-                      Record Full Payoff
-                    </button>
-                  )}
-                  {isQuick && loan.status === 'Active' && !loan.extension_fee_charged && (
-                    <button className="btn-primary" style={{ width: '100%', background: 'rgba(245,158,11,0.1)', color: 'var(--gold)', border: '1px solid rgba(245,158,11,0.3)', display: 'flex', justifyContent: 'center' }} onClick={() => handleQuickLoanDay15Missed(loan, panelCashLocation)}>
-                      Record Extension
-                    </button>
-                  )}
-                  
-                  {isQuick && loan.status === 'Active' && loan.extension_fee_charged && (
-                    <button className="btn-primary" style={{ width: '100%', display: 'flex', justifyContent: 'center' }} onClick={() => handleQuickLoanPayoff(loan, panelCashLocation)}>
-                      Record Full Payoff
-                    </button>
-                  )}
-
-                  {isQuick && loan.status === 'Overdue' && (
-                    <button className="btn-primary" style={{ width: '100%', display: 'flex', justifyContent: 'center' }} onClick={() => handleQuickLoanPayoff(loan, panelCashLocation)}>
-                      Record Full Payoff
-                    </button>
-                  )}
-
-                  {!isQuick && ['Active', 'Partially Paid'].includes(loan.status) && (
-                    <>
-                      <button className="btn-primary" style={{ width: '100%', display: 'flex', justifyContent: 'center' }} onClick={() => handleRecordPayment(loan, panelCashLocation)}>
-                        Record Payment
-                      </button>
-                      <button className="btn-primary" style={{ width: '100%', background: 'rgba(34,197,94,0.1)', color: 'var(--green)', border: '1px solid rgba(34,197,94,0.3)', display: 'flex', justifyContent: 'center' }} onClick={() => handleFullPayoff(loan, panelCashLocation)}>
-                        Full Payoff
-                      </button>
-                    </>
-                  )}
-                  
-                  {!isQuick && loan.status === 'Overdue' && (
-                    <>
-                      <button className="btn-primary" style={{ width: '100%', display: 'flex', justifyContent: 'center' }} onClick={() => handleRecordPayment(loan, panelCashLocation)}>
-                        Record Payment
-                      </button>
-                    </>
-                  )}
-
-                  {/* Renew Button */}
-                  {(loan.status === 'Paid' || loan.status === 'Paid Off') && (() => {
-                    const level = b?.loan_limit_level || 1
-                    const limitMap = { 4: 10000, 3: 9000, 2: 7000, 1: 5000 }
-                    const suggestedMax = isQuick ? 3000 : (limitMap[level] || 5000)
-                    const tierMap = { 4: '👑 VIP', 3: '🤝 Reliable', 2: '⭐ Trusted', 1: '🌱 New' }
-                    const tierName = tierMap[level] || '🌱 New'
-                    const increased = suggestedMax > loan.loan_amount
-
-                    if (panelConfirmingRenew) {
-                      return (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, background: 'rgba(20,184,166,0.06)', border: '1px solid rgba(20,184,166,0.25)', borderRadius: 10, padding: '12px 14px', width: '100%', marginTop: 4 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
-                            <div style={{ fontSize: 13 }}>
-                              <span style={{ fontWeight: 700, color: 'var(--teal)' }}>{tierName} Tier Upgrade</span>
-                              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
-                                Credit Score: <strong>{b?.credit_score || 0}</strong> · {' '}
-                                {increased 
-                                  ? <span>Eligible limit increased to <strong style={{ color: 'var(--green)' }}>{formatCurrency(suggestedMax)}</strong>!</span>
-                                  : <span>Eligible for renewal up to {formatCurrency(suggestedMax)}</span>
-                                }
-                              </div>
-                            </div>
-                            <div style={{ display: 'flex', gap: 8 }}>
-                              <button 
-                                onClick={() => { handleRenew(loan, suggestedMax); setPanelConfirmingRenew(false) }}
-                                style={{ background: 'var(--teal)', color: '#fff', border: 'none', borderRadius: 6, padding: '6px 12px', cursor: 'pointer', fontSize: 12, fontWeight: 700 }}
-                              >
-                                Open Renewal Form
-                              </button>
-                              <button 
-                                onClick={() => setPanelConfirmingRenew(false)}
-                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 12 }}
-                              >
-                                Cancel
-                              </button>
-                            </div>
+                      if (penalty > 0) {
+                        return (
+                          <div style={{ background: 'rgba(239,68,68,0.1)', color: 'var(--red)', padding: '8px 12px', borderRadius: 6, fontSize: 11, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
+                            <AlertTriangle size={14} /> +{formatCurrency(penalty)} penalty accrued
                           </div>
-                        </div>
-                      )
-                    }
+                        )
+                      }
+                      return null
+                    })()}
+                  </div>
 
-                    return (
-                      <button className="btn-primary" style={{ width: '100%', background: 'rgba(20,184,166,0.1)', color: 'var(--teal)', border: '1px solid rgba(20,184,166,0.3)', display: 'flex', justifyContent: 'center' }} onClick={() => setPanelConfirmingRenew(true)}>
-                        Renew Loan
-                      </button>
-                    )
-                  })()}
+                  {/* Actions */}
+                  <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {/* Cash Location Dropdown for active loans */}
+                    {loan.status !== 'Pending' && loan.status !== 'Paid' && loan.status !== 'Paid Off' && loan.status !== 'Defaulted' && (
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 4 }}>
+                        <select value={panelCashLocation} onChange={e => setPanelCashLocation(e.target.value)}
+                          style={{ background: 'var(--card)', color: 'var(--text-primary)', border: '1px solid var(--card-border)', borderRadius: 6, padding: '3px 6px', fontSize: 11 }}>
+                          <option value="hand">Hand</option>
+                          <option value="maribank">Maribank</option>
+                        </select>
+                      </div>
+                    )}
 
-                  {/* Common Actions */}
-                  <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
-                    <button className="btn-secondary" style={{ flex: 1, display: 'flex', justifyContent: 'center' }} onClick={() => { setEditingLoan(loan); setPrefillLoan(null); setModalOpen(true) }}>
-                      Edit
-                    </button>
-                    {['Active', 'Partially Paid', 'Overdue'].includes(loan.status) && (
-                      <button className="btn-secondary" style={{ flex: 1, display: 'flex', justifyContent: 'center', color: 'var(--red)', border: '1px solid rgba(239,68,68,0.3)' }} onClick={() => setDefaultTarget(loan)}>
-                        Default
+                    {/* Contextual Buttons */}
+                    {loan.status === 'Pending' && (
+                      <button className="btn-primary" style={{ width: '100%', display: 'flex', justifyContent: 'center' }} onClick={() => handleConfirmRelease(loan)}>
+                        Confirm Release
                       </button>
                     )}
+
+                    {isQuick && loan.status === 'Active' && !loan.extension_fee_charged && (
+                      <button className="btn-primary" style={{ width: '100%', display: 'flex', justifyContent: 'center' }} onClick={() => handleQuickLoanPayoff(loan, panelCashLocation)}>
+                        Record Full Payoff
+                      </button>
+                    )}
+                    {isQuick && loan.status === 'Active' && !loan.extension_fee_charged && (
+                      <button className="btn-primary" style={{ width: '100%', background: 'rgba(245,158,11,0.1)', color: 'var(--gold)', border: '1px solid rgba(245,158,11,0.3)', display: 'flex', justifyContent: 'center' }} onClick={() => handleQuickLoanDay15Missed(loan, panelCashLocation)}>
+                        Record Extension
+                      </button>
+                    )}
+
+                    {isQuick && loan.status === 'Active' && loan.extension_fee_charged && (
+                      <button className="btn-primary" style={{ width: '100%', display: 'flex', justifyContent: 'center' }} onClick={() => handleQuickLoanPayoff(loan, panelCashLocation)}>
+                        Record Full Payoff
+                      </button>
+                    )}
+
+                    {isQuick && loan.status === 'Overdue' && (
+                      <button className="btn-primary" style={{ width: '100%', display: 'flex', justifyContent: 'center' }} onClick={() => handleQuickLoanPayoff(loan, panelCashLocation)}>
+                        Record Full Payoff
+                      </button>
+                    )}
+
+                    {!isQuick && ['Active', 'Partially Paid'].includes(loan.status) && (
+                      <>
+                        <button className="btn-primary" style={{ width: '100%', display: 'flex', justifyContent: 'center' }} onClick={() => handleRecordPayment(loan, panelCashLocation)}>
+                          Record Payment
+                        </button>
+                        <button className="btn-primary" style={{ width: '100%', background: 'rgba(34,197,94,0.1)', color: 'var(--green)', border: '1px solid rgba(34,197,94,0.3)', display: 'flex', justifyContent: 'center' }} onClick={() => handleFullPayoff(loan, panelCashLocation)}>
+                          Full Payoff
+                        </button>
+                      </>
+                    )}
+
+                    {!isQuick && loan.status === 'Overdue' && (
+                      <>
+                        <button className="btn-primary" style={{ width: '100%', display: 'flex', justifyContent: 'center' }} onClick={() => handleRecordPayment(loan, panelCashLocation)}>
+                          Record Payment
+                        </button>
+                      </>
+                    )}
+
+                    {/* Renew Button */}
+                    {(loan.status === 'Paid' || loan.status === 'Paid Off') && (() => {
+                      const level = b?.loan_limit_level || 1
+                      const limitMap = { 4: 10000, 3: 9000, 2: 7000, 1: 5000 }
+                      const suggestedMax = isQuick ? 3000 : (limitMap[level] || 5000)
+                      const tierMap = { 4: '👑 VIP', 3: '🤝 Reliable', 2: '⭐ Trusted', 1: '🌱 New' }
+                      const tierName = tierMap[level] || '🌱 New'
+                      const increased = suggestedMax > loan.loan_amount
+
+                      if (panelConfirmingRenew) {
+                        return (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, background: 'rgba(20,184,166,0.06)', border: '1px solid rgba(20,184,166,0.25)', borderRadius: 10, padding: '12px 14px', width: '100%', marginTop: 4 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+                              <div style={{ fontSize: 13 }}>
+                                <span style={{ fontWeight: 700, color: 'var(--teal)' }}>{tierName} Tier Upgrade</span>
+                                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
+                                  Credit Score: <strong>{b?.credit_score || 0}</strong> · {' '}
+                                  {increased
+                                    ? <span>Eligible limit increased to <strong style={{ color: 'var(--green)' }}>{formatCurrency(suggestedMax)}</strong>!</span>
+                                    : <span>Eligible for renewal up to {formatCurrency(suggestedMax)}</span>
+                                  }
+                                </div>
+                              </div>
+                              <div style={{ display: 'flex', gap: 8 }}>
+                                <button
+                                  onClick={() => { handleRenew(loan, suggestedMax); setPanelConfirmingRenew(false) }}
+                                  style={{ background: 'var(--teal)', color: '#fff', border: 'none', borderRadius: 6, padding: '6px 12px', cursor: 'pointer', fontSize: 12, fontWeight: 700 }}
+                                >
+                                  Open Renewal Form
+                                </button>
+                                <button
+                                  onClick={() => setPanelConfirmingRenew(false)}
+                                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 12 }}
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      }
+
+                      return (
+                        <button className="btn-primary" style={{ width: '100%', background: 'rgba(20,184,166,0.1)', color: 'var(--teal)', border: '1px solid rgba(20,184,166,0.3)', display: 'flex', justifyContent: 'center' }} onClick={() => setPanelConfirmingRenew(true)}>
+                          Renew Loan
+                        </button>
+                      )
+                    })()}
+
+                    {/* Common Actions */}
+                    <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+                      <button className="btn-secondary" style={{ flex: 1, display: 'flex', justifyContent: 'center' }} onClick={() => { setEditingLoan(loan); setPrefillLoan(null); setModalOpen(true) }}>
+                        Edit
+                      </button>
+                      {['Active', 'Partially Paid', 'Overdue'].includes(loan.status) && (
+                        <button className="btn-secondary" style={{ flex: 1, display: 'flex', justifyContent: 'center', color: 'var(--red)', border: '1px solid rgba(239,68,68,0.3)' }} onClick={() => setDefaultTarget(loan)}>
+                          Default
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            )
-          })()}
+              )
+            })()}
 
-        </div>
+          </div>
 
 
         </>

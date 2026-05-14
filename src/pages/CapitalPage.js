@@ -134,12 +134,8 @@ export default function CapitalPage() {
       .filter(e => e.type === 'CASH IN' && LOAN_IN_CATS.includes(e.category))
       .reduce((s, e) => s + (parseFloat(e.amount) || 0), 0)
 
-    // Available cash = simple net of all capital_flow entries
-    // Both hand and maribank are our money — one clean number
-    const availableCash = entries.reduce((s, e) => {
-      const amt = parseFloat(e.amount) || 0
-      return e.type === 'CASH IN' ? s + amt : s - amt
-    }, 0)
+    // FIXED — use runningPool which already excludes principal cycling
+    const availableCash = runningPool
 
     const jpShare      = (jpCapital / ((jpCapital + charlouCapital) || 1)) * 100
     const charlouShare = (charlouCapital / ((jpCapital + charlouCapital) || 1)) * 100
